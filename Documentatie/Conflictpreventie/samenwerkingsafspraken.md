@@ -1,4 +1,8 @@
 # Organisatie
+## ToDo/Agenda
+Jira: https://vjls.atlassian.net/jira/software/projects/KAN/list?jql=project+%3D+KAN+ORDER+BY+cf%5B10019%5D+ASC&atlOrigin=eyJpIjoiZmY1MGI3MzQ5OWE0NGQzZmFiMzlkMmMyYmQ0NTBjNGMiLCJwIjoiaiJ9
+## Files+code
+Github repo
 
 # Communicatie
 ## Whatsapp
