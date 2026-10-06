@@ -15,6 +15,7 @@ Voor elk deelonderwerp maken we een post in de forum, hierin krijgen we een loss
 Bellen gaat via discord voice channel
 
 # Omgangsvormen
+Geen speciale afspraken nodig op dit moment.
 
 # Besluiten
 
