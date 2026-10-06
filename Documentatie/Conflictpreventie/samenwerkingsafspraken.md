@@ -18,5 +18,6 @@ Bellen gaat via discord voice channel
 Geen speciale afspraken nodig op dit moment.
 
 # Besluiten
+Besluiten nemen met 4/6 Eens met de keuze, niet 4/6 akkoord betekend aanpassen tot het wel aan die eis voldoet
 
 # Consequenties
