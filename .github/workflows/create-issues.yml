@@ -1,0 +1,268 @@
+name: Create Timaflu User Story Issues
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  create-issues:
+    if: github.event.pull_request.merged == true
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Create user story issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = [
+              {
+                title: 'US1 – Klanten beheren',
+                body: [
+                  '**Als** verkoopmedewerker',
+                  '**wil ik** klantgegevens centraal beheren',
+                  '**zodat** alle afdelingen dezelfde informatie gebruiken.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Klant aanmaken',
+                  '- Klant wijzigen',
+                  '- Klant verwijderen',
+                  '- Leveradres registreren',
+                  '- Factuuradres registreren',
+                  '- Telefoonnummer registreren',
+                  '- Jaaromzet registreren'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US2 – Orders registreren',
+                body: [
+                  '**Als** verkoopmedewerker',
+                  '**wil ik** telefonisch geplaatste orders digitaal registreren',
+                  '**zodat** orders correct verwerkt worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Klant selecteren',
+                  '- Product toevoegen',
+                  '- Aantal invoeren',
+                  '- Orderdatum opslaan',
+                  '- Totaalprijs berekenen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US3 – Kortingen automatisch berekenen',
+                body: [
+                  '**Als** verkoopmedewerker',
+                  '**wil ik** automatische kortingsberekeningen',
+                  '**zodat** fouten worden voorkomen.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- 5% korting vanaf €500',
+                  '- Klantkorting automatisch toepassen',
+                  '- Jaaromzet automatisch bepalen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US4 – Realtime voorraadbeheer',
+                body: [
+                  '**Als** verkoopmedewerker',
+                  '**wil ik** actuele voorraad kunnen zien',
+                  '**zodat** ik geen niet-beschikbare medicijnen verkoop.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Voorraad realtime zichtbaar',
+                  '- Gereserveerde voorraad zichtbaar',
+                  '- Niet beschikbare producten markeren'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US5 – Orderstatus beheren',
+                body: [
+                  '**Als** medewerker',
+                  '**wil ik** de status van orders volgen',
+                  '**zodat** klanten geïnformeerd kunnen worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Nieuw',
+                  '- Wordt verzameld',
+                  '- Backorder',
+                  '- Verpakt',
+                  '- Verzonden',
+                  '- Afgeleverd'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US6 – Productcatalogus beheren',
+                body: [
+                  '**Als** inkoper',
+                  '**wil ik** producten centraal beheren',
+                  '**zodat** de catalogus actueel blijft.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Product toevoegen',
+                  '- Product wijzigen',
+                  '- Product verwijderen',
+                  '- Productgegevens beheren'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US7 – Fabrikanten beheren',
+                body: [
+                  '**Als** inkoper',
+                  '**wil ik** leveranciers beheren',
+                  '**zodat** producten gekoppeld zijn aan fabrikanten.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Fabrikant toevoegen',
+                  '- Fabrikant wijzigen',
+                  '- Leverprijzen beheren'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US8 – Minimumvoorraad bewaken',
+                body: [
+                  '**Als** inkoper',
+                  '**wil ik** waarschuwingen bij lage voorraad',
+                  '**zodat** tijdig besteld kan worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Minimumvoorraad instellen',
+                  '- Meldingen genereren',
+                  '- Overzicht tekorten tonen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US9 – Robotorders aansturen',
+                body: [
+                  '**Als** systeem',
+                  '**wil ik** orders automatisch verdelen over robots',
+                  '**zodat** medicijnen automatisch verzameld worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Deelorders genereren',
+                  '- Robot per gang aansturen',
+                  '- Gereedmelding ontvangen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US10 – Verzamelbakken registreren',
+                body: [
+                  '**Als** magazijnsysteem',
+                  '**wil ik** verzamelbakken kunnen volgen',
+                  '**zodat** orders traceerbaar blijven.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Unieke bakcode',
+                  '- Koppeling aan order',
+                  '- Locatie registreren'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US11 – Levermoment plannen',
+                body: [
+                  '**Als** klant',
+                  '**wil ik** een datum en dagdeel kiezen',
+                  '**zodat** ik aanwezig ben bij levering.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Datum kiezen',
+                  '- Ochtend kiezen',
+                  '- Middag kiezen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US12 – Ritplanning bekijken',
+                body: [
+                  '**Als** koerier',
+                  '**wil ik** mijn toegewezen ritten zien',
+                  '**zodat** ik efficiënt kan leveren.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Regio zichtbaar',
+                  '- Spoedritten zichtbaar',
+                  '- Leveradres zichtbaar'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US13 – Levering bevestigen',
+                body: [
+                  '**Als** koerier',
+                  '**wil ik** leveringen kunnen afmelden',
+                  '**zodat** de orderstatus wordt bijgewerkt.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Afgeleverd registreren',
+                  '- Datum opslaan',
+                  '- Tijdstip opslaan'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US14 – Facturen genereren',
+                body: [
+                  '**Als** administratie',
+                  '**wil ik** automatisch facturen genereren',
+                  '**zodat** klanten correct gefactureerd worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Wekelijkse facturen',
+                  '- Alleen geleverde producten',
+                  '- Factuurbedrag berekenen'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US15 – Betalingsherinneringen versturen',
+                body: [
+                  '**Als** administratie',
+                  '**wil ik** herinneringen kunnen versturen',
+                  '**zodat** openstaande facturen betaald worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Eerste herinnering',
+                  '- Tweede herinnering',
+                  '- Incassotraject starten'
+                ].join('\n'),
+              },
+
+              {
+                title: 'US16 – Nieuwe klanten werven',
+                body: [
+                  '**Als** accountmanager',
+                  '**wil ik** prospects registreren',
+                  '**zodat** nieuwe klanten opgevolgd worden.',
+                  '',
+                  '## Acceptatiecriteria',
+                  '- Prospect registreren',
+                  '- Contactgegevens opslaan',
+                  '- Opvolgstatus registreren'
+                ].join('\n'),
+              }
+            ];
+
+            for (const issue of issues) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issue.title,
+                body: issue.body,
+                labels: ['user-story']
+              });
+
+              console.log(`Created issue: ${issue.title}`);
+            }
