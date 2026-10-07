@@ -253,6 +253,227 @@ jobs:
                   '- Opvolgstatus registreren'
                 ].join('\n'),
               }
+
+              {
+              title: 'US17 – Authenticatie en autorisatie',
+              body: [
+                '**Als** systeembeheerder',
+                '**wil ik** gebruikersrollen beheren',
+                '**zodat** alleen bevoegde medewerkers toegang hebben tot functies.',
+                '',
+                '## Acceptatiecriteria',
+                '- Rollen beheren',
+                '- Autorisatie controleren',
+                '- Toegang beperken per functie'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US18 – Auditlog bijhouden',
+              body: [
+                '**Als** directie',
+                '**wil ik** wijzigingen kunnen volgen',
+                '**zodat** acties herleidbaar zijn.',
+                '',
+                '## Acceptatiecriteria',
+                '- Orders loggen',
+                '- Voorraadwijzigingen loggen',
+                '- Gebruikers registreren'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US19 – Dashboard voorraadtekorten',
+              body: [
+                '**Als** inkoper',
+                '**wil ik** producten onder minimumvoorraad zien',
+                '**zodat** tijdig besteld kan worden.',
+                '',
+                '## Acceptatiecriteria',
+                '- Productnaam tonen',
+                '- Voorraad tonen',
+                '- Minimumvoorraad tonen'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US20 – Rapportage orderstatussen',
+              body: [
+                '**Als** directie',
+                '**wil ik** orderstatusrapportages kunnen bekijken',
+                '**zodat** prestaties gevolgd kunnen worden.',
+                '',
+                '## Acceptatiecriteria',
+                '- Openstaande orders zichtbaar',
+                '- Backorders zichtbaar',
+                '- Afgeleverde orders zichtbaar'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US21 – Voorraad reserveren bij bestelling',
+              body: [
+                '**Als** verkoopmedewerker',
+                '**wil ik** voorraad automatisch reserveren',
+                '**zodat** producten niet dubbel verkocht kunnen worden.',
+                '',
+                '## Acceptatiecriteria',
+                '- Voorraad reserveren',
+                '- Gereserveerde voorraad zichtbaar',
+                '- Dubbele verkoop voorkomen'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US22 – Klant informeren over orderstatus',
+              body: [
+                '**Als** klant',
+                '**wil ik** de actuele orderstatus kunnen bekijken',
+                '**zodat** ik weet waar mijn bestelling zich bevindt.',
+                '',
+                '## Acceptatiecriteria',
+                '- Status zichtbaar',
+                '- Leverdatum zichtbaar',
+                '- Backorderstatus zichtbaar'
+              ].join('\n'),
+            },
+
+            {
+              title: 'US23 – Verkooprapportages genereren',
+              body: [
+                '**Als** directie',
+                '**wil ik** verkooprapportages kunnen bekijken',
+                '**zodat** strategische beslissingen genomen kunnen worden.',
+                '',
+                '## Acceptatiecriteria',
+                '- Omzet per klant',
+                '- Omzet per periode',
+                '- Best verkochte medicijnen'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH1 – Use Case Diagram opstellen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Alle actoren geïdentificeerd',
+                '- Alle use cases uitgewerkt',
+                '- Diagram toegevoegd aan documentatie'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH2 – Activity Diagram orderproces',
+              body: [
+                '## Acceptatiecriteria',
+                '- Orderproces gemodelleerd',
+                '- Beslismomenten opgenomen',
+                '- Diagram gevalideerd'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH3 – Activity Diagram voorraadbeheer',
+              body: [
+                '## Acceptatiecriteria',
+                '- Voorraadproces uitgewerkt',
+                '- Tekortscenario opgenomen',
+                '- Backorderproces opgenomen'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH4 – Domeinmodel ontwerpen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Klant aanwezig',
+                '- Order aanwezig',
+                '- Product aanwezig',
+                '- Leverancier aanwezig'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH5 – ERD ontwerpen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Entiteiten gedefinieerd',
+                '- Relaties gedefinieerd',
+                '- Keys uitgewerkt'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH6 – Databaseontwerp maken',
+              body: [
+                '## Acceptatiecriteria',
+                '- Tabellen ontworpen',
+                '- Relaties uitgewerkt',
+                '- Normalisatie toegepast'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH7 – Wireframes ontwerpen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Loginpagina',
+                '- Dashboard',
+                '- Orderscherm',
+                '- Voorraadscherm'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH8 – Softwarearchitectuur definiëren',
+              body: [
+                '## Acceptatiecriteria',
+                '- Frontend beschreven',
+                '- Backend beschreven',
+                '- Database beschreven',
+                '- Architectuurdiagram gemaakt'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH9 – REST API specificatie opstellen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Endpoints beschreven',
+                '- Requests beschreven',
+                '- Responses beschreven'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH10 – CI/CD Pipeline configureren',
+              body: [
+                '## Acceptatiecriteria',
+                '- Build pipeline actief',
+                '- PR validatie actief',
+                '- Workflow succesvol uitvoerbaar'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH11 – Testplan opstellen',
+              body: [
+                '## Acceptatiecriteria',
+                '- Unit tests beschreven',
+                '- Integratietests beschreven',
+                '- Acceptatietests beschreven'
+              ].join('\n'),
+            },
+
+            {
+              title: 'TECH12 – Product Backlog onderhouden',
+              body: [
+                '## Acceptatiecriteria',
+                '- Stories geprioriteerd',
+                '- Story points toegevoegd',
+                '- Sprintplanning mogelijk'
+              ].join('\n'),
+            },
             ];
 
             for (const issue of issues) {
