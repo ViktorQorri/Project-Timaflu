@@ -1,14 +1,10 @@
 name: Create Timaflu User Story Issues
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
 
 jobs:
   create-issues:
-    if: github.event.pull_request.merged == true
-
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,7 +17,7 @@ jobs:
           script: |
             const issues = [
               {
-                title: 'US1 – Klanten beheren',
+                title: 'Klanten beheren',
                 body: [
                   '**Als** verkoopmedewerker',
                   '**wil ik** klantgegevens centraal beheren',
@@ -39,7 +35,7 @@ jobs:
               },
 
               {
-                title: 'US2 – Orders registreren',
+                title: 'Orders registreren',
                 body: [
                   '**Als** verkoopmedewerker',
                   '**wil ik** telefonisch geplaatste orders digitaal registreren',
@@ -55,7 +51,7 @@ jobs:
               },
 
               {
-                title: 'US3 – Kortingen automatisch berekenen',
+                title: 'Kortingen automatisch berekenen',
                 body: [
                   '**Als** verkoopmedewerker',
                   '**wil ik** automatische kortingsberekeningen',
@@ -69,7 +65,7 @@ jobs:
               },
 
               {
-                title: 'US4 – Realtime voorraadbeheer',
+                title: 'Realtime voorraadbeheer',
                 body: [
                   '**Als** verkoopmedewerker',
                   '**wil ik** actuele voorraad kunnen zien',
@@ -83,7 +79,7 @@ jobs:
               },
 
               {
-                title: 'US5 – Orderstatus beheren',
+                title: 'Orderstatus beheren',
                 body: [
                   '**Als** medewerker',
                   '**wil ik** de status van orders volgen',
@@ -100,7 +96,7 @@ jobs:
               },
 
               {
-                title: 'US6 – Productcatalogus beheren',
+                title: 'Productcatalogus beheren',
                 body: [
                   '**Als** inkoper',
                   '**wil ik** producten centraal beheren',
@@ -115,7 +111,7 @@ jobs:
               },
 
               {
-                title: 'US7 – Fabrikanten beheren',
+                title: 'Fabrikanten beheren',
                 body: [
                   '**Als** inkoper',
                   '**wil ik** leveranciers beheren',
@@ -129,7 +125,7 @@ jobs:
               },
 
               {
-                title: 'US8 – Minimumvoorraad bewaken',
+                title: 'Minimumvoorraad bewaken',
                 body: [
                   '**Als** inkoper',
                   '**wil ik** waarschuwingen bij lage voorraad',
@@ -143,7 +139,7 @@ jobs:
               },
 
               {
-                title: 'US9 – Robotorders aansturen',
+                title: 'Robotorders aansturen',
                 body: [
                   '**Als** systeem',
                   '**wil ik** orders automatisch verdelen over robots',
@@ -157,7 +153,7 @@ jobs:
               },
 
               {
-                title: 'US10 – Verzamelbakken registreren',
+                title: 'Verzamelbakken registreren',
                 body: [
                   '**Als** magazijnsysteem',
                   '**wil ik** verzamelbakken kunnen volgen',
@@ -171,7 +167,7 @@ jobs:
               },
 
               {
-                title: 'US11 – Levermoment plannen',
+                title: 'Levermoment plannen',
                 body: [
                   '**Als** klant',
                   '**wil ik** een datum en dagdeel kiezen',
@@ -185,7 +181,7 @@ jobs:
               },
 
               {
-                title: 'US12 – Ritplanning bekijken',
+                title: 'Ritplanning bekijken',
                 body: [
                   '**Als** koerier',
                   '**wil ik** mijn toegewezen ritten zien',
@@ -199,7 +195,7 @@ jobs:
               },
 
               {
-                title: 'US13 – Levering bevestigen',
+                title: 'Levering bevestigen',
                 body: [
                   '**Als** koerier',
                   '**wil ik** leveringen kunnen afmelden',
@@ -213,7 +209,7 @@ jobs:
               },
 
               {
-                title: 'US14 – Facturen genereren',
+                title: 'Facturen genereren',
                 body: [
                   '**Als** administratie',
                   '**wil ik** automatisch facturen genereren',
@@ -227,7 +223,7 @@ jobs:
               },
 
               {
-                title: 'US15 – Betalingsherinneringen versturen',
+                title: 'Betalingsherinneringen versturen',
                 body: [
                   '**Als** administratie',
                   '**wil ik** herinneringen kunnen versturen',
@@ -241,7 +237,7 @@ jobs:
               },
 
               {
-                title: 'US16 – Nieuwe klanten werven',
+                title: 'Nieuwe klanten werven',
                 body: [
                   '**Als** accountmanager',
                   '**wil ik** prospects registreren',
@@ -252,10 +248,10 @@ jobs:
                   '- Contactgegevens opslaan',
                   '- Opvolgstatus registreren'
                 ].join('\n'),
-              }
+              },
 
               {
-              title: 'US17 – Authenticatie en autorisatie',
+              title: 'Authenticatie en autorisatie',
               body: [
                 '**Als** systeembeheerder',
                 '**wil ik** gebruikersrollen beheren',
@@ -269,7 +265,7 @@ jobs:
             },
 
             {
-              title: 'US18 – Auditlog bijhouden',
+              title: 'Auditlog bijhouden',
               body: [
                 '**Als** directie',
                 '**wil ik** wijzigingen kunnen volgen',
@@ -283,7 +279,7 @@ jobs:
             },
 
             {
-              title: 'US19 – Dashboard voorraadtekorten',
+              title: 'Dashboard voorraadtekorten',
               body: [
                 '**Als** inkoper',
                 '**wil ik** producten onder minimumvoorraad zien',
@@ -297,7 +293,7 @@ jobs:
             },
 
             {
-              title: 'US20 – Rapportage orderstatussen',
+              title: 'Rapportage orderstatussen',
               body: [
                 '**Als** directie',
                 '**wil ik** orderstatusrapportages kunnen bekijken',
@@ -311,7 +307,7 @@ jobs:
             },
 
             {
-              title: 'US21 – Voorraad reserveren bij bestelling',
+              title: 'Voorraad reserveren bij bestelling',
               body: [
                 '**Als** verkoopmedewerker',
                 '**wil ik** voorraad automatisch reserveren',
@@ -325,7 +321,7 @@ jobs:
             },
 
             {
-              title: 'US22 – Klant informeren over orderstatus',
+              title: 'Klant informeren over orderstatus',
               body: [
                 '**Als** klant',
                 '**wil ik** de actuele orderstatus kunnen bekijken',
@@ -339,7 +335,7 @@ jobs:
             },
 
             {
-              title: 'US23 – Verkooprapportages genereren',
+              title: 'Verkooprapportages genereren',
               body: [
                 '**Als** directie',
                 '**wil ik** verkooprapportages kunnen bekijken',
@@ -353,7 +349,7 @@ jobs:
             },
 
             {
-              title: 'TECH1 – Use Case Diagram opstellen',
+              title: 'Use Case Diagram opstellen',
               body: [
                 '## Acceptatiecriteria',
                 '- Alle actoren geïdentificeerd',
@@ -363,7 +359,7 @@ jobs:
             },
 
             {
-              title: 'TECH2 – Activity Diagram orderproces',
+              title: 'Activity Diagram orderproces',
               body: [
                 '## Acceptatiecriteria',
                 '- Orderproces gemodelleerd',
@@ -373,7 +369,7 @@ jobs:
             },
 
             {
-              title: 'TECH3 – Activity Diagram voorraadbeheer',
+              title: 'Activity Diagram voorraadbeheer',
               body: [
                 '## Acceptatiecriteria',
                 '- Voorraadproces uitgewerkt',
@@ -383,7 +379,7 @@ jobs:
             },
 
             {
-              title: 'TECH4 – Domeinmodel ontwerpen',
+              title: 'Domeinmodel ontwerpen',
               body: [
                 '## Acceptatiecriteria',
                 '- Klant aanwezig',
@@ -394,7 +390,7 @@ jobs:
             },
 
             {
-              title: 'TECH5 – ERD ontwerpen',
+              title: 'ERD ontwerpen',
               body: [
                 '## Acceptatiecriteria',
                 '- Entiteiten gedefinieerd',
@@ -404,7 +400,7 @@ jobs:
             },
 
             {
-              title: 'TECH6 – Databaseontwerp maken',
+              title: 'Databaseontwerp maken',
               body: [
                 '## Acceptatiecriteria',
                 '- Tabellen ontworpen',
@@ -414,7 +410,7 @@ jobs:
             },
 
             {
-              title: 'TECH7 – Wireframes ontwerpen',
+              title: 'Wireframes ontwerpen',
               body: [
                 '## Acceptatiecriteria',
                 '- Loginpagina',
@@ -425,7 +421,7 @@ jobs:
             },
 
             {
-              title: 'TECH8 – Softwarearchitectuur definiëren',
+              title: 'Softwarearchitectuur definiëren',
               body: [
                 '## Acceptatiecriteria',
                 '- Frontend beschreven',
@@ -436,7 +432,7 @@ jobs:
             },
 
             {
-              title: 'TECH9 – REST API specificatie opstellen',
+              title: 'REST API specificatie opstellen',
               body: [
                 '## Acceptatiecriteria',
                 '- Endpoints beschreven',
@@ -446,7 +442,7 @@ jobs:
             },
 
             {
-              title: 'TECH10 – CI/CD Pipeline configureren',
+              title: 'CI/CD Pipeline configureren',
               body: [
                 '## Acceptatiecriteria',
                 '- Build pipeline actief',
@@ -456,7 +452,7 @@ jobs:
             },
 
             {
-              title: 'TECH11 – Testplan opstellen',
+              title: 'Testplan opstellen',
               body: [
                 '## Acceptatiecriteria',
                 '- Unit tests beschreven',
@@ -466,7 +462,7 @@ jobs:
             },
 
             {
-              title: 'TECH12 – Product Backlog onderhouden',
+              title: 'Product Backlog onderhouden',
               body: [
                 '## Acceptatiecriteria',
                 '- Stories geprioriteerd',
