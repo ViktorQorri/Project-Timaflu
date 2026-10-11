@@ -32,318 +32,120 @@ jobs:
             const issues = [
               issueTemplate({
                 number: 1,
-                title: 'Klanten beheren',
-                comment: 'Victor, Nadia',
-                role: 'verkoopmedewerker',
-                wish: 'klantgegevens centraal beheren',
-                outcome: 'alle afdelingen dezelfde informatie gebruiken',
-                criteria: ['Klant aanmaken', 'Klant wijzigen', 'Klant verwijderen', 'Leveradres registreren', 'Factuuradres registreren', 'Telefoonnummer registreren', 'Jaaromzet registreren']
+                title: 'Database met queries',
+                comment: 'Floris Melchers, Lars',
+                role: 'projectteam',
+                wish: 'een werkende MySQL-database met queries opstellen',
+                outcome: 'de database de benodigde schermen ondersteunt',
+                criteria: ['Werkende MySQL-database', 'Genormaliseerd ontwerp', 'Queries per scherm', 'Output per query vastgelegd']
               }),
               issueTemplate({
                 number: 2,
-                title: 'Orders registreren',
-                comment: 'Janiek, Nadia',
-                role: 'verkoopmedewerker',
-                wish: 'telefonisch geplaatste orders digitaal registreren',
-                outcome: 'orders correct verwerkt worden',
-                criteria: ['Klant selecteren', 'Product toevoegen', 'Aantal invoeren', 'Orderdatum opslaan', 'Totaalprijs berekenen']
+                title: 'Backend - verkoopproces, kortingsberekening en klantgegevens',
+                comment: 'Victor, Nadia',
+                role: 'projectteam',
+                wish: 'de verkooplogica in Python implementeren',
+                outcome: 'bestellingen correct worden berekend en verwerkt',
+                criteria: ['5% bestellingskorting vanaf €500', '10% korting eerste bestelling', 'Klantenkorting op basis van jaaromzet', 'Eindbedrag berekenen']
               }),
               issueTemplate({
                 number: 3,
-                title: 'Kortingen automatisch berekenen',
-                comment: 'Victor, Nadia',
-                role: 'verkoopmedewerker',
-                wish: 'automatische kortingsberekeningen',
-                outcome: 'fouten worden voorkomen',
-                criteria: ['5% korting vanaf €500', 'Klantkorting automatisch toepassen', 'Jaaromzet automatisch bepalen']
+                title: 'Backend - inkoop, voorraadbeheer en facturatie',
+                comment: 'Lars, Floris Melchers',
+                role: 'projectteam',
+                wish: 'de inkoop- en voorraadlogica implementeren',
+                outcome: 'tekorten, leverancierskeuzes en facturen correct worden verwerkt',
+                criteria: ['Product niet op voorraad', 'Leveranciers tonen', 'Goedkoopste leverancier bovenaan', 'Contactgegevens tonen', 'Leverancier verwijderen', 'Product verwijderen']
               }),
               issueTemplate({
                 number: 4,
-                title: 'Realtime voorraadbeheer',
-                comment: 'Floris Melchers, Lars',
-                role: 'verkoopmedewerker',
-                wish: 'actuele voorraad kunnen zien',
-                outcome: 'ik geen niet-beschikbare medicijnen verkoop',
-                criteria: ['Voorraad realtime zichtbaar', 'Gereserveerde voorraad zichtbaar', 'Niet beschikbare producten markeren']
+                title: 'Backend - acquisitie en nieuwe klantaanmaak',
+                comment: 'Nadia, Victor',
+                role: 'projectteam',
+                wish: 'de acquisitieproceslogica implementeren',
+                outcome: 'potentiële klanten goed kunnen worden geregistreerd en opgevolgd',
+                criteria: ['Bezoek registreren', 'Overzicht van bedrijven zonder bestelling > 1 maand', '10% kortingsactie', 'Klantaccount aanmaken']
               }),
               issueTemplate({
                 number: 5,
-                title: 'Orderstatus beheren',
-                comment: 'Floris Goudswaard, Janiek',
-                role: 'medewerker',
-                wish: 'de status van orders volgen',
-                outcome: 'klanten geïnformeerd kunnen worden',
-                criteria: ['Nieuw', 'Wordt verzameld', 'Backorder', 'Verpakt', 'Verzonden', 'Afgeleverd']
+                title: 'Frontend - verkoop en inkoopprocessen',
+                comment: 'Janiek, Nadia',
+                role: 'projectteam',
+                wish: 'een frontend bouwen voor verkoop en inkoop',
+                outcome: 'de bedrijfsprocessen via een website kunnen worden uitgevoerd',
+                criteria: ['HTML', 'CSS', 'Geen JS-frameworks', 'Alle relevante schermen voor verkoop en inkoop']
               }),
               issueTemplate({
                 number: 6,
-                title: 'Productcatalogus beheren',
-                comment: 'Lars, Floris Melchers',
-                role: 'inkoper',
-                wish: 'producten centraal beheren',
-                outcome: 'de catalogus actueel blijft',
-                criteria: ['Product toevoegen', 'Product wijzigen', 'Product verwijderen', 'Productgegevens beheren']
+                title: 'Frontend - distributie, orderpicking en mobiele schermen',
+                comment: 'Floris Goudswaard, Janiek',
+                role: 'projectteam',
+                wish: 'de schermen voor distributie en orderpicking bouwen',
+                outcome: 'de magazijn- en distributietaken op mobiel en desktop werken',
+                criteria: ['Orderpicking responsive', 'Distributie responsive', 'HTML en CSS']
               }),
               issueTemplate({
                 number: 7,
-                title: 'Fabrikanten beheren',
-                comment: 'Lars, Floris Melchers',
-                role: 'inkoper',
-                wish: 'leveranciers beheren',
-                outcome: 'producten gekoppeld zijn aan fabrikanten',
-                criteria: ['Fabrikant toevoegen', 'Fabrikant wijzigen', 'Leverprijzen beheren']
+                title: 'Activity diagrams',
+                comment: 'Victor, Floris Melchers',
+                role: 'projectteam',
+                wish: 'activity diagrams maken voor de gewenste processen',
+                outcome: 'de bedrijfsprocessen helder en traceerbaar worden vastgelegd',
+                criteria: ['Verkoop', 'Inkoop', 'Orderpicking met robots', 'Distributie', 'Administratie en facturatie', 'Acquisitie']
               }),
               issueTemplate({
                 number: 8,
-                title: 'Minimumvoorraad bewaken',
-                comment: 'Lars, Floris Melchers',
-                role: 'inkoper',
-                wish: 'waarschuwingen bij lage voorraad',
-                outcome: 'tijdig besteld kan worden',
-                criteria: ['Minimumvoorraad instellen', 'Meldingen genereren', 'Overzicht tekorten tonen']
+                title: 'Use case diagrammen en use case beschrijvingen',
+                comment: 'Janiek, Nadia',
+                role: 'projectteam',
+                wish: 'use case diagrammen en beschrijvingen opstellen',
+                outcome: 'de functionaliteit van het informatiesysteem en de robot duidelijk wordt beschreven',
+                criteria: ['1 use case diagram voor het informatiesysteem', '1 use case diagram voor de magazijnrobot', 'Beschrijvingen van alle primaire use cases']
               }),
               issueTemplate({
                 number: 9,
-                title: 'Robotorders aansturen',
-                comment: 'Victor, Floris Melchers',
-                role: 'systeem',
-                wish: 'orders automatisch verdelen over robots',
-                outcome: 'medicijnen automatisch verzameld worden',
-                criteria: ['Deelorders genereren', 'Robot per gang aansturen', 'Gereedmelding ontvangen']
+                title: 'Enhanced Entity Relationship Diagram',
+                comment: 'Floris Melchers, Lars',
+                role: 'projectteam',
+                wish: 'een uitgebreid EER-diagram ontwerpen',
+                outcome: 'de database goed is genormaliseerd en alle relevante gegevens zijn vastgelegd',
+                criteria: ['Klanten', 'Orders', 'Orderregels', 'Producten', 'Leveranciers', 'Facturen', 'Koeriers', 'Robots', 'Acquisitiebezoeken']
               }),
               issueTemplate({
                 number: 10,
-                title: 'Verzamelbakken registreren',
-                comment: 'Victor, Janiek',
-                role: 'magazijnsysteem',
-                wish: 'verzamelbakken kunnen volgen',
-                outcome: 'orders traceerbaar blijven',
-                criteria: ['Unieke bakcode', 'Koppeling aan order', 'Locatie registreren']
+                title: 'Schermontwerpen',
+                comment: 'Floris Goudswaard, Victor',
+                role: 'projectteam',
+                wish: 'schermen ontwerpen voor alle bedrijfsprocessen',
+                outcome: 'de frontend op basis van duidelijke schermontwerpen kan worden ontwikkeld',
+                criteria: ['Schermen voor verkoop', 'Schermen voor inkoop', 'Schermen voor orderpicking', 'Schermen voor distributie', 'Schermen voor administratie en acquisitie']
               }),
               issueTemplate({
                 number: 11,
-                title: 'Levermoment plannen',
-                comment: 'Floris Goudswaard, Janiek',
-                role: 'klant',
-                wish: 'een datum en dagdeel kiezen',
-                outcome: 'ik aanwezig ben bij levering',
-                criteria: ['Datum kiezen', 'Ochtend kiezen', 'Middag kiezen']
+                title: 'Klassendiagram ter ondersteuning van de backend',
+                comment: 'Lars, Nadia',
+                role: 'projectteam',
+                wish: 'een klassendiagram voor de backend opstellen',
+                outcome: 'de backendstructuur duidelijk en consistent is',
+                criteria: ['Classes', 'Attributen', 'Methoden', 'Relaties tussen classes']
               }),
               issueTemplate({
                 number: 12,
-                title: 'Ritplanning bekijken',
-                comment: 'Nadia, Floris Goudswaard',
-                role: 'koerier',
-                wish: 'mijn toegewezen ritten zien',
-                outcome: 'ik efficiënt kan leveren',
-                criteria: ['Regio zichtbaar', 'Spoedritten zichtbaar', 'Leveradres zichtbaar']
+                title: 'Sequence diagrammen',
+                comment: 'Victor, Janiek',
+                role: 'projectteam',
+                wish: 'sequence diagrammen voor de kernscenario\'s maken',
+                outcome: 'de interactie tussen objecten in de belangrijkste use cases duidelijk is',
+                criteria: ['Klantenkorting berekenen', 'Product niet op voorraad', 'Klant heeft niet betaald', 'Klant niet thuis bij levering', 'Potentiële klant heeft nog niet besteld']
               }),
               issueTemplate({
                 number: 13,
-                title: 'Levering bevestigen',
-                comment: 'Nadia, Floris Goudswaard',
-                role: 'koerier',
-                wish: 'leveringen kunnen afmelden',
-                outcome: 'de orderstatus wordt bijgewerkt',
-                criteria: ['Afgeleverd registreren', 'Datum opslaan', 'Tijdstip opslaan']
-              }),
-              issueTemplate({
-                number: 14,
-                title: 'Facturen genereren',
-                comment: 'Lars, Nadia',
-                role: 'administratie',
-                wish: 'automatisch facturen genereren',
-                outcome: 'klanten correct gefactureerd worden',
-                criteria: ['Wekelijkse facturen', 'Alleen geleverde producten', 'Factuurbedrag berekenen']
-              }),
-              issueTemplate({
-                number: 15,
-                title: 'Betalingsherinneringen versturen',
-                comment: 'Lars, Nadia',
-                role: 'administratie',
-                wish: 'herinneringen kunnen versturen',
-                outcome: 'openstaande facturen betaald worden',
-                criteria: ['Eerste herinnering', 'Tweede herinnering', 'Incassotraject starten']
-              }),
-              issueTemplate({
-                number: 16,
-                title: 'Nieuwe klanten werven',
-                comment: 'Nadia, Victor',
-                role: 'accountmanager',
-                wish: 'prospects registreren',
-                outcome: 'nieuwe klanten opgevolgd worden',
-                criteria: ['Prospect registreren', 'Contactgegevens opslaan', 'Opvolgstatus registreren']
-              }),
-              issueTemplate({
-                number: 17,
-                title: 'Authenticatie en autorisatie',
-                comment: 'Floris Melchers, Lars',
-                role: 'systeembeheerder',
-                wish: 'gebruikersrollen beheren',
-                outcome: 'alleen bevoegde medewerkers toegang hebben tot functies',
-                criteria: ['Rollen beheren', 'Autorisatie controleren', 'Toegang beperken per functie']
-              }),
-              issueTemplate({
-                number: 18,
-                title: 'Auditlog bijhouden',
-                comment: 'Floris Goudswaard, Nadia',
-                role: 'directie',
-                wish: 'wijzigingen kunnen volgen',
-                outcome: 'acties herleidbaar zijn',
-                criteria: ['Orders loggen', 'Voorraadwijzigingen loggen', 'Gebruikers registreren']
-              }),
-              issueTemplate({
-                number: 19,
-                title: 'Dashboard voorraadtekorten',
-                comment: 'Lars, Floris Melchers',
-                role: 'inkoper',
-                wish: 'producten onder minimumvoorraad zien',
-                outcome: 'tijdig besteld kan worden',
-                criteria: ['Productnaam tonen', 'Voorraad tonen', 'Minimumvoorraad tonen']
-              }),
-              issueTemplate({
-                number: 20,
-                title: 'Rapportage orderstatussen',
-                comment: 'Victor, Nadia',
-                role: 'directie',
-                wish: 'orderstatusrapportages kunnen bekijken',
-                outcome: 'prestaties gevolgd kunnen worden',
-                criteria: ['Openstaande orders zichtbaar', 'Backorders zichtbaar', 'Afgeleverde orders zichtbaar']
-              }),
-              issueTemplate({
-                number: 21,
-                title: 'Voorraad reserveren bij bestelling',
-                comment: 'Janiek, Nadia',
-                role: 'verkoopmedewerker',
-                wish: 'voorraad automatisch reserveren',
-                outcome: 'producten niet dubbel verkocht kunnen worden',
-                criteria: ['Voorraad reserveren', 'Gereserveerde voorraad zichtbaar', 'Dubbele verkoop voorkomen']
-              }),
-              issueTemplate({
-                number: 22,
-                title: 'Klant informeren over orderstatus',
-                comment: 'Victor, Janiek',
-                role: 'klant',
-                wish: 'de actuele orderstatus kunnen bekijken',
-                outcome: 'ik weet waar mijn bestelling zich bevindt',
-                criteria: ['Status zichtbaar', 'Leverdatum zichtbaar', 'Backorderstatus zichtbaar']
-              }),
-              issueTemplate({
-                number: 23,
-                title: 'Verkooprapportages genereren',
-                comment: 'Victor, Nadia',
-                role: 'directie',
-                wish: 'verkooprapportages kunnen bekijken',
-                outcome: 'strategische beslissingen genomen kunnen worden',
-                criteria: ['Omzet per klant', 'Omzet per periode', 'Best verkochte medicijnen']
-              }),
-              issueTemplate({
-                number: 24,
-                title: 'Use Case Diagram opstellen',
-                comment: 'Janiek, Nadia',
-                role: 'projectteam',
-                wish: 'use case modellen opstellen',
-                outcome: 'de functionele scope helder is',
-                criteria: ['Alle actoren geïdentificeerd', 'Alle use cases uitgewerkt', 'Diagram toegevoegd aan documentatie']
-              }),
-              issueTemplate({
-                number: 25,
-                title: 'Activity Diagram orderproces',
-                comment: 'Victor, Floris Melchers',
-                role: 'projectteam',
-                wish: 'activity diagrammen maken',
-                outcome: 'het bedrijfsproces traceerbaar wordt beschreven',
-                criteria: ['Orderproces gemodelleerd', 'Beslismomenten opgenomen', 'Diagram gevalideerd']
-              }),
-              issueTemplate({
-                number: 26,
-                title: 'Activity Diagram voorraadbeheer',
-                comment: 'Lars, Floris Melchers',
-                role: 'projectteam',
-                wish: 'voorraadbeheer modelleren',
-                outcome: 'tekorten en backorders helder zijn',
-                criteria: ['Voorraadproces uitgewerkt', 'Tekortscenario opgenomen', 'Backorderproces opgenomen']
-              }),
-              issueTemplate({
-                number: 27,
-                title: 'Domeinmodel ontwerpen',
-                comment: 'Floris Goudswaard, Victor',
-                role: 'projectteam',
-                wish: 'een domeinmodel opstellen',
-                outcome: 'belangrijke entiteiten en relaties helder zijn',
-                criteria: ['Klant aanwezig', 'Order aanwezig', 'Product aanwezig', 'Leverancier aanwezig']
-              }),
-              issueTemplate({
-                number: 28,
-                title: 'ERD ontwerpen',
-                comment: 'Floris Melchers, Lars',
-                role: 'projectteam',
-                wish: 'het enhanced ERD opstellen',
-                outcome: 'de database goed genormaliseerd is',
-                criteria: ['Entiteiten gedefinieerd', 'Relaties gedefinieerd', 'Keys uitgewerkt']
-              }),
-              issueTemplate({
-                number: 29,
-                title: 'Databaseontwerp maken',
-                comment: 'Floris Melchers, Lars',
-                role: 'projectteam',
-                wish: 'databaseontwerp opstellen',
-                outcome: 'de backend en frontend op dezelfde structuur voortbouwen',
-                criteria: ['Tabellen ontworpen', 'Relaties uitgewerkt', 'Normalisatie toegepast']
-              }),
-              issueTemplate({
-                number: 30,
-                title: 'Wireframes ontwerpen',
-                comment: 'Floris Goudswaard, Janiek',
-                role: 'projectteam',
-                wish: 'schermontwerpen opstellen',
-                outcome: 'de frontend goed aansluit op de processen',
-                criteria: ['Loginpagina', 'Dashboard', 'Orderscherm', 'Voorraadscherm']
-              }),
-              issueTemplate({
-                number: 31,
-                title: 'Softwarearchitectuur definiëren',
-                comment: 'Victor, Nadia',
-                role: 'projectteam',
-                wish: 'de softwarearchitectuur definiëren',
-                outcome: 'de onderdelen van frontend, backend en database samenhangend zijn',
-                criteria: ['Frontend beschreven', 'Backend beschreven', 'Database beschreven', 'Architectuurdiagram gemaakt']
-              }),
-              issueTemplate({
-                number: 32,
-                title: 'REST API specificatie opstellen',
-                comment: 'Nadia, Victor',
-                role: 'projectteam',
-                wish: 'de API contracten vastleggen',
-                outcome: 'de backend en frontend consistent werken',
-                criteria: ['Endpoints beschreven', 'Requests beschreven', 'Responses beschreven']
-              }),
-              issueTemplate({
-                number: 33,
-                title: 'CI/CD Pipeline configureren',
-                comment: 'Victor, Nadia',
-                role: 'projectteam',
-                wish: 'een pipeline opzetten',
-                outcome: 'automatische validatie en deploys mogelijk zijn',
-                criteria: ['Build pipeline actief', 'PR validatie actief', 'Workflow succesvol uitvoerbaar']
-              }),
-              issueTemplate({
-                number: 34,
-                title: 'Testplan opstellen',
-                comment: 'Janiek, Floris Goudswaard',
-                role: 'projectteam',
-                wish: 'testen beschrijven',
-                outcome: 'de oplossing gecontroleerd en betrouwbaar is',
-                criteria: ['Unit tests beschreven', 'Integratietests beschreven', 'Acceptatietests beschreven']
-              }),
-              issueTemplate({
-                number: 35,
-                title: 'Product Backlog onderhouden',
+                title: 'Vergaderingen, notulen en conflictpreventie',
                 comment: 'Floris Goudswaard, Nadia',
                 role: 'projectteam',
-                wish: 'de backlog bijwerken',
-                outcome: 'prioriteiten en werkstroom helder blijven',
-                criteria: ['Stories geprioriteerd', 'Story points toegevoegd', 'Sprintplanning mogelijk']
+                wish: 'vergaderingen en samenwerking op orde houden',
+                outcome: 'de projectorganisatie, communicatie en samenwerking goed verlopen',
+                criteria: ['Agenda', 'Notulen', 'Samenwerkingsafspraken', 'Herbeoordeling van afspraken']
               })
             ];
 
@@ -358,12 +160,16 @@ jobs:
               const existingIssue = existingIssues.data.find(item => item.title === issue.title);
 
               if (existingIssue) {
+                const currentCommentMatch = (existingIssue.body || '').match(/\*\*Comment:\*\*\s*(.*)/i);
+                const preservedComment = currentCommentMatch ? currentCommentMatch[1].trim() : issue.comment;
+                const updatedBody = issue.body.replace(/\*\*Comment:\*\*\s*.*(?:\r?\n|$)/i, `**Comment:** ${preservedComment}\n`);
+
                 await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: existingIssue.number,
                   title: issue.title,
-                  body: issue.body
+                  body: updatedBody
                 });
                 console.log(`Updated issue #${existingIssue.number}: ${issue.title}`);
               } else {
