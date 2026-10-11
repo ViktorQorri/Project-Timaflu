@@ -6,7 +6,7 @@ Hier volgen een aantal belangrijke aandachtspunten met betrekking tot dit projec
 
 We volgen voor dit project geen officiële ontwikkelmethodiek, maar de aanpak die we hanteren lijkt wel op de watervalmethodiek. We gaan tijdens dit project eerst een aantal weken ontwerpen voordat jullie daadwerkelijk aan de slag kunnen met het bouwen van de eindproducten.
 
-Wij verwachten van jullie dat jullie systematisch aan de slag gaan en een levend document bijhouden om de projectaanpak vast te leggen. Voor een omschrijving van dit document, ga je naar de pagina met projecten die je op moet leveren, waaronder het projectplan (zie [Productbeschrijving](Productbeschrijving.md)).
+Wij verwachten van jullie dat jullie systematisch aan de slag gaan en een levend document bijhouden om de projectaanpak vast te leggen. Voor een omschrijving van dit document, ga je naar de pagina met projecten die je op moet leveren, waaronder het projectplan (zie [Productbeschrijving](Product-description.md)).
 
 **Uren schrijven**
 
@@ -18,7 +18,7 @@ We verwachten van je dat je je uren gaat schrijven voor dit project. Dat kan met
 
 ## Feedbackmoment
 
-Het project heeft verschillende voorwaardelijke ontwerpproducten. Deze moet je als groep maken en inleveren en dienen als ontwerp voor jullie eindproducten. Voor een overzicht van alle op te leveren producten, ga je naar de [productbeschrijving](Productbeschrijving.md).
+Het project heeft verschillende voorwaardelijke ontwerpproducten. Deze moet je als groep maken en inleveren en dienen als ontwerp voor jullie eindproducten. Voor een overzicht van alle op te leveren producten, ga je naar de [productbeschrijving](Product-description.md).
 
 Tijdens de lessen krijgen jullie de kans om één keer feedback te krijgen op jullie eerste versie van deze voorwaardelijke producten. Deze feedbackmomenten zijn ingepland in bepaalde weken. Deze momenten zijn te vinden in de weekplanning (Brightspace).
 
