@@ -10,7 +10,7 @@
 | **Discord forum** | Per deelonderwerp een aparte forum-post |
 | **Voice** | Overleg, brainstorms en vergaderingen |
 | **Omgangsvormen** | Respectvol communiceren en kritiek richten op het werk |
-| **Besluiten** | Minimaal 4 van de 6 stemmen nodig |
+| **Besluiten** | Minimaal 3 van de 5 stemmen nodig |
 | **Geen meerderheid** | Voorstel aanpassen of alternatief bespreken en opnieuw stemmen |
 | **Besluiten vastleggen** | Belangrijke besluiten schriftelijk vastleggen in Discord/Github Project |
 | **Consequenties** | Problemen eerst bespreken en gezamenlijk oplossen |
@@ -145,9 +145,9 @@ Besluiten worden zoveel mogelijk gezamenlijk genomen.
 
 Wanneer er meerdere mogelijkheden zijn, worden de belangrijkste voor- en nadelen van de opties besproken. Daarna wordt er gestemd.
 
-Een voorstel wordt aangenomen wanneer **minimaal 4 van de 6 groepsleden** voor de keuze zijn.
+Een voorstel wordt aangenomen wanneer **minimaal 3 van de 5 groepsleden** voor de keuze zijn.
 
-Wanneer een voorstel geen 4 van de 6 stemmen krijgt, wordt het voorstel aangepast of worden andere mogelijkheden besproken. Daarna wordt opnieuw gestemd.
+Wanneer een voorstel geen 3 van de 5 stemmen krijgt, wordt het voorstel aangepast of worden andere mogelijkheden besproken. Daarna wordt opnieuw gestemd.
 
 ## Belangrijke besluiten vastleggen
 
