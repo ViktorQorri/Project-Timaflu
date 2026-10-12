@@ -158,6 +158,44 @@ Rules for the layers:
 
 Documentation inside the code: every class and method has a docstring with its purpose, parameters and return value. Names are English and follow the class diagram.
 
+### What are repositories
+
+A repository is a Python class that holds all database access for one aggregate, for example `OrderRepository` or `CustomerRepository`. It is the only place in the backend with SQL. The queries are the core of a repository, but it is more than a collection of queries: every method also takes parameters, runs the query and converts the result into domain classes.
+
+Example:
+
+```python
+class OrderRepository:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def get_by_id(self, order_id):
+        """Return the Order with this id, or None if it does not exist."""
+        cursor = self.connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM orders WHERE id = %s", (order_id,))
+        row = cursor.fetchone()
+        return Order(**row) if row else None
+```
+
+A service calls `order_repository.get_by_id(5)` and gets an `Order` back. It does not know that SQL is behind it, and it never sees a raw database row.
+
+What a repository does:
+
+- **Runs the SQL.** SELECT, INSERT, UPDATE and DELETE for MySQL, always parameterized (`%s` with a tuple of values), never by building the query from strings.
+- **Converts rows to domain classes.** Methods return `Order`, `Customer`, `Product` and so on, or lists of them.
+- **Hides the database from the rest of the code.** Routes and services only know the repository methods.
+
+What a repository does not do:
+
+- No business logic. "Is this order allowed to be delivered" is decided in the service. The repository only reads and writes.
+- No HTTP. It knows nothing about requests, forms or JSON.
+
+Why we use them:
+
+- **SQL in one place.** A change to a table or query is made in one file, and the queries stay visible for the query document.
+- **Testable services.** A service receives its repository through the constructor, so a test can pass a fake repository and run without a database.
+- **Traceable.** One repository per aggregate maps to the tables in the EER and the classes in the class diagram (see [Traceability](#traceability)).
+
 ## Request flow
 
 Example: a courier marks a delivery as delivered.

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="architecture" name="Software architecture">
-        <mxGraphModel dx="429" dy="550" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="530" math="0" shadow="0">
+        <mxGraphModel dx="301" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="530" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -8,7 +8,7 @@
                     <mxGeometry height="480" width="300" x="320" y="25" as="geometry"/>
                 </mxCell>
                 <mxCell id="browser" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;b&gt;Browser&lt;/b&gt;&lt;br&gt;HTML + CSS, no JS&lt;br&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;employees and couriers&lt;/font&gt;" vertex="1">
-                    <mxGeometry height="70" width="200" x="40" y="55" as="geometry"/>
+                    <mxGeometry height="70" width="200" x="40" y="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="robot" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;Robot&lt;/b&gt;&lt;br&gt;one per aisle" vertex="1">
                     <mxGeometry height="70" width="200" x="40" y="135" as="geometry"/>
@@ -29,9 +29,9 @@
                     <mxGeometry height="50" width="260" x="340" y="430" as="geometry"/>
                 </mxCell>
                 <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#e1d5e7;strokeColor=#9673a6;" value="&lt;b&gt;MySQL&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;database, online&lt;/font&gt;" vertex="1">
-                    <mxGeometry height="80" width="160" x="700" y="328" as="geometry"/>
+                    <mxGeometry height="80" width="160" x="700" y="330" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1" edge="1" parent="1" source="browser" style="endArrow=classic;startArrow=classic;html=1;fontSize=11;" target="pageroutes" value="request / HTML">
+                <mxCell id="e1" edge="1" parent="1" source="browser" style="endArrow=classic;startArrow=classic;html=1;fontSize=11;" target="pageroutes" value="request&lt;span style=&quot;color: rgb(63, 63, 63); background-color: light-dark(#ffffff, var(--ge-dark-color, #121212));&quot;&gt;&amp;nbsp;/ HTML&lt;/span&gt;">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="240" y="90" as="sourcePoint"/>
                         <mxPoint x="340" y="90" as="targetPoint"/>
@@ -62,6 +62,9 @@
                     <mxGeometry relative="1" x="0.0024" y="19" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
+                </mxCell>
+                <mxCell id="7vriiYROpfzXdGM-LfqD-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="HTTP" vertex="1">
+                    <mxGeometry height="30" width="60" x="250" y="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
