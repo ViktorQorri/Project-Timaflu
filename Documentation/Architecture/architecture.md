@@ -80,6 +80,51 @@ The system has three parts: a frontend of plain HTML and CSS, a Python backend t
 - Shared layout (header, navigation, footer) lives in one base template that every screen extends, so the look stays the same.
 - One stylesheet with shared styles, plus small sections for the responsive screens.
 
+### What are Jinja2 templates
+
+Jinja2 is the template engine that comes with Flask. A Jinja2 template is an HTML file with a few extra placeholders and simple instructions. The backend fills in those placeholders with data from the database and sends the finished HTML to the browser. The browser never sees the template itself, only the result, so it is plain HTML and CSS with no JavaScript.
+
+There are three kinds of markers:
+
+| Marker | Purpose | Example |
+| --- | --- | --- |
+| `{{ ... }}` | Print a value | `{{ order.status }}` |
+| `{% ... %}` | Logic: loops, conditions, extending a layout | `{% for line in order.lines %}` |
+| `{# ... #}` | Comment, not sent to the browser | `{# order table #}` |
+
+Example of a template for a list of orders:
+
+```html
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Orders of {{ customer.name }}</h1>
+  <table>
+    {% for order in orders %}
+      <tr>
+        <td>{{ order.number }}</td>
+        <td>{{ order.status }}</td>
+      </tr>
+    {% else %}
+      <tr><td>No orders yet.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}
+```
+
+The page route passes the data to the template, for example `render_template("orders.html", customer=customer, orders=orders)`. If the customer has two orders, the browser receives a normal HTML table with two rows.
+
+Why we use them:
+
+- **No JavaScript needed.** The server does the work that JS would otherwise do in the browser: fetching data and putting it on the page.
+- **One layout for every screen.** The `base.html` template holds the header, navigation and footer. Every screen template starts with `{% extends "base.html" %}` and only fills in its own `content` block, so a change to the layout is made in one place.
+- **One template per screen.** This maps directly to the screen designs (see [Traceability](#traceability)).
+- **Safe output.** Jinja2 escapes values by default, so a customer name containing `<script>` is shown as text and never runs (see [Configuration and security](#configuration-and-security)).
+
+Rules for templates: they only show data and contain no business logic or SQL. Decisions such as "may this order be delivered" are made in the services, and the template only displays the result.
+
+Because a template contains Jinja2 markers, it is not pure HTML. The output that the browser receives is pure HTML and CSS. See the first risk in [Risks](#risks).
+
 ## Backend
 
 Python with Flask. Flask (with its template engine Jinja2) is the only web dependency, to keep dependencies minimal. The code is split in layers so every class is easy to find and to trace to the class diagram.
