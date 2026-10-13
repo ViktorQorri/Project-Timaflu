@@ -1,0 +1,16 @@
+@startuml
+left to right direction
+
+actor "Magazijnrobot" as Robot
+
+rectangle "Timaflu-informatiesysteem" {
+    usecase "Deelorder aanvragen" as UC1
+    usecase "Verzamelbak aanmelden" as UC2
+    usecase "Voltooiing deelorder melden" as UC3
+}
+
+Robot -- UC1
+Robot -- UC2
+Robot -- UC3
+
+@enduml
