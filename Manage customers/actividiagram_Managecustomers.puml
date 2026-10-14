@@ -1,0 +1,70 @@
+@startuml
+title Manage Customers
+
+start
+
+:Show customer overview;
+
+if (Row selected?) then (Yes)
+
+    :Enable Edit Customer;
+    :Enable Delete Customer;
+
+    if (Action?) then (Edit)
+
+        :Edit customer;
+
+        repeat
+            :Modify customer data;
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    else (Delete)
+
+        :Delete customer;
+
+        if (Are you sure?) then (Yes)
+            :Delete customer record;
+        else (No)
+        endif
+
+    endif
+
+else (No)
+
+    :Enable Create Customer;
+
+    if (Create customer selected?) then (Yes)
+
+        :Create customer;
+
+        repeat
+            :Enter customer data;
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    endif
+
+endif
+
+:Return to customer overview;
+
+stop
+
+@enduml
