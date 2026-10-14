@@ -1,0 +1,34 @@
+@startuml
+title Register Order
+
+start
+
+:Select Customer;
+
+:Create Order;
+
+repeat
+    :Add Product;
+    :Enter Quantity;
+
+    if (Add another product?) then (Yes)
+    else (No)
+        break
+    endif
+
+repeat while (More products?)
+
+:Calculate Total Price;
+
+:Save Order Date;
+
+:Record Delivery Moment
+(Date + Part of Day);
+
+:Save Order;
+
+:Return to Order Overview;
+
+stop
+
+@enduml

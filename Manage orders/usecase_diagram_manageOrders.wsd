@@ -1,0 +1,37 @@
+@startuml
+title Register Order
+
+left to right direction
+
+actor "Sales Employee" as SalesEmployee
+
+rectangle "Order Management" {
+
+    usecase "Register Order" as RegisterOrder
+
+    usecase "Maintain Order Details" as OrderDetails
+    usecase "Select Customer" as SelectCustomer
+    usecase "Manage Products" as ManageProducts
+    usecase "Record Delivery Moment" as DeliveryMoment
+
+    usecase "Add Product" as AddProduct
+    usecase "Enter Quantity" as EnterQuantity
+    usecase "Save Order Date" as SaveOrderDate
+    usecase "Calculate Total Price" as CalculateTotalPrice
+}
+
+SalesEmployee --> RegisterOrder
+
+RegisterOrder .> OrderDetails : <<include>>
+RegisterOrder .> ManageProducts : <<include>>
+RegisterOrder .> DeliveryMoment : <<include>>
+
+OrderDetails .> SelectCustomer : <<include>>
+OrderDetails .> SaveOrderDate : <<include>>
+
+ManageProducts .> AddProduct : <<include>>
+ManageProducts .> EnterQuantity : <<include>>
+ManageProducts .> CalculateTotalPrice : <<include>>
+
+@enduml
+``
