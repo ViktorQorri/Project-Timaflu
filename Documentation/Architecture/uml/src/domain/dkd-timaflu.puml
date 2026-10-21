@@ -9,7 +9,6 @@ skinparam nodesep 65
 skinparam ranksep 85
 skinparam classBackgroundColor #FFFFFF
 skinparam packageBackgroundColor #F2F6FA
-hide methods
 hide circle
 
 package "Klanten en acquisitie" as P1 {
@@ -19,21 +18,34 @@ package "Klanten en acquisitie" as P1 {
     telefoonnummer
     /jaaromzet
     /bestellenGeblokkeerd
+    --
+    berekenJaaromzet()
+    controleerBestelblokkade()
   }
   class Adres {
     adres
+    --
   }
   class PotentieleKlant {
     bedrijfsnaam
     contactpersoon
     contactgegevens
+    --
+    heeftBestellingGeplaatst()
+    controleerOpvolgingNaMaand()
+    biedEenmaligeKortingAan()
+    maakKlantaccountAan()
   }
   class Acquisitiebezoek {
     bezoekdatum
+    --
+    registreerBezoek()
   }
   class Klantkorting {
     kalenderjaar
     percentage
+    --
+    bepaalPercentage(jaaromzet, kalenderjaar)
   }
 }
 
@@ -47,14 +59,26 @@ package "Verkoop" as P2 {
     extraBezorgkosten
     toelichtingExtraBezorgkosten
     /totaalbedrag
+    --
+    berekenBestellingskorting()
+    berekenEenmaligeKorting()
+    berekenKlantenkorting()
+    berekenTotaalbedrag()
+    stelLevermomentIn(datum, dagdeel)
+    wijzigOrderstatus(status)
+    registreerExtraBezorgkosten(bedrag, toelichting)
   }
   class Bestelregel {
     aantal
     prijsPerEenheid
     afnemenBijTekort [0..1]
+    --
+    pasAantalAan(aantal)
+    legKeuzeBijTekortVast(afnemen)
   }
   class OrderStatus {
     naam
+    --
   }
 }
 
@@ -71,43 +95,70 @@ package "Assortiment en inkoop" as P3 {
     minimaleBestelhoeveelheid
     minimumvoorraad
     /voorraadAantal
+    --
+    controleerVoorraad()
+    controleerMinimumvoorraad()
+    zoekLeveranciersOpPrijs()
+    verwijderLeverancier(leverancier)
+    verwijderUitAssortiment()
   }
   class ProductWerkzameStof {
     stofnaam
     hoeveelheid
+    --
   }
   class Leverancier {
     naam
     contactpersoon
     telefoonnummer
     internetadres
+    --
   }
   class LeveranciersAanbod {
     inkoopprijs
+    --
   }
-  class Inkoopbestelling
+  class Inkoopbestelling {
+    --
+    plaatsBijLeverancier()
+  }
   class Inkoopbestelregel {
     aantal
+    --
   }
 }
 
 package "Magazijn en orderpicking" as P4 {
   class Gang {
     letter
+    --
   }
   class Magazijnlocatie {
     schapnummer
     aantal
+    --
   }
-  class Robot
+  class Robot {
+    --
+    ontvangDeelorder(deelorder)
+    pakVerzamelbak()
+    scanVerzamelbak(verzamelbak)
+    verzamelMedicijnen()
+    zetBakOpRollerbaan()
+    meldDeelorderGereed()
+  }
   class Deelorder {
     afgerond
+    --
+    controleerCompleetheid()
   }
   class Deelorderregel {
     aantal
+    --
   }
   class Verzamelbak {
     uniekeCode
+    --
   }
 }
 
@@ -117,20 +168,36 @@ package "Distributie" as P5 {
     beschikbaar
     eigenKoerier
     regio [0..1]
+    --
+    meldAanwezig()
+    meldBeschikbaar()
+    bekijkToegewezenRitten()
+    zoekKlanttelefoonnummerOp(klant)
+    zoekLevermomentOp(bestelling)
   }
   class Rit {
     ritdatum
+    --
+    toonRooster(datum)
+    pasRoosterAan()
   }
-  class Levering
+  class Levering {
+    --
+  }
   class Leverpoging {
     pogingnummer
     geplandeTijd
     daadwerkelijkAfgeleverdOp [0..1]
     resultaat [0..1]
     ontvangstGetekend [0..1]
+    --
+    markeerNietAanwezig()
+    markeerAfgeleverd(tijdstip)
+    registreerOntvangsthandtekening()
   }
   class Leveringregel {
     aantalGeleverd
+    --
   }
 }
 
@@ -142,14 +209,24 @@ package "Administratie" as P6 {
     betalingsregelingGeaccepteerd [0..1]
     incassoIngeschakeld
     /bedrag
+    --
+    stelWeekfactuurOp()
+    registreerVolledigeBetaling(datum)
+    controleerBetalingsachterstand()
+    stelBetalingsregelingVoor()
+    schakelIncassoIn()
   }
   class Betalingsherinnering {
     volgnummer
     verstuurdOp
+    --
+    verstuur()
   }
   class Inkoopfactuur {
     bedrag
     betaaldOp [0..1]
+    --
+    betaal()
   }
 }
 

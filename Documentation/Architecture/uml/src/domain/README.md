@@ -1,10 +1,10 @@
 # DKD Timaflu
 
-[PlantUML-bron](dkd-timaflu.puml) · [SVG-diagram](../../export/domain/dkd-timaflu.svg) · [PNG-diagram](../../export/domain/dkd-timaflu.png)
+[PlantUML-bron](dkd-timaflu.puml)
 
 Dit domeinklassediagram beschrijft de bedrijfsinformatie voor de **nieuwe situatie**. Het is één gecombineerd model: de huidige situatie blijft gelden, behalve waar de gewenste situatie haar wijzigt. Het zijn dus geen twee losse modellen. De vergelijking hieronder maakt zichtbaar welke informatie behouden blijft en welke verandert.
 
-Het model bevat geen methoden, SQL-sleutels, schermen, controllers of API's. Die horen bij het technische ontwerp. Een DKD beschrijft bedrijfsbegrippen, hun eigenschappen en hun onderlinge verbanden. De opdracht vraagt uiteindelijk ook een klassendiagram met methoden voor de backend; dit DKD is daarvoor de inhoudelijke basis, niet dat volledige technische klassendiagram.
+Een DKD beschrijft bedrijfsbegrippen, hun eigenschappen en hun onderlinge verbanden. Op verzoek bevat dit diagram ook domeinoperaties voor het klassendiagram: bovenaan staan de attributen, onder een horizontale scheidingslijn staan de methoden. Het model bevat geen SQL-sleutels, schermen, controllers of API's. De methoden zijn ontwerpbenamingen voor handelingen uit de casus; zij voegen geen nieuwe bedrijfsregels toe en vormen nog geen werkende backend.
 
 ## Bronnen en bronvolgorde
 
@@ -158,8 +158,33 @@ De bestaande SQL-tabellen zijn herkenbaar in de klassennamen, maar het diagram k
 
 Deze bestanden zijn niet aangepast: de opdracht betreft het DKD. Dit zijn aansluitpunten voor het verder gelijkmaken van ontwerp, database en backend, geen bevestiging dat de huidige implementatie al overeenkomt.
 
-## Openen en exporteren
+## Methoden onder de attributen
 
-Open `dkd-timaflu.puml` in VS Code en kies **PlantUML: Preview Current Diagram**. De meegeleverde SVG kan direct in een browser geopend worden. De bron gebruikt de standaard Graphviz-layout met orthogonale lijnen: alle verbindingsstukken lopen horizontaal of verticaal. Onzichtbare layoutverbindingen plaatsen de procesvlakken naast elkaar; zij zijn geen domeinrelaties. De bestaande PlantUML-extensie bevat de renderer. De uitleg van de notatie staat in deze README; het diagram bevat geen apart uitlegblok.
+Elke klasse heeft een apart methodenvak onder de attributen, gescheiden met `--` in de PlantUML-bron. Alleen klassen waaraan een beschreven handeling is toegewezen krijgen methoden. Bij gegevensklassen zonder beschreven eigen gedrag blijft dat vak leeg; er zijn geen willekeurige getters, setters of CRUD-functies toegevoegd.
 
-Kies na wijzigingen **PlantUML: Export Current Diagram** en werk de SVG in `uml/export/domain/` bij. De `.puml` blijft de bewerkbare bron. Voor dit DKD is PlantUML gebruikt zoals gevraagd, ook al noemt de algemene project-README draw.io voor diagrammen.
+De methodenamen en hun plaatsing zijn ontwerpkeuzes. De handelingen zelf komen uit H, G en P; de namen zijn geen letterlijke citaten uit de casus. Parameters benoemen alleen de al beschreven gegevens. Er zijn geen extra returntypes, uitzonderingsregels of algoritmen ingevuld.
+
+| Klasse | Herkomst van de methoden |
+| --- | --- |
+| Klant | Jaaromzet uit betaalde bedragen en controle op de incassoblokkade: H/Administratie. |
+| PotentieleKlant | Controleren of besteld is, na een maand opvolgen, 10% aanbieden en klantaccount aanmaken: H/Acquisitie en P/5. |
+| Acquisitiebezoek | Bezoek toevoegen: P/5. |
+| Klantkorting | Jaarpercentage bepalen op basis van jaaromzet: H/Bestellingen. |
+| Bestelling | Kortingen en totaal berekenen: H/Bestellingen en P/1. Levermoment vastleggen en status bijwerken: G. Extra bezorgkosten met uitleg: H/Distributie. |
+| Bestelregel | Bestelling aanpassen en per ontbrekend product de keuze vastleggen: H/Bestellingen. |
+| Product | Voorraad controleren en minimum bewaken: G. Leveranciers op prijs tonen, leverancierskoppeling verwijderen en product verwijderen: H/Voorraad en P/2. |
+| Inkoopbestelling | Bestelling plaatsen bij de leverancier: H/Voorraad. |
+| Robot | Deelorder ontvangen, bak pakken en scannen, medicijnen verzamelen, bak op rollerbaan zetten en gereed melden: G. |
+| Deelorder | Controleren of de verzamelopdracht compleet is: G. |
+| Koerier | Aanwezig en beschikbaar melden: H/Distributie. Toegewezen ritten, klanttelefoonnummer en levermoment opzoeken: G. |
+| Rit | Rooster met tijden per datum tonen en bij afwezigheid aanpassen: P/4. |
+| Leverpoging | Niet aanwezig of afgeleverd markeren: P/4 en G. Tekenen voor ontvangst registreren: H/Distributie. |
+| Factuur | Weekfactuur maken, volledige betaling registreren, achterstand controleren, regeling voorstellen en incasso inschakelen: H/Administratie. |
+| Betalingsherinnering | Herinnering versturen: H/Administratie. |
+| Inkoopfactuur | Producentenrekening betalen: H/Administratie. |
+
+## Openen
+
+Open `dkd-timaflu.puml` in VS Code en kies **PlantUML: Preview Current Diagram**. De bron gebruikt de standaard Graphviz-layout met orthogonale lijnen: alle verbindingsstukken lopen horizontaal of verticaal. Onzichtbare layoutverbindingen plaatsen de procesvlakken naast elkaar; zij zijn geen domeinrelaties. De bestaande PlantUML-extensie bevat de renderer. De uitleg van de notatie staat in deze README; het diagram bevat geen apart uitlegblok.
+
+Alleen de `.puml`-bron wordt bewaard; de PNG- en SVG-export van dit diagram zijn op verzoek verwijderd. Voor dit diagram is PlantUML gebruikt zoals gevraagd, ook al noemt de algemene project-README draw.io voor diagrammen.
