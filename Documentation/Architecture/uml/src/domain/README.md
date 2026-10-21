@@ -160,6 +160,6 @@ Deze bestanden zijn niet aangepast: de opdracht betreft het DKD. Dit zijn aanslu
 
 ## Openen en exporteren
 
-Open `dkd-timaflu.puml` in VS Code en kies **PlantUML: Preview Current Diagram**. De meegeleverde SVG kan direct in een browser geopend worden. De bron gebruikt Smetana voor lokale layout en vereist daarvoor geen losse Graphviz-installatie. De bestaande PlantUML-extensie bevat de renderer.
+Open `dkd-timaflu.puml` in VS Code en kies **PlantUML: Preview Current Diagram**. De meegeleverde SVG kan direct in een browser geopend worden. De bron gebruikt de standaard Graphviz-layout met orthogonale lijnen: alle verbindingsstukken lopen horizontaal of verticaal. Onzichtbare layoutverbindingen plaatsen de procesvlakken naast elkaar; zij zijn geen domeinrelaties. De bestaande PlantUML-extensie bevat de renderer. De uitleg van de notatie staat in deze README; het diagram bevat geen apart uitlegblok.
 
 Kies na wijzigingen **PlantUML: Export Current Diagram** en werk de SVG in `uml/export/domain/` bij. De `.puml` blijft de bewerkbare bron. Voor dit DKD is PlantUML gebruikt zoals gevraagd, ook al noemt de algemene project-README draw.io voor diagrammen.

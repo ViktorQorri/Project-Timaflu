@@ -1,19 +1,18 @@
 @startuml dkd-timaflu
-!pragma layout smetana
 title Timaflu — domeinklassediagram van de nieuwe situatie
 top to bottom direction
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
 skinparam shadowing false
-skinparam linetype polyline
-skinparam nodesep 45
-skinparam ranksep 65
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 85
 skinparam classBackgroundColor #FFFFFF
 skinparam packageBackgroundColor #F2F6FA
 hide methods
 hide circle
 
-package "Klanten en acquisitie" {
+package "Klanten en acquisitie" as P1 {
   class Klant {
     bedrijfsnaam
     contactpersoon
@@ -38,7 +37,7 @@ package "Klanten en acquisitie" {
   }
 }
 
-package "Verkoop" {
+package "Verkoop" as P2 {
   class Bestelling {
     besteldOp
     gewensteLeverdatum
@@ -59,7 +58,7 @@ package "Verkoop" {
   }
 }
 
-package "Assortiment en inkoop" {
+package "Assortiment en inkoop" as P3 {
   class Product {
     artikelnummer
     bestelcode
@@ -92,7 +91,7 @@ package "Assortiment en inkoop" {
   }
 }
 
-package "Magazijn en orderpicking" {
+package "Magazijn en orderpicking" as P4 {
   class Gang {
     letter
   }
@@ -112,7 +111,7 @@ package "Magazijn en orderpicking" {
   }
 }
 
-package "Distributie" {
+package "Distributie" as P5 {
   class Koerier {
     naam
     beschikbaar
@@ -135,7 +134,7 @@ package "Distributie" {
   }
 }
 
-package "Administratie" {
+package "Administratie" as P6 {
   class Factuur {
     factuurnummer
     factuurdatum
@@ -161,15 +160,15 @@ PotentieleKlant "0..*" -- "1" Adres : bezoekadres
 PotentieleKlant "1" -- "0..*" Acquisitiebezoek : krijgt
 PotentieleKlant "0..1" -- "0..1" Klant : wordt
 Klant "1" -- "0..*" Klantkorting : heeft per jaar
-Klant "1" -- "0..*" Bestelling : plaatst
-Bestelling "0..*" -- "1" Adres : afleveradres
-Bestelling "0..*" -- "1" Adres : betaaladres
+Klant "1" -[norank]- "0..*" Bestelling : plaatst
+Bestelling "0..*" -[norank]- "1" Adres : afleveradres
+Bestelling "0..*" -[norank]- "1" Adres : betaaladres
 Bestelling "1" -- "1..*" Bestelregel : bevat
-Bestelregel "0..*" -- "1" Product : bestelt
+Bestelregel "0..*" -[norank]- "1" Product : bestelt
 Bestelling "0..*" -- "1" OrderStatus : heeft
 
 Product "1" -- "1..*" ProductWerkzameStof : bevat
-Leverancier "0..*" -- "1" Adres : gevestigd op
+Leverancier "0..*" -[norank]- "1" Adres : gevestigd op
 Leverancier "1" -- "0..*" LeveranciersAanbod : doet
 Product "1" -- "0..*" LeveranciersAanbod : wordt aangeboden in
 Leverancier "1" -- "0..*" Inkoopbestelling : ontvangt
@@ -178,29 +177,29 @@ Inkoopbestelregel "0..*" -- "1" Product : bestelt
 
 Gang "1" -- "40" Magazijnlocatie : bevat
 Gang "1" -- "1" Robot : wordt bediend door
-Product "0..1" -- "0..*" Magazijnlocatie : ligt op
-Bestelling "1" -- "0..*" Deelorder : wordt verzameld via
+Product "0..1" -[norank]- "0..*" Magazijnlocatie : ligt op
+Bestelling "1" -[norank]- "0..*" Deelorder : wordt verzameld via
 Robot "1" -- "0..*" Deelorder : verwerkt
 Deelorder "1" -- "1..*" Deelorderregel : bevat
-Deelorderregel "0..*" -- "1" Bestelregel : verzamelt deel van
+Deelorderregel "0..*" -[norank]- "1" Bestelregel : verzamelt deel van
 Deelorder "0..1" -- "0..*" Verzamelbak : gebruikt momenteel
 
 Koerier "1" -- "0..*" Rit : rijdt
 Rit "0..1" -- "1..*" Leverpoging : plant
-Bestelling "1" -- "0..*" Levering : wordt uitgeleverd via
+Bestelling "1" -[norank]- "0..*" Levering : wordt uitgeleverd via
 Levering "1" -- "0..*" Leverpoging : wordt aangeboden in
 Levering "1" -- "1..*" Leveringregel : bevat
-Leveringregel "0..*" -- "1" Bestelregel : levert deel van
+Leveringregel "0..*" -[norank]- "1" Bestelregel : levert deel van
 
-Klant "1" -- "0..*" Factuur : ontvangt weekfactuur
-Factuur "0..1" -- "1..*" Leveringregel : factureert
+Klant "1" -[norank]- "0..*" Factuur : ontvangt weekfactuur
+Factuur "0..1" -[norank]- "1..*" Leveringregel : factureert
 Factuur "1" -- "0..2" Betalingsherinnering : krijgt
-Leverancier "1" -- "0..*" Inkoopfactuur : stuurt
+Leverancier "1" -[norank]- "0..*" Inkoopfactuur : stuurt
 
-legend bottom
-  1 = precies een | 0..1 = optioneel | 0..* = nul of meer | 1..* = een of meer
-  /attribuut = afgeleid gegeven | [0..1] = optionele attribuutwaarde
-  Multipliciteiten gelden voor de levenscyclus; aanvullende regels staan in de README.
-  Geen methoden, databasesleutels, schermen of technische softwareklassen.
-endlegend
+' Alleen layout: deze onzichtbare lijnen zijn geen domeinrelaties.
+PotentieleKlant -[hidden]right-> Bestelling
+Bestelling -[hidden]right-> Leverancier
+Leverancier -[hidden]right-> Gang
+Gang -[hidden]right-> Koerier
+Koerier -[hidden]right-> Factuur
 @enduml
