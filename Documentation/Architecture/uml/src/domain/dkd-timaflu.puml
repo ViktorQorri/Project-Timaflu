@@ -20,16 +20,19 @@ class Klant {
     bedrijfsnaam
     contactpersoon
     telefoonnummer
+    eenmaligeKortingToegekend
     /jaaromzet
     /bestellenGeblokkeerd
     --
     berekenJaaromzet()
     controleerBestelblokkade()
+    wijzigGegevens()
 }
 
 class Adres {
     adres
     --
+    wijzigAdres(adres)
 }
 
 class PotentieleKlant {
@@ -61,6 +64,7 @@ class Bestelling {
     gewensteLeverdatum
     dagdeel
     spoed
+    klantAkkoord [0..1]
     eenmaligeKortingToegepast
     extraBezorgkosten
     toelichtingExtraBezorgkosten
@@ -73,6 +77,13 @@ class Bestelling {
     stelLevermomentIn(datum, dagdeel)
     wijzigOrderstatus(status)
     registreerExtraBezorgkosten(bedrag, toelichting)
+    registreerBestelling()
+    legKlantakkoordVast(akkoord)
+    markeerAlsSpoed()
+    vraagOrderstatusOp()
+    verdeelInDeelorders()
+    raadpleegVerzamelbakken()
+    verpak()
 }
 
 class Bestelregel {
@@ -121,6 +132,7 @@ class Leverancier {
     telefoonnummer
     internetadres
     --
+    wijzigGegevens()
 }
 
 class LeveranciersAanbod {
@@ -163,6 +175,7 @@ class Deelorder {
     afgerond
     --
     controleerCompleetheid()
+    wijsToeAanRobot(robot)
 }
 
 class Deelorderregel {
@@ -173,6 +186,7 @@ class Deelorderregel {
 class Verzamelbak {
     uniekeCode
     --
+    registreerVoorDeelorder(deelorder)
 }
 
 class Koerier {
@@ -193,6 +207,7 @@ class Rit {
     --
     toonRooster(datum)
     pasRoosterAan()
+    wijsToeAanKoerier(koerier)
 }
 
 class Levering {
@@ -225,6 +240,7 @@ class Factuur {
     /bedrag
     --
     stelWeekfactuurOp()
+    verstuurNaarKlant()
     registreerVolledigeBetaling(datum)
     controleerBetalingsachterstand()
     stelBetalingsregelingVoor()
@@ -271,9 +287,9 @@ Bestelling "1" -[norank]- "0..*" Deelorder : wordt verzameld via
 Robot "1" -[norank]- "0..*" Deelorder : verwerkt
 Deelorder "1" -[norank]- "1..*" Deelorderregel : bevat
 Deelorderregel "0..*" -[norank]- "1" Bestelregel : verzamelt deel van
-Deelorder "0..1" -[norank]- "0..*" Verzamelbak : gebruikt momenteel
+Deelorder "1" -[norank]- "0..*" Verzamelbak : geregistreerd voor
 Koerier "1" -[norank]- "0..*" Rit : rijdt
-Rit "0..1" -[norank]- "1..*" Leverpoging : plant
+Rit "1" -[norank]- "1..*" Leverpoging : plant
 Bestelling "1" -[norank]- "0..*" Levering : wordt uitgeleverd via
 Levering "1" -[norank]- "0..*" Leverpoging : wordt aangeboden in
 Levering "1" -[norank]- "1..*" Leveringregel : bevat

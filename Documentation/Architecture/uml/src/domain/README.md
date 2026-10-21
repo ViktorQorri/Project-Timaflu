@@ -110,9 +110,9 @@ De waarde naast een klasse vertelt hoeveel objecten van **die klasse** bij één
 | Bestelling–Deelorder                                         | Iedere deelorder hoort bij één bestelling. Een bestelling kan nog wachten op verzamelen of op voorraad; daarom nul of meer deelorders in haar levenscyclus (G/backorder en robots).                                                                            |
 | Robot–Deelorder                                              | Eén robot verwerkt een deelorder; dezelfde robot verwerkt achtereenvolgens meerdere deelorders (G). Dit betekent niet dat hij die tegelijk uitvoert.                                                                                                           |
 | Deelorder–Deelorderregel–Bestelregel                         | Een deelorder bevat medicijnen om te verzamelen, dus minstens één regel. Elke verzamelregel betreft één oorspronkelijke bestelregel. Die bestelregel kan wachten of via meerdere verzamelopdrachten worden afgehandeld (G en H/tekorten).                      |
-| Deelorder–Verzamelbak                                        | Een deelorder kan nog geen bak hebben of meerdere bakken nodig hebben (G). De relatie toont het **huidige gebruik**: een bak hoort tegelijk bij maximaal één deelorder en kan buiten gebruik zijn. Er is geen historisch bakvolgsysteem toegevoegd.            |
+| Deelorder–Verzamelbak | Elke geregistreerde bak hoort bij precies één deelorder; een deelorder kan nog geen of meerdere gescande bakken hebben (G). Dit betreft de door het systeem geregistreerde bakken, zoals in SQL. Vrije bakken en historische hergebruikregistratie zijn niet beschreven en worden niet apart gemodelleerd. |
 | Koerier–Rit                                                  | Een toegewezen rit heeft één koerier; een koerier kan nog geen of meerdere ritten hebben (G). Een externe spoedkoerier is ook een Koerier.                                                                                                                     |
-| Rit–Leverpoging                                              | Een rit heeft minstens één geplande afleverpoging. Een poging kan nog niet aan een rit zijn toegewezen; na toewijzing hoort zij bij één rit (G en P/4).                                                                                                        |
+| Rit–Leverpoging | Een rit heeft minstens één geplande afleverpoging; elke geregistreerde geplande poging hoort bij precies één rit (H/Distributie, G en P/4). Dit sluit aan op de verplichte ritkoppeling in SQL. |
 | Bestelling–Levering                                          | Een levering hoort bij één bestelling; een bestelling kan nog niet, gedeeltelijk of in meerdere delen geleverd zijn (H/Bestellingen).                                                                                                                          |
 | Levering–Leverpoging                                         | Elke poging betreft één levering. Een levering kan nog klaarstaan zonder poging; afwezigheid kan leiden tot meerdere pogingen (H/Distributie).                                                                                                                 |
 | Levering–Leveringregel–Bestelregel                           | Een levering bevat minstens één productregel; iedere geleverde hoeveelheid is herleidbaar tot één bestelregel. Een bestelregel kan nog niets geleverd hebben of in delen geleverd worden (H/Bestellingen en Administratie).                                    |
@@ -154,11 +154,18 @@ De bestaande SQL-tabellen zijn herkenbaar in de klassennamen, maar het diagram k
 - Regio en onderscheid eigen/externe koerier komen uit H, maar ontbreken in de huidige SQL.
 - Het daadwerkelijke aflevermoment uit G en de inkoopfacturen uit H ontbreken als zodanig in de huidige SQL.
 - Deelorderregel en Leveringregel verwijzen in het DKD naar de oorspronkelijke Bestelregel; SQL gebruikt daarvoor product en de route via bestelling. Dat moet bij verdere uitwerking dezelfde betekenis houden.
-- Een vrije Verzamelbak kan in dit DKD bestaan zonder actieve deelorder; SQL verplicht nu altijd een deelorder.
 - Het DKD vereist een actuele OrderStatus; SQL laat de status nu leeg.
-- Het bestaande usecasediagram toont nog geen acquisitie. P vereist dat proces wel. G vraagt het **telefoonnummer** van de klant opzoeken; de bestaande usecase heet `Klantnummer opzoeken`.
+- De PlantUML-usecasebron is beperkter dan de aanwezige SVG en PNG. De bron noemt `Klantnummer opzoeken`; beide uitgebreidere afbeeldingen noemen het telefoonnummer van de klant. De casus vraagt het telefoonnummer. In alle aanwezige versies ontbreekt acquisitie; P vereist dit proces wel.
 
-Deze bestanden zijn niet aangepast: de opdracht betreft het DKD. Dit zijn aansluitpunten voor het verder gelijkmaken van ontwerp, database en backend, geen bevestiging dat de huidige implementatie al overeenkomt.
+In `index.sql` is uitsluitend de syntaxfout bij `Robot` hersteld: de overbodige komma vóór de sluitende haak is verwijderd. De usecasediagrammen en de overige SQL-structuur zijn niet aangepast. De resterende verschillen hierboven moeten bij verdere uitwerking van database en backend worden afgestemd; het DKD volgt de casus waar de huidige SQL nog onvolledig is.
+
+## Aanvullingen uit de casus
+
+- `Klant.eenmaligeKortingToegekend` legt de melding van de accountmanager aan verkoop vast (H/Acquisitie). Dit is iets anders dan `Bestelling.eenmaligeKortingToegepast`: toekenning kan al bestaan voordat de eerste bestelling is geplaatst. Het gegeven legt geen nieuwe kortingsvoorwaarde vast.
+- `Bestelling.klantAkkoord [0..1]` legt de laatste goedkeuring van de klant vast (H/Bestellingen). De waarde kan ontbreken zolang de bestelling wordt besproken. Bij weigering wordt de bestelling aangepast of niet definitief geregistreerd; er is geen nieuwe annuleringsprocedure toegevoegd.
+- `verdeelInDeelorders()` geeft de verdeling van één bestelling over robots weer (G). De naam is een ontwerpkeuze op basis van de beschreven deelorders; er is geen nieuw optimalisatie- of planningsalgoritme toegevoegd.
+- Registreren en opvragen van gegevens worden als methoden bij de betreffende domeinklasse weergegeven. Handelingen van medewerkers blijven door medewerkers uitgevoerd; de methode stelt hun systeemhandeling voor.
+- `Gang` en `Inkoopfactuur` blijven behouden: beide zijn expliciet in H beschreven en niet in G vervallen. Papieren formulieren, winkelwagens en handmatige informatieoverdracht worden niet als extra klassen toegevoegd, omdat G die werkwijze vervangt. Voorraadontvangst blijft buiten scope.
 
 ## Methoden onder de attributen
 
@@ -168,20 +175,23 @@ De methodenamen en hun plaatsing zijn ontwerpkeuzes. De handelingen zelf komen u
 
 | Klasse | Herkomst van de methoden |
 | --- | --- |
-| Klant | Jaaromzet uit betaalde bedragen en controle op de incassoblokkade: H/Administratie. |
+| Adres | Adresgegevens centraal beheren: G. |
+| Leverancier | Fabrikantgegevens centraal beheren: G. |
+| Verzamelbak | De gescande bakcode voor een deelorder registreren: G. |
+| Klant | Jaaromzet uit betaalde bedragen en controle op de incassoblokkade: H/Administratie. Klantgegevens wijzigen: G/centraal beheer. |
 | PotentieleKlant | Controleren of besteld is, na een maand opvolgen, 10% aanbieden en klantaccount aanmaken: H/Acquisitie en P/5. |
 | Acquisitiebezoek | Bezoek toevoegen: P/5. |
 | Klantkorting | Jaarpercentage bepalen op basis van jaaromzet: H/Bestellingen. |
-| Bestelling | Kortingen en totaal berekenen: H/Bestellingen en P/1. Levermoment vastleggen en status bijwerken: G. Extra bezorgkosten met uitleg: H/Distributie. |
+| Bestelling | Registratie, klantakkoord en spoed: H/Bestellingen. Kortingen en totaal: H/Bestellingen en P/1. Levermoment en orderstatus: G. Verdeling over robots, bakoverzicht en verpakken: G/verzamelen. Extra bezorgkosten met uitleg: H/Distributie. |
 | Bestelregel | Bestelling aanpassen en per ontbrekend product de keuze vastleggen: H/Bestellingen. |
 | Product | Voorraad controleren en minimum bewaken: G. Leveranciers op prijs tonen, leverancierskoppeling verwijderen en product verwijderen: H/Voorraad en P/2. |
 | Inkoopbestelling | Bestelling plaatsen bij de leverancier: H/Voorraad. |
 | Robot | Deelorder ontvangen, bak pakken en scannen, medicijnen verzamelen, bak op rollerbaan zetten en gereed melden: G. |
-| Deelorder | Controleren of de verzamelopdracht compleet is: G. |
+| Deelorder | Compleetheid controleren en een deelorder aan een robot toewijzen: G/verzamelen. |
 | Koerier | Aanwezig en beschikbaar melden: H/Distributie. Toegewezen ritten, klanttelefoonnummer en levermoment opzoeken: G. |
-| Rit | Rooster met tijden per datum tonen en bij afwezigheid aanpassen: P/4. |
+| Rit | Rooster per datum tonen en bij afwezigheid aanpassen: P/4. Rit aan een koerier toewijzen: H/Bestellingen en G/Koeriers. |
 | Leverpoging | Niet aanwezig of afgeleverd markeren: P/4 en G. Tekenen voor ontvangst registreren: H/Distributie. |
-| Factuur | Weekfactuur maken, volledige betaling registreren, achterstand controleren, regeling voorstellen en incasso inschakelen: H/Administratie. |
+| Factuur | Weekfactuur maken en naar de klant sturen, volledige betaling registreren, achterstand controleren, regeling voorstellen en incasso inschakelen: H/Administratie. |
 | Betalingsherinnering | Herinnering versturen: H/Administratie. |
 | Inkoopfactuur | Producentenrekening betalen: H/Administratie. |
 
