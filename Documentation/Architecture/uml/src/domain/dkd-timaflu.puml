@@ -1,0 +1,206 @@
+@startuml dkd-timaflu
+!pragma layout smetana
+title Timaflu — domeinklassediagram van de nieuwe situatie
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam nodesep 45
+skinparam ranksep 65
+skinparam classBackgroundColor #FFFFFF
+skinparam packageBackgroundColor #F2F6FA
+hide methods
+hide circle
+
+package "Klanten en acquisitie" {
+  class Klant {
+    bedrijfsnaam
+    contactpersoon
+    telefoonnummer
+    /jaaromzet
+    /bestellenGeblokkeerd
+  }
+  class Adres {
+    adres
+  }
+  class PotentieleKlant {
+    bedrijfsnaam
+    contactpersoon
+    contactgegevens
+  }
+  class Acquisitiebezoek {
+    bezoekdatum
+  }
+  class Klantkorting {
+    kalenderjaar
+    percentage
+  }
+}
+
+package "Verkoop" {
+  class Bestelling {
+    besteldOp
+    gewensteLeverdatum
+    dagdeel
+    spoed
+    eenmaligeKortingToegepast
+    extraBezorgkosten
+    toelichtingExtraBezorgkosten
+    /totaalbedrag
+  }
+  class Bestelregel {
+    aantal
+    prijsPerEenheid
+    afnemenBijTekort [0..1]
+  }
+  class OrderStatus {
+    naam
+  }
+}
+
+package "Assortiment en inkoop" {
+  class Product {
+    artikelnummer
+    bestelcode
+    productnaam
+    prijsPerGrootverpakking
+    verpakkingssoort
+    aantalDetailverpakkingen
+    korteOmschrijving
+    langeOmschrijving
+    minimaleBestelhoeveelheid
+    minimumvoorraad
+    /voorraadAantal
+  }
+  class ProductWerkzameStof {
+    stofnaam
+    hoeveelheid
+  }
+  class Leverancier {
+    naam
+    contactpersoon
+    telefoonnummer
+    internetadres
+  }
+  class LeveranciersAanbod {
+    inkoopprijs
+  }
+  class Inkoopbestelling
+  class Inkoopbestelregel {
+    aantal
+  }
+}
+
+package "Magazijn en orderpicking" {
+  class Gang {
+    letter
+  }
+  class Magazijnlocatie {
+    schapnummer
+    aantal
+  }
+  class Robot
+  class Deelorder {
+    afgerond
+  }
+  class Deelorderregel {
+    aantal
+  }
+  class Verzamelbak {
+    uniekeCode
+  }
+}
+
+package "Distributie" {
+  class Koerier {
+    naam
+    beschikbaar
+    eigenKoerier
+    regio [0..1]
+  }
+  class Rit {
+    ritdatum
+  }
+  class Levering
+  class Leverpoging {
+    pogingnummer
+    geplandeTijd
+    daadwerkelijkAfgeleverdOp [0..1]
+    resultaat [0..1]
+    ontvangstGetekend [0..1]
+  }
+  class Leveringregel {
+    aantalGeleverd
+  }
+}
+
+package "Administratie" {
+  class Factuur {
+    factuurnummer
+    factuurdatum
+    betaaldOp [0..1]
+    betalingsregelingGeaccepteerd [0..1]
+    incassoIngeschakeld
+    /bedrag
+  }
+  class Betalingsherinnering {
+    volgnummer
+    verstuurdOp
+  }
+  class Inkoopfactuur {
+    bedrag
+    betaaldOp [0..1]
+  }
+}
+
+' Klantgegevens en orderadressen zijn verschillende rollen.
+Klant "0..*" -- "1" Adres : afleveradres
+Klant "0..*" -- "1" Adres : betaaladres
+PotentieleKlant "0..*" -- "1" Adres : bezoekadres
+PotentieleKlant "1" -- "0..*" Acquisitiebezoek : krijgt
+PotentieleKlant "0..1" -- "0..1" Klant : wordt
+Klant "1" -- "0..*" Klantkorting : heeft per jaar
+Klant "1" -- "0..*" Bestelling : plaatst
+Bestelling "0..*" -- "1" Adres : afleveradres
+Bestelling "0..*" -- "1" Adres : betaaladres
+Bestelling "1" -- "1..*" Bestelregel : bevat
+Bestelregel "0..*" -- "1" Product : bestelt
+Bestelling "0..*" -- "1" OrderStatus : heeft
+
+Product "1" -- "1..*" ProductWerkzameStof : bevat
+Leverancier "0..*" -- "1" Adres : gevestigd op
+Leverancier "1" -- "0..*" LeveranciersAanbod : doet
+Product "1" -- "0..*" LeveranciersAanbod : wordt aangeboden in
+Leverancier "1" -- "0..*" Inkoopbestelling : ontvangt
+Inkoopbestelling "1" -- "1..*" Inkoopbestelregel : bevat
+Inkoopbestelregel "0..*" -- "1" Product : bestelt
+
+Gang "1" -- "40" Magazijnlocatie : bevat
+Gang "1" -- "1" Robot : wordt bediend door
+Product "0..1" -- "0..*" Magazijnlocatie : ligt op
+Bestelling "1" -- "0..*" Deelorder : wordt verzameld via
+Robot "1" -- "0..*" Deelorder : verwerkt
+Deelorder "1" -- "1..*" Deelorderregel : bevat
+Deelorderregel "0..*" -- "1" Bestelregel : verzamelt deel van
+Deelorder "0..1" -- "0..*" Verzamelbak : gebruikt momenteel
+
+Koerier "1" -- "0..*" Rit : rijdt
+Rit "0..1" -- "1..*" Leverpoging : plant
+Bestelling "1" -- "0..*" Levering : wordt uitgeleverd via
+Levering "1" -- "0..*" Leverpoging : wordt aangeboden in
+Levering "1" -- "1..*" Leveringregel : bevat
+Leveringregel "0..*" -- "1" Bestelregel : levert deel van
+
+Klant "1" -- "0..*" Factuur : ontvangt weekfactuur
+Factuur "0..1" -- "1..*" Leveringregel : factureert
+Factuur "1" -- "0..2" Betalingsherinnering : krijgt
+Leverancier "1" -- "0..*" Inkoopfactuur : stuurt
+
+legend bottom
+  1 = precies een | 0..1 = optioneel | 0..* = nul of meer | 1..* = een of meer
+  /attribuut = afgeleid gegeven | [0..1] = optionele attribuutwaarde
+  Multipliciteiten gelden voor de levenscyclus; aanvullende regels staan in de README.
+  Geen methoden, databasesleutels, schermen of technische softwareklassen.
+endlegend
+@enduml
