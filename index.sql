@@ -378,7 +378,6 @@ CREATE TABLE Verzamelbak (
 CREATE TABLE Koerier (
     koerier_id INT AUTO_INCREMENT PRIMARY KEY,
     naam VARCHAR(100) NOT NULL,
-    regio VARCHAR(100),
     beschikbaar BOOLEAN NOT NULL DEFAULT FALSE
 );
 
