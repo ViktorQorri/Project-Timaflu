@@ -2,21 +2,7 @@
 
 [PlantUML-bron](dkd-timaflu.puml)
 
-Het overzicht toont alle klassen en relaties zonder de grote attribuut- en methodenvakken. Relatienamen staan in de detailweergaven; het overzicht toont alleen de lijnen en multipliciteiten. Open voor de volledige klasse-inhoud de betreffende detailweergave:
-
-| Weergave | Inhoud |
-| --- | --- |
-| [Overzicht](dkd-timaflu.puml) | Alle 28 klassen en alle 37 associaties met multipliciteiten. |
-| [1. Klanten en acquisitie](01-klanten-acquisitie.puml) | Klant, prospect, bezoeken, adressen en jaarpercentage. |
-| [2. Verkoop](02-verkoop.puml) | Bestelling, bestelregels en orderstatus. |
-| [3. Assortiment en inkoop](03-assortiment-inkoop.puml) | Product, samenstelling, leveranciers, aanbiedingen en inkoopbestellingen. |
-| [4. Magazijn en orderpicking](04-magazijn-orderpicking.puml) | Gangen, locaties, robots, deelorders en verzamelbakken. |
-| [5. Distributie](05-distributie.puml) | Koeriers, ritten, leveringen en afleverpogingen. |
-| [6. Administratie](06-administratie.puml) | Weekfacturen, herinneringen en inkoopfacturen. |
-
-In de detailweergaven hebben de hoofdklassen hun attributen en methoden met een scheidingslijn. Lichtblauwe referentieklassen tonen alleen hun naam; hun volledige inhoud staat in hun eigen detailweergave. Een detailweergave toont alle bestaande relaties tussen de klassen die erop staan. Het zijn verschillende weergaven van hetzelfde domein, geen afzonderlijke modellen.
-
-Alle klassen, attributen, methoden en relaties staan één keer in [model.iuml](model.iuml). De `.puml`-bestanden kiezen welke klassen zichtbaar zijn; [stijl.iuml](stijl.iuml) bevat de gezamenlijke opmaak. Wijzig bedrijfsinformatie in het modelbestand zodat elke weergave dezelfde informatie blijft gebruiken.
+Het bestand `dkd-timaflu.puml` bevat één compleet diagram: alle 28 klassen, attributen, methoden en 37 associaties met multipliciteiten. De klassen staan in meerdere rijen, met ruimte tussen de procesonderdelen. De onzichtbare layoutlijnen bepalen alleen de plaatsing en voegen geen domeinrelaties toe.
 
 Dit domeinklassediagram beschrijft de bedrijfsinformatie voor de **nieuwe situatie**. Het is één gecombineerd model: de huidige situatie blijft gelden, behalve waar de gewenste situatie haar wijzigt. Het zijn dus geen twee losse modellen. De vergelijking hieronder maakt zichtbaar welke informatie behouden blijft en welke verandert.
 
@@ -201,6 +187,6 @@ De methodenamen en hun plaatsing zijn ontwerpkeuzes. De handelingen zelf komen u
 
 ## Openen
 
-Open `dkd-timaflu.puml` of een van de zes detailbestanden in VS Code en kies **PlantUML: Preview Current Diagram**. Het overzicht verbergt de leden van de klassen; de detailbestanden tonen attributen en methoden van hun hoofdklassen. De bron gebruikt de standaard Graphviz-layout met orthogonale lijnen: alle verbindingsstukken lopen horizontaal of verticaal. De bestaande PlantUML-extensie bevat de renderer. De uitleg van de notatie staat in deze README; de diagrammen bevatten geen apart uitlegblok.
+Open `dkd-timaflu.puml` in VS Code en kies **PlantUML: Preview Current Diagram**. Alle klassen tonen hun attributen en methoden, met een horizontale scheidingslijn ertussen. Alle relaties en hun multipliciteiten staan in hetzelfde diagram. De bron gebruikt de standaard Graphviz-layout met orthogonale lijnen: alle verbindingsstukken lopen horizontaal of verticaal. Onzichtbare layoutlijnen verdelen de klassen over rijen. De bestaande PlantUML-extensie bevat de renderer; extra include-bestanden of detailweergaven zijn niet nodig.
 
-Alleen de PlantUML-bronnen (`.puml` en gedeelde `.iuml`-bestanden) worden bewaard; de PNG- en SVG-export van dit diagram zijn op verzoek verwijderd. Voor dit diagram is PlantUML gebruikt zoals gevraagd, ook al noemt de algemene project-README draw.io voor diagrammen.
+Alleen de `.puml`-bron wordt bewaard; PNG- en SVG-export worden niet opgeslagen in het project. Voor dit diagram is PlantUML gebruikt zoals gevraagd, ook al noemt de algemene project-README draw.io voor diagrammen.

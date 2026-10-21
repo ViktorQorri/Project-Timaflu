@@ -1,8 +1,314 @@
 @startuml dkd-timaflu
-title Timaflu — overzicht van alle domeinklassen
-!include stijl.iuml
-!$classes = "|Klant|Adres|PotentieleKlant|Acquisitiebezoek|Klantkorting|Bestelling|Bestelregel|OrderStatus|Product|ProductWerkzameStof|Leverancier|LeveranciersAanbod|Inkoopbestelling|Inkoopbestelregel|Gang|Magazijnlocatie|Robot|Deelorder|Deelorderregel|Verzamelbak|Koerier|Rit|Levering|Leverpoging|Leveringregel|Factuur|Betalingsherinnering|Inkoopfactuur|"
-!$overview = 1
-!include model.iuml
-hide members
+title Timaflu — compleet domeinklassediagram
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 110
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classFontSize 16
+skinparam classAttributeFontSize 14
+skinparam ArrowFontSize 13
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #526779
+skinparam ArrowColor #526779
+hide circle
+
+class Klant {
+    bedrijfsnaam
+    contactpersoon
+    telefoonnummer
+    /jaaromzet
+    /bestellenGeblokkeerd
+    --
+    berekenJaaromzet()
+    controleerBestelblokkade()
+}
+
+class Adres {
+    adres
+    --
+}
+
+class PotentieleKlant {
+    bedrijfsnaam
+    contactpersoon
+    contactgegevens
+    --
+    heeftBestellingGeplaatst()
+    controleerOpvolgingNaMaand()
+    biedEenmaligeKortingAan()
+    maakKlantaccountAan()
+}
+
+class Acquisitiebezoek {
+    bezoekdatum
+    --
+    registreerBezoek()
+}
+
+class Klantkorting {
+    kalenderjaar
+    percentage
+    --
+    bepaalPercentage(jaaromzet, kalenderjaar)
+}
+
+class Bestelling {
+    besteldOp
+    gewensteLeverdatum
+    dagdeel
+    spoed
+    eenmaligeKortingToegepast
+    extraBezorgkosten
+    toelichtingExtraBezorgkosten
+    /totaalbedrag
+    --
+    berekenBestellingskorting()
+    berekenEenmaligeKorting()
+    berekenKlantenkorting()
+    berekenTotaalbedrag()
+    stelLevermomentIn(datum, dagdeel)
+    wijzigOrderstatus(status)
+    registreerExtraBezorgkosten(bedrag, toelichting)
+}
+
+class Bestelregel {
+    aantal
+    prijsPerEenheid
+    afnemenBijTekort [0..1]
+    --
+    pasAantalAan(aantal)
+    legKeuzeBijTekortVast(afnemen)
+}
+
+class OrderStatus {
+    naam
+    --
+}
+
+class Product {
+    artikelnummer
+    bestelcode
+    productnaam
+    prijsPerGrootverpakking
+    verpakkingssoort
+    aantalDetailverpakkingen
+    korteOmschrijving
+    langeOmschrijving
+    minimaleBestelhoeveelheid
+    minimumvoorraad
+    /voorraadAantal
+    --
+    controleerVoorraad()
+    controleerMinimumvoorraad()
+    zoekLeveranciersOpPrijs()
+    verwijderLeverancier(leverancier)
+    verwijderUitAssortiment()
+}
+
+class ProductWerkzameStof {
+    stofnaam
+    hoeveelheid
+    --
+}
+
+class Leverancier {
+    naam
+    contactpersoon
+    telefoonnummer
+    internetadres
+    --
+}
+
+class LeveranciersAanbod {
+    inkoopprijs
+    --
+}
+
+class Inkoopbestelling {
+    --
+    plaatsBijLeverancier()
+}
+
+class Inkoopbestelregel {
+    aantal
+    --
+}
+
+class Gang {
+    letter
+    --
+}
+
+class Magazijnlocatie {
+    schapnummer
+    aantal
+    --
+}
+
+class Robot {
+    --
+    ontvangDeelorder(deelorder)
+    pakVerzamelbak()
+    scanVerzamelbak(verzamelbak)
+    verzamelMedicijnen()
+    zetBakOpRollerbaan()
+    meldDeelorderGereed()
+}
+
+class Deelorder {
+    afgerond
+    --
+    controleerCompleetheid()
+}
+
+class Deelorderregel {
+    aantal
+    --
+}
+
+class Verzamelbak {
+    uniekeCode
+    --
+}
+
+class Koerier {
+    naam
+    beschikbaar
+    eigenKoerier
+    regio [0..1]
+    --
+    meldAanwezig()
+    meldBeschikbaar()
+    bekijkToegewezenRitten()
+    zoekKlanttelefoonnummerOp(klant)
+    zoekLevermomentOp(bestelling)
+}
+
+class Rit {
+    ritdatum
+    --
+    toonRooster(datum)
+    pasRoosterAan()
+}
+
+class Levering {
+    --
+}
+
+class Leverpoging {
+    pogingnummer
+    geplandeTijd
+    daadwerkelijkAfgeleverdOp [0..1]
+    resultaat [0..1]
+    ontvangstGetekend [0..1]
+    --
+    markeerNietAanwezig()
+    markeerAfgeleverd(tijdstip)
+    registreerOntvangsthandtekening()
+}
+
+class Leveringregel {
+    aantalGeleverd
+    --
+}
+
+class Factuur {
+    factuurnummer
+    factuurdatum
+    betaaldOp [0..1]
+    betalingsregelingGeaccepteerd [0..1]
+    incassoIngeschakeld
+    /bedrag
+    --
+    stelWeekfactuurOp()
+    registreerVolledigeBetaling(datum)
+    controleerBetalingsachterstand()
+    stelBetalingsregelingVoor()
+    schakelIncassoIn()
+}
+
+class Betalingsherinnering {
+    volgnummer
+    verstuurdOp
+    --
+    verstuur()
+}
+
+class Inkoopfactuur {
+    bedrag
+    betaaldOp [0..1]
+    --
+    betaal()
+}
+
+Klant "0..*" -[norank]- "1" Adres : afleveradres
+Klant "0..*" -[norank]- "1" Adres : betaaladres
+PotentieleKlant "0..*" -[norank]- "1" Adres : bezoekadres
+PotentieleKlant "1" -[norank]- "0..*" Acquisitiebezoek : krijgt
+PotentieleKlant "0..1" -[norank]- "0..1" Klant : wordt
+Klant "1" -[norank]- "0..*" Klantkorting : heeft per jaar
+Klant "1" -[norank]- "0..*" Bestelling : plaatst
+Bestelling "0..*" -[norank]- "1" Adres : afleveradres
+Bestelling "0..*" -[norank]- "1" Adres : betaaladres
+Bestelling "1" -[norank]- "1..*" Bestelregel : bevat
+Bestelregel "0..*" -[norank]- "1" Product : bestelt
+Bestelling "0..*" -[norank]- "1" OrderStatus : heeft
+Product "1" -[norank]- "1..*" ProductWerkzameStof : bevat
+Leverancier "0..*" -[norank]- "1" Adres : gevestigd op
+Leverancier "1" -[norank]- "0..*" LeveranciersAanbod : doet
+Product "1" -[norank]- "0..*" LeveranciersAanbod : wordt aangeboden in
+Leverancier "1" -[norank]- "0..*" Inkoopbestelling : ontvangt
+Inkoopbestelling "1" -[norank]- "1..*" Inkoopbestelregel : bevat
+Inkoopbestelregel "0..*" -[norank]- "1" Product : bestelt
+Gang "1" -[norank]- "40" Magazijnlocatie : bevat
+Gang "1" -[norank]- "1" Robot : wordt bediend door
+Product "0..1" -[norank]- "0..*" Magazijnlocatie : ligt op
+Bestelling "1" -[norank]- "0..*" Deelorder : wordt verzameld via
+Robot "1" -[norank]- "0..*" Deelorder : verwerkt
+Deelorder "1" -[norank]- "1..*" Deelorderregel : bevat
+Deelorderregel "0..*" -[norank]- "1" Bestelregel : verzamelt deel van
+Deelorder "0..1" -[norank]- "0..*" Verzamelbak : gebruikt momenteel
+Koerier "1" -[norank]- "0..*" Rit : rijdt
+Rit "0..1" -[norank]- "1..*" Leverpoging : plant
+Bestelling "1" -[norank]- "0..*" Levering : wordt uitgeleverd via
+Levering "1" -[norank]- "0..*" Leverpoging : wordt aangeboden in
+Levering "1" -[norank]- "1..*" Leveringregel : bevat
+Leveringregel "0..*" -[norank]- "1" Bestelregel : levert deel van
+Klant "1" -[norank]- "0..*" Factuur : ontvangt weekfactuur
+Factuur "0..1" -[norank]- "1..*" Leveringregel : factureert
+Factuur "1" -[norank]- "0..2" Betalingsherinnering : krijgt
+Leverancier "1" -[norank]- "0..*" Inkoopfactuur : stuurt
+
+' Onzichtbare lijnen bepalen uitsluitend de plaatsing.
+PotentieleKlant -[hidden]right-> Acquisitiebezoek
+Acquisitiebezoek -[hidden]right-> Leverancier
+Leverancier -[hidden]right-> Inkoopbestelling
+Inkoopbestelling -[hidden]right-> Inkoopfactuur
+Klant -[hidden]right-> Klantkorting
+Klantkorting -[hidden]right-> LeveranciersAanbod
+LeveranciersAanbod -[hidden]right-> Inkoopbestelregel
+Inkoopbestelregel -[hidden]right-> Factuur
+Adres -[hidden]right-> Bestelling
+Bestelling -[hidden]right-> Bestelregel
+Bestelregel -[hidden]right-> Product
+Product -[hidden]right-> ProductWerkzameStof
+ProductWerkzameStof -[hidden]right-> Betalingsherinnering
+OrderStatus -[hidden]right-> Deelorder
+Deelorder -[hidden]right-> Deelorderregel
+Deelorderregel -[hidden]right-> Magazijnlocatie
+Magazijnlocatie -[hidden]right-> Gang
+Koerier -[hidden]right-> Levering
+Levering -[hidden]right-> Leveringregel
+Leveringregel -[hidden]right-> Verzamelbak
+Verzamelbak -[hidden]right-> Robot
+Rit -[hidden]right-> Leverpoging
+PotentieleKlant -[hidden]down-> Klant
+Klant -[hidden]down-> Adres
+Adres -[hidden]down-> OrderStatus
+OrderStatus -[hidden]down-> Koerier
+Koerier -[hidden]down-> Rit
 @enduml
