@@ -1,0 +1,13 @@
+@startuml 06-administratie
+title Timaflu — Administratie
+!include stijl.iuml
+!$classes = "|Factuur|Betalingsherinnering|Inkoopfactuur|Klant|Leveringregel|Leverancier|"
+!$overview = 0
+!include model.iuml
+hide Klant members
+class Klant #EAF0F5
+hide Leveringregel members
+class Leveringregel #EAF0F5
+hide Leverancier members
+class Leverancier #EAF0F5
+@enduml

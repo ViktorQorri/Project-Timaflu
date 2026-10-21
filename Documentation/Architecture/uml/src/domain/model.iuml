@@ -1,0 +1,573 @@
+' Gedeeld model voor het overzicht en de zes detailweergaven.
+!if %strpos($classes, "|Klant|") >= 0
+class Klant {
+    bedrijfsnaam
+    contactpersoon
+    telefoonnummer
+    /jaaromzet
+    /bestellenGeblokkeerd
+    --
+    berekenJaaromzet()
+    controleerBestelblokkade()
+
+}
+!endif
+
+!if %strpos($classes, "|Adres|") >= 0
+class Adres {
+    adres
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|PotentieleKlant|") >= 0
+class PotentieleKlant {
+    bedrijfsnaam
+    contactpersoon
+    contactgegevens
+    --
+    heeftBestellingGeplaatst()
+    controleerOpvolgingNaMaand()
+    biedEenmaligeKortingAan()
+    maakKlantaccountAan()
+
+}
+!endif
+
+!if %strpos($classes, "|Acquisitiebezoek|") >= 0
+class Acquisitiebezoek {
+    bezoekdatum
+    --
+    registreerBezoek()
+
+}
+!endif
+
+!if %strpos($classes, "|Klantkorting|") >= 0
+class Klantkorting {
+    kalenderjaar
+    percentage
+    --
+    bepaalPercentage(jaaromzet, kalenderjaar)
+
+}
+!endif
+
+!if %strpos($classes, "|Bestelling|") >= 0
+class Bestelling {
+    besteldOp
+    gewensteLeverdatum
+    dagdeel
+    spoed
+    eenmaligeKortingToegepast
+    extraBezorgkosten
+    toelichtingExtraBezorgkosten
+    /totaalbedrag
+    --
+    berekenBestellingskorting()
+    berekenEenmaligeKorting()
+    berekenKlantenkorting()
+    berekenTotaalbedrag()
+    stelLevermomentIn(datum, dagdeel)
+    wijzigOrderstatus(status)
+    registreerExtraBezorgkosten(bedrag, toelichting)
+
+}
+!endif
+
+!if %strpos($classes, "|Bestelregel|") >= 0
+class Bestelregel {
+    aantal
+    prijsPerEenheid
+    afnemenBijTekort [0..1]
+    --
+    pasAantalAan(aantal)
+    legKeuzeBijTekortVast(afnemen)
+
+}
+!endif
+
+!if %strpos($classes, "|OrderStatus|") >= 0
+class OrderStatus {
+    naam
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Product|") >= 0
+class Product {
+    artikelnummer
+    bestelcode
+    productnaam
+    prijsPerGrootverpakking
+    verpakkingssoort
+    aantalDetailverpakkingen
+    korteOmschrijving
+    langeOmschrijving
+    minimaleBestelhoeveelheid
+    minimumvoorraad
+    /voorraadAantal
+    --
+    controleerVoorraad()
+    controleerMinimumvoorraad()
+    zoekLeveranciersOpPrijs()
+    verwijderLeverancier(leverancier)
+    verwijderUitAssortiment()
+
+}
+!endif
+
+!if %strpos($classes, "|ProductWerkzameStof|") >= 0
+class ProductWerkzameStof {
+    stofnaam
+    hoeveelheid
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Leverancier|") >= 0
+class Leverancier {
+    naam
+    contactpersoon
+    telefoonnummer
+    internetadres
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|LeveranciersAanbod|") >= 0
+class LeveranciersAanbod {
+    inkoopprijs
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Inkoopbestelling|") >= 0
+class Inkoopbestelling {
+    --
+    plaatsBijLeverancier()
+
+}
+!endif
+
+!if %strpos($classes, "|Inkoopbestelregel|") >= 0
+class Inkoopbestelregel {
+    aantal
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Gang|") >= 0
+class Gang {
+    letter
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Magazijnlocatie|") >= 0
+class Magazijnlocatie {
+    schapnummer
+    aantal
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Robot|") >= 0
+class Robot {
+    --
+    ontvangDeelorder(deelorder)
+    pakVerzamelbak()
+    scanVerzamelbak(verzamelbak)
+    verzamelMedicijnen()
+    zetBakOpRollerbaan()
+    meldDeelorderGereed()
+
+}
+!endif
+
+!if %strpos($classes, "|Deelorder|") >= 0
+class Deelorder {
+    afgerond
+    --
+    controleerCompleetheid()
+
+}
+!endif
+
+!if %strpos($classes, "|Deelorderregel|") >= 0
+class Deelorderregel {
+    aantal
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Verzamelbak|") >= 0
+class Verzamelbak {
+    uniekeCode
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Koerier|") >= 0
+class Koerier {
+    naam
+    beschikbaar
+    eigenKoerier
+    regio [0..1]
+    --
+    meldAanwezig()
+    meldBeschikbaar()
+    bekijkToegewezenRitten()
+    zoekKlanttelefoonnummerOp(klant)
+    zoekLevermomentOp(bestelling)
+
+}
+!endif
+
+!if %strpos($classes, "|Rit|") >= 0
+class Rit {
+    ritdatum
+    --
+    toonRooster(datum)
+    pasRoosterAan()
+
+}
+!endif
+
+!if %strpos($classes, "|Levering|") >= 0
+class Levering {
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Leverpoging|") >= 0
+class Leverpoging {
+    pogingnummer
+    geplandeTijd
+    daadwerkelijkAfgeleverdOp [0..1]
+    resultaat [0..1]
+    ontvangstGetekend [0..1]
+    --
+    markeerNietAanwezig()
+    markeerAfgeleverd(tijdstip)
+    registreerOntvangsthandtekening()
+
+}
+!endif
+
+!if %strpos($classes, "|Leveringregel|") >= 0
+class Leveringregel {
+    aantalGeleverd
+    --
+
+}
+!endif
+
+!if %strpos($classes, "|Factuur|") >= 0
+class Factuur {
+    factuurnummer
+    factuurdatum
+    betaaldOp [0..1]
+    betalingsregelingGeaccepteerd [0..1]
+    incassoIngeschakeld
+    /bedrag
+    --
+    stelWeekfactuurOp()
+    registreerVolledigeBetaling(datum)
+    controleerBetalingsachterstand()
+    stelBetalingsregelingVoor()
+    schakelIncassoIn()
+
+}
+!endif
+
+!if %strpos($classes, "|Betalingsherinnering|") >= 0
+class Betalingsherinnering {
+    volgnummer
+    verstuurdOp
+    --
+    verstuur()
+
+}
+!endif
+
+!if %strpos($classes, "|Inkoopfactuur|") >= 0
+class Inkoopfactuur {
+    bedrag
+    betaaldOp [0..1]
+    --
+    betaal()
+
+}
+!endif
+
+!if (%strpos($classes, "|Klant|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+Klant "0..*" -- "1" Adres
+!else
+Klant "0..*" -- "1" Adres : afleveradres
+!endif
+!endif
+!if (%strpos($classes, "|Klant|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+Klant "0..*" -- "1" Adres
+!else
+Klant "0..*" -- "1" Adres : betaaladres
+!endif
+!endif
+!if (%strpos($classes, "|PotentieleKlant|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+PotentieleKlant "0..*" -- "1" Adres
+!else
+PotentieleKlant "0..*" -- "1" Adres : bezoekadres
+!endif
+!endif
+!if (%strpos($classes, "|PotentieleKlant|") >= 0) && (%strpos($classes, "|Acquisitiebezoek|") >= 0)
+!if $overview
+PotentieleKlant "1" -- "0..*" Acquisitiebezoek
+!else
+PotentieleKlant "1" -- "0..*" Acquisitiebezoek : krijgt
+!endif
+!endif
+!if (%strpos($classes, "|PotentieleKlant|") >= 0) && (%strpos($classes, "|Klant|") >= 0)
+!if $overview
+PotentieleKlant "0..1" -- "0..1" Klant
+!else
+PotentieleKlant "0..1" -- "0..1" Klant : wordt
+!endif
+!endif
+!if (%strpos($classes, "|Klant|") >= 0) && (%strpos($classes, "|Klantkorting|") >= 0)
+!if $overview
+Klant "1" -- "0..*" Klantkorting
+!else
+Klant "1" -- "0..*" Klantkorting : heeft per jaar
+!endif
+!endif
+!if (%strpos($classes, "|Klant|") >= 0) && (%strpos($classes, "|Bestelling|") >= 0)
+!if $overview
+Klant "1" -- "0..*" Bestelling
+!else
+Klant "1" -- "0..*" Bestelling : plaatst
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+Bestelling "0..*" -- "1" Adres
+!else
+Bestelling "0..*" -- "1" Adres : afleveradres
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+Bestelling "0..*" -- "1" Adres
+!else
+Bestelling "0..*" -- "1" Adres : betaaladres
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|Bestelregel|") >= 0)
+!if $overview
+Bestelling "1" -- "1..*" Bestelregel
+!else
+Bestelling "1" -- "1..*" Bestelregel : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Bestelregel|") >= 0) && (%strpos($classes, "|Product|") >= 0)
+!if $overview
+Bestelregel "0..*" -- "1" Product
+!else
+Bestelregel "0..*" -- "1" Product : bestelt
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|OrderStatus|") >= 0)
+!if $overview
+Bestelling "0..*" -- "1" OrderStatus
+!else
+Bestelling "0..*" -- "1" OrderStatus : heeft
+!endif
+!endif
+!if (%strpos($classes, "|Product|") >= 0) && (%strpos($classes, "|ProductWerkzameStof|") >= 0)
+!if $overview
+Product "1" -- "1..*" ProductWerkzameStof
+!else
+Product "1" -- "1..*" ProductWerkzameStof : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Leverancier|") >= 0) && (%strpos($classes, "|Adres|") >= 0)
+!if $overview
+Leverancier "0..*" -- "1" Adres
+!else
+Leverancier "0..*" -- "1" Adres : gevestigd op
+!endif
+!endif
+!if (%strpos($classes, "|Leverancier|") >= 0) && (%strpos($classes, "|LeveranciersAanbod|") >= 0)
+!if $overview
+Leverancier "1" -- "0..*" LeveranciersAanbod
+!else
+Leverancier "1" -- "0..*" LeveranciersAanbod : doet
+!endif
+!endif
+!if (%strpos($classes, "|Product|") >= 0) && (%strpos($classes, "|LeveranciersAanbod|") >= 0)
+!if $overview
+Product "1" -- "0..*" LeveranciersAanbod
+!else
+Product "1" -- "0..*" LeveranciersAanbod : wordt aangeboden in
+!endif
+!endif
+!if (%strpos($classes, "|Leverancier|") >= 0) && (%strpos($classes, "|Inkoopbestelling|") >= 0)
+!if $overview
+Leverancier "1" -- "0..*" Inkoopbestelling
+!else
+Leverancier "1" -- "0..*" Inkoopbestelling : ontvangt
+!endif
+!endif
+!if (%strpos($classes, "|Inkoopbestelling|") >= 0) && (%strpos($classes, "|Inkoopbestelregel|") >= 0)
+!if $overview
+Inkoopbestelling "1" -- "1..*" Inkoopbestelregel
+!else
+Inkoopbestelling "1" -- "1..*" Inkoopbestelregel : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Inkoopbestelregel|") >= 0) && (%strpos($classes, "|Product|") >= 0)
+!if $overview
+Inkoopbestelregel "0..*" -- "1" Product
+!else
+Inkoopbestelregel "0..*" -- "1" Product : bestelt
+!endif
+!endif
+!if (%strpos($classes, "|Gang|") >= 0) && (%strpos($classes, "|Magazijnlocatie|") >= 0)
+!if $overview
+Gang "1" -- "40" Magazijnlocatie
+!else
+Gang "1" -- "40" Magazijnlocatie : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Gang|") >= 0) && (%strpos($classes, "|Robot|") >= 0)
+!if $overview
+Gang "1" -- "1" Robot
+!else
+Gang "1" -- "1" Robot : wordt bediend door
+!endif
+!endif
+!if (%strpos($classes, "|Product|") >= 0) && (%strpos($classes, "|Magazijnlocatie|") >= 0)
+!if $overview
+Product "0..1" -- "0..*" Magazijnlocatie
+!else
+Product "0..1" -- "0..*" Magazijnlocatie : ligt op
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|Deelorder|") >= 0)
+!if $overview
+Bestelling "1" -- "0..*" Deelorder
+!else
+Bestelling "1" -- "0..*" Deelorder : wordt verzameld via
+!endif
+!endif
+!if (%strpos($classes, "|Robot|") >= 0) && (%strpos($classes, "|Deelorder|") >= 0)
+!if $overview
+Robot "1" -- "0..*" Deelorder
+!else
+Robot "1" -- "0..*" Deelorder : verwerkt
+!endif
+!endif
+!if (%strpos($classes, "|Deelorder|") >= 0) && (%strpos($classes, "|Deelorderregel|") >= 0)
+!if $overview
+Deelorder "1" -- "1..*" Deelorderregel
+!else
+Deelorder "1" -- "1..*" Deelorderregel : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Deelorderregel|") >= 0) && (%strpos($classes, "|Bestelregel|") >= 0)
+!if $overview
+Deelorderregel "0..*" -- "1" Bestelregel
+!else
+Deelorderregel "0..*" -- "1" Bestelregel : verzamelt deel van
+!endif
+!endif
+!if (%strpos($classes, "|Deelorder|") >= 0) && (%strpos($classes, "|Verzamelbak|") >= 0)
+!if $overview
+Deelorder "0..1" -- "0..*" Verzamelbak
+!else
+Deelorder "0..1" -- "0..*" Verzamelbak : gebruikt momenteel
+!endif
+!endif
+!if (%strpos($classes, "|Koerier|") >= 0) && (%strpos($classes, "|Rit|") >= 0)
+!if $overview
+Koerier "1" -- "0..*" Rit
+!else
+Koerier "1" -- "0..*" Rit : rijdt
+!endif
+!endif
+!if (%strpos($classes, "|Rit|") >= 0) && (%strpos($classes, "|Leverpoging|") >= 0)
+!if $overview
+Rit "0..1" -- "1..*" Leverpoging
+!else
+Rit "0..1" -- "1..*" Leverpoging : plant
+!endif
+!endif
+!if (%strpos($classes, "|Bestelling|") >= 0) && (%strpos($classes, "|Levering|") >= 0)
+!if $overview
+Bestelling "1" -- "0..*" Levering
+!else
+Bestelling "1" -- "0..*" Levering : wordt uitgeleverd via
+!endif
+!endif
+!if (%strpos($classes, "|Levering|") >= 0) && (%strpos($classes, "|Leverpoging|") >= 0)
+!if $overview
+Levering "1" -- "0..*" Leverpoging
+!else
+Levering "1" -- "0..*" Leverpoging : wordt aangeboden in
+!endif
+!endif
+!if (%strpos($classes, "|Levering|") >= 0) && (%strpos($classes, "|Leveringregel|") >= 0)
+!if $overview
+Levering "1" -- "1..*" Leveringregel
+!else
+Levering "1" -- "1..*" Leveringregel : bevat
+!endif
+!endif
+!if (%strpos($classes, "|Leveringregel|") >= 0) && (%strpos($classes, "|Bestelregel|") >= 0)
+!if $overview
+Leveringregel "0..*" -- "1" Bestelregel
+!else
+Leveringregel "0..*" -- "1" Bestelregel : levert deel van
+!endif
+!endif
+!if (%strpos($classes, "|Klant|") >= 0) && (%strpos($classes, "|Factuur|") >= 0)
+!if $overview
+Klant "1" -- "0..*" Factuur
+!else
+Klant "1" -- "0..*" Factuur : ontvangt weekfactuur
+!endif
+!endif
+!if (%strpos($classes, "|Factuur|") >= 0) && (%strpos($classes, "|Leveringregel|") >= 0)
+!if $overview
+Factuur "0..1" -- "1..*" Leveringregel
+!else
+Factuur "0..1" -- "1..*" Leveringregel : factureert
+!endif
+!endif
+!if (%strpos($classes, "|Factuur|") >= 0) && (%strpos($classes, "|Betalingsherinnering|") >= 0)
+!if $overview
+Factuur "1" -- "0..2" Betalingsherinnering
+!else
+Factuur "1" -- "0..2" Betalingsherinnering : krijgt
+!endif
+!endif
+!if (%strpos($classes, "|Leverancier|") >= 0) && (%strpos($classes, "|Inkoopfactuur|") >= 0)
+!if $overview
+Leverancier "1" -- "0..*" Inkoopfactuur
+!else
+Leverancier "1" -- "0..*" Inkoopfactuur : stuurt
+!endif
+!endif

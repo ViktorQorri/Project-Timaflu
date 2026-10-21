@@ -1,0 +1,9 @@
+@startuml 01-klanten-acquisitie
+title Timaflu — Klanten en acquisitie
+!include stijl.iuml
+!$classes = "|PotentieleKlant|Acquisitiebezoek|Klant|Klantkorting|Adres|Bestelling|"
+!$overview = 0
+!include model.iuml
+hide Bestelling members
+class Bestelling #EAF0F5
+@enduml

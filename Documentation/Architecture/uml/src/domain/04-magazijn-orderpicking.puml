@@ -1,0 +1,13 @@
+@startuml 04-magazijn-orderpicking
+title Timaflu — Magazijn en orderpicking
+!include stijl.iuml
+!$classes = "|Gang|Magazijnlocatie|Robot|Deelorder|Deelorderregel|Verzamelbak|Bestelling|Bestelregel|Product|"
+!$overview = 0
+!include model.iuml
+hide Bestelling members
+class Bestelling #EAF0F5
+hide Bestelregel members
+class Bestelregel #EAF0F5
+hide Product members
+class Product #EAF0F5
+@enduml
