@@ -311,7 +311,7 @@ CREATE TABLE Klantkorting (
 
 CREATE TABLE Robot (
     robot_id INT PRIMARY KEY,
-    gang CHAR(1) UNIQUE,
+    gang CHAR(1) UNIQUE
 );
 
 
