@@ -16,14 +16,14 @@ skinparam ActivityDiamondFontSize 12
 skinparam NoteBackgroundColor #fffbe6
 
 |System.left|
-|User|
+|User.left|
 |System.right|
 
 |System.left|
 start
 :Show customer overview;
 
-|User|
+|User.left|
 
 :Selects row;
 
@@ -33,7 +33,7 @@ if (Row selected?) then (Yes)
     :Enable Edit Customer;
     :Enable Delete Customer;
 
-    |User|
+    |User.left|
     :Chooses action;
 
     if (Action?) then (Edit)
@@ -42,7 +42,7 @@ if (Row selected?) then (Yes)
         :Show edit customer;
 
         repeat
-            |User|
+            |User.left|
             :Modifies customer data;
 
             |System.left|
@@ -62,7 +62,7 @@ if (Row selected?) then (Yes)
         |System.right|
         :Show delete customer;
 
-        |User|
+        |User.left|
         :Confirms delete data;
 
         |System.right|

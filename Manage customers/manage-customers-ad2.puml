@@ -1,0 +1,113 @@
+@startuml Manage Customers
+title Manage Customers
+
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ActivityBackgroundColor #dbe8fb
+skinparam ActivityBorderColor #2a62e0
+skinparam ActivityDiamondBackgroundColor #fff4c2
+skinparam ActivityDiamondBorderColor #b8860b
+skinparam SwimlaneBorderColor #5b6b85
+skinparam SwimlaneTitleFontStyle bold
+skinparam ArrowColor #1f2937
+skinparam ArrowThickness 1.6
+skinparam conditionStyle diamond
+skinparam ActivityDiamondFontSize 12
+skinparam NoteBackgroundColor #fffbe6
+
+|System|
+|User|
+|System|
+
+|System|
+start
+:Show customer overview;
+
+|User|
+
+:Selects row;
+
+if (Row selected?) then (Yes)
+
+    |System|
+    :Enable Edit Customer;
+    :Enable Delete Customer;
+
+    |User|
+    :Chooses action;
+
+    if (Action?) then (Edit)
+
+        |System|
+        :Show edit customer;
+
+        repeat
+            |User|
+            :Modifies customer data;
+
+            |System|
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    else (Delete)
+
+        |System|
+        :Show delete customer;
+
+        |User|
+        :Confirms delete data;
+
+        |System|
+        if (Are you sure?) then (Yes)
+            :Delete customer record;
+        else (No)
+        endif
+
+    endif
+
+else (No)
+
+	|System|
+    :Enable Create Customer;
+
+    |User|
+    :Chooses Create Customer;
+
+    |System|
+    if (Create customer selected?) then (Yes)
+
+        :Create customer;
+
+        repeat
+            |User|
+            :Enter customer data;
+
+            |System|
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    endif
+
+endif
+
+:Return to customer overview;
+
+stop
+
+@enduml
