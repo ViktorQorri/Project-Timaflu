@@ -1,4 +1,4 @@
-@startuml
+@startuml Manage Customers
 title Manage Customers
 
 skinparam defaultFontSize 12
