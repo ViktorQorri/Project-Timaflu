@@ -1,0 +1,113 @@
+@startuml Manage Customers
+title Manage Customers
+
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ActivityBackgroundColor #dbe8fb
+skinparam ActivityBorderColor #2a62e0
+skinparam ActivityDiamondBackgroundColor #fff4c2
+skinparam ActivityDiamondBorderColor #b8860b
+skinparam SwimlaneBorderColor #5b6b85
+skinparam SwimlaneTitleFontStyle bold
+skinparam ArrowColor #1f2937
+skinparam ArrowThickness 1.6
+skinparam conditionStyle diamond
+skinparam ActivityDiamondFontSize 12
+skinparam NoteBackgroundColor #fffbe6
+
+|System.left|
+|User.left|
+|System.right|
+
+|System.left|
+start
+:Show customer overview;
+
+|User.left|
+
+:Selects row;
+
+if (Row selected?) then (Yes)
+
+    |System.left|
+    :Enable Edit Customer;
+    :Enable Delete Customer;
+
+    |User.left|
+    :Chooses action;
+
+    if (Action?) then (Edit)
+
+        |System.left|
+        :Show edit customer;
+
+        repeat
+            |User.left|
+            :Modifies customer data;
+
+            |System.left|
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    else (Delete)
+
+        |System.right|
+        :Show delete customer;
+
+        |User.left|
+        :Confirms delete data;
+
+        |System.right|
+        if (Are you sure?) then (Yes)
+            :Delete customer record;
+        else (No)
+        endif
+
+    endif
+
+else (No)
+
+	|System.right|
+    :Enable Create Customer;
+
+    |User.right|
+    :Chooses Create Customer;
+
+    |System.right|
+    if (Create customer selected?) then (Yes)
+
+        :Create customer;
+
+        repeat
+            |User.right|
+            :Enter customer data;
+
+            |System.right|
+            :Validate data;
+
+            if (Valid?) then (Yes)
+                :Save customer;
+                break
+            else (No)
+                :Show validation errors;
+            endif
+
+        repeat while (Validation errors?)
+
+    endif
+
+endif
+
+:Return to customer overview;
+
+stop
+
+@enduml
