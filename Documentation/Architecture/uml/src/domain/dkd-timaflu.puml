@@ -1,19 +1,11 @@
 @startuml dkd-timaflu
-title Timaflu — compleet domeinklassediagram
+title Timaflu - compleet domeinklassendiagram
 top to bottom direction
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 100
 skinparam ranksep 110
-skinparam defaultFontName Arial
-skinparam defaultFontSize 14
-skinparam classFontSize 16
-skinparam classAttributeFontSize 14
-skinparam ArrowFontSize 13
-skinparam classBackgroundColor #FFFFFF
-skinparam classBorderColor #526779
-skinparam ArrowColor #526779
 hide circle
 
 class Klant {
@@ -261,6 +253,7 @@ class Inkoopfactuur {
     betaal()
 }
 
+' Associaties inclusief multipliciteit aan beide uiteinden.
 Klant "0..*" -[norank]- "1" Adres : afleveradres
 Klant "0..*" -[norank]- "1" Adres : betaaladres
 PotentieleKlant "0..*" -[norank]- "1" Adres : bezoekadres
@@ -287,7 +280,7 @@ Bestelling "1" -[norank]- "0..*" Deelorder : wordt verzameld via
 Robot "1" -[norank]- "0..*" Deelorder : verwerkt
 Deelorder "1" -[norank]- "1..*" Deelorderregel : bevat
 Deelorderregel "0..*" -[norank]- "1" Bestelregel : verzamelt deel van
-Deelorder "1" -[norank]- "0..*" Verzamelbak : geregistreerd voor
+Deelorder "0..1" -[norank]- "0..*" Verzamelbak : geregistreerd voor
 Koerier "1" -[norank]- "0..*" Rit : rijdt
 Rit "1" -[norank]- "1..*" Leverpoging : plant
 Bestelling "1" -[norank]- "0..*" Levering : wordt uitgeleverd via
@@ -299,7 +292,7 @@ Factuur "0..1" -[norank]- "1..*" Leveringregel : factureert
 Factuur "1" -[norank]- "0..2" Betalingsherinnering : krijgt
 Leverancier "1" -[norank]- "0..*" Inkoopfactuur : stuurt
 
-' Onzichtbare lijnen bepalen uitsluitend de plaatsing.
+' Onzichtbare lijnen bepalen uitsluitend de plaatsing van de klassen.
 PotentieleKlant -[hidden]right-> Acquisitiebezoek
 Acquisitiebezoek -[hidden]right-> Leverancier
 Leverancier -[hidden]right-> Inkoopbestelling
