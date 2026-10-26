@@ -1,7 +1,6 @@
 @startuml dkd-timaflu
-title Timaflu - compleet domeinklassendiagram
+title Timaflu
 top to bottom direction
-skinparam classAttributeIconSize 0
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 100
@@ -89,7 +88,6 @@ class Bestelregel {
 
 class OrderStatus {
     naam
-    --
 }
 
 class Product {
@@ -115,7 +113,6 @@ class Product {
 class ProductWerkzameStof {
     stofnaam
     hoeveelheid
-    --
 }
 
 class Leverancier {
@@ -129,7 +126,6 @@ class Leverancier {
 
 class LeveranciersAanbod {
     inkoopprijs
-    --
 }
 
 class Inkoopbestelling {
@@ -139,18 +135,15 @@ class Inkoopbestelling {
 
 class Inkoopbestelregel {
     aantal
-    --
 }
 
 class Gang {
     letter
-    --
 }
 
 class Magazijnlocatie {
     schapnummer
     aantal
-    --
 }
 
 class Robot {
@@ -172,7 +165,6 @@ class Deelorder {
 
 class Deelorderregel {
     aantal
-    --
 }
 
 class Verzamelbak {
