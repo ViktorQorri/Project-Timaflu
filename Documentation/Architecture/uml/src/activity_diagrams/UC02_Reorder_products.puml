@@ -1,0 +1,31 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Purchasing Employee|
+start
+:Select product to reorder;
+:Enter desired quantity;
+|System|
+:Execute UC Determine cheapest manufacturer;
+:Show manufacturer and price;
+|Purchasing Employee|
+:Confirm order;
+|System|
+repeat
+  :Execute UC Send order to manufacturer;
+  |Manufacturer|
+  :Accept or reject order;
+  |System|
+backward :Select next cheapest manufacturer;
+repeat while (Order rejected and next\nmanufacturer exists?) is ([yes])
+->[no];
+if (Order placed?) then ([yes])
+  :Register purchase order;
+  stop
+else ([no])
+  :Report that no manufacturer can deliver;
+  :Remove product from internal order list;
+  stop
+endif
+@enduml

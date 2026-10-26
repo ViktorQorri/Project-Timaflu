@@ -1,0 +1,29 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Courier|
+start
+:Select order in trip overview;
+if (Customer present?) then ([yes])
+else ([no])
+  :Execute UC Look up customer phone number;
+  :Call customer;
+  if (Customer can still receive?) then ([yes])
+  else ([no])
+    :Register failed delivery;
+    |System|
+    :Set status to "not delivered";
+    :Notify sales\nand register extra costs;
+    stop
+  endif
+endif
+|Customer|
+:Sign digitally for receipt;
+|Courier|
+:Confirm delivery;
+|System|
+:Save signature and time;
+:Execute UC Update order status;
+stop
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Purchasing Employee|
+start
+:Open minimum stock overview;
+|System|
+:Execute UC Check stock;
+if (Products below minimum?) then ([yes])
+  :Show products with current\nand minimum stock;
+  stop
+else ([no])
+  |System|
+  :Show message that all\nstock levels are sufficient;
+  stop
+endif
+@enduml

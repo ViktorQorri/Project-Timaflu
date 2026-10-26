@@ -1,0 +1,32 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Administration Employee|
+start
+:Open outstanding invoices overview;
+|System|
+:Show unpaid invoices\nwith number of weeks open;
+|Administration Employee|
+:Select invoice;
+if (Open 3 weeks or more?) then ([yes])
+  :Call customer and propose\nstandard payment plan;
+  if (Customer accepts\npayment plan?) then ([yes])
+    :Register payment plan;
+    stop
+  else ([no])
+    :Register debt collection agency;
+    |System|
+    :Block customer\nfrom new orders;
+    stop
+  endif
+else ([no])
+  if (Open 1 week or more?) then ([yes])
+    :Execute UC Send payment reminder;
+    stop
+  else ([no])
+    :No action;
+    stop
+  endif
+endif
+@enduml

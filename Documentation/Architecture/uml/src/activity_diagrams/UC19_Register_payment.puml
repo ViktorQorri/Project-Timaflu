@@ -1,0 +1,23 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Administration Employee|
+start
+:Look up invoice;
+:Enter received amount;
+|System|
+if (Amount equals invoice amount?) then ([yes])
+  :Set invoice to paid;
+  :Add amount to customer's\nannual revenue;
+  if (Customer blocked and\nall paid?) then ([yes])
+    :Lift block;
+  else ([no])
+  endif
+  :Show confirmation;
+  stop
+else ([no])
+  :Report that partial payment\nis not possible;
+  stop
+endif
+@enduml

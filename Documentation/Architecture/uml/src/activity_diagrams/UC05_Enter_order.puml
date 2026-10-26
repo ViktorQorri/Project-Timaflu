@@ -1,0 +1,66 @@
+@startuml
+
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Sales Employee|
+start
+:Look up customer;
+
+|System|
+:Show customer data;
+
+if (Customer blocked\n(debt collection)?) then ([yes])
+  :Show message that customer\ncannot place orders;
+  stop
+endif
+
+|Sales Employee|
+repeat
+  :Enter product and quantity;
+
+  |System|
+  :Execute UC Check stock;
+
+  if (Sufficient stock?) then ([yes])
+    :Add order line\nand reserve stock;
+  else ([no])
+    :Report shortage\n(possible backorder);
+  endif
+
+  |Sales Employee|
+repeat while (Add another product?) is ([yes])
+->[no];
+
+if (Rush order?) then ([yes])
+  :Execute UC Mark as rush order;
+endif
+
+|System|
+repeat
+  :Execute UC Calculate price and discount;
+  :Show total price;
+
+  |Sales Employee|
+  :Ask customer for approval;
+
+backward :Adjust order lines;
+repeat while (Customer wants to\nchange order?) is ([yes])
+->[no];
+
+if (Customer agrees?) then ([yes])
+  :Execute UC Schedule delivery time;
+
+  |System|
+  :Save order;
+  :Execute UC Pick order;
+  :Show order number;
+  stop
+else ([no])
+  |Sales Employee|
+  :Cancel order and end call;
+  stop
+endif
+
+@enduml

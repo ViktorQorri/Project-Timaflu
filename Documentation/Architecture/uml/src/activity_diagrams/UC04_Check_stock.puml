@@ -1,0 +1,23 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Employee|
+start
+:Search product by name or item number;
+|System|
+:Search product;
+if (Product found?) then ([yes])
+  :Calculate available stock\n(stock - reserved);
+  :Show stock and locations;
+  if (Requested quantity > available stock?) then ([yes])
+    :Execute UC Register backorder;
+    stop
+  else ([no])
+  stop
+  endif
+else ([no])
+  :Show message product not found;
+  stop
+endif
+@enduml
