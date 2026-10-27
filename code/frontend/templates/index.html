@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1>Timaflu</h1>
+
+  {% if database_ok %}
+    <p class="status status-ok">Database connected</p>
+  {% else %}
+    <p class="status status-error">Database not available</p>
+  {% endif %}
+
+  <h2>Processes</h2>
+  <table>
+    <thead>
+      <tr><th>Process</th><th>Used by</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Sales</td><td>Sales employee</td></tr>
+      <tr><td>Purchasing</td><td>Purchasing employee</td></tr>
+      <tr><td>Order picking</td><td>Warehouse, robots</td></tr>
+      <tr><td>Distribution</td><td>Distribution corner, courier</td></tr>
+      <tr><td>Administration and invoicing</td><td>Administration employee</td></tr>
+      <tr><td>Acquisition</td><td>Acquisition employee</td></tr>
+    </tbody>
+  </table>
+{% endblock %}
