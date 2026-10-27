@@ -6,7 +6,7 @@ skinparam ActivityDiamondFontSize 11
 start
 :Open minimum stock overview;
 |System|
-:Execute UC Check stock;
+:Execute AD UC04 Check stock;
 if (Products below minimum?) then ([yes])
   :Show products with current\nand minimum stock;
   stop

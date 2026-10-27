@@ -20,7 +20,7 @@ endif
 while (Add another product?) is ([yes])
   :Enter product and quantity;
   |System|
-  :Execute UC Check stock;
+  :Execute AD UC04 Check stock;
   if (Sufficient stock?) then ([yes])
     :Add order line\nand reserve stock;
   else ([no])
@@ -31,29 +31,29 @@ while (Add another product?) is ([yes])
 endwhile ([no])
 
 if (Rush order?) then ([yes])
-  :Execute UC Mark as rush order;
+  :Mark as rush order;
 else ([no])
 endif
 
 |System|
-:Execute UC Calculate price and discount;
+:Calculate price and discount;
 :Show total price;
 |Sales Employee|
 :Ask customer for approval;
 while (Customer wants to\nchange order?) is ([yes])
   :Adjust order lines;
   |System|
-  :Execute UC Calculate price and discount;
+  :Calculate price and discount;
   :Show total price;
   |Sales Employee|
   :Ask customer for approval;
 endwhile ([no])
 
 if (Customer agrees?) then ([yes])
-  :Execute UC Schedule delivery time;
+  :Schedule delivery time;
   |System|
   :Save order;
-  :Execute UC Pick order;
+  :Pick order;
   :Show order number;
   stop
 else ([no])

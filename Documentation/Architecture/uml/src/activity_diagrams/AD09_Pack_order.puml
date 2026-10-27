@@ -16,8 +16,8 @@ if (Rush order?) then ([yes])
   :Print extra "Rush" label;
 else ([no])
 endif
-:Execute UC Update order status;
-:Execute UC Assign trip;
+:Update order status;
+:Assign trip;
 |Distribution Employee|
 :Attach labels and set boxes ready;
 stop

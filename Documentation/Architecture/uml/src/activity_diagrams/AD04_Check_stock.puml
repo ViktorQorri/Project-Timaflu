@@ -16,7 +16,7 @@ if (Product found?) then ([yes])
   :Enter requested quantity;
   |System|
   if (Requested quantity > available stock?) then ([yes])
-    :Execute UC Register backorder;
+    :Register backorder;
     stop
   else ([no])
     :Show that requested quantity is available;

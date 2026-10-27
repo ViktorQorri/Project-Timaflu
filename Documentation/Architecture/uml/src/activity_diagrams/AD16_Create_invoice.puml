@@ -6,7 +6,7 @@ skinparam ActivityDiamondFontSize 11
 start
 :Start weekly invoicing;
 |System|
-:Execute UC View delivered orders;
+:Execute AD UC17 View delivered orders;
 if (Customers without invoice?) then ([yes])
   repeat
     :Bundle delivered orders of customer;
@@ -16,7 +16,7 @@ if (Customers without invoice?) then ([yes])
     :Check and approve invoice;
     |System|
     :Save invoice;
-    :Execute UC Send invoice to customer;
+    :Send invoice to customer;
     :Set orders to "invoiced";
   repeat while (Another customer\nwithout invoice? [yes]) is ([yes])
   ->[no];

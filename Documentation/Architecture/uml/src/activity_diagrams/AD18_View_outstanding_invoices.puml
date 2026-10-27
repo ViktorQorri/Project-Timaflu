@@ -22,7 +22,7 @@ if (Open 3 weeks or more?) then ([yes])
   endif
 else ([no])
   if (Open 1 week or more?) then ([yes])
-    :Execute UC Send payment reminder;
+    :Send payment reminder;
     stop
   else ([no])
     :No action;

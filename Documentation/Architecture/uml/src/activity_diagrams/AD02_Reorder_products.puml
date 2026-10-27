@@ -7,13 +7,13 @@ start
 :Select product to reorder;
 :Enter desired quantity;
 |System|
-:Execute UC Determine cheapest manufacturer;
+:Determine cheapest manufacturer;
 :Show manufacturer and price;
 |Purchasing Employee|
 :Confirm order;
 |System|
 repeat
-  :Execute UC Send order to manufacturer;
+  :Send order to manufacturer;
   |Manufacturer|
   :Accept or reject order;
   |System|

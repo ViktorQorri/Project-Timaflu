@@ -12,11 +12,11 @@ else ([no])
   :Correct stock and set\nmissing lines to backorder;
 endif
 if (All sub-orders of order completed?) then ([yes])
-  :Execute UC Update order status;
+  :Update order status;
 else ([no])
 endif
 if (New sub-order for this aisle?) then ([yes])
-  :Execute UC Send sub-order to robot;
+  :Send sub-order to robot;
   stop
 else ([no])
   :Set robot to waiting;
