@@ -10,8 +10,8 @@ repeat
   :Send bin code and sub-order\nnumber to system;
   |System|
   :Validate bin code;
-backward :Send error message;\nrobot takes another bin;
-repeat while (Bin unknown or\nalready in use?) is ([yes])
+backward :Send error message,\nrobot takes another bin;
+repeat while (Bin unknown or\nalready in use? [no]) is ([yes])
 ->[no];
 :Link bin to sub-order;
 :Send confirmation to robot;

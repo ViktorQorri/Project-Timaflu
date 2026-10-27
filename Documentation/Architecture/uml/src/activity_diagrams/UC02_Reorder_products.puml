@@ -18,7 +18,7 @@ repeat
   :Accept or reject order;
   |System|
 backward :Select next cheapest manufacturer;
-repeat while (Order rejected and next\nmanufacturer exists?) is ([yes])
+repeat while (Order rejected and next\nmanufacturer exists? [yes]) is ([yes])
 ->[no];
 if (Order placed?) then ([yes])
   :Register purchase order;
