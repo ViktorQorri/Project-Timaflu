@@ -55,6 +55,7 @@ Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
+| Domain class diagram (PlantUML), sources and multiplicities | [Documentation/Architecture/uml/src/domain/README.md](Documentation/Architecture/uml/src/domain/README.md) |
 | Product description | [Documentation/brightspace/Product-description.md](Documentation/brightspace/Product-description.md) |
 | Process description | [Documentation/brightspace/Process-description.md](Documentation/brightspace/Process-description.md) |
 | Current processes | [Documentation/brightspace/Current-processes.md](Documentation/brightspace/Current-processes.md) |
