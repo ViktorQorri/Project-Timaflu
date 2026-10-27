@@ -1,5 +1,4 @@
 @startuml
-
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
@@ -12,28 +11,28 @@ start
 :Show list of manufacturers;
 
 |Purchasing Employee|
-
 switch (Choose action)
-case (Add)
+case (  [Add])
   :Enter new manufacturer data;
-case (Edit)
+case (          [Edit])
   :Select manufacturer;
   :Edit manufacturer data;
-case (Remove)
+case ([Remove])
   :Select manufacturer;
   :Choose remove;
+  |System|
+  :Remove manufacturer;
+  :Show confirmation;
+  stop
 endswitch
 
 |System|
 :Validate data;
-
 if (Data valid?) then ([yes])
   :Save changes;
   :Show confirmation;
 else ([no])
   :Show error message;
 endif
-
 stop
-
 @enduml
