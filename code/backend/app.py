@@ -7,8 +7,15 @@ from werkzeug.exceptions import HTTPException
 from config import Config
 from db import close_connection
 from domain.errors import DomainError
+from routes.acquisition import acquisition
+from routes.administration import administration
 from routes.api import api
+from routes.distribution import distribution
 from routes.home import home
+from routes.order_picking import order_picking
+from routes.purchasing import purchasing
+from routes.reports import reports
+from routes.sales import sales
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 
@@ -31,6 +38,13 @@ def create_app(config=Config):
     app.teardown_appcontext(close_connection)
 
     app.register_blueprint(home)
+    app.register_blueprint(sales)
+    app.register_blueprint(purchasing)
+    app.register_blueprint(order_picking)
+    app.register_blueprint(distribution)
+    app.register_blueprint(administration)
+    app.register_blueprint(acquisition)
+    app.register_blueprint(reports)
     app.register_blueprint(api, url_prefix="/api")
 
     register_error_handlers(app)
