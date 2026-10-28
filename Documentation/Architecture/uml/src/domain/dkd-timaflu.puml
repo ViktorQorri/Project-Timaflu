@@ -1,0 +1,311 @@
+@startuml dkd-timaflu
+title Timaflu
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 110
+hide circle
+
+class Customer {
+    companyName
+    contactPerson
+    phoneNumber
+    oneTimeDiscountGranted
+    --
+    calculateAnnualRevenue()
+    checkOrderBlock()
+    updateDetails()
+}
+
+class Address {
+    address
+    --
+    updateAddress(address)
+}
+
+class ProspectiveCustomer {
+    companyName
+    contactPerson
+    contactDetails
+    --
+    hasPlacedOrder()
+    checkFollowUpAfterOneMonth()
+    offerOneTimeDiscount()
+    createCustomerAccount()
+}
+
+class AcquisitionVisit {
+    visitDate
+    --
+    recordVisit()
+}
+
+class CustomerDiscount {
+    calendarYear
+    percentage
+    --
+    determinePercentage(annualRevenue, calendarYear)
+}
+
+class Order {
+    orderedOn
+    requestedDeliveryDate
+    timeSlot
+    urgent
+    customerApproval [0..1]
+    oneTimeDiscountApplied
+    additionalDeliveryCosts
+    additionalDeliveryCostsExplanation
+    --
+    calculateOrderDiscount()
+    calculateOneTimeDiscount()
+    calculateCustomerDiscount()
+    calculateTotalAmount()
+    setDeliveryTime(date, timeSlot)
+    changeOrderStatus(status)
+    recordAdditionalDeliveryCosts(amount, explanation)
+    recordOrder()
+    recordCustomerApproval(approval)
+    markAsUrgent()
+    getOrderStatus()
+    splitIntoSuborders()
+    viewCollectionBins()
+    packageOrder()
+}
+
+class OrderLine {
+    quantity
+    unitPrice
+    acceptShortage [0..1]
+    --
+    adjustQuantity(quantity)
+    recordShortageChoice(accept)
+}
+
+class OrderStatus {
+    name
+}
+
+class Product {
+    articleNumber
+    orderCode
+    productName
+    pricePerBulkPackage
+    packageType
+    numberOfRetailPackages
+    shortDescription
+    longDescription
+    minimumOrderQuantity
+    minimumStock
+    --
+    checkStock()
+    checkMinimumStock()
+    findSuppliersByPrice()
+    removeSupplier(supplier)
+    removeFromAssortment()
+}
+
+class ProductActiveIngredient {
+    ingredientName
+    quantity
+}
+
+class Supplier {
+    name
+    contactPerson
+    phoneNumber
+    website
+    --
+    updateDetails()
+}
+
+class SupplierOffer {
+    purchasePrice
+}
+
+class PurchaseOrder {
+    --
+    placeWithSupplier()
+}
+
+class PurchaseOrderLine {
+    quantity
+}
+
+class Aisle {
+    letter
+}
+
+class WarehouseLocation {
+    shelfNumber
+    quantity
+}
+
+class Robot {
+    --
+    receiveSuborder(suborder)
+    pickCollectionBin()
+    scanCollectionBin(collectionBin)
+    collectMedicines()
+    placeBinOnConveyor()
+    markSuborderComplete()
+}
+
+class Suborder {
+    completed
+    --
+    checkCompleteness()
+    assignToRobot(robot)
+}
+
+class SuborderLine {
+    quantity
+}
+
+class CollectionBin {
+    uniqueCode
+    --
+    registerForSuborder(suborder)
+}
+
+class Courier {
+    name
+    available
+    inHouseCourier
+    region [0..1]
+    --
+    reportArrival()
+    reportAvailability()
+    viewAssignedRoutes()
+    lookUpCustomerPhoneNumber(customer)
+    lookUpDeliveryTime(order)
+}
+
+class Route {
+    routeDate
+    --
+    showSchedule(date)
+    adjustSchedule()
+    assignToCourier(courier)
+}
+
+class Delivery {
+    --
+}
+
+class DeliveryAttempt {
+    attemptNumber
+    scheduledTime
+    actuallyDeliveredOn [0..1]
+    result [0..1]
+    receiptSigned [0..1]
+    --
+    markRecipientAbsent()
+    markDelivered(timestamp)
+    recordReceiptSignature()
+}
+
+class DeliveryLine {
+    quantityDelivered
+    --
+}
+
+class Invoice {
+    invoiceNumber
+    invoiceDate
+    paidOn [0..1]
+    paymentPlanAccepted [0..1]
+    debtCollectionEnabled
+    --
+    createWeeklyInvoice()
+    sendToCustomer()
+    recordFullPayment(date)
+    checkPaymentArrears()
+    proposePaymentPlan()
+    enableDebtCollection()
+}
+
+class PaymentReminder {
+    sequenceNumber
+    sentOn
+    --
+    send()
+}
+
+class PurchaseInvoice {
+    amount
+    paidOn [0..1]
+    --
+    pay()
+}
+
+' Directed associations: the arrow points from the subject to the related entity.
+' All original multiplicities are preserved.
+Customer "0..*" -[norank]-> "1" Address : delivery address
+Customer "0..*" -[norank]-> "1" Address : billing address
+ProspectiveCustomer "0..*" -[norank]-> "1" Address : visit address
+ProspectiveCustomer "1" -[norank]-> "0..*" AcquisitionVisit : receives
+ProspectiveCustomer "0..1" -[norank]-> "0..1" Customer : becomes
+Customer "1" -[norank]-> "0..*" CustomerDiscount : has per year
+Customer "1" -[norank]-> "0..*" Order : places
+Order "0..*" -[norank]-> "1" Address : delivery address
+Order "0..*" -[norank]-> "1" Address : billing address
+Order "1" -[norank]-> "1..*" OrderLine : contains
+OrderLine "0..*" -[norank]-> "1" Product : orders
+Order "0..*" -[norank]-> "1" OrderStatus : has
+Product "1" -[norank]-> "1..*" ProductActiveIngredient : contains
+Supplier "0..*" -[norank]-> "1" Address : located at
+Supplier "1" -[norank]-> "0..*" SupplierOffer : makes
+Product "1" -[norank]-> "0..*" SupplierOffer : offered in
+Supplier "1" -[norank]-> "0..*" PurchaseOrder : receives
+PurchaseOrder "1" -[norank]-> "1..*" PurchaseOrderLine : contains
+PurchaseOrderLine "0..*" -[norank]-> "1" Product : orders
+Aisle "1" -[norank]-> "40" WarehouseLocation : contains
+Aisle "1" -[norank]-> "1" Robot : serviced by
+Product "0..1" -[norank]-> "0..*" WarehouseLocation : stored at
+Order "1" -[norank]-> "0..*" Suborder : collected through
+Robot "1" -[norank]-> "0..*" Suborder : processes
+Suborder "1" -[norank]-> "1..*" SuborderLine : contains
+SuborderLine "0..*" -[norank]-> "1" OrderLine : collects part of
+Suborder "0..1" -[norank]-> "0..*" CollectionBin : registered for
+Courier "1" -[norank]-> "0..*" Route : drives
+Route "1" -[norank]-> "1..*" DeliveryAttempt : schedules
+Order "1" -[norank]-> "0..*" Delivery : fulfilled through
+Delivery "1" -[norank]-> "0..*" DeliveryAttempt : attempted in
+Delivery "1" -[norank]-> "1..*" DeliveryLine : contains
+DeliveryLine "0..*" -[norank]-> "1" OrderLine : delivers part of
+Customer "1" -[norank]-> "0..*" Invoice : receives weekly invoice
+Invoice "0..1" -[norank]-> "1..*" DeliveryLine : invoices
+Invoice "1" -[norank]-> "0..2" PaymentReminder : receives
+Supplier "1" -[norank]-> "0..*" PurchaseInvoice : sends
+
+' Invisible layout constraints only; no additional domain relations.
+ProspectiveCustomer -[hidden]right-> AcquisitionVisit
+AcquisitionVisit -[hidden]right-> Supplier
+Supplier -[hidden]right-> PurchaseOrder
+PurchaseOrder -[hidden]right-> PurchaseInvoice
+Customer -[hidden]right-> CustomerDiscount
+CustomerDiscount -[hidden]right-> SupplierOffer
+SupplierOffer -[hidden]right-> PurchaseOrderLine
+PurchaseOrderLine -[hidden]right-> Invoice
+Address -[hidden]right-> Order
+Order -[hidden]right-> OrderLine
+OrderLine -[hidden]right-> Product
+Product -[hidden]right-> ProductActiveIngredient
+ProductActiveIngredient -[hidden]right-> PaymentReminder
+OrderStatus -[hidden]right-> Suborder
+Suborder -[hidden]right-> SuborderLine
+SuborderLine -[hidden]right-> WarehouseLocation
+WarehouseLocation -[hidden]right-> Aisle
+Courier -[hidden]right-> Delivery
+Delivery -[hidden]right-> DeliveryLine
+DeliveryLine -[hidden]right-> CollectionBin
+CollectionBin -[hidden]right-> Robot
+Route -[hidden]right-> DeliveryAttempt
+ProspectiveCustomer -[hidden]down-> Customer
+Customer -[hidden]down-> Address
+Address -[hidden]down-> OrderStatus
+OrderStatus -[hidden]down-> Courier
+Courier -[hidden]down-> Route
+@enduml

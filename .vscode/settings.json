@@ -1,0 +1,8 @@
+
+{
+  "plantuml.diagramsRoot": "Documentation/Architecture/uml/src",
+  "plantuml.exportOutDir": "Documentation/Architecture/uml/export",
+  "plantuml.exportFormat": "svg",
+  "plantuml.exportSubFolder": false,
+  "plantuml.exportIncludeFolderHeirarchy": true,
+}
