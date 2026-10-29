@@ -4,28 +4,23 @@ skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
 |Purchasing Employee|
 start
+:View products below minimum stock;
 :Select product to reorder;
 :Enter desired quantity;
 |System|
-:Determine cheapest manufacturer;
-:Show manufacturer and price;
+:Show linked manufacturers ordered by purchase price;
 |Purchasing Employee|
-:Confirm order;
+:Contact cheapest manufacturer;
+while (Can manufacturer supply the medicine?) is ([no])
+  :Contact next cheapest manufacturer;
+  if (No manufacturers remain?) then ([yes])
+    :Remove product from internal reorder list;
+    stop
+  endif
+endwhile ([yes])
+:Confirm purchase with manufacturer;
 |System|
-repeat
-  :Send order to manufacturer;
-  |Manufacturer|
-  :Accept or reject order;
-  |System|
-backward :Select next cheapest manufacturer;
-repeat while (Order rejected and next\nmanufacturer exists? [yes]) is ([yes])
-->[no];
-if (Order placed?) then ([yes])
-  :Register purchase order;
-  stop
-else ([no])
-  :Report that no manufacturer can deliver;
-  :Remove product from internal order list;
-  stop
-endif
+:Register confirmed purchase order;
+:Show confirmation;
+stop
 @enduml

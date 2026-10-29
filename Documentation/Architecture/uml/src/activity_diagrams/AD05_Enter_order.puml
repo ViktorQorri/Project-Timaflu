@@ -2,63 +2,44 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
-
 |Sales Employee|
 start
 :Look up customer;
-
 |System|
-:Show customer data;
-if (Customer blocked\n(debt collection)?) then ([yes])
-  :Show message that customer\ncannot place orders;
+:Show customer details;
+if (Customer blocked for unpaid invoices?) then ([yes])
+  :Show cannot place order;
   stop
-else ([no])
 endif
-
 |Sales Employee|
-:Ask customer which product\nthey want to order;
-while (Add another product?) is ([yes])
-  :Enter product and quantity;
+repeat
+  :Enter product and requested quantity;
   |System|
-  :Execute AD UC04 Check stock;
-  if (Sufficient stock?) then ([yes])
-    :Add order line\nand reserve stock;
+  :Check available stock (AD04);
+  if (Enough stock?) then ([yes])
+    :Add provisional order line;
   else ([no])
-    :Report shortage\n(possible backorder);
+    :Report shortage and backorder possibility;
   endif
   |Sales Employee|
-  :Ask customer for another product;
-endwhile ([no])
-
-if (Rush order?) then ([yes])
-  :Mark as rush order;
-else ([no])
-endif
-
+repeat while (Another product?) is ([yes])
 |System|
-:Calculate price and discount;
-:Show total price;
+:Calculate discounts and total;
+:Show total;
 |Sales Employee|
-:Ask customer for approval;
-while (Customer wants to\nchange order?) is ([yes])
-  :Adjust order lines;
-  |System|
-  :Calculate price and discount;
-  :Show total price;
-  |Sales Employee|
-  :Ask customer for approval;
-endwhile ([no])
-
 if (Customer agrees?) then ([yes])
-  :Schedule delivery time;
+  :Agree delivery date and morning/afternoon;
   |System|
-  :Save order;
-  :Pick order;
-  :Show order number;
-  stop
+  :In one transaction, recheck available stock;
+  if (Stock still sufficient?) then ([yes])
+    :Save order and order lines;
+    :Create reservations for available order lines;
+    :Show order number;
+  else ([no])
+    :Report changed availability and ask employee to revise order;
+  endif
 else ([no])
-  |Sales Employee|
-  :Cancel order and end call;
-  stop
+  :Cancel provisional order without stock reservations;
 endif
+stop
 @enduml
