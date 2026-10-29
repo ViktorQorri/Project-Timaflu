@@ -83,6 +83,10 @@ class OrderLine {
     recordShortageChoice(accept)
 }
 
+class StockReservation {
+    reservedQuantity
+}
+
 class OrderStatus {
     name
 }
@@ -253,6 +257,7 @@ Order "0..*" -[norank]-> "1" Address : delivery address
 Order "0..*" -[norank]-> "1" Address : billing address
 Order "1" -[norank]-> "1..*" OrderLine : contains
 OrderLine "0..*" -[norank]-> "1" Product : orders
+OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
 Order "0..*" -[norank]-> "1" OrderStatus : has
 Product "1" -[norank]-> "1..*" ProductActiveIngredient : contains
 Supplier "0..*" -[norank]-> "1" Address : located at
@@ -261,6 +266,7 @@ Product "1" -[norank]-> "0..*" SupplierOffer : offered in
 Supplier "1" -[norank]-> "0..*" PurchaseOrder : receives
 PurchaseOrder "1" -[norank]-> "1..*" PurchaseOrderLine : contains
 PurchaseOrderLine "0..*" -[norank]-> "1" Product : orders
+OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
 Aisle "1" -[norank]-> "40" WarehouseLocation : contains
 Aisle "1" -[norank]-> "1" Robot : serviced by
 Product "0..1" -[norank]-> "0..*" WarehouseLocation : stored at
