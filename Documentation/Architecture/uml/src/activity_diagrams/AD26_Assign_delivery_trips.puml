@@ -1,0 +1,40 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Distribution Employee|
+start
+:Open packed orders ready for delivery;
+|System|
+:Show destination, requested\ndate and time slot, and rush flag;
+|Distribution Employee|
+while (Another order to assign?) is ([yes])
+  :Select packed order;
+  if (Rush order?) then ([yes])
+    |System|
+    :Find first available in-house courier\n(regardless of region or time);
+    if (In-house courier available?) then ([yes])
+      :Assign separate priority rush trip;
+    else ([no])
+      |Sales Employee|
+      :Contact external rush courier;
+      |System|
+      :Register external rush assignment;
+    endif
+  else ([no])
+    |System|
+    :Find courier for destination region\nand agreed delivery time slot;
+    if (Pickup before 17:00\nand courier available?) then ([yes])
+      :Assign to courier's regional route;
+    else ([no])
+      :Queue for next suitable pickup\nand agreed delivery window;
+    endif
+  endif
+  |System|
+  :Save trip assignment or queue;
+  :Update delivery details for courier;
+  |Distribution Employee|
+endwhile ([no])
+stop
+@enduml

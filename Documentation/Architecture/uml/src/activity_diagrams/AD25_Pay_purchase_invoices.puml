@@ -1,0 +1,33 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Administration Employee|
+start
+:After weekly customer invoicing,\nopen supplier invoices;
+|System|
+:Show outstanding purchase invoices;
+if (Unpaid purchase invoices?) then ([yes])
+  |Administration Employee|
+  while (Another invoice to handle?) is ([yes])
+    :Select supplier invoice;
+    :Check supplier, amount and\ndue date;
+    if (Invoice approved for payment?) then ([yes])
+      :Pay supplier invoice;
+      :Record payment date;
+      |System|
+      :Mark purchase invoice as paid;
+      :Show confirmation;
+    else ([no])
+      |Administration Employee|
+      :Leave invoice outstanding\nfor further review;
+    endif
+    |Administration Employee|
+  endwhile ([no])
+else ([no])
+  |System|
+  :Show message no unpaid\npurchase invoices;
+endif
+stop
+@enduml
