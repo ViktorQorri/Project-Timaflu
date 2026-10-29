@@ -1,0 +1,43 @@
+@startuml eer-stock-reservation
+title Timaflu - EER-aanvulling voorraadreserveringen
+hide circle
+skinparam linetype ortho
+
+entity "Bestelling" as Bestelling {
+  * bestelling_id : INT <<PK>>
+}
+
+entity "Product" as Product {
+  * product_id : INT <<PK>>
+  --
+  productnaam : VARCHAR(100)
+  minimumvoorraad : INT
+}
+
+entity "Bestelregel" as Bestelregel {
+  * bestelling_id : INT <<PK, FK>>
+  * product_id : INT <<PK, FK>>
+  --
+  aantal : INT
+  prijs_per_eenheid : DECIMAL(10,2)
+}
+
+entity "Voorraadreservering" as Reservation {
+  * bestelling_id : INT <<PK, FK>>
+  * product_id : INT <<PK, FK>>
+  --
+  aantal : INT
+}
+
+Bestelling ||--|{ Bestelregel : bevat
+Product ||--o{ Bestelregel : besteld_in
+Bestelregel ||--o| Reservation : reserveert
+
+note right of Reservation
+  Samengestelde foreign key naar Bestelregel.
+  Eén reservering per bestelregel (0..1).
+  Alleen voor een bestaande bestelling.
+  CHECK aantal > 0.
+end note
+
+@enduml
