@@ -1,7 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Stock{% endblock %}
+{% block title %}Stock shortages{% endblock %}
 
 {% block content %}
-  <h1>Stock</h1>
+  <section class="stock-dashboard" aria-labelledby="stock-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Purchasing</p>
+        <h1 id="stock-title">Stock shortages</h1>
+        <p class="stock-dashboard__subtitle">Products below their minimum physical warehouse stock.</p>
+      </div>
+      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} products below minimum stock">
+        {{ shortages|length }} products below minimum
+      </p>
+    </header>
+
+    {% if shortages %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Products that need replenishment, sorted by largest shortage</caption>
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">Article number</th>
+              <th scope="col" class="stock-dashboard__number">Available stock</th>
+              <th scope="col" class="stock-dashboard__number">Minimum stock</th>
+              <th scope="col" class="stock-dashboard__number">Shortage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in shortages %}
+              <tr>
+                <th scope="row">{{ item.productnaam }}</th>
+                <td>{{ item.artikelnummer }}</td>
+                <td class="stock-dashboard__number">{{ item.voorraad }}</td>
+                <td class="stock-dashboard__number">{{ item.minimumvoorraad }}</td>
+                <td class="stock-dashboard__number">
+                  <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="stock-dashboard__empty" role="status">
+        <h2>No stock shortages</h2>
+        <p>All products meet their configured minimum inventory.</p>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}
