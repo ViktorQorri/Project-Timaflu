@@ -18,6 +18,6 @@ class SalesStockService:
             raise DomainError("Requested quantity must be a positive whole number.")
         rows = self.repository.find_products(query)
         return [
-            {**item, "voldoende": item["voorraad"] >= quantity}
+            {**item, "voldoende": item["beschikbaar"] >= quantity}
             for item in rows
         ]

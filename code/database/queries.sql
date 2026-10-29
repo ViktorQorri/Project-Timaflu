@@ -31,13 +31,22 @@ INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
 -- Both INSERT statements are one transaction in the application.
 
--- Telephone-sales current physical stock lookup, GET /orders?q=...&quantity=...
--- Same query as SalesStockRepository.find_products(), with example values.
--- This is physical stock, not a reservation count.
+-- Telephone-sales availability lookup, GET /orders?q=...&quantity=...
+-- Same SELECT as SalesStockRepository.find_products() with example parameters.
+-- Availability = physical stock minus stock reserved for open orders.
 SELECT p.product_id, p.artikelnummer, p.productnaam,
-       COALESCE(SUM(m.aantal), 0) AS voorraad
+       COALESCE(m.voorraad, 0) AS voorraad,
+       COALESCE(r.gereserveerd, 0) AS gereserveerd,
+       GREATEST(COALESCE(m.voorraad, 0) -
+                COALESCE(r.gereserveerd, 0), 0) AS beschikbaar
 FROM Product AS p
-LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+LEFT JOIN (
+    SELECT product_id, SUM(aantal) AS voorraad
+    FROM Magazijnlocatie GROUP BY product_id
+) AS m ON m.product_id = p.product_id
+LEFT JOIN (
+    SELECT product_id, SUM(aantal) AS gereserveerd
+    FROM Voorraadreservering GROUP BY product_id
+) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
-GROUP BY p.product_id, p.artikelnummer, p.productnaam
 ORDER BY p.productnaam ASC;

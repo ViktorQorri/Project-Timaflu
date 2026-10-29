@@ -34,21 +34,22 @@ class Connection:
 class StockCheckTests(TestCase):
     def setUp(self):
         self.rows = [
-            {"product_id": 1, "artikelnummer": "T-1", "productnaam": "Medication A", "voorraad": 3}
+            {"product_id": 1, "artikelnummer": "T-1", "productnaam": "Medication A", "voorraad": 3, "gereserveerd": 1, "beschikbaar": 2}
         ]
 
     def test_query_uses_all_warehouse_locations(self):
         connection = Connection(self.rows)
         self.assertEqual(SalesStockRepository(connection).find_products("T-1"), self.rows)
-        self.assertIn("SUM(m.aantal)", connection.c.statement)
-        self.assertIn("LEFT JOIN Magazijnlocatie", connection.c.statement)
+        self.assertIn("SUM(aantal)", connection.c.statement)
+        self.assertIn("FROM Magazijnlocatie", connection.c.statement)
+        self.assertIn("FROM Voorraadreservering", connection.c.statement)
         self.assertEqual(connection.c.params, ("%T-1%", "%T-1%"))
 
     def test_sufficient_and_insufficient_quantity(self):
         repo = type("Repo", (), {"find_products": lambda _, query: self.rows})()
         service = SalesStockService(repo)
-        self.assertTrue(service.check("Medication", 3)[0]["voldoende"])
-        self.assertFalse(service.check("Medication", 4)[0]["voldoende"])
+        self.assertTrue(service.check("Medication", 2)[0]["voldoende"])
+        self.assertFalse(service.check("Medication", 3)[0]["voldoende"])
 
     def test_get_screen_does_not_change_database(self):
         app = create_app()
@@ -58,6 +59,6 @@ class StockCheckTests(TestCase):
                 response = client.get("/orders?q=Medication&quantity=4")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Insufficient stock", response.data)
-                self.assertIn(b"no reservation recorded", response.data)
+                self.assertIn(b"Reserved", response.data)
             response = client.get("/orders")
             self.assertEqual(response.status_code, 200)

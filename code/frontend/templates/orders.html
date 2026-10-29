@@ -15,11 +15,11 @@
     {% if products %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Current physical stock, no reservation recorded</caption>
-          <thead><tr><th scope="col">Medicine</th><th scope="col">Article number</th><th scope="col" class="stock-dashboard__number">Physical stock</th><th scope="col">Can supply requested quantity?</th></tr></thead>
+          <caption>Physical stock minus reservations linked to existing orders</caption>
+          <thead><tr><th scope="col">Medicine</th><th scope="col">Article number</th><th scope="col" class="stock-dashboard__number">Physical stock</th><th scope="col" class="stock-dashboard__number">Reserved</th><th scope="col" class="stock-dashboard__number">Available</th><th scope="col">Can supply requested quantity?</th></tr></thead>
           <tbody>
             {% for item in products %}
-              <tr><th scope="row">{{ item.productnaam }}</th><td>{{ item.artikelnummer }}</td><td class="stock-dashboard__number">{{ item.voorraad }}</td><td>
+              <tr><th scope="row">{{ item.productnaam }}</th><td>{{ item.artikelnummer }}</td><td class="stock-dashboard__number">{{ item.voorraad }}</td><td class="stock-dashboard__number">{{ item.gereserveerd }}</td><td class="stock-dashboard__number">{{ item.beschikbaar }}</td><td>
                 {% if item.voldoende %}<span class="stock-dashboard__available">Sufficient stock</span>
                 {% else %}<span class="stock-dashboard__shortage">Insufficient stock</span>{% endif %}
               </td></tr>
@@ -31,6 +31,6 @@
       <p role="status">No matching medicine found.</p>
     {% endif %}
   {% endif %}
-  <p class="stock-dashboard__subtitle">This screen does not reserve products or create customer orders.</p>
+  <p class="stock-dashboard__subtitle">Reservations are registered with actual orders; this screen only checks stock.</p>
 </section>
 {% endblock %}
