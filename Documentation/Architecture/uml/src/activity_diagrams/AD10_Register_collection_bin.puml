@@ -1,0 +1,22 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Warehouse Robot|
+start
+repeat
+  |Warehouse Robot|
+  :Take empty collection bin;
+  :Scan unique bin code;
+  :Send bin code and sub-order\nnumber to system;
+  |System|
+  :Validate bin code;
+backward :Notify robot of invalid code\nand request another bin;
+repeat while (Bin unknown or\nalready in use?) is ([yes])
+->[no];
+:Link bin to sub-order;
+:Send confirmation to robot;
+|Warehouse Robot|
+:Start collecting;
+stop
+@enduml

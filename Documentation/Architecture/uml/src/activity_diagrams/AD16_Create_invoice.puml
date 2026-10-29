@@ -1,0 +1,26 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Administration Employee|
+start
+:Start weekly invoicing;
+|System|
+:Execute AD UC17 View delivered orders;
+if (Uninvoiced delivered\norders available?) then ([yes])
+  repeat
+    :Bundle delivered orders of customer;
+    :Calculate total of delivered\nproducts plus extra costs;
+    :Show draft invoice;
+    |Administration Employee|
+    :Check and approve invoice;
+    |System|
+    :Save invoice;
+    :Send invoice to customer;
+    :Set orders to "invoiced";
+  repeat while (Another customer with\nuninvoiced delivered orders?) is ([yes])
+  ->[no];
+else ([no])
+endif
+stop
+@enduml

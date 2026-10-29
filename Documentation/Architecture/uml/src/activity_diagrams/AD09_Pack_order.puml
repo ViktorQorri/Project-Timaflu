@@ -1,0 +1,24 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Distribution Employee|
+start
+:Select complete order;
+|System|
+:Show related collection bins\nand order lines;
+|Distribution Employee|
+:Pack medicines into boxes;
+:Enter number of boxes and confirm;
+|System|
+:Print address label\n(customer name, address, phone number);
+if (Rush order?) then ([yes])
+  :Print extra "Rush" label;
+else ([no])
+endif
+:Update order status;
+:Assign trip;
+|Distribution Employee|
+:Attach labels and set boxes ready;
+stop
+@enduml
