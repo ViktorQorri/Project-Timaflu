@@ -30,3 +30,14 @@ INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
 -- Both INSERT statements are one transaction in the application.
+
+-- Telephone-sales current physical stock lookup, GET /orders?q=...&quantity=...
+-- Same query as SalesStockRepository.find_products(), with example values.
+-- This is physical stock, not a reservation count.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
+GROUP BY p.product_id, p.artikelnummer, p.productnaam
+ORDER BY p.productnaam ASC;
