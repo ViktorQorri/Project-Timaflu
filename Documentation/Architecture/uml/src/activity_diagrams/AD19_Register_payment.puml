@@ -10,7 +10,7 @@ start
 if (Amount equals invoice amount?) then ([yes])
   :Set invoice to paid;
   :Add amount to customer's\nannual revenue;
-  if (Customer blocked and\nall paid?) then ([yes])
+  if (Customer blocked and all\noutstanding invoices paid?) then ([yes])
     :Lift block;
   else ([no])
   endif

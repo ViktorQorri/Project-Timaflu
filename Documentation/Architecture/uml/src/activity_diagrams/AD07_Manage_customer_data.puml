@@ -8,6 +8,7 @@ start
 |System|
 :Show list of customers;
 |Sales Employee|
+:Choose customer action;
 if (Add customer?) then ([yes])
   :Enter new customer data;
   if (One-time acquisition discount?) then ([yes])

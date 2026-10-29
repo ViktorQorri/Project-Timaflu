@@ -7,7 +7,7 @@ start
 :Start weekly invoicing;
 |System|
 :Execute AD UC17 View delivered orders;
-if (Customers without invoice?) then ([yes])
+if (Uninvoiced delivered\norders available?) then ([yes])
   repeat
     :Bundle delivered orders of customer;
     :Calculate total of delivered\nproducts plus extra costs;
@@ -18,7 +18,7 @@ if (Customers without invoice?) then ([yes])
     :Save invoice;
     :Send invoice to customer;
     :Set orders to "invoiced";
-  repeat while (Another customer\nwithout invoice? [yes]) is ([yes])
+  repeat while (Another customer with\nuninvoiced delivered orders?) is ([yes])
   ->[no];
 else ([no])
 endif

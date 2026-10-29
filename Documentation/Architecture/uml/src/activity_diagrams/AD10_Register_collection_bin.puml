@@ -4,14 +4,15 @@ skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
 |Warehouse Robot|
 start
-:Take empty collection bin;
 repeat
+  |Warehouse Robot|
+  :Take empty collection bin;
   :Scan unique bin code;
   :Send bin code and sub-order\nnumber to system;
   |System|
   :Validate bin code;
-backward :Send error message,\nrobot takes another bin;
-repeat while (Bin unknown or\nalready in use? [no]) is ([yes])
+backward :Notify robot of invalid code\nand request another bin;
+repeat while (Bin unknown or\nalready in use?) is ([yes])
 ->[no];
 :Link bin to sub-order;
 :Send confirmation to robot;
