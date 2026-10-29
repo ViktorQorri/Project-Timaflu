@@ -1,7 +1,36 @@
 {% extends "base.html" %}
-
 {% block title %}Suppliers{% endblock %}
-
 {% block content %}
-  <h1>Suppliers</h1>
+<section class="stock-dashboard" aria-labelledby="supplier-title">
+  <h1 id="supplier-title">Find suppliers for a medicine</h1>
+  <p class="stock-dashboard__subtitle">Compare suppliers by purchase price, as required for purchasing.</p>
+  <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="supplier-lookup">
+    <label for="product-name">Medicine name</label>
+    <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
+    <button type="submit">Find suppliers</button>
+  </form>
+  {% if product_name %}
+    {% if offers %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Supplier offers for {{ product_name }}, ordered by purchase price</caption>
+          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col" class="stock-dashboard__number">Purchase price</th></tr></thead>
+          <tbody>
+            {% for offer in offers %}
+              <tr>
+                <th scope="row">{{ offer.productnaam }}</th>
+                <td>{{ offer.leverancier }}</td>
+                <td>{{ offer.contactpersoon or 'Not recorded' }}</td>
+                <td>{{ offer.telefoonnummer or 'Not recorded' }}</td>
+                <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p role="status">No suppliers found for this medicine.</p>
+    {% endif %}
+  {% endif %}
+</section>
 {% endblock %}
