@@ -7,7 +7,7 @@ class SupplierRepository:
     def find_offers(self, product_name):
         """Find matching products and their offers, cheapest supplier first."""
         query = """
-            SELECT p.product_id, p.productnaam, l.naam AS leverancier,
+            SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
                    l.contactpersoon, l.telefoonnummer, a.inkoopprijs
             FROM Product AS p
             JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id

@@ -3,7 +3,7 @@
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="supplier-title">
   <h1 id="supplier-title">Find suppliers for a medicine</h1>
-  <p class="stock-dashboard__subtitle">Compare suppliers by purchase price, as required for purchasing.</p>
+  <p class="stock-dashboard__subtitle">Compare suppliers by purchase price. Contact the chosen manufacturer yourself before recording an order.</p>
   <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="supplier-lookup">
     <label for="product-name">Medicine name</label>
     <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
@@ -14,7 +14,7 @@
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <caption>Supplier offers for {{ product_name }}, ordered by purchase price</caption>
-          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col" class="stock-dashboard__number">Purchase price</th></tr></thead>
+          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col" class="stock-dashboard__number">Purchase price</th><th scope="col">Manual purchase order</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
@@ -23,6 +23,14 @@
                 <td>{{ offer.contactpersoon or 'Not recorded' }}</td>
                 <td>{{ offer.telefoonnummer or 'Not recorded' }}</td>
                 <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
+                    <label>Quantity <input name="quantity" type="number" min="1" step="1" required></label>
+                    <button type="submit">Record confirmed order</button>
+                  </form>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

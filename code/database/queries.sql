@@ -14,10 +14,19 @@ ORDER BY (p.minimumvoorraad - voorraad) DESC,
 
 -- Supplier offers for GET /suppliers?product=...
 -- Example parameter 'Medication': backend uses LIKE %s with value '%Medication%'.
-SELECT p.product_id, p.productnaam, l.naam AS leverancier,
+SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
        l.contactpersoon, l.telefoonnummer, a.inkoopprijs
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
 WHERE p.productnaam LIKE '%Medication%'
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
+
+-- Recording a purchasing order after the employee has contacted the manufacturer.
+-- The supplier-product relationship is validated by PurchaseOrderRepository.
+SELECT 1 FROM LeveranciersAanbod
+WHERE leverancier_id = 1 AND product_id = 1;
+INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
+INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
+VALUES (LAST_INSERT_ID(), 1, 10);
+-- Both INSERT statements are one transaction in the application.
