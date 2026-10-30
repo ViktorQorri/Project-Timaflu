@@ -51,7 +51,7 @@ LEFT JOIN (
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
 
--- =============
+-- ======
 -- Manage customers (issue #8, AD07), /customers
 -- Same queries as CustomerRepository, with example values instead of %s.
 -- =========================================
@@ -276,3 +276,44 @@ LEFT JOIN Voorraadreservering AS vr
       AND vr.product_id = br.product_id
 WHERE br.bestelling_id = 1
 ORDER BY p.productnaam ASC;
+=======
+-- Sales reports for management, GET /reports/sales?start=...&end=...&grouping=...
+-- Keep these queries in sync with SalesReportRepository.
+-- Example period 2026-01-01 up to and including 2026-12-31: the backend passes
+-- the day after the last day as the (excluded) end date.
+-- Revenue = aantal * prijs_per_eenheid of the order lines, excluding VAT and discounts.
+
+-- Revenue per customer, SalesReportRepository.revenue_per_customer().
+SELECT k.klant_id, k.bedrijfsnaam,
+       COUNT(DISTINCT b.bestelling_id) AS aantal_bestellingen,
+       SUM(r.aantal * r.prijs_per_eenheid) AS omzet
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
+WHERE b.besteld_op >= '2026-01-01' AND b.besteld_op < '2027-01-01'
+GROUP BY k.klant_id, k.bedrijfsnaam
+ORDER BY omzet DESC, k.bedrijfsnaam ASC;
+
+-- Revenue per period, SalesReportRepository.revenue_per_period().
+-- Example grouping per month '%Y-%m'; the backend also uses '%Y-%m-%d' (day),
+-- '%x-W%v' (ISO week) and '%Y' (year).
+SELECT DATE_FORMAT(b.besteld_op, '%Y-%m') AS periode,
+       COUNT(DISTINCT b.bestelling_id) AS aantal_bestellingen,
+       SUM(r.aantal * r.prijs_per_eenheid) AS omzet
+FROM Bestelling AS b
+JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
+WHERE b.besteld_op >= '2026-01-01' AND b.besteld_op < '2027-01-01'
+GROUP BY periode
+ORDER BY periode ASC;
+
+-- Best-selling medicines, SalesReportRepository.best_selling_products().
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       SUM(r.aantal) AS aantal_verkocht,
+       SUM(r.aantal * r.prijs_per_eenheid) AS omzet
+FROM Bestelregel AS r
+JOIN Bestelling AS b ON b.bestelling_id = r.bestelling_id
+JOIN Product AS p ON p.product_id = r.product_id
+WHERE b.besteld_op >= '2026-01-01' AND b.besteld_op < '2027-01-01'
+GROUP BY p.product_id, p.artikelnummer, p.productnaam
+ORDER BY aantal_verkocht DESC, omzet DESC, p.productnaam ASC
+LIMIT 10;

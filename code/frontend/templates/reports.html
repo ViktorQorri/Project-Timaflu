@@ -10,6 +10,15 @@
       <p class="order-report__subtitle">Openstaande orders, backorders en afgeleverde orders op basis van de huidige orderstatus.</p>
     </header>
 
+    <ul class="sales-report__links">
+      <li>
+        <a class="sales-report__link" href="{{ url_for('reports.sales_report') }}">
+          <span class="sales-report__link-title">Verkooprapportage</span>
+          <span class="sales-report__link-text">Omzet per klant, omzet per periode en de best verkochte medicijnen.</span>
+        </a>
+      </li>
+    </ul>
+
     <form method="get" action="{{ url_for('reports.index') }}" class="order-report__filter">
       <div class="order-report__field">
         <label for="report-from">Besteld vanaf</label>
