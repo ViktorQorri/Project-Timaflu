@@ -2,17 +2,37 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
+skinparam swimlaneWidth 220
 |Purchasing Employee|
 start
 :Open minimum stock overview;
 |System|
-:Execute AD UC04 Check stock;
-if (Products below minimum?) then ([yes])
-  :Show products with current\nand minimum stock;
-  stop
-else ([no])
+:Retrieve physical warehouse stock per product;
+:Compare with each product minimum stock;
+if (Any products below minimum?) then ([yes])
+  :Show shortages and required quantities;
+  |Purchasing Employee|
+  :Select shortage to follow up;
   |System|
-  :Show message that all\nstock levels are sufficient;
-  stop
+  :Show linked manufacturers sorted by purchase price;
+  if (Manufacturer offers available?) then ([yes])
+    |Purchasing Employee|
+    :Contact cheapest available manufacturer by phone or website;
+    if (Manufacturer can supply?) then ([yes])
+      :Agree desired purchase quantity;
+      |System|
+      :Register manually agreed purchase order (AD02);
+    else ([no])
+      |Purchasing Employee|
+      :Contact next cheapest available manufacturer (AD02);
+    endif
+  else ([no])
+    :Show no available linked manufacturer;
+    |Purchasing Employee|
+    :Assess shortage with purchasing team;
+  endif
+else ([no])
+  :Show that all stock levels meet minimums;
 endif
+stop
 @enduml
