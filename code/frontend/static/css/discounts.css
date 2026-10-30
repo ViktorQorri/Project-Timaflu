@@ -14,7 +14,9 @@
 }
 .discount-form__field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
 }
 .discount-form__field label,
 .discount-form__lines legend {
@@ -22,6 +24,8 @@
 }
 .discount-form select,
 .discount-form input {
+  box-sizing: border-box;
+  width: 100%;
   min-height: 48px;
   padding: 0 12px;
   border: 1px solid var(--color-line);
