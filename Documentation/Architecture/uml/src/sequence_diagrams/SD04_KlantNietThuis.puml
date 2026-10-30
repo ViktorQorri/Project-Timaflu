@@ -4,7 +4,8 @@ autonumber
 
 actor "Courier" as K
 participant "Route" as R
-participant "Customer" as C
+actor "Customer contact" as C
+actor "Sales employee" as S
 participant "Delivery attempt" as D
 participant "Order" as O
 
@@ -15,17 +16,25 @@ C --> K: customerAvailability
 alt Customer available later the same day
   K -> R: adjustSchedule()
   R --> K: updatedSchedule
-  K -> D: recordDelivery(timestamp)
-  D -> O: updateOrderStatus(delivered)
+  K -> C: requestSignature()
+  C --> K: signedReceipt
+  K -> D: recordReceiptSignature()
+  D --> K: signatureSaved
+  K -> D: markDelivered(timestamp)
+  D -> O: changeOrderStatus(delivered)
   O --> D: statusUpdated
   D --> K: deliveryRecorded
-else No one available on second attempt
-  K -> D: recordRecipientAbsent()
-  D -> O: updateOrderStatus(notDelivered)
+else Customer unavailable on both attempts
+  K -> D: markRecipientAbsent()
+  D -> O: changeOrderStatus(notDelivered)
   O --> D: statusUpdated
   D --> K: failedDeliveryRecorded
-  K -> O: recordAdditionalDeliveryCosts(amount, explanation)
-  O --> K: additionalCostsRecorded
-  note right of K: Sales contacts the customer to arrange another delivery
+  K -> S: reportFailedDelivery()
+  S -> C: agreeNewDeliveryDateAndTimeSlot()
+  C --> S: date, timeSlot
+  S -> O: setDeliveryTime(date, timeSlot)
+  O --> S: revisedDeliveryTimeSaved
+  S -> O: recordAdditionalDeliveryCosts(amount, explanation)
+  O --> S: additionalCostsRecorded
 end
 @enduml

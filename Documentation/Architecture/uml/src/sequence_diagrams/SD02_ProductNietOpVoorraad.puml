@@ -12,7 +12,7 @@ participant "Purchase order" as PO
 I -> P: checkMinimumStock()
 P -> M: getPhysicalStock(product)
 M --> P: quantity
-P --> I: stockStatus
+P --> I: currentStock, minimumStock
 alt Below minimum stock level
   I -> P: findSuppliersByPrice()
   P -> A: listOffersSortedByPrice(product)
@@ -25,11 +25,11 @@ alt Below minimum stock level
   alt Supplier can deliver
     I -> L: confirmOrder()
     L --> I: orderConfirmed
-    I -> PO: registerPurchaseOrder()
+    I -> PO: placeWithSupplier()
     PO --> I: purchaseOrderRegistered
   else No supplier can deliver
-    I -> P: removeSupplierOrProduct()
-    P --> I: assortmentUpdated
+    I -> I: removeProductFromInternalReorderList()
+    note right of I: Do not remove the product from the entire assortment
   end
 else Sufficient stock
   I -> I: noReorderRequired()

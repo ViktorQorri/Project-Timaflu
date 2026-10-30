@@ -5,25 +5,25 @@ autonumber
 actor "Sales employee" as V
 participant "Order" as O
 participant "Customer" as K
-participant "Customer discount" as D
-database "Orders" as DB
+participant "CustomerDiscount" as D
 
-V -> O: calculateTotalAmount(customer, orderLines)
+V -> O: calculateTotalAmount()
 activate O
-O -> DB: countPreviousOrders(customer)
-DB --> O: numberOfOrders
-alt First order
-  O -> O: calculateOneTimeDiscount(10%)
-else Existing customer
-  O -> K: calculateAnnualRevenue(previousYear)
-  K -> DB: sumPurchases(previousYear)
-  DB --> K: annualRevenue
-  K --> O: annualRevenue
-  O -> D: determineDiscountPercentage(annualRevenue)
-  D --> O: discountPercentage
-  O -> O: calculateCustomerDiscount()
+O -> O: calculateOrderDiscount()
+note right of O: Apply 5% order discount when subtotal >= EUR 500
+O -> K: readApplicableCustomerDiscount()
+K -> D: readPercentageForCurrentYear()
+D --> K: percentage
+K --> O: percentage
+O -> O: calculateCustomerDiscount()
+note right of O: 5%, 10% or 15% based on previous year's revenue (AD28)
+O -> K: readOneTimeDiscountGranted()
+K --> O: acquisitionIncentiveGranted
+alt Incentive granted AND first order AND not previously applied
+  O -> O: calculateOneTimeDiscount()
+  note right of O: Extra 10% only for eligible acquisition incentive (AD21)
 end
-O -> O: calculateTotalAfterDiscount()
+O -> O: calculateTotalAmount()
 O --> V: totalAmount, appliedDiscounts
 deactivate O
 @enduml

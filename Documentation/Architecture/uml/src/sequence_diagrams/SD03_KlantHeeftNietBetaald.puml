@@ -16,20 +16,20 @@ alt Overdue invoice
   A -> F: checkPaymentArrears()
   F -> DB: loadInvoiceAndLineItems()
   DB --> F: lineItems, discount, VAT, total
-  F --> A: paymentStatus, invoiceDetails
-  alt First or second reminder
-    A -> H: sendReminder(invoice)
+  F --> A: paymentStatus, invoiceDetails, weeksOverdue
+  alt Unpaid for 1 or 2 weeks
+    A -> H: send()
     H --> A: reminderSent
-  else Still unpaid after reminders
+  else Unpaid for at least 3 weeks
     A -> F: proposePaymentPlan()
     F --> A: paymentPlanProposal
     alt Payment plan accepted
-      A -> F: recordPaymentPlan()
+      A -> F: recordAcceptedPaymentPlan()
       F --> A: paymentPlanRecorded
     else Payment plan rejected
-      A -> F: initiateDebtCollection()
+      A -> F: enableDebtCollection()
       F --> A: debtCollectionInitiated
-      A -> K: checkAndBlockOrders()
+      A -> K: checkOrderBlock()
       K --> A: orderBlockConfirmed
     end
   end
