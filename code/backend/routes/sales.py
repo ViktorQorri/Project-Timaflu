@@ -13,8 +13,10 @@ from services.sales_stock_service import SalesStockService
 
 sales = Blueprint("sales", __name__)
 
-# Number of order line rows on the order form; empty rows are ignored.
-ORDER_LINE_ROWS = 5
+# Order line rows on the order form: three to start with, one more per "Medicijn toevoegen".
+# Empty rows are ignored.
+ORDER_LINE_ROWS = 3
+MAX_ORDER_LINE_ROWS = 20
 
 
 @sales.get("/customers")
@@ -38,7 +40,8 @@ def new_order():
     service = _order_service()
     form = _order_form(request.args)
     calculation, error, status = None, None, 200
-    if form["customer_id"] or any(product_id for product_id, _ in form["lines"]):
+    # Adding a row only shows the form again; the total is calculated with "Totaal berekenen".
+    if not form["add_line"] and (form["customer_id"] or any(product_id for product_id, _ in form["lines"])):
         try:
             calculation = service.prepare(form["customer_id"], form["lines"], form["backorders"])
         except DomainError as domain_error:
@@ -84,11 +87,14 @@ def _order_form(values):
         "delivery_date": values.get("delivery_date", "", type=str),
         "part_of_day": values.get("part_of_day", "", type=str),
         "urgent": values.get("urgent") == "1",
+        "add_line": values.get("add_line") == "1",
     }
 
 
 def _render_order(service, form, calculation, error):
+    line_rows = min(max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"]), MAX_ORDER_LINE_ROWS)
     return render_template(
-        "order_new.html", form=form, calculation=calculation, error=error, line_rows=ORDER_LINE_ROWS,
-        parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(), **service.discount_service.form_options(),
+        "order_new.html", form=form, calculation=calculation, error=error, line_rows=line_rows,
+        max_line_rows=MAX_ORDER_LINE_ROWS, parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(),
+        **service.discount_service.form_options(),
     )

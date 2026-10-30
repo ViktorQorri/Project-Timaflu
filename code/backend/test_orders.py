@@ -246,6 +246,28 @@ class OrderPageTests(TestCase):
         self.assertIn("Klantenkorting (10% over € 1.045,00)", page)
         self.assertIn("Order opslaan", page)
 
+    def test_form_starts_with_three_lines_and_adds_one_per_click(self):
+        page = self.request(FakeOrderRepository(), "get", "/orders/new").get_data(as_text=True)
+        self.assertIn('id="product-2"', page)
+        self.assertNotIn('id="product-3"', page)
+        self.assertIn("+ Medicijn toevoegen", page)
+        response = self.request(FakeOrderRepository(), "get",
+                                "/orders/new?customer_id=7&product_id=1&quantity=4&product_id=&quantity="
+                                "&product_id=&quantity=&add_line=1")
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        self.assertIn('id="product-3"', page)
+        self.assertNotIn('id="product-4"', page)
+        self.assertIn('id="quantity-0" name="quantity" type="number" min="1" step="1" value="4"', page)
+        self.assertNotIn("Totaalbedrag", page)
+
+    def test_add_line_stops_at_the_maximum(self):
+        query = "&".join(["product_id=&quantity="] * 20) + "&add_line=1"
+        page = self.request(FakeOrderRepository(), "get", f"/orders/new?{query}").get_data(as_text=True)
+        self.assertIn('id="product-19"', page)
+        self.assertNotIn('id="product-20"', page)
+        self.assertNotIn("+ Medicijn toevoegen", page)
+
     def test_saved_order_redirects_with_order_number(self):
         repository = FakeOrderRepository()
         with self.app.test_client() as client:

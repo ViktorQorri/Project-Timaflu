@@ -129,6 +129,24 @@
 .order-form .discount-form {
   margin: 0;
 }
+.order-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.order-add-line {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.order-add-line:hover {
+  border-color: var(--color-primary);
+}
 .order-line__article {
   display: block;
   color: var(--color-text-muted);

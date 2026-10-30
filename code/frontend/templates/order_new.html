@@ -45,7 +45,13 @@
           </div>
         {% endfor %}
       </fieldset>
-      <button type="submit" class="discount-form__submit">Totaal berekenen</button>
+      <div class="order-form__actions">
+        {# First submit button, so Enter in a field calculates the total. #}
+        <button type="submit" class="discount-form__submit">Totaal berekenen</button>
+        {% if line_rows < max_line_rows %}
+          <button type="submit" name="add_line" value="1" class="order-add-line" formnovalidate>+ Medicijn toevoegen</button>
+        {% endif %}
+      </div>
     </div>
 
     {% if error %}<p class="discount-error" role="alert">{{ error }}</p>{% endif %}
