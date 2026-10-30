@@ -12,6 +12,8 @@ from repositories.purchase_order_repository import PurchaseOrderRepository
 from services.purchase_order_service import PurchaseOrderService
 from repositories.manufacturer_repository import ManufacturerRepository
 from services.manufacturer_service import ManufacturerService
+
+from services.reorder_service import ReorderService
 from domain.errors import DomainError
 
 purchasing = Blueprint("purchasing", __name__)
@@ -221,3 +223,28 @@ def set_stock_minimum(product_id):
     service.set_minimum(product_id, request.form.get("minimumvoorraad"))
     flash("Minimumvoorraad bijgewerkt.", "success")
     return redirect(url_for("purchasing.stock_minimums"))
+
+def _reorder_service():
+    connection = get_connection()
+    return ReorderService(
+        StockService(StockRepository(connection)),
+        SupplierService(SupplierRepository(connection)),
+        PurchaseOrderService(PurchaseOrderRepository(connection)),
+    )
+
+
+@purchasing.route("/reorder", methods=["GET", "POST"])
+def reorder():
+    """Prepare shortages and only persist purchases explicitly confirmed manually."""
+    service = _reorder_service()
+    if request.method == "POST":
+        order_id = service.record_confirmed(
+            request.form.get("product_id"),
+            request.form.get("supplier_id"),
+            request.form.get("quantity"),
+            request.form.get("confirmed"),
+        )
+        flash(f"Inkooporder {order_id} is geregistreerd.", "success")
+        return redirect(url_for("purchasing.reorder"))
+    result = service.overview(request.args.get("product_id"))
+    return render_template("reorder.html", **result)

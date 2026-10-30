@@ -11,6 +11,7 @@
         <h1 id="stock-title">Voorraadtekorten</h1>
         <p class="stock-dashboard__subtitle">Producten waarvan de voorraad in het magazijn onder de minimumvoorraad zit.</p>
       </div>
+      <a class="button" href="{{ url_for('purchasing.reorder') }}">Medicijnen bijbestellen</a>
       <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
         {{ shortages|length }} producten onder minimum
       </p>
