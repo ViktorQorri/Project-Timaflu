@@ -50,3 +50,46 @@ LEFT JOIN (
 ) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
+
+-- Order status lookup for informing the customer, GET /orders?order=...
+-- Same SELECT as OrderStatusNotificationRepository.search_orders() with example parameters.
+-- Search term '1': the backend passes the order number only when the term is a number,
+-- otherwise NULL, and uses LIKE %s with value '%1%' for the customer name.
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.status_naam
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+WHERE b.bestelling_id = 1 OR k.bedrijfsnaam LIKE '%1%'
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
+
+-- Order status of one order, GET /orders/1/status
+-- Same SELECT as OrderStatusNotificationRepository.find_order() with example order 1.
+-- afgeleverd_op is the trip date of the successful delivery attempt.
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel,
+       b.status_naam, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+       a.adres AS afleveradres, l.afgeleverd_op
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+JOIN Adres AS a ON a.adres_id = b.afleveradres_id
+LEFT JOIN (
+    SELECT lv.bestelling_id, MAX(r.ritdatum) AS afgeleverd_op
+    FROM Levering AS lv
+    JOIN Leverpoging AS lp ON lp.levering_id = lv.levering_id
+    JOIN Rit AS r ON r.rit_id = lp.rit_id
+    WHERE lp.resultaat = 'afgeleverd'
+    GROUP BY lv.bestelling_id
+) AS l ON l.bestelling_id = b.bestelling_id
+WHERE b.bestelling_id = 1;
+
+-- Order lines with reserved stock for the same screen, GET /orders/1/status
+-- Same SELECT as OrderStatusNotificationRepository.find_order_lines() with example order 1.
+-- For an order with status 'backorder', the backorder quantity is aantal - gereserveerd.
+SELECT p.product_id, p.artikelnummer, p.productnaam, br.aantal,
+       COALESCE(vr.aantal, 0) AS gereserveerd
+FROM Bestelregel AS br
+JOIN Product AS p ON p.product_id = br.product_id
+LEFT JOIN Voorraadreservering AS vr
+       ON vr.bestelling_id = br.bestelling_id
+      AND vr.product_id = br.product_id
+WHERE br.bestelling_id = 1
+ORDER BY p.productnaam ASC;

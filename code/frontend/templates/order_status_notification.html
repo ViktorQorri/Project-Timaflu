@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Orderstatus {{ order.bestelling_id }}{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard" aria-labelledby="order-status-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Verkoop</p>
+        <h1 id="order-status-title">Order {{ order.bestelling_id }}</h1>
+        <p class="stock-dashboard__subtitle">{{ order.bedrijfsnaam }}, besteld op {{ order.besteld_op.strftime('%d-%m-%Y') }}</p>
+      </div>
+      <a class="order-status__link" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a>
+    </header>
+
+    <dl class="order-status__summary">
+      <div class="order-status__card">
+        <dt>Status</dt>
+        <dd><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></dd>
+      </div>
+      <div class="order-status__card">
+        <dt>Geplande levering</dt>
+        <dd>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</dd>
+      </div>
+      <div class="order-status__card">
+        <dt>Afgeleverd op</dt>
+        <dd>{{ order.afgeleverd_op.strftime('%d-%m-%Y') if order.afgeleverd_op else 'Nog niet afgeleverd' }}</dd>
+      </div>
+      <div class="order-status__card">
+        <dt>Backorder</dt>
+        <dd>
+          {% if backorder_lines %}
+            <span class="order-status__label order-status__label--warning">{{ backorder_lines|length }} product{{ 'en' if backorder_lines|length != 1 }} in backorder</span>
+          {% else %}
+            <span class="order-status__label order-status__label--success">Geen backorder</span>
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="stock-dashboard__table-wrap">
+      <table class="stock-dashboard__table">
+        <caption>Orderregels met gereserveerde voorraad en backorder</caption>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Artikelnummer</th>
+            <th scope="col" class="stock-dashboard__number">Besteld</th>
+            <th scope="col" class="stock-dashboard__number">Gereserveerd</th>
+            <th scope="col">Backorder</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+            <tr>
+              <th scope="row">{{ line.productnaam }}</th>
+              <td>{{ line.artikelnummer }}</td>
+              <td class="stock-dashboard__number">{{ line.aantal }}</td>
+              <td class="stock-dashboard__number">{{ line.gereserveerd }}</td>
+              <td>
+                {% if line.backorder %}
+                  <span class="order-status__label order-status__label--warning">Backorder: {{ line.backorder }}</span>
+                {% else %}
+                  Geen
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">Deze order heeft geen orderregels.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <section class="order-status__message" aria-labelledby="customer-message-title">
+      <h2 id="customer-message-title">Bericht voor de klant</h2>
+      <p class="stock-dashboard__subtitle">
+        Neem dit bericht door met {{ order.contactpersoon or order.bedrijfsnaam }}
+        {%- if order.telefoonnummer %} via {{ order.telefoonnummer }}{% endif %}. Het bericht wordt niet automatisch verstuurd.
+      </p>
+      <p class="order-status__message-text">{{ message }}</p>
+      <p class="order-status__address">Afleveradres: {{ order.afleveradres }}</p>
+    </section>
+  </section>
+{% endblock %}
