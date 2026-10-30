@@ -1,5 +1,8 @@
 """Supplier offers for a medicine, using the current purchasing data."""
 
+from domain.supplier import Supplier
+
+
 class SupplierRepository:
     def __init__(self, connection):
         self.connection = connection
@@ -21,3 +24,45 @@ class SupplierRepository:
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(query, (f"%{product_name}%",))
             return cursor.fetchall()
+
+    def list_all(self):
+        """
+        Returns:
+            Every Supplier, sorted by name.
+        """
+        query = """
+            SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+            FROM Leverancier
+            ORDER BY naam ASC
+        """
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query)
+            return [self._to_supplier(row) for row in cursor.fetchall()]
+
+    def get_by_id(self, supplier_id):
+        """
+        Args:
+            supplier_id: The leverancier_id.
+
+        Returns:
+            The Supplier, or None when it does not exist.
+        """
+        query = """
+            SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+            FROM Leverancier
+            WHERE leverancier_id = %s
+        """
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (supplier_id,))
+            rows = cursor.fetchall()
+        return self._to_supplier(rows[0]) if rows else None
+
+    @staticmethod
+    def _to_supplier(row):
+        return Supplier(
+            supplier_id=row["leverancier_id"],
+            name=row["naam"],
+            contact_person=row["contactpersoon"],
+            phone_number=row["telefoonnummer"],
+            website=row["internetadres"],
+        )
