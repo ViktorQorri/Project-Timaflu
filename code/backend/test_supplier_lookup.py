@@ -63,4 +63,4 @@ class SupplierLookupTests(TestCase):
             with patch("routes.purchasing.get_connection", return_value=Connection([])):
                 response = client.get("/suppliers?product=Unknown")
                 self.assertEqual(response.status_code, 200)
-                self.assertIn(b"No suppliers found", response.data)
+                self.assertIn(b"Geen leveranciers gevonden", response.data)

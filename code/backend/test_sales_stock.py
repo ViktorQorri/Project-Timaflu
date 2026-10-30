@@ -58,7 +58,7 @@ class StockCheckTests(TestCase):
             with patch("routes.sales.get_connection", return_value=Connection(self.rows)):
                 response = client.get("/orders?q=Medication&quantity=4")
                 self.assertEqual(response.status_code, 200)
-                self.assertIn(b"Insufficient stock", response.data)
-                self.assertIn(b"Reserved", response.data)
+                self.assertIn(b"Onvoldoende voorraad", response.data)
+                self.assertIn(b"Gereserveerd", response.data)
             response = client.get("/orders")
             self.assertEqual(response.status_code, 200)

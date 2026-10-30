@@ -1,37 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Check stock for an order{% endblock %}
+{% block title %}Voorraad controleren{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="sales-stock-title">
-  <h1 id="sales-stock-title">Check stock for a telephone order</h1>
-  <p class="stock-dashboard__subtitle">Check the physical warehouse stock before confirming availability with the customer.</p>
+  <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
+  <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
   <p class="stock-dashboard__subtitle"><a class="discount-link" href="{{ url_for('sales.order_discount') }}">Korting berekenen</a></p>
   <form method="get" action="{{ url_for('sales.orders') }}" class="supplier-lookup">
-    <label for="medicine-query">Medicine name or article number</label>
+    <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
     <input id="medicine-query" name="q" value="{{ query }}" maxlength="100" required>
-    <label for="quantity">Requested quantity</label>
+    <label for="quantity">Gevraagd aantal</label>
     <input id="quantity" name="quantity" type="number" min="1" step="1" value="{{ quantity }}" required>
-    <button type="submit">Check stock</button>
+    <button type="submit">Voorraad controleren</button>
   </form>
   {% if query %}
     {% if products %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Physical stock minus reservations linked to existing orders</caption>
-          <thead><tr><th scope="col">Medicine</th><th scope="col">Article number</th><th scope="col" class="stock-dashboard__number">Physical stock</th><th scope="col" class="stock-dashboard__number">Reserved</th><th scope="col" class="stock-dashboard__number">Available</th><th scope="col">Can supply requested quantity?</th></tr></thead>
+          <caption>Voorraad in het magazijn min de reserveringen voor bestaande bestellingen</caption>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Artikelnummer</th><th scope="col" class="stock-dashboard__number">Voorraad</th><th scope="col" class="stock-dashboard__number">Gereserveerd</th><th scope="col" class="stock-dashboard__number">Beschikbaar</th><th scope="col">Gevraagd aantal leverbaar?</th></tr></thead>
           <tbody>
             {% for item in products %}
               <tr><th scope="row">{{ item.productnaam }}</th><td>{{ item.artikelnummer }}</td><td class="stock-dashboard__number">{{ item.voorraad }}</td><td class="stock-dashboard__number">{{ item.gereserveerd }}</td><td class="stock-dashboard__number">{{ item.beschikbaar }}</td><td>
-                {% if item.voldoende %}<span class="stock-dashboard__available">Sufficient stock</span>
-                {% else %}<span class="stock-dashboard__shortage">Insufficient stock</span>{% endif %}
+                {% if item.voldoende %}<span class="stock-dashboard__available">Voldoende voorraad</span>
+                {% else %}<span class="stock-dashboard__shortage">Onvoldoende voorraad</span>{% endif %}
               </td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <p role="status">No matching medicine found.</p>
+      <p role="status">Geen medicijn gevonden.</p>
     {% endif %}
   {% endif %}
-  <p class="stock-dashboard__subtitle">Reservations are registered with actual orders; this screen only checks stock.</p>
+  <p class="stock-dashboard__subtitle">Reserveringen worden vastgelegd bij echte bestellingen; dit scherm controleert alleen de voorraad.</p>
 </section>
 {% endblock %}
