@@ -23,7 +23,7 @@ class PurchaseOrderRepository:
                     (supplier_id, product_id),
                 )
                 if cursor.fetchone() is None:
-                    raise DomainError("This supplier does not offer the selected product.")
+                    raise DomainError("Deze leverancier levert het gekozen product niet.")
                 cursor.execute(
                     "INSERT INTO Inkoopbestelling (leverancier_id) VALUES (%s)",
                     (supplier_id,),

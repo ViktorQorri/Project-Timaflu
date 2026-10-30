@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,16 +20,16 @@
       <ul>
         {% for endpoint, label in [
           ('home.index', 'Home'),
-          ('sales.customers', 'Customers'),
+          ('sales.customers', 'Klanten'),
           ('sales.orders', 'Orders'),
           ('purchasing.products', 'Producten'),
-          ('purchasing.stock', 'Stock'),
-          ('purchasing.suppliers', 'Suppliers'),
-          ('order_picking.index', 'Order picking'),
-          ('distribution.deliveries', 'Deliveries'),
-          ('administration.invoices', 'Invoices'),
-          ('acquisition.index', 'Acquisition'),
-          ('reports.index', 'Reports'),
+          ('purchasing.stock', 'Voorraad'),
+          ('purchasing.suppliers', 'Leveranciers'),
+          ('order_picking.index', 'Orderpicking'),
+          ('distribution.deliveries', 'Leveringen'),
+          ('administration.invoices', 'Facturen'),
+          ('acquisition.index', 'Acquisitie'),
+          ('reports.index', 'Rapportages'),
         ] %}
           <li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
         {% endfor %}
@@ -47,6 +47,6 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer">Timaflu information system</footer>
+  <footer class="site-footer">Timaflu informatiesysteem</footer>
 </body>
 </html>

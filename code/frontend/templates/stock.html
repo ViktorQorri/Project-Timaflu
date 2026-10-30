@@ -1,31 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}Stock shortages{% endblock %}
+{% block title %}Voorraadtekorten{% endblock %}
 
 {% block content %}
   <section class="stock-dashboard" aria-labelledby="stock-title">
     <header class="stock-dashboard__intro">
       <div>
-        <p class="stock-dashboard__eyebrow">Purchasing</p>
-        <h1 id="stock-title">Stock shortages</h1>
-        <p class="stock-dashboard__subtitle">Products below their minimum physical warehouse stock.</p>
+        <p class="stock-dashboard__eyebrow">Inkoop</p>
+        <h1 id="stock-title">Voorraadtekorten</h1>
+        <p class="stock-dashboard__subtitle">Producten waarvan de voorraad in het magazijn onder de minimumvoorraad zit.</p>
       </div>
-      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} products below minimum stock">
-        {{ shortages|length }} products below minimum
+      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
+        {{ shortages|length }} producten onder minimum
       </p>
     </header>
 
     {% if shortages %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Products that need replenishment, sorted by largest shortage</caption>
+          <caption>Producten die bijbesteld moeten worden, grootste tekort bovenaan</caption>
           <thead>
             <tr>
               <th scope="col">Product</th>
-              <th scope="col">Article number</th>
-              <th scope="col" class="stock-dashboard__number">Available stock</th>
-              <th scope="col" class="stock-dashboard__number">Minimum stock</th>
-              <th scope="col" class="stock-dashboard__number">Shortage</th>
+              <th scope="col">Artikelnummer</th>
+              <th scope="col" class="stock-dashboard__number">Voorraad</th>
+              <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
+              <th scope="col" class="stock-dashboard__number">Tekort</th>
             </tr>
           </thead>
           <tbody>
@@ -45,8 +45,8 @@
       </div>
     {% else %}
       <div class="stock-dashboard__empty" role="status">
-        <h2>No stock shortages</h2>
-        <p>All products meet their configured minimum inventory.</p>
+        <h2>Geen voorraadtekorten</h2>
+        <p>Alle producten zitten op of boven hun minimumvoorraad.</p>
       </div>
     {% endif %}
   </section>

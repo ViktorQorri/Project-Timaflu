@@ -14,7 +14,7 @@ class PurchaseOrderService:
             product_id = int(product_id)
             quantity = int(quantity)
         except (ValueError, TypeError):
-            raise DomainError("Supplier, product, and quantity must be valid integers.")
+            raise DomainError("Leverancier, product en aantal moeten hele getallen zijn.")
         if min(supplier_id, product_id, quantity) <= 0:
-            raise DomainError("Supplier, product, and quantity must be positive.")
+            raise DomainError("Leverancier, product en aantal moeten groter dan 0 zijn.")
         return self.repository.create(supplier_id, product_id, quantity)
