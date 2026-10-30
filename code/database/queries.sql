@@ -50,3 +50,20 @@ LEFT JOIN (
 ) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
+
+-- Order status report for management, GET /reports?from=...&to=...
+-- Same SELECT as OrderStatusReportRepository.list_orders() with example parameters.
+-- Example period 2026-10-01 up to and including 2026-10-31; the app passes NULL
+-- instead of a date when that side of the period is left empty.
+-- The service groups the rows: 'backorder', 'afgeleverd', and every other status as open.
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam,
+       COUNT(r.product_id) AS aantal_regels
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+LEFT JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
+WHERE ('2026-10-01' IS NULL OR b.besteld_op >= '2026-10-01')
+  AND ('2026-10-31' IS NULL OR b.besteld_op < '2026-10-31' + INTERVAL 1 DAY)
+GROUP BY b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+         b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
