@@ -40,3 +40,8 @@ def complete_robot_order(robot_id):
         robot_id, payload.get("aisle"), payload.get("suborder_id")
     )
     return jsonify(result)
+
+@api.post("/orders/<int:order_id>/suborders")
+def generate_robot_suborders(order_id):
+    """Generate aisle-specific partial orders from the existing reservation."""
+    return jsonify(suborders=_robot_service().generate_suborders(order_id)), 201

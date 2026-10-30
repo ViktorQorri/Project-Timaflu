@@ -39,3 +39,7 @@ class RobotOrderService:
     def complete(self, robot_id, aisle, suborder_id):
         robot_id = self._validate_robot(robot_id, aisle)
         return self.repository.complete(robot_id, self._id(suborder_id))
+
+    def generate_suborders(self, order_id):
+        """Split a confirmed order from recorded stock reservations."""
+        return self.repository.generate(self._id(order_id))
