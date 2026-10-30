@@ -14,33 +14,38 @@ Location --> Product: currentPhysicalStock
 Product --> Purchasing: currentPhysicalStock, minimumStock
 deactivate Product
 alt Below minimum stock
-  note right of Purchasing: Select the product and desired reorder quantity.
+  note right of Purchasing: Select product and desired quantity.
   Purchasing -> Product: findSuppliersByPrice()
   activate Product
   Product -> Offer: Read purchasePrice and linked Supplier
   Offer --> Product: ranked supplier offers
-  Product --> Purchasing: offers sorted cheapest first
+  Product --> Purchasing: offers ordered by price
   deactivate Product
-  loop For each supplier until an order is confirmed or options are exhausted
-    Purchasing -> Manufacturer: Ask availability for requested quantity
+  loop For each remaining manufacturer, cheapest first
+    Purchasing -> Manufacturer: Request availability for selected quantity
     Manufacturer --> Purchasing: available / unavailable / discontinued
-    opt Permanently discontinued by this manufacturer
-      Purchasing -> Product: removeSupplier(supplier)
-      Product --> Purchasing: supplier link removed
-    end
-    alt Manufacturer can supply requested quantity
-      Purchasing -> Manufacturer: Confirm purchase directly
-      Manufacturer --> Purchasing: confirmed purchase
+    alt Manufacturer is able to deliver
+      Purchasing -> Manufacturer: Confirm purchase
+      Manufacturer --> Purchasing: purchase confirmed
       Purchasing -> PurchaseOrder: placeWithSupplier()
-      PurchaseOrder --> Purchasing: purchase order recorded
-    else Manufacturer unavailable
-      note right of Purchasing: Try the next cheapest supplier, if any.
+      PurchaseOrder --> Purchasing: confirmed order recorded
+      break Order confirmed; stop contacting manufacturers
+      end
+    else Manufacturer cannot deliver
+      opt Manufacturer permanently discontinued this product
+        Purchasing -> Product: removeSupplier(supplier)
+        Product --> Purchasing: manufacturer link removed
+      end
+      note right of Purchasing: Continue with the next cheapest offer.
     end
   end
-  opt No manufacturer can deliver
-    note right of Purchasing: Remove from internal reorder list only, not the product assortment.
+  opt All manufacturers exhausted without a confirmed purchase
+    note right of Purchasing
+      Remove the product from the internal reorder list.
+      Do not remove it from the overall assortment.
+    end note
   end
-else Sufficient stock
-  note right of Purchasing: No reorder needed.
+else Stock is sufficient
+  note right of Purchasing: No purchase order required.
 end
 @enduml
