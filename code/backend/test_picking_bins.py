@@ -159,25 +159,51 @@ class PickingBinPageTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Nog geen verzamelbakken", response.data)
 
-    def test_register_redirects_with_confirmation(self):
-        db = FakeConnection([OPEN_SUB_ORDER, None])
+    def test_page_has_no_registration_form(self):
         with self.app.test_client() as client:
-            with patch("routes.order_picking.get_connection", return_value=db):
-                response = client.post("/order-picking/bins", data={
-                    "bin_code": "VB-0001", "sub_order_id": "7", "aisle": "B"
-                })
-                self.assertEqual(response.status_code, 302)
-                self.assertTrue(response.headers["Location"].endswith("/order-picking"))
+            with patch("routes.order_picking.get_connection", return_value=FakeConnection()):
+                response = client.get("/order-picking")
+                self.assertNotIn(b"<form", response.data)
+                self.assertEqual(client.post("/order-picking/bins").status_code, 404)
+
+
+class PickingBinApiTests(TestCase):
+    def setUp(self):
+        self.app = create_app()
+        self.app.testing = True
+
+    def post(self, db, **kwargs):
+        with self.app.test_client() as client:
+            with patch("routes.api.get_connection", return_value=db):
+                return client.post("/api/picking-bins", **kwargs)
+
+    def test_robot_registers_scanned_bin(self):
+        db = FakeConnection([OPEN_SUB_ORDER, None])
+        response = self.post(db, json={"aisle": "B", "sub_order_id": 7, "bin_code": "VB-0001"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"accepted": True, "bin_code": "VB-0001", "order_id": 3,
+                                               "sub_order_id": 7, "aisle": "B"})
         self.assertEqual(db.commits, 1)
 
-    def test_rejected_bin_shows_message_and_keeps_input(self):
-        db = FakeConnection([OPEN_SUB_ORDER, {"deelorder_id": 5}])
-        with self.app.test_client() as client:
-            with patch("routes.order_picking.get_connection", return_value=db):
-                response = client.post("/order-picking/bins", data={
-                    "bin_code": "VB-0001", "sub_order_id": "7", "aisle": "B"
-                })
-        self.assertEqual(response.status_code, 409)
-        self.assertIn("al geregistreerd".encode(), response.data)
-        self.assertIn(b'value="VB-0001"', response.data)
-        self.assertEqual(db.commits, 0)
+    def test_rejections_answer_json_with_matching_status(self):
+        for values, message, status in [
+            ([OPEN_SUB_ORDER, {"deelorder_id": 5}], {"aisle": "B", "sub_order_id": 7, "bin_code": "VB-0001"}, 409),
+            ([None], {"aisle": "B", "sub_order_id": 99, "bin_code": "VB-0001"}, 404),
+            ([OPEN_SUB_ORDER], {"aisle": "C", "sub_order_id": 7, "bin_code": "VB-0001"}, 400),
+            ([], {"aisle": "B", "sub_order_id": 7}, 400),
+        ]:
+            db = FakeConnection(values)
+            with self.subTest(status=status, message=message):
+                response = self.post(db, json=message)
+                self.assertEqual(response.status_code, status)
+                self.assertIn("error", response.get_json())
+                self.assertEqual(db.commits, 0)
+
+    def test_body_that_is_not_a_json_object_is_rejected(self):
+        for kwargs in [{"data": "bin_code=VB-0001"}, {"json": ["VB-0001"]}]:
+            db = FakeConnection()
+            with self.subTest(kwargs=kwargs):
+                response = self.post(db, **kwargs)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("error", response.get_json())
+                self.assertEqual(db.cur.statements, [])

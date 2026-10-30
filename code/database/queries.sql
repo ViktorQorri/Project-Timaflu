@@ -61,7 +61,7 @@ JOIN Deelorder AS d ON d.deelorder_id = v.deelorder_id
 JOIN Robot AS r ON r.robot_id = d.robot_id
 ORDER BY d.bestelling_id ASC, v.deelorder_id ASC, v.unieke_code ASC;
 
--- Registering a scanned picking bin, POST /order-picking/bins
+-- Registering a scanned picking bin, POST /api/picking-bins
 -- Same statements as PickingBinRepository.register() with example values:
 -- bin code 'VB-0001', sub-order 1, aisle 'A'.
 -- Before the INSERT the application rejects a missing or completed sub-order,

@@ -7,37 +7,13 @@
     <header class="stock-dashboard__intro">
       <div>
         <p class="stock-dashboard__eyebrow">Orderpicking</p>
-        <h1 id="picking-bins-title">Verzamelbakken registreren</h1>
-        <p class="stock-dashboard__subtitle">Koppel een gescande verzamelbak aan een deelorder en de gang waar de robot verzamelt.</p>
+        <h1 id="picking-bins-title">Verzamelbakken</h1>
+        <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
       </div>
       <p class="picking-bins__count" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
         {{ bins|length }} bakken geregistreerd
       </p>
     </header>
-
-    <form method="post" action="{{ url_for('order_picking.register_bin') }}" class="picking-bins__form">
-      <div class="picking-bins__field">
-        <label for="bin-code">Bakcode</label>
-        <input id="bin-code" name="bin_code" value="{{ form.bin_code }}" maxlength="50" placeholder="Bijv. VB-0001" required>
-      </div>
-      <div class="picking-bins__field">
-        <label for="sub-order-id">Deelordernummer</label>
-        <input id="sub-order-id" name="sub_order_id" type="number" min="1" step="1" value="{{ form.sub_order_id }}" required>
-      </div>
-      <div class="picking-bins__field">
-        <label for="aisle">Locatie (gang)</label>
-        <select id="aisle" name="aisle" required>
-          <option value="">Kies een gang</option>
-          {% for aisle in aisles %}
-            <option value="{{ aisle }}"{% if form.aisle|upper == aisle %} selected{% endif %}>Gang {{ aisle }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="picking-bins__submit">Bak registreren</button>
-      {% if error %}
-        <p class="picking-bins__error" role="alert">{{ error }}</p>
-      {% endif %}
-    </form>
 
     {% if bins %}
       <div class="stock-dashboard__table-wrap">
@@ -72,7 +48,7 @@
     {% else %}
       <div class="stock-dashboard__empty" role="status">
         <h2>Nog geen verzamelbakken</h2>
-        <p>Geregistreerde bakken verschijnen hier met hun order en locatie.</p>
+        <p>Zodra een robot een bak scant, verschijnt die hier met de order en de locatie.</p>
       </div>
     {% endif %}
   </section>
