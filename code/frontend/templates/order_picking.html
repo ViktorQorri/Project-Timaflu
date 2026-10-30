@@ -1,7 +1,79 @@
 {% extends "base.html" %}
 
-{% block title %}Order picking{% endblock %}
+{% block title %}Verzamelbakken{% endblock %}
 
 {% block content %}
-  <h1>Order picking</h1>
+  <section class="stock-dashboard" aria-labelledby="picking-bins-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Orderpicking</p>
+        <h1 id="picking-bins-title">Verzamelbakken registreren</h1>
+        <p class="stock-dashboard__subtitle">Koppel een gescande verzamelbak aan een deelorder en de gang waar de robot verzamelt.</p>
+      </div>
+      <p class="picking-bins__count" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
+        {{ bins|length }} bakken geregistreerd
+      </p>
+    </header>
+
+    <form method="post" action="{{ url_for('order_picking.register_bin') }}" class="picking-bins__form">
+      <div class="picking-bins__field">
+        <label for="bin-code">Bakcode</label>
+        <input id="bin-code" name="bin_code" value="{{ form.bin_code }}" maxlength="50" placeholder="Bijv. VB-0001" required>
+      </div>
+      <div class="picking-bins__field">
+        <label for="sub-order-id">Deelordernummer</label>
+        <input id="sub-order-id" name="sub_order_id" type="number" min="1" step="1" value="{{ form.sub_order_id }}" required>
+      </div>
+      <div class="picking-bins__field">
+        <label for="aisle">Locatie (gang)</label>
+        <select id="aisle" name="aisle" required>
+          <option value="">Kies een gang</option>
+          {% for aisle in aisles %}
+            <option value="{{ aisle }}"{% if form.aisle|upper == aisle %} selected{% endif %}>Gang {{ aisle }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="picking-bins__submit">Bak registreren</button>
+      {% if error %}
+        <p class="picking-bins__error" role="alert">{{ error }}</p>
+      {% endif %}
+    </form>
+
+    {% if bins %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Geregistreerde verzamelbakken per order</caption>
+          <thead>
+            <tr>
+              <th scope="col">Bakcode</th>
+              <th scope="col" class="stock-dashboard__number">Order</th>
+              <th scope="col" class="stock-dashboard__number">Deelorder</th>
+              <th scope="col">Locatie</th>
+              <th scope="col" class="stock-dashboard__number">Robot</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bin in bins %}
+              <tr>
+                <th scope="row">{{ bin.unieke_code }}</th>
+                <td class="stock-dashboard__number">{{ bin.bestelling_id }}</td>
+                <td class="stock-dashboard__number">{{ bin.deelorder_id }}</td>
+                <td>{% if bin.gang %}Gang {{ bin.gang }}{% else %}Onbekend{% endif %}</td>
+                <td class="stock-dashboard__number">{{ bin.robot_id }}</td>
+                <td>
+                  <span class="picking-bins__status{% if bin.afgerond %} picking-bins__status--done{% endif %}">{{ bin.status }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="stock-dashboard__empty" role="status">
+        <h2>Nog geen verzamelbakken</h2>
+        <p>Geregistreerde bakken verschijnen hier met hun order en locatie.</p>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}
