@@ -184,3 +184,17 @@ SELECT 1 FROM Product WHERE product_id = 1;
 INSERT INTO LeveranciersAanbod (leverancier_id, product_id, inkoopprijs)
 VALUES (1, 1, 12.50)
 ON DUPLICATE KEY UPDATE inkoopprijs = VALUES(inkoopprijs);
+
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
