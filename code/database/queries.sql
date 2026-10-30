@@ -6,6 +6,7 @@ SELECT p.product_id, p.artikelnummer, p.productnaam,
        COALESCE(SUM(m.aantal), 0) AS voorraad
 FROM Product AS p
 LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
 GROUP BY p.product_id, p.artikelnummer, p.productnaam,
          p.minimumvoorraad
 HAVING voorraad < p.minimumvoorraad
@@ -19,13 +20,15 @@ SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%'
+WHERE p.productnaam LIKE '%Medication%' AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
 -- The supplier-product relationship is validated by PurchaseOrderRepository.
-SELECT 1 FROM LeveranciersAanbod
-WHERE leverancier_id = 1 AND product_id = 1;
+SELECT 1 FROM LeveranciersAanbod AS a
+JOIN Product AS p ON p.product_id = a.product_id
+WHERE a.leverancier_id = 1 AND a.product_id = 1
+  AND p.in_assortiment = TRUE;
 INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
@@ -48,5 +51,6 @@ LEFT JOIN (
     SELECT product_id, SUM(aantal) AS gereserveerd
     FROM Voorraadreservering GROUP BY product_id
 ) AS r ON r.product_id = p.product_id
-WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
+WHERE (p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%')
+  AND p.in_assortiment = TRUE
 ORDER BY p.productnaam ASC;

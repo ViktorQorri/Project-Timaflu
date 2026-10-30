@@ -5,14 +5,17 @@ class SupplierRepository:
         self.connection = connection
 
     def find_offers(self, product_name):
-        """Find matching products and their offers, cheapest supplier first."""
+        """Find matching products and their offers, cheapest supplier first.
+
+        Products removed from the assortment are left out.
+        """
         query = """
             SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
                    l.contactpersoon, l.telefoonnummer, a.inkoopprijs
             FROM Product AS p
             JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
             JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-            WHERE p.productnaam LIKE %s
+            WHERE p.productnaam LIKE %s AND p.in_assortiment = TRUE
             ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC
         """
         with self.connection.cursor(dictionary=True) as cursor:
