@@ -1,37 +1,40 @@
 @startuml
-title SD05 - Prospective customer without an order (acquisition)
+title SD05 - Follow up prospective customer (AD20 / AD21)
 autonumber
-
-actor "Acquisition employee" as M
-participant "Prospective customer" as P
-participant "Acquisition visit" as V
-participant "Customer" as K
-database "Prospects, visits and orders" as DB
-
-M -> V: recordVisit(company, contact, address, date)
-V -> DB: saveVisit()
-DB --> V: saved
-V --> M: visitRecorded
-M -> P: checkFollowUpAfterOneMonth()
-P -> DB: findProspectsWithoutOrdersAfterOneMonth()
-DB --> P: prospects, contactDetails
-P -> P: hasPlacedOrder()
-P --> M: followUpStatus, contactDetails
-alt No order and visit at least one month ago
-  M -> P: offerOneTimeDiscount()
-  P --> M: offerResponse
-  alt Prospect agrees to become a customer
-    M -> P: createCustomerAccount()
-    P -> K: registerCustomer()
-    K -> DB: saveCustomer()
-    DB --> K: customerNumber
-    K --> P: accountDetails, discountOption
-    P --> M: customerAccountRegistered
-    note right of M: Notify sales; record oneTimeDiscountGranted for first order
-  else Prospect remains a prospect
-    M -> M: closeAcquisitionFollowUp()
+actor "Acquisition employee" as Acquisition
+participant "visit:AcquisitionVisit" as Visit
+participant "prospect:ProspectiveCustomer" as Prospect
+actor "Pharmacy contact" as Pharmacy
+actor "Sales employee" as Sales
+participant "customer:Customer" as Customer
+Acquisition -> Visit: recordVisit()
+Visit --> Acquisition: visit recorded with date and contact information
+note right of Acquisition: Follow-up is eligible only after at least one month.
+Acquisition -> Prospect: checkFollowUpAfterOneMonth()
+activate Prospect
+Prospect -> Prospect: hasPlacedOrder()
+Prospect --> Acquisition: eligibility and order status
+deactivate Prospect
+alt At least one month has elapsed and no order exists
+  Acquisition -> Pharmacy: Call and offer 10% extra on first order
+  Pharmacy --> Acquisition: interest and permission to create account
+  alt Interested and account creation permitted
+    Acquisition -> Prospect: offerOneTimeDiscount()
+    Prospect --> Acquisition: incentive recorded
+    Acquisition -> Sales: Transfer company, billing/delivery addresses and incentive
+    Sales -> Prospect: createCustomerAccount()
+    activate Prospect
+    create participant "newCustomer:Customer" as NewCustomer
+    Prospect -> NewCustomer: <<create>>
+    note right of NewCustomer: oneTimeDiscountGranted = true
+    NewCustomer --> Prospect: customer account created
+    Prospect --> Sales: new customer details
+    deactivate Prospect
+    Sales --> Acquisition: account registration confirmed
+  else Not interested or no permission
+    note right of Acquisition: Record outcome and close follow-up without more contact.
   end
-else Order already placed or visit more recent
-  M -> M: noFollowUpRequired()
+else Already ordered or follow-up not yet due
+  note right of Acquisition: No incentive follow-up required.
 end
 @enduml

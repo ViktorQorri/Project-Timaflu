@@ -1,29 +1,35 @@
 @startuml
-title SD01 - Calculate customer discount (sales)
+title SD01 - Calculate order discounts (UC05 / AD05 / AD28)
 autonumber
-
-actor "Sales employee" as V
-participant "Order" as O
-participant "Customer" as K
-participant "CustomerDiscount" as D
-
-V -> O: calculateTotalAmount()
+actor "Sales employee" as Sales
+participant "order:Order" as O
+participant "customer:Customer" as C
+participant "discount:CustomerDiscount" as D
+Sales -> O: calculateTotalAmount()
 activate O
 O -> O: calculateOrderDiscount()
-note right of O: Apply 5% order discount when subtotal >= EUR 500
-O -> K: readApplicableCustomerDiscount()
-K -> D: readPercentageForCurrentYear()
-D --> K: percentage
-K --> O: percentage
+note right of O: 5% order discount when order subtotal >= EUR 500.
+O -> C: calculateAnnualRevenue()
+activate C
+C --> O: previousYearRevenue
+deactivate C
+O -> D: determinePercentage(previousYearRevenue, currentYear)
+activate D
+D --> O: 5%, 10% or 15% customer discount
+deactivate D
 O -> O: calculateCustomerDiscount()
-note right of O: 5%, 10% or 15% based on previous year's revenue (AD28)
-O -> K: readOneTimeDiscountGranted()
-K --> O: acquisitionIncentiveGranted
-alt Incentive granted AND first order AND not previously applied
+note right of O
+  Apply the annual customer discount to the
+  amount remaining after the order discount.
+  AD28 saves the rate on December 31 for the next year.
+end note
+alt First order and customer.oneTimeDiscountGranted and not order.oneTimeDiscountApplied
   O -> O: calculateOneTimeDiscount()
-  note right of O: Extra 10% only for eligible acquisition incentive (AD21)
+  note right of O: Extra 10% only when the acquisition incentive was granted (AD21).
+else No acquisition incentive
+  note right of O: No additional first-order discount.
 end
 O -> O: calculateTotalAmount()
-O --> V: totalAmount, appliedDiscounts
+O --> Sales: totalAmount and applied discounts
 deactivate O
 @enduml

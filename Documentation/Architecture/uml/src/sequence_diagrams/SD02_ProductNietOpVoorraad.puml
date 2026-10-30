@@ -1,37 +1,46 @@
 @startuml
-title SD02 - Product out of stock (purchasing)
+title SD02 - Reorder product below minimum stock (UC02 / AD02)
 autonumber
-
-actor "Purchasing employee" as I
-participant "Product" as P
-database "Warehouse location" as M
-database "Supplier offers" as A
-participant "Supplier" as L
-participant "Purchase order" as PO
-
-I -> P: checkMinimumStock()
-P -> M: getPhysicalStock(product)
-M --> P: quantity
-P --> I: currentStock, minimumStock
-alt Below minimum stock level
-  I -> P: findSuppliersByPrice()
-  P -> A: listOffersSortedByPrice(product)
-  A --> P: offers, contactName, phoneNumber
-  P --> I: suppliers sorted by price
-  loop While no supplier can deliver and options remain
-    I -> L: checkAvailability()
-    L --> I: availability
+actor "Purchasing employee" as Purchasing
+participant "product:Product" as Product
+participant "location:WarehouseLocation" as Location
+participant "offer:SupplierOffer" as Offer
+actor "Manufacturer" as Manufacturer
+participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
+Purchasing -> Product: checkMinimumStock()
+activate Product
+Product -> Location: Read quantity
+Location --> Product: currentPhysicalStock
+Product --> Purchasing: currentPhysicalStock, minimumStock
+deactivate Product
+alt Below minimum stock
+  note right of Purchasing: Select the product and desired reorder quantity.
+  Purchasing -> Product: findSuppliersByPrice()
+  activate Product
+  Product -> Offer: Read purchasePrice and linked Supplier
+  Offer --> Product: ranked supplier offers
+  Product --> Purchasing: offers sorted cheapest first
+  deactivate Product
+  loop For each supplier until an order is confirmed or options are exhausted
+    Purchasing -> Manufacturer: Ask availability for requested quantity
+    Manufacturer --> Purchasing: available / unavailable / discontinued
+    opt Permanently discontinued by this manufacturer
+      Purchasing -> Product: removeSupplier(supplier)
+      Product --> Purchasing: supplier link removed
+    end
+    alt Manufacturer can supply requested quantity
+      Purchasing -> Manufacturer: Confirm purchase directly
+      Manufacturer --> Purchasing: confirmed purchase
+      Purchasing -> PurchaseOrder: placeWithSupplier()
+      PurchaseOrder --> Purchasing: purchase order recorded
+    else Manufacturer unavailable
+      note right of Purchasing: Try the next cheapest supplier, if any.
+    end
   end
-  alt Supplier can deliver
-    I -> L: confirmOrder()
-    L --> I: orderConfirmed
-    I -> PO: placeWithSupplier()
-    PO --> I: purchaseOrderRegistered
-  else No supplier can deliver
-    I -> I: removeProductFromInternalReorderList()
-    note right of I: Do not remove the product from the entire assortment
+  opt No manufacturer can deliver
+    note right of Purchasing: Remove from internal reorder list only, not the product assortment.
   end
 else Sufficient stock
-  I -> I: noReorderRequired()
+  note right of Purchasing: No reorder needed.
 end
 @enduml
