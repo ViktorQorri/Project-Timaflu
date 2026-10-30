@@ -1,0 +1,93 @@
+/* Start: Issue #29 - order status for informing the customer, using the existing Timaflu design tokens. */
+.order-status__section-title {
+  font-size: 25px;
+  letter-spacing: -0.3px;
+}
+.order-status__label {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-weight: 700;
+}
+.order-status__label--info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.order-status__label--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.order-status__label--warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.order-status__label--neutral {
+  background: var(--color-line-light);
+  color: var(--color-text-muted);
+}
+.order-status__link {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.order-status__link:hover {
+  color: var(--color-primary-dark);
+}
+.order-status__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.order-status__card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.order-status__card dt {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.order-status__card dd {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+.order-status__message {
+  margin-top: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+.order-status__message-text {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius);
+  white-space: pre-line;
+}
+.order-status__address {
+  margin-top: 12px;
+  color: var(--color-text-muted);
+}
+.order-status__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .order-status__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 430px) {
+  .order-status__summary {
+    grid-template-columns: 1fr;
+  }
+}
+/* End: Issue #29 order status. */

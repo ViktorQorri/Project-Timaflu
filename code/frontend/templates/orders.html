@@ -33,4 +33,38 @@
   {% endif %}
   <p class="stock-dashboard__subtitle">Reserveringen worden vastgelegd bij echte bestellingen; dit scherm controleert alleen de voorraad.</p>
 </section>
+<section class="stock-dashboard" aria-labelledby="order-status-title">
+  <p class="stock-dashboard__eyebrow">Verkoop</p>
+  <h2 id="order-status-title" class="order-status__section-title">Orderstatus opzoeken</h2>
+  <p class="stock-dashboard__subtitle">Zoek een order om de klant te informeren over de status, het levermoment en eventuele backorders.</p>
+  <form method="get" action="{{ url_for('sales.orders') }}" class="supplier-lookup">
+    <label for="order-search">Ordernummer of klantnaam</label>
+    <input id="order-search" name="order" type="search" value="{{ order_search }}" maxlength="100" required>
+    <button type="submit">Order zoeken</button>
+  </form>
+  {% if order_search %}
+    {% if found_orders %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Orders voor "{{ order_search }}", nieuwste eerst</caption>
+          <thead><tr><th scope="col">Ordernummer</th><th scope="col">Klant</th><th scope="col">Besteld op</th><th scope="col">Levermoment</th><th scope="col">Status</th><th scope="col"><span class="order-status__visually-hidden">Actie</span></th></tr></thead>
+          <tbody>
+            {% for order in found_orders %}
+              <tr>
+                <th scope="row">{{ order.bestelling_id }}</th>
+                <td>{{ order.bedrijfsnaam }}</td>
+                <td>{{ order.besteld_op.strftime('%d-%m-%Y') }}</td>
+                <td>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</td>
+                <td><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></td>
+                <td><a class="order-status__link" href="{{ url_for('sales.order_status', order_id=order.bestelling_id) }}">Status bekijken</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p role="status">Geen order gevonden.</p>
+    {% endif %}
+  {% endif %}
+</section>
 {% endblock %}
