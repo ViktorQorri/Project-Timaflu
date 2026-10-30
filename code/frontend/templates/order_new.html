@@ -14,6 +14,8 @@
   </header>
 
   <form method="get" action="{{ url_for('sales.new_order') }}" class="order-form">
+    {# Enter in a field presses the first submit button, so that must calculate, not remove a row. #}
+    <button type="submit" class="order-form__default" tabindex="-1" aria-hidden="true">Totaal berekenen</button>
     <div class="discount-form">
       <div class="discount-form__field">
         <label for="customer">Klant</label>
@@ -42,11 +44,11 @@
               <label for="quantity-{{ row }}">Aantal</label>
               <input id="quantity-{{ row }}" name="quantity" type="number" min="1" step="1" value="{{ line[1] }}"{% if row == 0 %} required{% endif %}>
             </div>
+            <button type="submit" name="remove_line" value="{{ row }}" class="order-remove-line" formnovalidate aria-label="Medicijn {{ row + 1 }} verwijderen">Verwijderen</button>
           </div>
         {% endfor %}
       </fieldset>
       <div class="order-form__actions">
-        {# First submit button, so Enter in a field calculates the total. #}
         <button type="submit" class="discount-form__submit">Totaal berekenen</button>
         {% if line_rows < max_line_rows %}
           <button type="submit" name="add_line" value="1" class="order-add-line" formnovalidate>+ Medicijn toevoegen</button>

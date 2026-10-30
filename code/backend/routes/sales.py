@@ -13,8 +13,8 @@ from services.sales_stock_service import SalesStockService
 
 sales = Blueprint("sales", __name__)
 
-# Order line rows on the order form: three to start with, one more per "Medicijn toevoegen".
-# Empty rows are ignored.
+# Order line rows on the order form: three to start with, one more per "Medicijn toevoegen",
+# one less per "Verwijderen" but never fewer than three. Empty rows are ignored.
 ORDER_LINE_ROWS = 3
 MAX_ORDER_LINE_ROWS = 20
 
@@ -40,8 +40,8 @@ def new_order():
     service = _order_service()
     form = _order_form(request.args)
     calculation, error, status = None, None, 200
-    # Adding a row only shows the form again; the total is calculated with "Totaal berekenen".
-    if not form["add_line"] and (form["customer_id"] or any(product_id for product_id, _ in form["lines"])):
+    # Adding or removing a row only shows the form again; "Totaal berekenen" calculates the total.
+    if not form["edit_lines"] and (form["customer_id"] or any(product_id for product_id, _ in form["lines"])):
         try:
             calculation = service.prepare(form["customer_id"], form["lines"], form["backorders"])
         except DomainError as domain_error:
@@ -80,14 +80,19 @@ def _order_service():
 
 
 def _order_form(values):
+    lines = list(zip(values.getlist("product_id"), values.getlist("quantity")))
+    remove_line = values.get("remove_line", type=int)
+    if remove_line is not None and 0 <= remove_line < len(lines):
+        del lines[remove_line]
     return {
         "customer_id": values.get("customer_id", "", type=str).strip(),
-        "lines": list(zip(values.getlist("product_id"), values.getlist("quantity"))),
+        "lines": lines,
         "backorders": values.getlist("backorder"),
         "delivery_date": values.get("delivery_date", "", type=str),
         "part_of_day": values.get("part_of_day", "", type=str),
         "urgent": values.get("urgent") == "1",
         "add_line": values.get("add_line") == "1",
+        "edit_lines": values.get("add_line") == "1" or remove_line is not None,
     }
 
 

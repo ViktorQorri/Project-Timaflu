@@ -49,7 +49,8 @@
 }
 .discount-form__line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  align-items: end;
   gap: 12px;
 }
 .discount-form__submit {
@@ -147,6 +148,32 @@
 .order-add-line:hover {
   border-color: var(--color-primary);
 }
+.order-remove-line {
+  min-height: 48px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 0 16px;
+  background: var(--color-surface);
+  color: var(--color-danger);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.order-remove-line:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+/* Default button for Enter, kept out of sight but not display: none so the browser still uses it. */
+.order-form__default {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
 .order-line__article {
   display: block;
   color: var(--color-text-muted);
@@ -201,6 +228,11 @@
 @media (max-width: 760px) {
   .discount-form__line {
     grid-template-columns: minmax(0, 1fr) 96px;
+  }
+  .order-remove-line {
+    grid-column: 1 / -1;
+    justify-self: end;
+    min-height: 40px;
   }
   .discount-form__submit {
     justify-self: stretch;

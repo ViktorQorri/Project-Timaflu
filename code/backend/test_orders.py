@@ -261,6 +261,32 @@ class OrderPageTests(TestCase):
         self.assertIn('id="quantity-0" name="quantity" type="number" min="1" step="1" value="4"', page)
         self.assertNotIn("Totaalbedrag", page)
 
+    def test_remove_line_shifts_the_rows_below_up(self):
+        response = self.request(FakeOrderRepository(), "get",
+                                "/orders/new?customer_id=7&product_id=1&quantity=4&product_id=2&quantity=6"
+                                "&product_id=1&quantity=8&product_id=2&quantity=9&remove_line=1")
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        self.assertIn('id="quantity-1" name="quantity" type="number" min="1" step="1" value="8"', page)
+        self.assertIn('id="quantity-2" name="quantity" type="number" min="1" step="1" value="9"', page)
+        self.assertNotIn('id="product-3"', page)
+        self.assertNotIn("Totaalbedrag", page)
+
+    def test_remove_line_keeps_three_rows(self):
+        page = self.request(FakeOrderRepository(), "get",
+                            "/orders/new?product_id=1&quantity=4&product_id=&quantity=&product_id=&quantity="
+                            "&remove_line=0").get_data(as_text=True)
+        self.assertIn('id="product-2"', page)
+        self.assertNotIn('id="product-3"', page)
+        self.assertNotIn('value="4"', page)
+
+    def test_enter_calculates_instead_of_removing_a_row(self):
+        page = self.request(FakeOrderRepository(), "get", "/orders/new").get_data(as_text=True)
+        form = page[page.index("<form"):]
+        first_button = form[form.index('<button type="submit"'):form.index("</button>")]
+        self.assertIn("Totaal berekenen", first_button)
+        self.assertNotIn("name=", first_button)
+
     def test_add_line_stops_at_the_maximum(self):
         query = "&".join(["product_id=&quantity="] * 20) + "&add_line=1"
         page = self.request(FakeOrderRepository(), "get", f"/orders/new?{query}").get_data(as_text=True)
