@@ -7,6 +7,8 @@ from repositories.supplier_repository import SupplierRepository
 from services.supplier_service import SupplierService
 from repositories.purchase_order_repository import PurchaseOrderRepository
 from services.purchase_order_service import PurchaseOrderService
+from services.reorder_service import ReorderService
+from domain.errors import DomainError
 
 purchasing = Blueprint("purchasing", __name__)
 
@@ -38,3 +40,28 @@ def record_purchase_order():
     )
     flash(f"Inkooporder {order_id} is vastgelegd na bevestiging door de leverancier.", "success")
     return redirect(url_for("purchasing.suppliers"))
+
+def _reorder_service():
+    connection = get_connection()
+    return ReorderService(
+        StockService(StockRepository(connection)),
+        SupplierService(SupplierRepository(connection)),
+        PurchaseOrderService(PurchaseOrderRepository(connection)),
+    )
+
+
+@purchasing.route("/reorder", methods=["GET", "POST"])
+def reorder():
+    """Prepare shortages and only persist purchases explicitly confirmed manually."""
+    service = _reorder_service()
+    if request.method == "POST":
+        order_id = service.record_confirmed(
+            request.form.get("product_id"),
+            request.form.get("supplier_id"),
+            request.form.get("quantity"),
+            request.form.get("confirmed"),
+        )
+        flash(f"Inkooporder {order_id} is geregistreerd.", "success")
+        return redirect(url_for("purchasing.reorder"))
+    result = service.overview(request.args.get("product_id"))
+    return render_template("reorder.html", **result)
