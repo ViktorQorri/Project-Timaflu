@@ -128,6 +128,8 @@ class PickingBinServiceTests(TestCase):
             ("VB-0001", None, "B"),
             ("VB-0001", 7, "Z"),
             ("VB-0001", 7, ""),
+            (123, 7, "B"),
+            ("VB-0001", 7, 2),
         ]:
             db = FakeConnection()
             with self.subTest(code=code, sub_order=sub_order, aisle=aisle):

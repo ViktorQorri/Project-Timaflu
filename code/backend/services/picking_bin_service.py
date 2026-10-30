@@ -22,7 +22,8 @@ class PickingBinService:
 
     def register(self, bin_code, sub_order_id, aisle):
         """Check the input, then link the bin to the sub-order in the given aisle."""
-        bin_code = (bin_code or "").strip()
+        # Robots send JSON, so a field can arrive as a number; only text is a valid code or aisle.
+        bin_code = bin_code.strip() if isinstance(bin_code, str) else ""
         if not BIN_CODE.fullmatch(bin_code):
             raise DomainError(
                 "Vul een bakcode in van maximaal 50 tekens met alleen letters, cijfers, - of _."
@@ -33,7 +34,7 @@ class PickingBinService:
             raise DomainError("Het deelordernummer moet een positief geheel getal zijn.") from error
         if sub_order_id < 1:
             raise DomainError("Het deelordernummer moet een positief geheel getal zijn.")
-        aisle = (aisle or "").strip().upper()
+        aisle = aisle.strip().upper() if isinstance(aisle, str) else ""
         if aisle not in AISLES:
             raise DomainError("Kies een gang van A tot en met H.")
         return self.repository.register(bin_code, sub_order_id, aisle)
