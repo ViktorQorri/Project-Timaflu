@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Klant verwijderen{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard" aria-labelledby="delete-customer-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Verkoop</p>
+        <h1 id="delete-customer-title">Klant verwijderen?</h1>
+        <p class="stock-dashboard__subtitle">Een klant met bestellingen, facturen of een acquisitiedossier kan niet worden verwijderd.</p>
+      </div>
+    </header>
+
+    <div class="customer-panel">
+      <dl class="customer-details">
+        <dt>Klantnummer</dt><dd>{{ customer.klant_id }}</dd>
+        <dt>Bedrijfsnaam</dt><dd>{{ customer.bedrijfsnaam }}</dd>
+        <dt>Contactpersoon</dt><dd>{{ customer.contactpersoon or 'Niet ingevuld' }}</dd>
+        <dt>Telefoonnummer</dt><dd>{{ customer.telefoonnummer or 'Niet ingevuld' }}</dd>
+        <dt>Afleveradres</dt><dd>{{ customer.afleveradres }}</dd>
+        <dt>Factuuradres</dt><dd>{{ customer.factuuradres }}</dd>
+      </dl>
+      <form method="post" action="{{ url_for('sales.delete_customer', customer_id=customer.klant_id) }}" class="customer-form__actions">
+        <button type="submit" class="customer-button customer-button--danger">Klant verwijderen</button>
+        <a class="customer-button customer-button--secondary" href="{{ url_for('sales.customers') }}">Annuleren</a>
+      </form>
+    </div>
+  </section>
+{% endblock %}
