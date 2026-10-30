@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Inkoopprijzen{% endblock %}
+{% block content %}
+<section class="stock-dashboard">
+  <h1>Inkoopprijzen van {{ manufacturer.naam }}</h1>
+  {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post">
+    <label for="product_id">Product</label>
+    <select name="product_id" id="product_id" required>
+    {% for item in products %}<option value="{{ item.product_id }}">{{ item.productnaam }} ({{ item.artikelnummer }})</option>{% endfor %}
+    </select>
+    <label for="price">Inkoopprijs (€)</label>
+    <input type="text" inputmode="decimal" name="price" id="price" required placeholder="12,50">
+    <button type="submit">Inkoopprijs opslaan</button>
+  </form>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Actueel aanbod</caption>
+      <thead><tr><th>Product</th><th>Inkoopprijs</th></tr></thead>
+      <tbody>
+      {% for offer in offers %}
+      <tr><th scope="row">{{ offer.productnaam }}</th><td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td></tr>
+      {% else %}<tr><td colspan="2">Geen producten gekoppeld.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p><a href="{{ url_for('purchasing.manufacturers') }}">Terug naar fabrikanten</a></p>
+</section>
+{% endblock %}

@@ -141,3 +141,46 @@ VALUES (1, 'paracetamol', '500 mg');
 -- with example product 1. The row stays, so orders, deliveries and invoices keep working.
 UPDATE Product SET in_assortiment = FALSE
 WHERE product_id = 1 AND in_assortiment = TRUE;
+
+-- Issue #14: manufacturer management (repository uses %s placeholders).
+SELECT l.leverancier_id, l.naam, a.adres, l.contactpersoon,
+       l.telefoonnummer, l.internetadres
+FROM Leverancier AS l
+JOIN Adres AS a ON a.adres_id = l.adres_id
+ORDER BY l.naam, l.leverancier_id;
+
+SELECT l.leverancier_id, l.naam, a.adres, l.contactpersoon,
+       l.telefoonnummer, l.internetadres
+FROM Leverancier AS l
+JOIN Adres AS a ON a.adres_id = l.adres_id
+WHERE l.leverancier_id = 1;
+
+-- One transaction: create an address and manufacturer.
+INSERT INTO Adres (adres) VALUES ('Voorbeeldstraat 1, Breda');
+INSERT INTO Leverancier (naam, adres_id, contactpersoon, telefoonnummer, internetadres)
+VALUES ('Voorbeeldfabrikant', LAST_INSERT_ID(), 'Contactpersoon', '0761234567', 'https://example.org');
+
+-- Update transaction checks existence and writes a new address before updating manufacturer.
+SELECT adres_id FROM Leverancier WHERE leverancier_id = 1 FOR UPDATE;
+INSERT INTO Adres (adres) VALUES ('Nieuw adres 2, Breda');
+UPDATE Leverancier
+SET naam = 'Voorbeeldfabrikant', adres_id = LAST_INSERT_ID(),
+    contactpersoon = 'Contactpersoon', telefoonnummer = '0761234567',
+    internetadres = 'https://example.org'
+WHERE leverancier_id = 1;
+
+SELECT product_id, productnaam, artikelnummer
+FROM Product ORDER BY productnaam, product_id;
+
+SELECT a.product_id, p.productnaam, a.inkoopprijs
+FROM LeveranciersAanbod AS a
+JOIN Product AS p ON p.product_id = a.product_id
+WHERE a.leverancier_id = 1
+ORDER BY p.productnaam, a.product_id;
+
+-- One transaction: validate manufacturer and product before upserting purchase price.
+SELECT 1 FROM Leverancier WHERE leverancier_id = 1;
+SELECT 1 FROM Product WHERE product_id = 1;
+INSERT INTO LeveranciersAanbod (leverancier_id, product_id, inkoopprijs)
+VALUES (1, 1, 12.50)
+ON DUPLICATE KEY UPDATE inkoopprijs = VALUES(inkoopprijs);
