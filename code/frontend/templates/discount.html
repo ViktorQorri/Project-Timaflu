@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Kortingsberekening{% endblock %}
+{% block content %}
+<h1>Bestelling: kortingsberekening voor {{customer.bedrijfsnaam}}</h1>
+<p>Betaalde jaaromzet vorig kalenderjaar: € {{annual_revenue}}</p>
+<p>Eerste bestelling: {{'ja' if first_order else 'nee'}}</p>
+<dl>
+<dt>Bestelbedrag</dt><dd>€ {{discount.subtotal}}</dd>
+<dt>Bestellingskorting</dt><dd>€ {{discount.order_discount}}</dd>
+<dt>Eenmalige korting</dt><dd>€ {{discount.first_order_discount}}</dd>
+<dt>Klantenkorting</dt><dd>€ {{discount.customer_discount}}</dd>
+<dt>Te betalen</dt><dd><strong>€ {{discount.total}}</strong></dd>
+</dl>
+<a href="{{url_for('sales.orders')}}">Terug naar verkoop</a>
+{% endblock %}

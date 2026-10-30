@@ -1,0 +1,190 @@
+"""MySQL queries for the five assessed scenarios, using the existing case tables."""
+from datetime import date
+from domain.errors import DomainError
+
+
+class AssessedRepository:
+    def __init__(self, connection):
+        self.db = connection
+
+    def customer_revenue(self, customer_id, year):
+        with self.db.cursor(dictionary=True) as c:
+            c.execute("SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=%s", (customer_id,))
+            customer = c.fetchone()
+            if not customer:
+                raise DomainError("Unknown customer")
+            c.execute("""SELECT 1 FROM Factuur WHERE klant_id=%s
+                         AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
+                         LIMIT 1""", (customer_id,))
+            if c.fetchone():
+                raise DomainError("Customer cannot order during active debt collection")
+            c.execute("""
+                SELECT COALESCE(SUM(l.aantal_geleverd * b.prijs_per_eenheid),0) AS annual
+                FROM Factuur f JOIN Leveringregel l ON l.factuur_id=f.factuur_id
+                JOIN Levering v ON v.levering_id=l.levering_id
+                JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
+                WHERE f.klant_id=%s AND f.betaald_op>= %s AND f.betaald_op< %s
+            """, (customer_id, date(year,1,1), date(year+1,1,1)))
+            return customer, c.fetchone()["annual"]
+
+    def customer_order_count(self, customer_id):
+        with self.db.cursor() as c:
+            c.execute("SELECT COUNT(*) FROM Bestelling WHERE klant_id=%s", (customer_id,))
+            return c.fetchone()[0]
+
+    def invoice_for_customer(self, customer_id):
+        with self.db.cursor(dictionary=True) as c:
+            c.execute("""
+                SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+                       f.incasso_ingeschakeld, k.bedrijfsnaam, a.adres
+                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                JOIN Adres a ON a.adres_id=k.betaaladres_id
+                WHERE f.klant_id=%s ORDER BY f.factuurdatum DESC
+            """, (customer_id,))
+            invoices=c.fetchall()
+            for invoice in invoices:
+                c.execute("""
+                    SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
+                    FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id
+                    JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
+                    WHERE l.factuur_id=%s
+                """, (invoice["factuur_id"],))
+                invoice["lines"]=c.fetchall()
+            return invoices
+
+    def delivery_schedule(self, day):
+        with self.db.cursor(dictionary=True) as c:
+            c.execute("""
+                SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
+                       b.bestelling_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                       a.adres, r.ritdatum
+                FROM Leverpoging lp
+                JOIN Rit r ON r.rit_id=lp.rit_id
+                JOIN Levering l ON l.levering_id=lp.levering_id
+                JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
+                JOIN Klant k ON k.klant_id=b.klant_id
+                JOIN Adres a ON a.adres_id=b.afleveradres_id
+                WHERE r.ritdatum=%s ORDER BY lp.geplande_tijd
+            """,(day,))
+            return c.fetchall()
+
+    def register_delivery_attempt(self, delivery_id, delivered, attempt_time):
+        with self.db.cursor() as c:
+            try:
+                c.execute("""SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+                             FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
+                             WHERE lp.levering_id=%s AND r.ritdatum=CURRENT_DATE()
+                             ORDER BY lp.pogingnummer DESC FOR UPDATE""", (delivery_id,))
+                last=c.fetchone()
+                if not last:
+                    raise DomainError("Delivery not scheduled")
+                ride, attempt, previous_result=last
+                if previous_result=="afgeleverd":
+                    raise DomainError("Delivery is already completed")
+                if attempt >= 2:
+                    raise DomainError("Maximum two attempts")
+                c.execute("UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=%s AND pogingnummer=%s",(delivery_id,attempt))
+                c.execute("""INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
+                             VALUES (%s,2,%s,%s,%s,%s)""",
+                          (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",bool(delivered)))
+                if delivered:
+                    c.execute("UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=%s",(delivery_id,))
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def prospect_followups(self, cutoff):
+        with self.db.cursor(dictionary=True) as c:
+            c.execute("""
+                SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
+                       p.contactgegevens, a.adres, MAX(v.bezoekdatum) AS bezoekdatum
+                FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
+                JOIN Adres a ON a.adres_id=p.adres_id
+                WHERE p.klant_id IS NULL
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+                HAVING MAX(v.bezoekdatum)<=%s
+                ORDER BY bezoekdatum
+            """,(cutoff,))
+            return c.fetchall()
+
+    def record_visit(self, company, contact, details, address, visited):
+        with self.db.cursor() as c:
+            try:
+                c.execute("INSERT INTO Adres (adres) VALUES (%s)",(address,))
+                addr=c.lastrowid
+                c.execute("INSERT INTO PotentieleKlant (bedrijfsnaam,contactpersoon,contactgegevens,adres_id) VALUES (%s,%s,%s,%s)",(company,contact,details,addr))
+                prospect=c.lastrowid
+                c.execute("INSERT INTO Acquisitiebezoek (potentiele_klant_id,bezoekdatum) VALUES (%s,%s)",(prospect,visited))
+                self.db.commit()
+                return prospect
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def register_prospect_customer(self, prospect, billing, delivery):
+        with self.db.cursor(dictionary=True) as c:
+            try:
+                c.execute("SELECT * FROM PotentieleKlant WHERE potentiele_klant_id=%s FOR UPDATE",(prospect,))
+                p=c.fetchone()
+                if not p or p["klant_id"] is not None:
+                    raise DomainError("Prospect not available for conversion")
+                c.execute("INSERT INTO Adres (adres) VALUES (%s)",(billing,))
+                billing_id=c.lastrowid
+                c.execute("INSERT INTO Adres (adres) VALUES (%s)",(delivery,))
+                delivery_id=c.lastrowid
+                c.execute("""INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
+                             VALUES(%s,%s,%s,%s,%s)""",(p["bedrijfsnaam"],p["contactgegevens"],p["contactpersoon"],delivery_id,billing_id))
+                customer=c.lastrowid
+                c.execute("UPDATE PotentieleKlant SET klant_id=%s WHERE potentiele_klant_id=%s",(customer,prospect))
+                self.db.commit()
+                return customer
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def record_payment_action(self, invoice_id, action, today):
+        """Record the case's reminders, full payment, or rejected plan/debt collection."""
+        with self.db.cursor(dictionary=True) as cursor:
+            try:
+                cursor.execute(
+                    "SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op "
+                    "FROM Factuur f WHERE f.factuur_id=%s FOR UPDATE", (invoice_id,))
+                invoice=cursor.fetchone()
+                if not invoice:
+                    raise DomainError("Invoice not found")
+                if action in ("reminder1", "reminder2"):
+                    if invoice["betaald_op"]:
+                        raise DomainError("Paid invoices need no reminder")
+                    sequence=1 if action=="reminder1" else 2
+                    min_days=sequence*7
+                    if (today-invoice["factuurdatum"]).days<min_days:
+                        raise DomainError("Reminder is not due")
+                    if sequence==2:
+                        cursor.execute("SELECT 1 FROM Betalingsherinnering WHERE factuur_id=%s AND volgnummer=1",(invoice_id,))
+                        if not cursor.fetchone():
+                            raise DomainError("First reminder must be recorded before second")
+                    cursor.execute(
+                        "INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) "
+                        "VALUES(%s,%s,%s)", (invoice_id,sequence,today))
+                elif action=="payment_plan_accepted":
+                    if invoice["betaald_op"]:
+                        raise DomainError("Invoice already paid")
+                    cursor.execute(
+                        "UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=%s",
+                        (invoice_id,))
+                elif action=="payment_plan_rejected":
+                    if invoice["betaald_op"] or (today-invoice["factuurdatum"]).days<21:
+                        raise DomainError("Debt collection can start only after three unpaid weeks")
+                    cursor.execute(
+                        "UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, "
+                        "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
+                elif action=="mark_paid":
+                    cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
+                                   (today,invoice_id))
+                else:
+                    raise DomainError("Unsupported invoice action")
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise

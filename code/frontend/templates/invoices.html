@@ -1,7 +1,34 @@
 {% extends "base.html" %}
-
-{% block title %}Invoices{% endblock %}
-
+{% block title %}Facturen{% endblock %}
 {% block content %}
-  <h1>Invoices</h1>
+<h1>Openstaande facturen</h1>
+<form method="get"><label>Klantnummer <input type="number" min="1" name="customer_id" required value="{{customer_id or ''}}"></label><button>Opzoeken</button></form>
+{% for f in invoices %}
+<section>
+  <h2>Factuur {{f.invoice_number}}</h2>
+  <p>{{f.date}} — {{f.customer_name}} — {{f.customer_address}}</p>
+  <table><thead><tr><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
+    <tbody>{% for r in f.lines %}<tr><td>{{r.quantity}}</td><td>{{r.unit_price}}</td><td>{{r.line_total}}</td></tr>{% endfor %}</tbody></table>
+  <p>Totaal excl. btw: {{f.total_ex_vat}}</p><p>9% btw: {{f.vat_9_percent}}</p>
+  <p>Totaal incl. btw: {{f.total_incl_vat}}</p>
+  <p>Bestellingskorting: {{f.order_discount}}</p>
+  <p>Eenmalige korting: {{f.first_order_discount}}</p>
+  <p>Klantenkorting: {{f.customer_discount}}</p>
+  <strong>Totaal: {{f.total}}</strong>
+  <p>Betalingsopvolging: {{f.action}}</p>
+  <form method="post" action="{{url_for('administration.invoice_action')}}">
+  <input type="hidden" name="invoice_id" value="{{f.invoice_number}}">
+  <input type="hidden" name="customer_id" value="{{customer_id}}">
+  <label>Actie <select name="action">
+     <option value="reminder1">Eerste herinnering</option>
+     <option value="reminder2">Tweede herinnering</option>
+     <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
+     <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
+     <option value="mark_paid">Volledig betaald</option>
+  </select></label>
+  <label>Ontvangen bedrag (alleen bij volledig betaald) <input type="number" min="0" step="0.01" name="received_amount"></label>
+  <button>Registreer</button>
+  </form>
+</section>
+{% else %}{% if customer_id %}<p>Geen facturen gevonden.</p>{% endif %}{% endfor %}
 {% endblock %}

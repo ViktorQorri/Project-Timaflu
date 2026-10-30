@@ -1,5 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Check stock for an order{% endblock %}
+{% block title %}Check stock for an order
+<section><h2>Korting berekenen voor telefonische bestelling</h2>
+<form method="post" action="{{url_for('sales.calculate_order_discount')}}">
+<label>Klantnummer <input name="customer_id" type="number" min="1" required></label>
+<label>Bedrag bestelde producten (€) <input name="subtotal" type="number" step="0.01" min="0" required></label>
+<button>Bereken kortingen</button>
+</form></section>
+{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="sales-stock-title">
   <h1 id="sales-stock-title">Check stock for a telephone order</h1>
@@ -33,4 +40,11 @@
   {% endif %}
   <p class="stock-dashboard__subtitle">Reservations are registered with actual orders; this screen only checks stock.</p>
 </section>
+
+<section><h2>Korting berekenen voor telefonische bestelling</h2>
+<form method="post" action="{{url_for('sales.calculate_order_discount')}}">
+<label>Klantnummer <input name="customer_id" type="number" min="1" required></label>
+<label>Bedrag bestelde producten (€) <input name="subtotal" type="number" step="0.01" min="0" required></label>
+<button>Bereken kortingen</button>
+</form></section>
 {% endblock %}

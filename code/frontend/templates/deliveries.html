@@ -1,7 +1,19 @@
 {% extends "base.html" %}
-
-{% block title %}Deliveries{% endblock %}
-
+{% block title %}Bezorgrooster{% endblock %}
 {% block content %}
-  <h1>Deliveries</h1>
+<h1>Bezorgrooster</h1>
+<form method="get"><label>Datum <input type="date" name="day" value="{{day}}" required></label><button>Bekijken</button></form>
+<table><thead><tr><th>Tijd</th><th>Bestelling</th><th>Klant</th><th>Adres</th><th>Contact</th><th>Status</th><th>Tweede poging</th></tr></thead><tbody>
+{% for item in schedule %}
+<tr><td>{{item.geplande_tijd}}</td><td>{{item.bestelling_id}}</td><td>{{item.bedrijfsnaam}}</td>
+<td>{{item.adres}}</td><td>{{item.contactpersoon}} – {{item.telefoonnummer}}</td><td>{{item.resultaat or 'nog niet afgeleverd'}}</td>
+<td>{% if item.pogingnummer == 1 and item.resultaat != 'afgeleverd' %}
+<form method="post" action="{{url_for('distribution.second_attempt')}}">
+<input type="hidden" name="day" value="{{day}}">
+<input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+<label>Tijd <input type="time" name="time" required></label>
+<label>Resultaat <select name="outcome"><option value="afgeleverd">Afgeleverd</option><option value="niet aanwezig">Niet afgeleverd</option></select></label>
+<button>Registreer tweede poging</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="7">Geen ritten.</td></tr>{% endfor %}
+</tbody></table>
 {% endblock %}

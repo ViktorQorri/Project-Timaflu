@@ -38,3 +38,26 @@ def record_purchase_order():
     )
     flash(f"Purchasing order {order_id} recorded after supplier confirmation.", "success")
     return redirect(url_for("purchasing.suppliers"))
+
+
+@purchasing.post("/suppliers/remove-offer")
+def remove_offer():
+    product_id = request.form.get("product_id", type=int)
+    supplier_id = request.form.get("supplier_id", type=int)
+    if not product_id or not supplier_id or min(product_id, supplier_id) < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product and supplier required.")
+    SupplierRepository(get_connection()).remove_offer(product_id, supplier_id)
+    flash("Leverancierskoppeling verwijderd.", "success")
+    return redirect(url_for("purchasing.suppliers"))
+
+
+@purchasing.post("/suppliers/remove-product")
+def remove_product_from_reorder_list():
+    product_id = request.form.get("product_id", type=int)
+    if not product_id or product_id < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product required.")
+    SupplierRepository(get_connection()).remove_from_internal_reorder_list(product_id)
+    flash("Product uit interne bestellijst verwijderd.", "success")
+    return redirect(url_for("purchasing.suppliers"))

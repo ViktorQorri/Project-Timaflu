@@ -84,6 +84,7 @@ CREATE TABLE Product (
     lange_omschrijving TEXT,
     minimale_bestelhoeveelheid INT NOT NULL,
     minimumvoorraad INT NOT NULL,
+    intern_bestelbaar BOOLEAN NOT NULL DEFAULT TRUE,
 
     CHECK (prijs_per_grootverpakking >= 0),
     CHECK (aantal_detailverpakkingen > 0),
@@ -516,6 +517,17 @@ CREATE TABLE Betalingsherinnering (
     CHECK (volgnummer IN (1, 2))
 );
 
+
+-- Inkoopfacturen: expliciet onderdeel van de administratie uit de casus.
+CREATE TABLE Inkoopfactuur (
+    inkoopfactuur_id INT AUTO_INCREMENT PRIMARY KEY,
+    leverancier_id INT NOT NULL,
+    factuurdatum DATE NOT NULL,
+    bedrag DECIMAL(10,2) NOT NULL,
+    betaald_op DATE,
+    FOREIGN KEY (leverancier_id) REFERENCES Leverancier(leverancier_id),
+    CHECK (bedrag >= 0)
+);
 
 -- =========================================
 -- ORDERSTATUSSEN UIT DE CASUS

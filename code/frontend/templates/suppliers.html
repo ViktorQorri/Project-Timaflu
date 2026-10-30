@@ -14,7 +14,7 @@
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <caption>Supplier offers for {{ product_name }}, ordered by purchase price</caption>
-          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col" class="stock-dashboard__number">Purchase price</th><th scope="col">Manual purchase order</th></tr></thead>
+          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col">Beheer</th><th scope="col" class="stock-dashboard__number">Purchase price</th><th scope="col">Manual purchase order</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
@@ -22,6 +22,17 @@
                 <td>{{ offer.leverancier }}</td>
                 <td>{{ offer.contactpersoon or 'Not recorded' }}</td>
                 <td>{{ offer.telefoonnummer or 'Not recorded' }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
+                    <button>Verwijder leverancier van product</button>
+                  </form>
+                  <form method="post" action="{{ url_for('purchasing.remove_product_from_reorder_list') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <button>Verwijder uit interne bestellijst</button>
+                  </form>
+                </td>
                 <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
                 <td>
                   <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">

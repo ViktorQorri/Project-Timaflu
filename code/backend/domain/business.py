@@ -45,6 +45,46 @@ class Order:
                 "first_order_discount": b, "customer_discount": c,
                 "total": euro(self.subtotal - a - b - c)}
 
+    def setDeliveryTime(self, date, timeSlot):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def changeOrderStatus(self, status):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def recordAdditionalDeliveryCosts(self, amount, explanation):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def recordOrder(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def recordCustomerApproval(self, approval):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def markAsUrgent(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def getOrderStatus(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def splitIntoSuborders(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def viewCollectionBins(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def packageOrder(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
 
 class Product:
     def __init__(self, productName, offers=()):
@@ -65,6 +105,14 @@ class Product:
     def removeFromAssortment(self):
         # Only remove from internal reorder list; not the historical product catalogue.
         self.onInternalReorderList = False
+
+    def checkStock(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def checkMinimumStock(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
 
 
 class Invoice:
@@ -111,6 +159,14 @@ class Invoice:
         self.debtCollectionEnabled = True
         customer.blocked = True
 
+    def sendToCustomer(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def recordFullPayment(self, date):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
 
 class PaymentReminder:
     def __init__(self, sequenceNumber):
@@ -134,6 +190,14 @@ class Customer:
     def checkOrderBlock(self):
         return self.blocked
 
+    def calculateAnnualRevenue(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
+    def updateDetails(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
+
 
 class DeliveryAttempt:
     def __init__(self, attemptNumber):
@@ -148,6 +212,10 @@ class DeliveryAttempt:
     def markDelivered(self, timestamp):
         self.result = "afgeleverd"
         self.actuallyDeliveredOn = timestamp
+
+    def recordReceiptSignature(self):
+        # Other case processes: school explicitly permits an empty method.
+        pass
 
 
 class Route:
@@ -165,6 +233,10 @@ class Route:
                 delivery["second_attempt"] = secondAttempt or "scheduled"
                 return self.deliveries
         raise ValueError("Bestelling niet in rooster")
+
+    def assignToCourier(self, courier):
+        # Other case processes: school explicitly permits an empty method.
+        pass
 
 
 class AcquisitionVisit:
