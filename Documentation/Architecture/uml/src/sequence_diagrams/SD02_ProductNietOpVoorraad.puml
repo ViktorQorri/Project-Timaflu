@@ -4,30 +4,33 @@ autonumber
 actor "Inkoopmedewerker" as I
 participant "Product" as P
 database "Magazijnlocatie" as M
-database "LeveranciersAanbod" as A
-participant "Supplier" as L
-participant "PurchaseOrder" as PO
-I -> P: checkMinimumStock()
-P -> M: getPhysicalStock(product)
-M --> P: quantity
+database "Leveranciersaanbod" as A
+participant "Leverancier" as L
+participant "Inkoopbestelling" as PO
+
+I -> P: controleerMinimumvoorraad()
+P -> M: haalFysiekeVoorraadOp(product)
+M --> P: hoeveelheid
+P --> I: voorraadstatus
 alt Onder minimumvoorraad
- I -> P: findSuppliersByPrice()
- P -> A: listOffersOrderedByPrice(product)
- A --> P: offers, contactName, phoneNumber
- P --> I: cheapest supplier first
- loop Zolang geen fabrikant kan leveren en opties resten
-   I -> L: Contact opnemen over leverbaarheid
-   L --> I: beschikbaar / niet beschikbaar
- end
- alt Fabrikant kan leveren
-   I -> L: Bestelling bevestigen
-   I -> PO: placeWithSupplier()
-   PO --> I: geregistreerde inkoopbestelling
- else Niemand kan leveren
-   I -> P: removeSupplier(supplier) / removeFromAssortment()
-   P --> I: interne bestellijst bijgewerkt
- end
+  I -> P: zoekLeveranciersOpPrijs()
+  P -> A: toonAanbiedingenGesorteerdOpPrijs(product)
+  A --> P: aanbiedingen, contactnaam, telefoonnummer
+  P --> I: leveranciers op prijs gesorteerd
+  loop Zolang nog geen leverancier kan leveren en opties resten
+    I -> L: vraagLeverbaarheid()
+    L --> I: beschikbaarheid
+  end
+  alt Leverancier kan leveren
+    I -> L: bevestigBestelling()
+    L --> I: bestelling bevestigd
+    I -> PO: registreerInkoopbestelling()
+    PO --> I: inkoopbestelling geregistreerd
+  else Geen leverancier kan leveren
+    I -> P: verwijderLeverancierOfProduct()
+    P --> I: assortiment bijgewerkt
+  end
 else Voldoende voorraad
- P --> I: geen bijbestelling nodig
+  I -> I: geen bijbestelling nodig
 end
 @enduml

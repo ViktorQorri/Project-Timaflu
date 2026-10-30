@@ -1,31 +1,35 @@
 @startuml
-title SD05 - Potentiele klant zonder bestelling (acquisitie)
+title SD05 - Potentiële klant zonder bestelling (acquisitie)
 autonumber
 actor "Acquisitiemedewerker" as M
-participant "ProspectiveCustomer" as P
-participant "AcquisitionVisit" as V
-participant "Customer" as K
-database "Prospects, bezoeken, orders" as DB
-M -> V: recordVisit(company, contact, address, date)
+participant "Potentiële klant" as P
+participant "Acquisitiebezoek" as V
+participant "Klant" as K
+database "Prospects, bezoeken en bestellingen" as DB
+
+M -> V: registreerBezoek(bedrijf, contact, adres, datum)
 V -> DB: slaBezoekOp()
 DB --> V: opgeslagen
 V --> M: bezoek geregistreerd
-M -> P: checkFollowUpAfterOneMonth()
+M -> P: controleerOpvolgingNaEenMaand()
 P -> DB: zoekZonderBestellingNaEenMaand()
 DB --> P: kandidaten, contactgegevens
-P -> P: hasPlacedOrder()
-alt Geen bestelling en bezoek minimaal maand geleden
- P --> M: opvolglijst met contactgegevens
- M -> P: offerOneTimeDiscount() (10%)
- alt Prospect wordt klant
-   P -> K: createCustomerAccount()
-   K -> DB: slaKlantOp()
-   DB --> K: klantnummer
-   K --> M: account met kortingsoptie
- else Prospect blijft prospect
-   P --> M: opvolging later
- end
+P -> P: controleerOfBestellingGeplaatst()
+P --> M: opvolgstatus en contactgegevens
+alt Geen bestelling en bezoek minstens een maand geleden
+  M -> P: biedEenmaligeKortingAan(10%)
+  P --> M: reactie op aanbod
+  alt Prospect wil klant worden
+    M -> P: maakKlantaccountAan()
+    P -> K: registreerKlant()
+    K -> DB: slaKlantOp()
+    DB --> K: klantnummer
+    K --> P: account en kortingsoptie
+    P --> M: klantaccount geregistreerd
+  else Prospect blijft prospect
+    M -> M: planLatereOpvolging()
+  end
 else Wel besteld of bezoek recenter
- P --> M: nog geen opvolging
+  M -> M: geen opvolging nodig
 end
 @enduml

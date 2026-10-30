@@ -2,27 +2,27 @@
 title SD01 - Berekenen klantenkorting (verkoop)
 autonumber
 actor "Verkoopmedewerker" as V
-participant "Order" as O
-participant "Customer" as K
-participant "CustomerDiscount" as D
+participant "Bestelling" as O
+participant "Klant" as K
+participant "Klantenkorting" as D
 database "Bestellingen" as DB
-V -> O: calculateTotalAmount(customer, orderLines)
+
+V -> O: berekenTotaalbedrag(klant, bestelregels)
 activate O
-O -> O: calculateOrderDiscount()
-O -> DB: countPreviousOrders(customer)
-DB --> O: numberOfOrders
+O -> DB: telEerdereBestellingen(klant)
+DB --> O: aantalBestellingen
 alt Eerste bestelling
-  O -> O: calculateOneTimeDiscount() (10%)
+  O -> O: berekenEenmaligeKorting(10%)
 else Bestaande klant
-  O -> K: calculateAnnualRevenue(previousYear)
-  K -> DB: sumPurchases(previousYear)
-  DB --> K: annualRevenue
-  K --> O: annualRevenue
-  O -> D: determinePercentage(annualRevenue, previousYear)
-  D --> O: percentage
-  O -> O: calculateCustomerDiscount()
+  O -> K: berekenJaaromzet(vorigJaar)
+  K -> DB: somAankopen(vorigJaar)
+  DB --> K: jaaromzet
+  K --> O: jaaromzet
+  O -> D: bepaalKortingspercentage(jaaromzet)
+  D --> O: kortingspercentage
+  O -> O: berekenKlantenkorting()
 end
-O -> O: calculateTotalAmount()
-O --> V: total, appliedDiscounts
+O -> O: berekenTotaalbedragNaKorting()
+O --> V: totaalbedrag, toegepasteKortingen
 deactivate O
 @enduml

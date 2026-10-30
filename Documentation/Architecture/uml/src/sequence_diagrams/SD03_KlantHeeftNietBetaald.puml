@@ -2,32 +2,37 @@
 title SD03 - Klant heeft niet betaald (administratie)
 autonumber
 actor "Administratiemedewerker" as A
-participant "Customer" as K
-participant "Invoice" as F
-participant "PaymentReminder" as H
+participant "Klant" as K
+participant "Factuur" as F
+participant "Betalingsherinnering" as H
 database "Factuurgegevens" as DB
+
 A -> K: zoekKlant(klantnummer)
 K -> DB: zoekOpenstaandeFacturen(klantnummer)
-DB --> K: facturen en betaaldatum
+DB --> K: facturen en vervaldata
 K --> A: openstaande facturen
 alt Achterstallige factuur
- A -> F: checkPaymentArrears()
- F -> DB: laadFactuurEnRegels()
- DB --> F: regels, korting, 9% btw, totaal
- alt Eerste of tweede herinnering
-   F -> H: send()
-   H --> F: herinnering verzonden
- else Na herinneringen onbetaald
-   F -> F: proposePaymentPlan()
-   alt Betalingsregeling akkoord
-     F --> A: regeling vastgelegd
-   else Niet akkoord
-     F -> F: enableDebtCollection()
-     F -> K: checkOrderBlock()
-     F --> A: incasso en orderblokkade
-   end
- end
-else Reeds betaald
- K --> A: geen achterstand
+  A -> F: controleerBetalingsachterstand()
+  F -> DB: laadFactuurEnRegels()
+  DB --> F: regels, korting, btw, totaal
+  F --> A: betalingsstatus en factuurdetails
+  alt Eerste of tweede herinnering
+    A -> H: verstuurHerinnering(factuur)
+    H --> A: herinnering verzonden
+  else Na herinneringen nog onbetaald
+    A -> F: stelBetalingsregelingVoor()
+    F --> A: voorstel betalingsregeling
+    alt Betalingsregeling akkoord
+      A -> F: legBetalingsregelingVast()
+      F --> A: regeling vastgelegd
+    else Betalingsregeling niet akkoord
+      A -> F: startIncassoprocedure()
+      F --> A: incasso gestart
+      A -> K: controleerEnBlokkeerBestellingen()
+      K --> A: bestelblokkade bevestigd
+    end
+  end
+else Factuur reeds betaald
+  A -> A: geen vervolgactie nodig
 end
 @enduml
