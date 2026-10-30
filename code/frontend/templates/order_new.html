@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Nieuwe order{% endblock %}
+{% block content %}
+{% macro euro(amount) %}€ {{ "{:,.2f}".format(amount)|replace(",", " ")|replace(".", ",")|replace(" ", ".") }}{% endmacro %}
+{% set labels = {"order": "Bestellingskorting", "one_time": "Eenmalige korting", "customer": "Klantenkorting"} %}
+<section class="stock-dashboard" aria-labelledby="order-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Verkoop</p>
+      <h1 id="order-title">Nieuwe order</h1>
+      <p class="stock-dashboard__subtitle">Voer een telefonische bestelling in. Je ziet direct de voorraad, de kortingen en het totaalbedrag.</p>
+    </div>
+    <a class="discount-link" href="{{ url_for('sales.orders') }}">Voorraad controleren</a>
+  </header>
+
+  <form method="get" action="{{ url_for('sales.new_order') }}" class="order-form">
+    <div class="discount-form">
+      <div class="discount-form__field">
+        <label for="customer">Klant</label>
+        <select id="customer" name="customer_id" required>
+          <option value="">Kies een klant</option>
+          {% for customer in customers %}
+            <option value="{{ customer.klant_id }}"{% if form.customer_id == customer.klant_id|string %} selected{% endif %}>{{ customer.bedrijfsnaam }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <fieldset class="discount-form__lines">
+        <legend>Bestelregels</legend>
+        {% for row in range(line_rows) %}
+          {% set line = form.lines[row] if row < form.lines|length else ("", "") %}
+          <div class="discount-form__line">
+            <div class="discount-form__field">
+              <label for="product-{{ row }}">Medicijn {{ row + 1 }}</label>
+              <select id="product-{{ row }}" name="product_id"{% if row == 0 %} required{% endif %}>
+                <option value="">Geen medicijn</option>
+                {% for product in products %}
+                  <option value="{{ product.product_id }}"{% if line[0] == product.product_id|string %} selected{% endif %}>{{ product.productnaam }} ({{ product.artikelnummer }}), {{ euro(product.prijs_per_grootverpakking) }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="discount-form__field discount-form__field--quantity">
+              <label for="quantity-{{ row }}">Aantal</label>
+              <input id="quantity-{{ row }}" name="quantity" type="number" min="1" step="1" value="{{ line[1] }}"{% if row == 0 %} required{% endif %}>
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="discount-form__submit">Totaal berekenen</button>
+    </div>
+
+    {% if error %}<p class="discount-error" role="alert">{{ error }}</p>{% endif %}
+
+    {% if calculation %}
+      <div class="discount-result">
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table">
+            <caption>Bestelregels met beschikbare voorraad en catalogusprijs per grootverpakking</caption>
+            <thead><tr><th scope="col">Medicijn</th><th scope="col" class="stock-dashboard__number">Aantal</th><th scope="col" class="stock-dashboard__number">Beschikbaar</th><th scope="col">Voorraad</th><th scope="col" class="stock-dashboard__number">Prijs</th><th scope="col" class="stock-dashboard__number">Regeltotaal</th></tr></thead>
+            <tbody>
+              {% for line in calculation.lines %}
+                <tr>
+                  <th scope="row">{{ line.productnaam }}<span class="order-line__article">{{ line.artikelnummer }}</span></th>
+                  <td class="stock-dashboard__number">{{ line.quantity }}</td>
+                  <td class="stock-dashboard__number">{{ line.available }}</td>
+                  <td>
+                    {% if line.short %}
+                      <span class="order-stock order-stock--short">Tekort</span>
+                      <label class="order-backorder">
+                        <input type="checkbox" name="backorder" value="{{ line.product_id }}"{% if line.backorder %} checked{% endif %}>
+                        Klant wacht op levering (backorder)
+                      </label>
+                    {% else %}
+                      <span class="order-stock">Op voorraad</span>
+                    {% endif %}
+                  </td>
+                  <td class="stock-dashboard__number">{{ euro(line.prijs_per_grootverpakking) }}</td>
+                  <td class="stock-dashboard__number">{{ euro(line.line_total) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <section class="discount-summary" aria-labelledby="discount-summary-title">
+          <h2 id="discount-summary-title">Totaalbedrag voor {{ calculation.customer.bedrijfsnaam }}</h2>
+          <p class="discount-summary__basis">
+            {% if calculation.first_order %}
+              <span class="discount-tag">Eerste bestelling</span> Eenmalige korting van 10%, geen klantenkorting.
+            {% else %}
+              <span class="discount-tag">Bestaande klant</span> Jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
+            {% endif %}
+          </p>
+          <dl class="discount-summary__rows">
+            <div class="discount-summary__row"><dt>Subtotaal</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>
+            {% if calculation.discounts[0].kind != "order" %}
+              <div class="discount-summary__row discount-summary__row--muted"><dt>Bestellingskorting</dt><dd>Niet van toepassing, subtotaal onder € 500,00</dd></div>
+            {% endif %}
+            {% for discount in calculation.discounts %}
+              <div class="discount-summary__row discount-summary__row--discount"><dt>{{ labels[discount.kind] }} ({{ discount.percentage|int }}% over {{ euro(discount.base) }})</dt><dd>− {{ euro(discount.amount) }}</dd></div>
+              <div class="discount-summary__row"><dt>Totaal na {{ labels[discount.kind]|lower }}</dt><dd>{{ euro(discount.total_after) }}</dd></div>
+            {% endfor %}
+            <div class="discount-summary__row discount-summary__row--total"><dt>Totaalbedrag</dt><dd>{{ euro(calculation.total_amount) }}</dd></div>
+          </dl>
+        </section>
+
+        <fieldset class="discount-form order-delivery">
+          <legend>Levermoment</legend>
+          <p class="discount-summary__basis">Gaat de klant akkoord met het totaalbedrag? Spreek dan de leverdatum en het dagdeel af.</p>
+          <div class="order-delivery__fields">
+            <div class="discount-form__field">
+              <label for="delivery-date">Leverdatum</label>
+              <input id="delivery-date" name="delivery_date" type="date" min="{{ today }}" value="{{ form.delivery_date }}">
+            </div>
+            <div class="discount-form__field">
+              <label for="part-of-day">Dagdeel</label>
+              <select id="part-of-day" name="part_of_day">
+                <option value="">Kies een dagdeel</option>
+                {% for part in parts_of_day %}
+                  <option value="{{ part }}"{% if form.part_of_day == part %} selected{% endif %}>{{ part|capitalize }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <label class="order-delivery__urgent">
+              <input type="checkbox" name="urgent" value="1"{% if form.urgent %} checked{% endif %}>
+              Spoedbestelling, vandaag leveren
+            </label>
+          </div>
+          {% if not calculation.can_save %}
+            <p class="discount-summary__basis">Niet alles is op voorraad. Vink bij elke regel met een tekort backorder aan, of verwijder de regel en bereken opnieuw.</p>
+          {% endif %}
+          <button type="submit" class="discount-form__submit" formmethod="post" formaction="{{ url_for('sales.place_order') }}">Order opslaan</button>
+        </fieldset>
+      </div>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}

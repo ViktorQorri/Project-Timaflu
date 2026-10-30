@@ -4,7 +4,7 @@
 <section class="stock-dashboard" aria-labelledby="sales-stock-title">
   <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
   <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
-  <p class="stock-dashboard__subtitle"><a class="discount-link" href="{{ url_for('sales.order_discount') }}">Korting berekenen</a></p>
+  <p class="stock-dashboard__subtitle"><a class="discount-link" href="{{ url_for('sales.new_order') }}">Nieuwe order invoeren</a></p>
   <form method="get" action="{{ url_for('sales.orders') }}" class="supplier-lookup">
     <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
     <input id="medicine-query" name="q" value="{{ query }}" maxlength="100" required>

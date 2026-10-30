@@ -1,4 +1,4 @@
-/* Start: Issue #10 - automatic order discount calculation, using the existing Timaflu design tokens. */
+/* Start: Issue #10 - order entry with automatic discount calculation, using the existing Timaflu design tokens. */
 .discount-link {
   color: var(--color-primary);
   font-weight: 700;
@@ -121,6 +121,60 @@
   font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 700;
+}
+.order-form {
+  display: grid;
+  gap: 24px;
+}
+.order-form .discount-form {
+  margin: 0;
+}
+.order-line__article {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+.order-stock {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-weight: 700;
+}
+.order-stock--short {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.order-backorder,
+.order-delivery__urgent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.order-delivery legend {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+}
+.order-delivery .discount-summary__basis {
+  margin: 0;
+}
+.order-delivery__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end;
+  gap: 16px;
+}
+.order-delivery__urgent {
+  min-height: 48px;
+  margin-top: 0;
+}
+.discount-form input[type="checkbox"] {
+  width: auto;
+  min-height: 0;
 }
 @media (max-width: 760px) {
   .discount-form__line {

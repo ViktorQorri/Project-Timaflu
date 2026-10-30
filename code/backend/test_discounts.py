@@ -1,11 +1,11 @@
-"""Order discount calculation (SD01) without a live MySQL server; nothing is written."""
+"""Order discount calculation (SD01) without a live MySQL server; nothing is written.
+
+The order screen that shows it is tested in test_orders.py."""
 
 from datetime import date
 from decimal import Decimal
 from unittest import TestCase
-from unittest.mock import patch
 
-from app import create_app
 from domain.errors import DomainError, NotFoundError
 from repositories.discount_repository import DiscountRepository
 from services.discount_service import DiscountService
@@ -180,24 +180,3 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(params, (7, 2025))
         self.assertEqual(repository.find_product(1), PRODUCTS[1])
         self.assertEqual(connection.commits, 0)
-
-    def test_discount_page_shows_breakdown_and_errors(self):
-        app = create_app()
-        app.testing = True
-        with app.test_client() as client:
-            with patch("routes.sales.get_connection", return_value=Connection()):
-                response = client.get("/orders/discount")
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(b"Korting berekenen", response.data)
-                self.assertIn(b"Apotheek De Brug", response.data)
-            with patch("routes.sales.get_connection", return_value=Connection()):
-                response = client.get("/orders/discount?customer_id=7&product_id=1&quantity=10&product_id=&quantity=")
-                self.assertEqual(response.status_code, 200)
-                page = response.get_data(as_text=True)
-                self.assertIn("Bestellingskorting (5% over € 1.000,00)", page)
-                self.assertIn("Klantenkorting (10% over € 950,00)", page)
-                self.assertIn("€ 855,00", page)
-            with patch("routes.sales.get_connection", return_value=Connection()):
-                response = client.get("/orders/discount?customer_id=7&product_id=1&quantity=0")
-                self.assertEqual(response.status_code, 400)
-                self.assertIn("Het aantal moet een positief geheel getal zijn.", response.get_data(as_text=True))
