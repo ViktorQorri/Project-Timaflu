@@ -19,6 +19,14 @@ from routes.sales import sales
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 
+# Dutch texts for the standard HTTP errors, whose own descriptions are English.
+HTTP_MESSAGES = {
+    400: "Het verzoek is ongeldig.",
+    403: "Je hebt geen toegang tot deze pagina.",
+    404: "Deze pagina bestaat niet.",
+    405: "Deze actie is hier niet toegestaan.",
+}
+
 
 def create_app(config=Config):
     """Create the Flask app and register the routes and error handlers.
@@ -69,17 +77,22 @@ def register_error_handlers(app):
 
     @app.errorhandler(HTTPException)
     def http_error(error):
-        return respond(error.code, error.description)
+        # Keep a description given with abort(), replace the standard English one.
+        if error.description == type(error).description:
+            message = HTTP_MESSAGES.get(error.code, "Er ging iets mis met dit verzoek.")
+        else:
+            message = error.description
+        return respond(error.code, message)
 
     @app.errorhandler(DatabaseError)
     def database_error(error):
         app.logger.error("Database error", exc_info=error)
-        return respond(503, "The database cannot be reached. Try again later.")
+        return respond(503, "De database is niet bereikbaar. Probeer het later opnieuw.")
 
     @app.errorhandler(Exception)
     def unexpected_error(error):
         app.logger.error("Unexpected error", exc_info=error)
-        return respond(500, "Something went wrong. Try again later.")
+        return respond(500, "Er ging iets mis. Probeer het later opnieuw.")
 
 
 if __name__ == "__main__":
