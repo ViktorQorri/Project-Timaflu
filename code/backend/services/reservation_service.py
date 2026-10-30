@@ -11,9 +11,9 @@ class ReservationService:
         try:
             values = int(order_id), int(product_id)
         except (TypeError, ValueError) as error:
-            raise DomainError("Order and product IDs must be integers.") from error
+            raise DomainError("Order en product moeten hele getallen zijn.") from error
         if any(value < 1 for value in values):
-            raise DomainError("Order and product IDs must be positive.")
+            raise DomainError("Order en product moeten groter dan 0 zijn.")
         return values
 
     def reserve_confirmed_line(self, order_id, product_id):

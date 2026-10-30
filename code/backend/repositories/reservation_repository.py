@@ -20,7 +20,7 @@ class ReservationRepository:
                     (product_id,),
                 )
                 if cur.fetchone() is None:
-                    raise NotFoundError("Product not found.")
+                    raise NotFoundError("Product niet gevonden.")
                 cur.execute(
                     """SELECT aantal FROM Bestelregel
                        WHERE bestelling_id = %s AND product_id = %s""",
@@ -28,7 +28,7 @@ class ReservationRepository:
                 )
                 line = cur.fetchone()
                 if line is None:
-                    raise NotFoundError("Existing customer order line not found.")
+                    raise NotFoundError("Bestelregel niet gevonden.")
                 quantity = int(line[0])
                 cur.execute(
                     """SELECT aantal FROM Voorraadreservering
@@ -36,7 +36,7 @@ class ReservationRepository:
                     (order_id, product_id),
                 )
                 if cur.fetchone() is not None:
-                    raise ConflictError("This order line has already been reserved.")
+                    raise ConflictError("Deze bestelregel is al gereserveerd.")
                 cur.execute(
                     "SELECT COALESCE(SUM(aantal), 0) FROM Magazijnlocatie WHERE product_id = %s",
                     (product_id,),
@@ -48,7 +48,7 @@ class ReservationRepository:
                 )
                 reserved = int(cur.fetchone()[0])
                 if quantity > physical - reserved:
-                    raise ConflictError("Insufficient available stock for this order line.")
+                    raise ConflictError("Onvoldoende beschikbare voorraad voor deze bestelregel.")
                 cur.execute(
                     """INSERT INTO Voorraadreservering (bestelling_id, product_id, aantal)
                        VALUES (%s, %s, %s)""",
@@ -70,7 +70,7 @@ class ReservationRepository:
                     (product_id,),
                 )
                 if cur.fetchone() is None:
-                    raise NotFoundError("Product not found.")
+                    raise NotFoundError("Product niet gevonden.")
                 cur.execute(
                     """DELETE FROM Voorraadreservering
                        WHERE bestelling_id = %s AND product_id = %s""",

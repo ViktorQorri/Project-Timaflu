@@ -74,4 +74,4 @@ class StockShortageTests(TestCase):
             with patch("routes.purchasing.get_connection", return_value=FakeConnection([])):
                 response = client.get("/stock")
                 self.assertEqual(response.status_code, 200)
-                self.assertIn(b"No stock shortages", response.data)
+                self.assertIn(b"Geen voorraadtekorten", response.data)

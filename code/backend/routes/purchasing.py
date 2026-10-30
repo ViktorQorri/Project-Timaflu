@@ -36,5 +36,5 @@ def record_purchase_order():
         request.form.get("product_id"),
         request.form.get("quantity"),
     )
-    flash(f"Purchasing order {order_id} recorded after supplier confirmation.", "success")
+    flash(f"Inkooporder {order_id} is vastgelegd na bevestiging door de leverancier.", "success")
     return redirect(url_for("purchasing.suppliers"))
