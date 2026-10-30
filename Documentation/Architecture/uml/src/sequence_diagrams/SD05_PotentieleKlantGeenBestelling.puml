@@ -1,0 +1,31 @@
+@startuml
+title SD05 - Potentiele klant zonder bestelling (acquisitie)
+autonumber
+actor "Acquisitiemedewerker" as M
+participant "ProspectiveCustomer" as P
+participant "AcquisitionVisit" as V
+participant "Customer" as K
+database "Prospects, bezoeken, orders" as DB
+M -> V: recordVisit(company, contact, address, date)
+V -> DB: slaBezoekOp()
+DB --> V: opgeslagen
+V --> M: bezoek geregistreerd
+M -> P: checkFollowUpAfterOneMonth()
+P -> DB: zoekZonderBestellingNaEenMaand()
+DB --> P: kandidaten, contactgegevens
+P -> P: hasPlacedOrder()
+alt Geen bestelling en bezoek minimaal maand geleden
+ P --> M: opvolglijst met contactgegevens
+ M -> P: offerOneTimeDiscount() (10%)
+ alt Prospect wordt klant
+   P -> K: createCustomerAccount()
+   K -> DB: slaKlantOp()
+   DB --> K: klantnummer
+   K --> M: account met kortingsoptie
+ else Prospect blijft prospect
+   P --> M: opvolging later
+ end
+else Wel besteld of bezoek recenter
+ P --> M: nog geen opvolging
+end
+@enduml

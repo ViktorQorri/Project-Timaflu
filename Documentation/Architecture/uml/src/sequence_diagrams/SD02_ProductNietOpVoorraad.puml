@@ -1,0 +1,33 @@
+@startuml
+title SD02 - Product niet op voorraad (inkoop)
+autonumber
+actor "Inkoopmedewerker" as I
+participant "Product" as P
+database "Magazijnlocatie" as M
+database "LeveranciersAanbod" as A
+participant "Supplier" as L
+participant "PurchaseOrder" as PO
+I -> P: checkMinimumStock()
+P -> M: getPhysicalStock(product)
+M --> P: quantity
+alt Onder minimumvoorraad
+ I -> P: findSuppliersByPrice()
+ P -> A: listOffersOrderedByPrice(product)
+ A --> P: offers, contactName, phoneNumber
+ P --> I: cheapest supplier first
+ loop Zolang geen fabrikant kan leveren en opties resten
+   I -> L: Contact opnemen over leverbaarheid
+   L --> I: beschikbaar / niet beschikbaar
+ end
+ alt Fabrikant kan leveren
+   I -> L: Bestelling bevestigen
+   I -> PO: placeWithSupplier()
+   PO --> I: geregistreerde inkoopbestelling
+ else Niemand kan leveren
+   I -> P: removeSupplier(supplier) / removeFromAssortment()
+   P --> I: interne bestellijst bijgewerkt
+ end
+else Voldoende voorraad
+ P --> I: geen bijbestelling nodig
+end
+@enduml

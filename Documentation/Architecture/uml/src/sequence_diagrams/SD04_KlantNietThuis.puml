@@ -1,0 +1,25 @@
+@startuml
+title SD04 - Klant niet thuis bij levering (distributie)
+autonumber
+actor "Koerier" as K
+participant "Route" as R
+participant "Customer" as C
+participant "DeliveryAttempt" as D
+participant "Order" as O
+K -> R: showSchedule(date)
+R --> K: rooster, adressen, contactgegevens
+K -> C: Bel klant bij gesloten deur
+alt Klant later dezelfde dag beschikbaar
+ K -> R: adjustSchedule()
+ R --> K: aangepast rooster
+ K -> D: markDelivered(timestamp)
+ D -> O: changeOrderStatus(delivered)
+ O --> K: levering geregistreerd
+else Ook bij tweede poging niemand aanwezig
+ K -> D: markRecipientAbsent()
+ D -> O: changeOrderStatus(not delivered)
+ K -> O: recordAdditionalDeliveryCosts(amount, explanation)
+ O --> K: niet afgeleverd
+ note right of K: Verkoop neemt contact op voor nieuwe afspraak
+end
+@enduml

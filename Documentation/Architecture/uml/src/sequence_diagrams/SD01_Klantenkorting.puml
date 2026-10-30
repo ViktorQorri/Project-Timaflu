@@ -1,0 +1,28 @@
+@startuml
+title SD01 - Berekenen klantenkorting (verkoop)
+autonumber
+actor "Verkoopmedewerker" as V
+participant "Order" as O
+participant "Customer" as K
+participant "CustomerDiscount" as D
+database "Bestellingen" as DB
+V -> O: calculateTotalAmount(customer, orderLines)
+activate O
+O -> O: calculateOrderDiscount()
+O -> DB: countPreviousOrders(customer)
+DB --> O: numberOfOrders
+alt Eerste bestelling
+  O -> O: calculateOneTimeDiscount() (10%)
+else Bestaande klant
+  O -> K: calculateAnnualRevenue(previousYear)
+  K -> DB: sumPurchases(previousYear)
+  DB --> K: annualRevenue
+  K --> O: annualRevenue
+  O -> D: determinePercentage(annualRevenue, previousYear)
+  D --> O: percentage
+  O -> O: calculateCustomerDiscount()
+end
+O -> O: calculateTotalAmount()
+O --> V: total, appliedDiscounts
+deactivate O
+@enduml
