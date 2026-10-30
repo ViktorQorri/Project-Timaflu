@@ -257,7 +257,7 @@ Order "0..*" -[norank]-> "1" Address : delivery address
 Order "0..*" -[norank]-> "1" Address : billing address
 Order "1" -[norank]-> "1..*" OrderLine : contains
 OrderLine "0..*" -[norank]-> "1" Product : orders
-OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
+
 Order "0..*" -[norank]-> "1" OrderStatus : has
 Product "1" -[norank]-> "1..*" ProductActiveIngredient : contains
 Supplier "0..*" -[norank]-> "1" Address : located at

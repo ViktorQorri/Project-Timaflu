@@ -5,6 +5,7 @@ School permits example data for methods. Database persistence is separate.
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from calendar import monthrange
+from domain.business import Order, Product, Invoice, Route, ProspectiveCustomer
 
 
 def eur(value):
@@ -12,56 +13,40 @@ def eur(value):
 
 
 def calculate_discount(subtotal, previous_annual_revenue, first_order=False):
-    total = eur(subtotal)
-    annual = eur(previous_annual_revenue)
-    if min(total, annual) < 0:
-        raise ValueError("Negative amount")
-    order = eur(total * Decimal("0.05")) if total >= 500 else eur(0)
-    total -= order
-    welcome = eur(total * Decimal("0.10")) if first_order else eur(0)
-    total -= welcome
-    rate = Decimal("0.05") if annual < 10000 else Decimal("0.10") if annual < 20000 else Decimal("0.15")
-    customer = eur(total * rate)
-    return {"order_discount": order, "welcome_discount": welcome,
-            "customer_discount": customer, "total": eur(total - customer)}
+    """Use the DKD Order methods instead of duplicating their business rules."""
+    result = Order(subtotal, previous_annual_revenue, first_order).calculateTotalAmount()
+    return {"order_discount": result["order_discount"],
+            "welcome_discount": result["first_order_discount"],
+            "customer_discount": result["customer_discount"],
+            "total": result["total"]}
 
 
 def cheapest_suppliers(product_name, offers):
-    """Only matching product; include prices and contact details."""
-    return sorted((o for o in offers if o["product"].casefold() == product_name.casefold()),
-                  key=lambda o: (eur(o["price"]), o["supplier"]))
+    """Offer listing delegates to Product.findSuppliersByPrice()."""
+    return Product(product_name, offers).findSuppliersByPrice()
 
 
 def outstanding_invoices(customer_id, invoices, today):
-    """First and second reminders; contact after three unpaid weeks."""
+    """Only unpaid invoices of the selected customer."""
     result = []
-    for invoice in invoices:
-        if invoice["customer_id"] != customer_id or invoice.get("paid"):
+    for record in invoices:
+        if record["customer_id"] != customer_id or record.get("paid"):
             continue
-        days = (today - invoice["date"]).days
-        action = ("contact_payment_plan" if days >= 21 else
-                  "second_reminder" if days >= 14 else
-                  "first_reminder" if days >= 7 else "no_action")
-        result.append({**invoice, "action": action})
+        invoice = Invoice(customer_id, record.get("invoice_number", ""),
+                          record["date"], record.get("paid_on"))
+        result.append({**record, "action": invoice.checkPaymentArrears(today)})
     return result
 
 
 def second_delivery_attempt(deliveries, delivery_date, order_id, result=None):
-    """One more delivery attempt on the same day; track actual outcome."""
-    entries = [dict(x) for x in deliveries if x["date"] == delivery_date]
-    for delivery in entries:
-        if delivery["order_id"] == order_id:
-            delivery["first_attempt"] = "absent"
-            delivery["second_attempt"] = result or "scheduled"
-            return entries
-    raise ValueError("Delivery not found")
+    return Route(delivery_date, deliveries).adjustSchedule(order_id, result)
 
 
 def follow_up_prospects(visits, customers_with_orders, today):
-    """One calendar month after visit, if no order, offer 10% with account."""
-    month = today.month - 1 or 12
-    year = today.year - (today.month == 1)
-    cutoff = date(year, month, min(today.day, monthrange(year, month)[1]))
-    return [{**v, "offer": "10% first order if account is created"}
-            for v in visits if v["date"] <= cutoff
-            and v["prospect_id"] not in customers_with_orders]
+    result = []
+    for visit in visits:
+        prospect = ProspectiveCustomer(str(visit["prospect_id"]),
+                                       visit["prospect_id"] in customers_with_orders)
+        if prospect.checkFollowUpAfterOneMonth(visit["date"], today):
+            result.append({**visit, "offer": "10% first order if account is created"})
+    return result
