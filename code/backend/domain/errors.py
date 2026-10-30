@@ -18,3 +18,14 @@ class ConflictError(DomainError):
     """The request clashes with the current state, for example an order that is already delivered."""
 
     status_code = 409
+
+
+class ValidationError(DomainError):
+    """Entered form data breaks one or more input rules, for example a missing company name.
+
+    Keeps every message, so a form can show all problems at once.
+    """
+
+    def __init__(self, messages):
+        super().__init__(" ".join(messages))
+        self.messages = list(messages)

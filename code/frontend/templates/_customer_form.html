@@ -1,0 +1,39 @@
+{# Shared customer form. Expects: action, submit_label, form (entered or stored values), errors. #}
+<form method="post" action="{{ action }}" class="customer-form" novalidate>
+  <div class="customer-form__grid">
+    <div class="customer-form__field">
+      <label for="bedrijfsnaam">Bedrijfsnaam</label>
+      <input id="bedrijfsnaam" name="bedrijfsnaam" value="{{ form.get('bedrijfsnaam') or '' }}" maxlength="100" required>
+    </div>
+    <div class="customer-form__field">
+      <label for="contactpersoon">Contactpersoon <span class="customer-form__optional">(optioneel)</span></label>
+      <input id="contactpersoon" name="contactpersoon" value="{{ form.get('contactpersoon') or '' }}" maxlength="100">
+    </div>
+    <div class="customer-form__field">
+      <label for="telefoonnummer">Telefoonnummer</label>
+      <input id="telefoonnummer" name="telefoonnummer" type="tel" value="{{ form.get('telefoonnummer') or '' }}" maxlength="25" placeholder="bijv. 076 123 45 67" required>
+    </div>
+    <div class="customer-form__field customer-form__field--wide">
+      <label for="afleveradres">Afleveradres</label>
+      <input id="afleveradres" name="afleveradres" value="{{ form.get('afleveradres') or '' }}" maxlength="255" placeholder="Straat en huisnummer, postcode en plaats" required>
+    </div>
+    <div class="customer-form__field customer-form__field--wide">
+      <label for="factuuradres">Factuuradres</label>
+      <input id="factuuradres" name="factuuradres" value="{{ form.get('factuuradres') or '' }}" maxlength="255" placeholder="Straat en huisnummer, postcode en plaats" required>
+    </div>
+  </div>
+
+  {% if errors %}
+    <div class="customer-form__errors" role="alert">
+      <p>De gegevens zijn niet opgeslagen:</p>
+      <ul>
+        {% for message in errors %}<li>{{ message }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="customer-form__actions">
+    <button type="submit" class="customer-button">{{ submit_label }}</button>
+    {% if cancel_url %}<a class="customer-button customer-button--secondary" href="{{ cancel_url }}">Annuleren</a>{% endif %}
+  </div>
+</form>
