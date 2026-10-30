@@ -1,38 +1,39 @@
 @startuml
-title SD03 - Klant heeft niet betaald (administratie)
+title SD03 - Customer has not paid (administration)
 autonumber
-actor "Administratiemedewerker" as A
-participant "Klant" as K
-participant "Factuur" as F
-participant "Betalingsherinnering" as H
-database "Factuurgegevens" as DB
 
-A -> K: zoekKlant(klantnummer)
-K -> DB: zoekOpenstaandeFacturen(klantnummer)
-DB --> K: facturen en vervaldata
-K --> A: openstaande facturen
-alt Achterstallige factuur
-  A -> F: controleerBetalingsachterstand()
-  F -> DB: laadFactuurEnRegels()
-  DB --> F: regels, korting, btw, totaal
-  F --> A: betalingsstatus en factuurdetails
-  alt Eerste of tweede herinnering
-    A -> H: verstuurHerinnering(factuur)
-    H --> A: herinnering verzonden
-  else Na herinneringen nog onbetaald
-    A -> F: stelBetalingsregelingVoor()
-    F --> A: voorstel betalingsregeling
-    alt Betalingsregeling akkoord
-      A -> F: legBetalingsregelingVast()
-      F --> A: regeling vastgelegd
-    else Betalingsregeling niet akkoord
-      A -> F: startIncassoprocedure()
-      F --> A: incasso gestart
-      A -> K: controleerEnBlokkeerBestellingen()
-      K --> A: bestelblokkade bevestigd
+actor "Administration employee" as A
+participant "Customer" as K
+participant "Invoice" as F
+participant "Payment reminder" as H
+database "Invoice records" as DB
+
+A -> K: findCustomer(customerNumber)
+K -> DB: findOutstandingInvoices(customerNumber)
+DB --> K: invoices, dueDates
+K --> A: outstandingInvoices
+alt Overdue invoice
+  A -> F: checkPaymentArrears()
+  F -> DB: loadInvoiceAndLineItems()
+  DB --> F: lineItems, discount, VAT, total
+  F --> A: paymentStatus, invoiceDetails
+  alt First or second reminder
+    A -> H: sendReminder(invoice)
+    H --> A: reminderSent
+  else Still unpaid after reminders
+    A -> F: proposePaymentPlan()
+    F --> A: paymentPlanProposal
+    alt Payment plan accepted
+      A -> F: recordPaymentPlan()
+      F --> A: paymentPlanRecorded
+    else Payment plan rejected
+      A -> F: initiateDebtCollection()
+      F --> A: debtCollectionInitiated
+      A -> K: checkAndBlockOrders()
+      K --> A: orderBlockConfirmed
     end
   end
-else Factuur reeds betaald
-  A -> A: geen vervolgactie nodig
+else Invoice already paid
+  A -> A: noFurtherActionRequired()
 end
 @enduml

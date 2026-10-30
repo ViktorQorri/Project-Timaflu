@@ -1,36 +1,37 @@
 @startuml
-title SD02 - Product niet op voorraad (inkoop)
+title SD02 - Product out of stock (purchasing)
 autonumber
-actor "Inkoopmedewerker" as I
-participant "Product" as P
-database "Magazijnlocatie" as M
-database "Leveranciersaanbod" as A
-participant "Leverancier" as L
-participant "Inkoopbestelling" as PO
 
-I -> P: controleerMinimumvoorraad()
-P -> M: haalFysiekeVoorraadOp(product)
-M --> P: hoeveelheid
-P --> I: voorraadstatus
-alt Onder minimumvoorraad
-  I -> P: zoekLeveranciersOpPrijs()
-  P -> A: toonAanbiedingenGesorteerdOpPrijs(product)
-  A --> P: aanbiedingen, contactnaam, telefoonnummer
-  P --> I: leveranciers op prijs gesorteerd
-  loop Zolang nog geen leverancier kan leveren en opties resten
-    I -> L: vraagLeverbaarheid()
-    L --> I: beschikbaarheid
+actor "Purchasing employee" as I
+participant "Product" as P
+database "Warehouse location" as M
+database "Supplier offers" as A
+participant "Supplier" as L
+participant "Purchase order" as PO
+
+I -> P: checkMinimumStock()
+P -> M: getPhysicalStock(product)
+M --> P: quantity
+P --> I: stockStatus
+alt Below minimum stock level
+  I -> P: findSuppliersByPrice()
+  P -> A: listOffersSortedByPrice(product)
+  A --> P: offers, contactName, phoneNumber
+  P --> I: suppliers sorted by price
+  loop While no supplier can deliver and options remain
+    I -> L: checkAvailability()
+    L --> I: availability
   end
-  alt Leverancier kan leveren
-    I -> L: bevestigBestelling()
-    L --> I: bestelling bevestigd
-    I -> PO: registreerInkoopbestelling()
-    PO --> I: inkoopbestelling geregistreerd
-  else Geen leverancier kan leveren
-    I -> P: verwijderLeverancierOfProduct()
-    P --> I: assortiment bijgewerkt
+  alt Supplier can deliver
+    I -> L: confirmOrder()
+    L --> I: orderConfirmed
+    I -> PO: registerPurchaseOrder()
+    PO --> I: purchaseOrderRegistered
+  else No supplier can deliver
+    I -> P: removeSupplierOrProduct()
+    P --> I: assortmentUpdated
   end
-else Voldoende voorraad
-  I -> I: geen bijbestelling nodig
+else Sufficient stock
+  I -> I: noReorderRequired()
 end
 @enduml

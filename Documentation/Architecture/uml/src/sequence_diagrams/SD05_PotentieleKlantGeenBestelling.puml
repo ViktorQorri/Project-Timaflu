@@ -1,35 +1,36 @@
 @startuml
-title SD05 - Potentiële klant zonder bestelling (acquisitie)
+title SD05 - Prospective customer without an order (acquisition)
 autonumber
-actor "Acquisitiemedewerker" as M
-participant "Potentiële klant" as P
-participant "Acquisitiebezoek" as V
-participant "Klant" as K
-database "Prospects, bezoeken en bestellingen" as DB
 
-M -> V: registreerBezoek(bedrijf, contact, adres, datum)
-V -> DB: slaBezoekOp()
-DB --> V: opgeslagen
-V --> M: bezoek geregistreerd
-M -> P: controleerOpvolgingNaEenMaand()
-P -> DB: zoekZonderBestellingNaEenMaand()
-DB --> P: kandidaten, contactgegevens
-P -> P: controleerOfBestellingGeplaatst()
-P --> M: opvolgstatus en contactgegevens
-alt Geen bestelling en bezoek minstens een maand geleden
-  M -> P: biedEenmaligeKortingAan(10%)
-  P --> M: reactie op aanbod
-  alt Prospect wil klant worden
-    M -> P: maakKlantaccountAan()
-    P -> K: registreerKlant()
-    K -> DB: slaKlantOp()
-    DB --> K: klantnummer
-    K --> P: account en kortingsoptie
-    P --> M: klantaccount geregistreerd
-  else Prospect blijft prospect
-    M -> M: planLatereOpvolging()
+actor "Acquisition employee" as M
+participant "Prospective customer" as P
+participant "Acquisition visit" as V
+participant "Customer" as K
+database "Prospects, visits and orders" as DB
+
+M -> V: recordVisit(company, contact, address, date)
+V -> DB: saveVisit()
+DB --> V: saved
+V --> M: visitRecorded
+M -> P: checkFollowUpAfterOneMonth()
+P -> DB: findProspectsWithoutOrdersAfterOneMonth()
+DB --> P: prospects, contactDetails
+P -> P: hasPlacedOrder()
+P --> M: followUpStatus, contactDetails
+alt No order and visit at least one month ago
+  M -> P: offerOneTimeDiscount(10%)
+  P --> M: offerResponse
+  alt Prospect agrees to become a customer
+    M -> P: createCustomerAccount()
+    P -> K: registerCustomer()
+    K -> DB: saveCustomer()
+    DB --> K: customerNumber
+    K --> P: accountDetails, discountOption
+    P --> M: customerAccountRegistered
+  else Prospect remains a prospect
+    M -> M: scheduleLaterFollowUp()
   end
-else Wel besteld of bezoek recenter
-  M -> M: geen opvolging nodig
+else Order already placed or visit more recent
+  M -> M: noFollowUpRequired()
 end
 @enduml

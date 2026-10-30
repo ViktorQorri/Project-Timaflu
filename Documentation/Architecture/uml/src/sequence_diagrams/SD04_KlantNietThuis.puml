@@ -1,30 +1,31 @@
 @startuml
-title SD04 - Klant niet thuis bij levering (distributie)
+title SD04 - Customer not home during delivery (distribution)
 autonumber
-actor "Koerier" as K
-participant "Route" as R
-participant "Klant" as C
-participant "Bezorgpoging" as D
-participant "Bestelling" as O
 
-K -> R: toonPlanning(datum)
-R --> K: planning, adressen, contactgegevens
-K -> C: belKlantBijGeslotenDeur()
-C --> K: beschikbaarheid klant
-alt Klant later dezelfde dag beschikbaar
-  K -> R: pasPlanningAan()
-  R --> K: aangepaste planning
-  K -> D: registreerAflevering(tijdstip)
-  D -> O: wijzigBestelstatus(afgeleverd)
-  O --> D: status bijgewerkt
-  D --> K: aflevering geregistreerd
-else Ook bij tweede poging niemand aanwezig
-  K -> D: registreerNietAanwezig()
-  D -> O: wijzigBestelstatus(nietAfgeleverd)
-  O --> D: status bijgewerkt
-  D --> K: niet-aflevering geregistreerd
-  K -> O: registreerExtraBezorgkosten(bedrag, toelichting)
-  O --> K: extra kosten geregistreerd
-  note right of K: Verkoop neemt contact op voor een nieuwe afspraak
+actor "Courier" as K
+participant "Route" as R
+participant "Customer" as C
+participant "Delivery attempt" as D
+participant "Order" as O
+
+K -> R: showSchedule(date)
+R --> K: schedule, addresses, contactDetails
+K -> C: callCustomerWhenNoAnswer()
+C --> K: customerAvailability
+alt Customer available later the same day
+  K -> R: adjustSchedule()
+  R --> K: updatedSchedule
+  K -> D: recordDelivery(timestamp)
+  D -> O: updateOrderStatus(delivered)
+  O --> D: statusUpdated
+  D --> K: deliveryRecorded
+else No one available on second attempt
+  K -> D: recordRecipientAbsent()
+  D -> O: updateOrderStatus(notDelivered)
+  O --> D: statusUpdated
+  D --> K: failedDeliveryRecorded
+  K -> O: recordAdditionalDeliveryCosts(amount, explanation)
+  O --> K: additionalCostsRecorded
+  note right of K: Sales contacts the customer to arrange another delivery
 end
 @enduml

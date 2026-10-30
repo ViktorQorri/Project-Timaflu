@@ -1,28 +1,29 @@
 @startuml
-title SD01 - Berekenen klantenkorting (verkoop)
+title SD01 - Calculate customer discount (sales)
 autonumber
-actor "Verkoopmedewerker" as V
-participant "Bestelling" as O
-participant "Klant" as K
-participant "Klantenkorting" as D
-database "Bestellingen" as DB
 
-V -> O: berekenTotaalbedrag(klant, bestelregels)
+actor "Sales employee" as V
+participant "Order" as O
+participant "Customer" as K
+participant "Customer discount" as D
+database "Orders" as DB
+
+V -> O: calculateTotalAmount(customer, orderLines)
 activate O
-O -> DB: telEerdereBestellingen(klant)
-DB --> O: aantalBestellingen
-alt Eerste bestelling
-  O -> O: berekenEenmaligeKorting(10%)
-else Bestaande klant
-  O -> K: berekenJaaromzet(vorigJaar)
-  K -> DB: somAankopen(vorigJaar)
-  DB --> K: jaaromzet
-  K --> O: jaaromzet
-  O -> D: bepaalKortingspercentage(jaaromzet)
-  D --> O: kortingspercentage
-  O -> O: berekenKlantenkorting()
+O -> DB: countPreviousOrders(customer)
+DB --> O: numberOfOrders
+alt First order
+  O -> O: calculateOneTimeDiscount(10%)
+else Existing customer
+  O -> K: calculateAnnualRevenue(previousYear)
+  K -> DB: sumPurchases(previousYear)
+  DB --> K: annualRevenue
+  K --> O: annualRevenue
+  O -> D: determineDiscountPercentage(annualRevenue)
+  D --> O: discountPercentage
+  O -> O: calculateCustomerDiscount()
 end
-O -> O: berekenTotaalbedragNaKorting()
-O --> V: totaalbedrag, toegepasteKortingen
+O -> O: calculateTotalAfterDiscount()
+O --> V: totalAmount, appliedDiscounts
 deactivate O
 @enduml
