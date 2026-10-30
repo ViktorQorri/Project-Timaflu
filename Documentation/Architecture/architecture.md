@@ -246,7 +246,7 @@ Agreements for the API:
 - Changes that touch several tables (for example saving an order with its order lines and updating stock) run in one transaction, so the data is never half written.
 - Stock is only changed through the services, so the answer to "is this medicine in stock" is always the same one.
 - The EER in the repository must always match the working database.
-- The database is created from SQL scripts kept in the repository (schema first, then sample data), so anyone can rebuild it.
+- The database is created from SQL scripts kept in the repository (`schema.sql` first, then `seed.sql`), so anyone can rebuild it.
 
 ## Users and screens
 
@@ -266,24 +266,27 @@ The courier and distribution screens are responsive, because they are used on mo
 
 ## Project structure
 
-Proposed layout of the code. It can change once the class diagram is final.
+Layout of the code in the `code/` folder. It can change once the class diagram is final. See [code/README.md](../../code/README.md) for how to run it locally.
 
 ```text
-backend/
-  app.py                 creates the Flask app and registers the routes
-  config.py              reads settings from environment variables
-  routes/                page routes and JSON API routes, one file per process
-  services/              business logic, one file per process
-  repositories/          SQL, one file per aggregate (customer, order, product, ...)
-  domain/                domain classes
-  tests/                 unit tests for the services
-frontend/
-  templates/             Jinja2 templates, one per screen, plus a base template
-  static/css/            stylesheets
-database/
-  schema.sql             creates the tables
-  sample-data.sql        fills the tables with relevant data
-  queries.sql            the queries per screen
+code/
+  backend/
+    app.py               creates the Flask app, registers the routes and error handlers
+    config.py            reads settings from environment variables
+    db.py                opens one database connection per request
+    routes/              page routes and JSON API routes, one file per process
+    services/            business logic, one file per process
+    repositories/        SQL, one file per aggregate (customer, order, product, ...)
+    domain/              domain classes and domain errors
+    requirements.txt     Python dependencies
+    .env.example         names of the environment variables
+  frontend/
+    templates/           Jinja2 templates, one per screen, plus a base template
+    static/css/          stylesheets
+  database/
+    schema.sql           creates the tables
+    seed.sql             fills the tables with relevant data (to be written)
+    queries.sql          the queries per screen (to be written)
 ```
 
 The frontend folder only contains HTML templates and CSS, so it can be handed in as the frontend zip. The backend folder is handed in as the backend zip.
@@ -307,7 +310,6 @@ The frontend folder only contains HTML templates and CSS, so it can be handed in
 
 ## Testing
 
-- The five fully implemented processes get unit tests, using fake repositories with dummy data, so tests run without a database.
 - Repositories are tested against a test database or by hand with the queries from the query document.
 - Each screen is checked by hand on desktop size. The order picking and distribution screens are also checked on a phone.
 - The output of the queries in the query document comes from the real database, not from made up data.

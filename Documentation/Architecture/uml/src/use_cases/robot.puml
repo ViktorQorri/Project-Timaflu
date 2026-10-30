@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+
+actor Robot
+
+rectangle "Timaflu-informatiesysteem" {
+    usecase "Producten verzamelen" as UC0
+    usecase "Deelorder afronden" as UC1
+    usecase "Deelorder ontvangen" as UC2
+    usecase "Verzamelbak registreren" as UC3
+
+    UC0 ..> UC1 : <<include>>
+    UC0 ..> UC2 : <<include>>
+    UC0 ..> UC3 : <<include>>
+}
+
+Robot -- UC0
+
+@enduml

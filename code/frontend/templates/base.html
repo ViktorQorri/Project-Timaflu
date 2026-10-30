@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Timaflu{% endblock %} | Timaflu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/stock.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/suppliers.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sales-stock.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-name" href="{{ url_for('home.index') }}">Timaflu</a>
+    <nav>
+      <ul>
+        {% for endpoint, label in [
+          ('home.index', 'Home'),
+          ('sales.customers', 'Customers'),
+          ('sales.orders', 'Orders'),
+          ('purchasing.stock', 'Stock'),
+          ('purchasing.suppliers', 'Suppliers'),
+          ('order_picking.index', 'Order picking'),
+          ('distribution.deliveries', 'Deliveries'),
+          ('administration.invoices', 'Invoices'),
+          ('acquisition.index', 'Acquisition'),
+          ('reports.index', 'Reports'),
+        ] %}
+          <li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="flash flash-{{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">Timaflu information system</footer>
+</body>
+</html>
