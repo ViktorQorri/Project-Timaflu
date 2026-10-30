@@ -12,41 +12,44 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/suppliers.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/sales-stock.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
+  {% block extra_styles %}{% endblock %}
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Ga naar inhoud</a>
   <header class="site-header">
-    <a class="site-name" href="{{ url_for('home.index') }}">Timaflu</a>
-    <nav>
-      <ul>
-        {% for endpoint, label in [
-          ('home.index', 'Home'),
-          ('sales.customers', 'Klanten'),
-          ('sales.orders', 'Orders'),
-          ('purchasing.products', 'Producten'),
-          ('purchasing.stock', 'Voorraad'),
-          ('purchasing.suppliers', 'Leveranciers'),
-          ('order_picking.index', 'Orderpicking'),
-          ('distribution.deliveries', 'Leveringen'),
-          ('administration.invoices', 'Facturen'),
-          ('acquisition.index', 'Acquisitie'),
-          ('reports.index', 'Rapportages'),
-        ] %}
-          <li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
-        {% endfor %}
-      </ul>
-    </nav>
+    <div class="header-inner">
+      <a class="site-name" href="{{ url_for('home.index') }}" aria-label="Timaflu, naar home"><span class="brand-mark" aria-hidden="true">+</span><span>tima<span class="brand-accent">flu</span></span></a>
+      <nav class="site-nav" aria-label="Hoofdnavigatie">
+        <ul>
+          {% for endpoint, label in [
+            ('home.index', 'Home'),
+            ('sales.customers', 'Klanten'),
+            ('sales.orders', 'Orders'),
+             ('purchasing.products', 'Producten'),
+            ('purchasing.stock', 'Voorraad'),
+            ('purchasing.suppliers', 'Leveranciers'),
+            ('order_picking.index', 'Orderpicking'),
+            ('distribution.deliveries', 'Leveringen'),
+            ('administration.invoices', 'Facturen'),
+            ('acquisition.index', 'Acquisitie'),
+            ('reports.index', 'Rapportages'),
+          ] %}
+            <li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
   </header>
-
-  <main>
+  <main id="main-content" class="main-content">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
-        <p class="flash flash-{{ category }}">{{ message }}</p>
+        <p role="status" class="flash flash-{{ category }}">{{ message }}</p>
       {% endfor %}
     {% endwith %}
-
     {% block content %}{% endblock %}
   </main>
-
   <footer class="site-footer">Timaflu informatiesysteem</footer>
 </body>
 </html>
+
+[executed on device: mac.home (9dea5b57-ad23-4d05-8c7d-1c72169e2c80)]
