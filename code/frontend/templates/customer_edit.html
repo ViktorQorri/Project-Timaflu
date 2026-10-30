@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Klant bewerken{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard" aria-labelledby="edit-customer-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Verkoop</p>
+        <h1 id="edit-customer-title">Klant {{ customer_id }} bewerken</h1>
+        <p class="stock-dashboard__subtitle">Een gewijzigd adres geldt voor nieuwe bestellingen; bestaande bestellingen houden hun adres.</p>
+      </div>
+    </header>
+
+    <div class="customer-panel">
+      {% with action=url_for('sales.update_customer', customer_id=customer_id), submit_label='Wijzigingen opslaan', cancel_url=url_for('sales.customers') %}
+        {% include "_customer_form.html" %}
+      {% endwith %}
+    </div>
+  </section>
+{% endblock %}

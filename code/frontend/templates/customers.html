@@ -1,7 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}Customers{% endblock %}
+{% block title %}Klanten{% endblock %}
 
 {% block content %}
-  <h1>Customers</h1>
+  <section class="stock-dashboard" aria-labelledby="customers-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Verkoop</p>
+        <h1 id="customers-title">Klanten</h1>
+        <p class="stock-dashboard__subtitle">Klantgegevens op één plek, zodat alle afdelingen dezelfde informatie gebruiken.</p>
+      </div>
+      <p class="customer-count">{{ customers|length }} {{ 'klant' if customers|length == 1 else 'klanten' }}</p>
+    </header>
+
+    <form method="get" action="{{ url_for('sales.customers') }}" class="supplier-lookup" role="search">
+      <label for="customer-search">Zoek klant</label>
+      <input id="customer-search" name="q" type="search" value="{{ search }}" maxlength="100" placeholder="Bedrijfsnaam, contactpersoon of telefoonnummer">
+      <button type="submit">Zoeken</button>
+      {% if search %}<a class="customer-link" href="{{ url_for('sales.customers') }}">Alle klanten tonen</a>{% endif %}
+    </form>
+
+    {% if customers %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table customer-table">
+          <caption>Jaaromzet {{ year }} uit betaalde facturen, klantkorting voor {{ year }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nr.</th>
+              <th scope="col">Bedrijfsnaam</th>
+              <th scope="col">Contactpersoon</th>
+              <th scope="col">Telefoonnummer</th>
+              <th scope="col">Afleveradres</th>
+              <th scope="col">Factuuradres</th>
+              <th scope="col" class="stock-dashboard__number">Jaaromzet {{ year }}</th>
+              <th scope="col">Klantkorting</th>
+              <th scope="col"><span class="customer-visually-hidden">Acties</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in customers %}
+              <tr>
+                <td>{{ customer.klant_id }}</td>
+                <th scope="row">{{ customer.bedrijfsnaam }}</th>
+                <td>{{ customer.contactpersoon or 'Niet ingevuld' }}</td>
+                <td>{{ customer.telefoonnummer or 'Niet ingevuld' }}</td>
+                <td>{{ customer.afleveradres }}</td>
+                <td>{{ customer.factuuradres }}</td>
+                <td class="stock-dashboard__number">€ {{ ("%.2f"|format(customer.jaaromzet))|replace('.', ',') }}</td>
+                <td>
+                  {% if customer.kortingspercentage is not none %}
+                    <span class="customer-discount">{{ customer.kortingspercentage|int }}%</span>
+                  {% else %}
+                    <span class="customer-muted">Nog niet bepaald</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="customer-row-actions">
+                    <a class="customer-link" href="{{ url_for('sales.edit_customer', customer_id=customer.klant_id) }}">Bewerken<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
+                    <a class="customer-link customer-link--danger" href="{{ url_for('sales.confirm_delete_customer', customer_id=customer.klant_id) }}">Verwijderen<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="stock-dashboard__empty" role="status">
+        <h2>Geen klanten gevonden</h2>
+        <p>{% if search %}Geen klant komt overeen met "{{ search }}".{% else %}Er zijn nog geen klanten geregistreerd.{% endif %}</p>
+      </div>
+    {% endif %}
+
+    <section class="customer-panel" id="new-customer" aria-labelledby="new-customer-title">
+      <h2 id="new-customer-title">Nieuwe klant</h2>
+      <p class="stock-dashboard__subtitle">De jaaromzet wordt automatisch bijgehouden uit betaalde facturen.</p>
+      {% with action=url_for('sales.create_customer'), submit_label='Klant opslaan', cancel_url=None %}
+        {% include "_customer_form.html" %}
+      {% endwith %}
+    </section>
+  </section>
 {% endblock %}
