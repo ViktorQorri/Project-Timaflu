@@ -50,3 +50,22 @@ LEFT JOIN (
 ) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
+
+-- Issue #16: robot order dispatch for an existing aisle-specific sub-order.
+SELECT robot_id, gang FROM Robot WHERE robot_id = 1 AND gang = 'A';
+
+SELECT deelorder_id, bestelling_id
+FROM Deelorder WHERE robot_id = 1 AND afgerond = FALSE
+ORDER BY deelorder_id ASC LIMIT 1;
+
+SELECT dr.product_id, p.productnaam, dr.aantal
+FROM Deelorderregel AS dr
+JOIN Product AS p ON p.product_id = dr.product_id
+WHERE dr.deelorder_id = 1
+ORDER BY p.productnaam, dr.product_id;
+
+-- Complete in one transaction, after a registered picking bin exists.
+SELECT deelorder_id, afgerond
+FROM Deelorder WHERE deelorder_id = 1 AND robot_id = 1 FOR UPDATE;
+SELECT COUNT(*) AS bin_count FROM Verzamelbak WHERE deelorder_id = 1;
+UPDATE Deelorder SET afgerond = TRUE WHERE deelorder_id = 1;
