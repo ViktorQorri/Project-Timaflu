@@ -1,0 +1,10 @@
+/* Start: Issue #11 - physical stock check for telephone sales, based on existing Timaflu tokens. */
+.stock-dashboard__available {
+  display: inline-block;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+/* End: Issue #11 physical stock check. */

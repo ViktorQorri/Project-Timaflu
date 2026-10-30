@@ -1,0 +1,45 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Sales Employee|
+start
+:Look up customer;
+|System|
+:Show customer details;
+if (Customer blocked for unpaid invoices?) then ([yes])
+  :Show cannot place order;
+  stop
+endif
+|Sales Employee|
+repeat
+  :Enter product and requested quantity;
+  |System|
+  :Check available stock (AD04);
+  if (Enough stock?) then ([yes])
+    :Add provisional order line;
+  else ([no])
+    :Report shortage and backorder possibility;
+  endif
+  |Sales Employee|
+repeat while (Another product?) is ([yes])
+|System|
+:Calculate discounts and total;
+:Show total;
+|Sales Employee|
+if (Customer agrees?) then ([yes])
+  :Agree delivery date and morning/afternoon;
+  |System|
+  :In one transaction, recheck available stock;
+  if (Stock still sufficient?) then ([yes])
+    :Save order and order lines;
+    :Create reservations for available order lines;
+    :Show order number;
+  else ([no])
+    :Report changed availability and ask employee to revise order;
+  endif
+else ([no])
+  :Cancel provisional order without stock reservations;
+endif
+stop
+@enduml

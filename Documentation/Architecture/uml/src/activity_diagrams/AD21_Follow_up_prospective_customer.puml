@@ -1,0 +1,43 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Acquisition Employee|
+start
+:Open acquisition follow-up overview;
+|System|
+:Find pharmacies visited at least\none month ago without an order;
+if (Follow-ups found?) then ([yes])
+  :Show prospective customers\nand contact details;
+  |Acquisition Employee|
+  :Select prospective customer;
+  :Call pharmacy;
+  :Offer extra 10% discount\non first order;
+  if (Pharmacy interested?) then ([yes])
+    if (May create customer account?) then ([yes])
+      :Request company name, billing\nand delivery address;
+      |Sales Employee|
+      :Execute AD07 Manage customer data;
+      :Register one-time 10% discount;
+      |System|
+      :Link prospective customer\nto customer account;
+      :Mark follow-up as completed;
+      :Show confirmation;
+      stop
+    else ([no])
+      |System|
+      :Record no consent for account;
+      stop
+    endif
+  else ([no])
+    |System|
+    :Record no interest;
+    :Close acquisition follow-up;
+    stop
+  endif
+else ([no])
+  :Show message no follow-ups due;
+  stop
+endif
+@enduml
