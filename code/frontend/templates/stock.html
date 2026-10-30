@@ -38,6 +38,7 @@
                 <td class="stock-dashboard__number">
                   <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
                 </td>
+                <td><a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Vergelijk leveranciers en prijzen</a></td>
               </tr>
             {% endfor %}
           </tbody>
