@@ -1,7 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Reports{% endblock %}
+{% block title %}Rapportages{% endblock %}
 
 {% block content %}
-  <h1>Reports</h1>
+  <section class="stock-dashboard" aria-labelledby="reports-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Directie</p>
+        <h1 id="reports-title">Rapportages</h1>
+        <p class="stock-dashboard__subtitle">Overzichten om strategische beslissingen te onderbouwen.</p>
+      </div>
+    </header>
+
+    <ul class="sales-report__links">
+      <li>
+        <a class="sales-report__link" href="{{ url_for('reports.sales_report') }}">
+          <span class="sales-report__link-title">Verkooprapportage</span>
+          <span class="sales-report__link-text">Omzet per klant, omzet per periode en de best verkochte medicijnen.</span>
+        </a>
+      </li>
+    </ul>
+  </section>
 {% endblock %}

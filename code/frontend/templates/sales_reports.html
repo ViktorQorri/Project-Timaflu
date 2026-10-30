@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Verkooprapportage{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard sales-report" aria-labelledby="sales-report-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Rapportages</p>
+        <h1 id="sales-report-title">Verkooprapportage</h1>
+        <p class="stock-dashboard__subtitle">Omzet per klant, omzet per periode en de best verkochte medicijnen.</p>
+      </div>
+      <a class="sales-report__back" href="{{ url_for('reports.index') }}">Alle rapportages</a>
+    </header>
+
+    <form method="get" action="{{ url_for('reports.sales_report') }}" class="sales-report__filters">
+      <div class="sales-report__field">
+        <label for="report-start">Van</label>
+        <input id="report-start" name="start" type="date" value="{{ filters.start }}">
+      </div>
+      <div class="sales-report__field">
+        <label for="report-end">Tot en met</label>
+        <input id="report-end" name="end" type="date" value="{{ filters.end }}">
+      </div>
+      <div class="sales-report__field">
+        <label for="report-grouping">Omzet per</label>
+        <select id="report-grouping" name="grouping">
+          {% for value, label in [('day', 'Dag'), ('week', 'Week'), ('month', 'Maand'), ('year', 'Jaar')] %}
+            <option value="{{ value }}"{% if filters.grouping == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit">Rapport tonen</button>
+    </form>
+
+    {% if error %}
+      <p class="sales-report__error" role="alert">{{ error }}</p>
+    {% endif %}
+
+    {% if report %}
+      <p class="sales-report__note">
+        Periode {{ report.start.strftime('%d-%m-%Y') }} tot en met {{ report.end.strftime('%d-%m-%Y') }}.
+        Omzet is aantal maal prijs per eenheid van de bestelde producten, op basis van de besteldatum, exclusief btw en vóór kortingen.
+      </p>
+
+      <div class="sales-report__kpis">
+        <article class="sales-report__kpi">
+          <h2>Totale omzet</h2>
+          <p class="sales-report__kpi-value">{{ report.total_revenue|euro }}</p>
+        </article>
+        <article class="sales-report__kpi">
+          <h2>Bestellingen</h2>
+          <p class="sales-report__kpi-value">{{ report.total_orders }}</p>
+        </article>
+        <article class="sales-report__kpi">
+          <h2>Klanten</h2>
+          <p class="sales-report__kpi-value">{{ report.customer_count }}</p>
+        </article>
+        <article class="sales-report__kpi">
+          <h2>Gemiddelde orderwaarde</h2>
+          <p class="sales-report__kpi-value">{{ report.average_order_value|euro }}</p>
+        </article>
+      </div>
+
+      {% if report.total_orders %}
+        <section class="sales-report__section" aria-labelledby="revenue-period-title">
+          <h2 id="revenue-period-title">Omzet per periode</h2>
+          <div class="stock-dashboard__table-wrap">
+            <table class="stock-dashboard__table">
+              <caption>Omzet per {{ {'day': 'dag', 'week': 'week', 'month': 'maand', 'year': 'jaar'}[report.grouping] }}, van oud naar nieuw</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Periode</th>
+                  <th scope="col" class="stock-dashboard__number">Bestellingen</th>
+                  <th scope="col" class="stock-dashboard__number">Omzet</th>
+                  <th scope="col"><span class="sales-report__visually-hidden">Omzet als balk</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for period in report.periods %}
+                  <tr>
+                    <th scope="row">{{ period.label }}</th>
+                    <td class="stock-dashboard__number">{{ period.aantal_bestellingen }}</td>
+                    <td class="stock-dashboard__number">{{ period.omzet|euro }}</td>
+                    <td class="sales-report__bar-cell" aria-hidden="true">
+                      <span class="sales-report__bar" style="width: {{ period.breedte }}%"></span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sales-report__section" aria-labelledby="revenue-customer-title">
+          <h2 id="revenue-customer-title">Omzet per klant</h2>
+          <div class="stock-dashboard__table-wrap">
+            <table class="stock-dashboard__table">
+              <caption>Klanten met bestellingen in deze periode, hoogste omzet eerst</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Klant</th>
+                  <th scope="col" class="stock-dashboard__number">Bestellingen</th>
+                  <th scope="col" class="stock-dashboard__number">Omzet</th>
+                  <th scope="col" class="stock-dashboard__number">Aandeel</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for customer in report.customers %}
+                  <tr>
+                    <th scope="row">{{ customer.bedrijfsnaam }}</th>
+                    <td class="stock-dashboard__number">{{ customer.aantal_bestellingen }}</td>
+                    <td class="stock-dashboard__number">{{ customer.omzet|euro }}</td>
+                    <td class="stock-dashboard__number">{{ customer.aandeel|string|replace('.', ',') }}%</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sales-report__section" aria-labelledby="best-selling-title">
+          <h2 id="best-selling-title">Best verkochte medicijnen</h2>
+          <div class="stock-dashboard__table-wrap">
+            <table class="stock-dashboard__table">
+              <caption>Top {{ report.products|length }} op aantal verkochte verpakkingen</caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="stock-dashboard__number">#</th>
+                  <th scope="col">Medicijn</th>
+                  <th scope="col">Artikelnummer</th>
+                  <th scope="col" class="stock-dashboard__number">Aantal verkocht</th>
+                  <th scope="col" class="stock-dashboard__number">Omzet</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for product in report.products %}
+                  <tr>
+                    <td class="stock-dashboard__number">{{ loop.index }}</td>
+                    <th scope="row">{{ product.productnaam }}</th>
+                    <td>{{ product.artikelnummer }}</td>
+                    <td class="stock-dashboard__number">{{ product.aantal_verkocht }}</td>
+                    <td class="stock-dashboard__number">{{ product.omzet|euro }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% else %}
+        <div class="stock-dashboard__empty sales-report__section" role="status">
+          <h2>Geen verkopen in deze periode</h2>
+          <p>Er zijn geen bestellingen geplaatst tussen deze datums. Kies een andere periode.</p>
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}
