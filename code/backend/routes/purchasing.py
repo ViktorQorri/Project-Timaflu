@@ -38,3 +38,18 @@ def record_purchase_order():
     )
     flash(f"Inkooporder {order_id} is vastgelegd na bevestiging door de leverancier.", "success")
     return redirect(url_for("purchasing.suppliers"))
+
+@purchasing.get("/stock/minimums")
+def stock_minimums():
+    """Manage minimum stock alerts for every catalog item."""
+    service = StockService(StockRepository(get_connection()))
+    return render_template("stock_minimums.html", products=service.minimums())
+
+
+@purchasing.post("/stock/minimums/<int:product_id>")
+def set_stock_minimum(product_id):
+    """Store a manually chosen threshold and return to the overview."""
+    service = StockService(StockRepository(get_connection()))
+    service.set_minimum(product_id, request.form.get("minimumvoorraad"))
+    flash("Minimumvoorraad bijgewerkt.", "success")
+    return redirect(url_for("purchasing.stock_minimums"))

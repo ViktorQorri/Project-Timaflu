@@ -5,6 +5,7 @@
 {% block content %}
   <section class="stock-dashboard" aria-labelledby="stock-title">
     <header class="stock-dashboard__intro">
+      <a class="button" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
       <div>
         <p class="stock-dashboard__eyebrow">Inkoop</p>
         <h1 id="stock-title">Voorraadtekorten</h1>

@@ -50,3 +50,17 @@ LEFT JOIN (
 ) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
+
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
