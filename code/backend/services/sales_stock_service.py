@@ -13,9 +13,9 @@ class SalesStockService:
         try:
             quantity = int(quantity)
         except (TypeError, ValueError) as error:
-            raise DomainError("Requested quantity must be a positive whole number.") from error
+            raise DomainError("Het gevraagde aantal moet een heel getal groter dan 0 zijn.") from error
         if quantity < 1:
-            raise DomainError("Requested quantity must be a positive whole number.")
+            raise DomainError("Het gevraagde aantal moet een heel getal groter dan 0 zijn.")
         rows = self.repository.find_products(query)
         return [
             {**item, "voldoende": item["beschikbaar"] >= quantity}
