@@ -50,3 +50,29 @@ LEFT JOIN (
 ) AS r ON r.product_id = p.product_id
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
+
+-- Order discount calculation, GET /orders/discount (issue #10, SD01).
+-- Same SELECTs as DiscountRepository with example parameters; nothing is written.
+-- Customer and product choices for the form.
+SELECT klant_id, bedrijfsnaam
+FROM Klant
+ORDER BY bedrijfsnaam ASC;
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+FROM Product
+ORDER BY productnaam ASC;
+-- The chosen customer and the catalog price of each order line.
+SELECT klant_id, bedrijfsnaam
+FROM Klant
+WHERE klant_id = 1;
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+FROM Product
+WHERE product_id = 1;
+-- SD01 countPreviousOrders(customer): 0 means first order, 10% one-time discount.
+SELECT COUNT(*) AS aantal_bestellingen
+FROM Bestelling
+WHERE klant_id = 1;
+-- SD01 sumPurchases(previousYear): annual revenue for the customer discount (Tabel 1).
+SELECT COALESCE(SUM(r.aantal * r.prijs_per_eenheid), 0) AS jaaromzet
+FROM Bestelling AS b
+JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
+WHERE b.klant_id = 1 AND YEAR(b.besteld_op) = 2025;
