@@ -8,31 +8,66 @@ start
 :Open manufacturer overview;
 
 |System|
-:Show list of manufacturers;
+:Show manufacturers from the central database;
 
 |Purchasing Employee|
 switch (Choose action)
-case (  [Add])
-  :Enter new manufacturer data;
-case (          [Edit])
-  :Select manufacturer;
-  :Edit manufacturer data;
-case ([Remove])
-  :Select manufacturer;
-  :Choose remove;
+case (Add manufacturer)
+  :Enter name, address, contact person,\nphone number and ordering website;
   |System|
-  :Remove manufacturer;
-  :Show confirmation;
-  stop
-endswitch
+  :Validate manufacturer details;
+  if (Details valid?) then (yes)
+    :Save manufacturer and address;
+    :Show confirmation;
+  else (no)
+    :Show validation error;
+  endif
 
-|System|
-:Validate data;
-if (Data valid?) then ([yes])
-  :Save changes;
-  :Show confirmation;
-else ([no])
-  :Show error message;
-endif
+case (Edit manufacturer)
+  |Purchasing Employee|
+  :Select manufacturer;
+  :Edit manufacturer details;
+  |System|
+  :Validate manufacturer details;
+  if (Details valid?) then (yes)
+    :Save updated manufacturer details;
+    :Show confirmation;
+  else (no)
+    :Show validation error;
+  endif
+
+case (Manage supplied products)
+  |Purchasing Employee|
+  :Select manufacturer;
+  |System|
+  :Show linked medicines with purchase prices;
+  :Show medicines in the assortment;
+  |Purchasing Employee|
+  switch (Choose offer action)
+  case (Add link or update price)
+    :Select medicine and enter purchase price;
+    |System|
+    :Validate manufacturer, active medicine\nand non-negative purchase price;
+    if (Offer valid?) then (yes)
+      :Link medicine to manufacturer\nor update its purchase price;
+      :Show confirmation;
+    else (no)
+      :Show validation error;
+    endif
+  case (Stop supplying a medicine)
+    |Purchasing Employee|
+    :Select a linked medicine;
+    :Confirm manufacturer no longer supplies it;
+    |System|
+    if (Confirmed?) then (yes)
+      :Remove only this manufacturer-medicine link;
+      :Keep manufacturer and medicine records;
+      :Show confirmation;
+    else (no)
+      :Keep existing link;
+      :Show confirmation required;
+    endif
+  endswitch
+endswitch
 stop
 @enduml

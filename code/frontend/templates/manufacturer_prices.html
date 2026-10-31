@@ -3,6 +3,7 @@
 {% block content %}
 <section class="stock-dashboard">
   <h1>Inkoopprijzen van {{ manufacturer.naam }}</h1>
+  <p>Beheer per medicijn welke fabrikant levert en tegen welke inkoopprijs. Een ontkoppeling verwijdert alleen het aanbod, niet het medicijn.</p>
   {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
   <form method="post">
     <label for="product_id">Product</label>
