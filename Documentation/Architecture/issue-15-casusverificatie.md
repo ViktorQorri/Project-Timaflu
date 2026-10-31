@@ -19,16 +19,16 @@
 | Leveranciers per medicijn | Selectie op unieke `product_id`; inkoopprijs oplopend; contactpersoon en telefoonnummer | `supplier_repository.py`, `suppliers.html` |
 | Handmatig bestellen | De inkoper neemt zelf contact op; verwerken na bevestiging hoort bij #57/#109 | `routes/purchasing.py` en afzonderlijke PR #109 |
 
-Een zoekterm is geen unieke productidentiteit. Productnamen kunnen in de huidige database dubbel voorkomen. Daarom worden bij een handmatige naamzoekopdracht **geen leveranciers of bestelknoppen** getoond totdat de medewerker via productnaam plus artikelnummer een product selecteert. Zo ontstaan geen verkeerde leverancier-productcombinaties. Het inkoopoverzicht linkt rechtstreeks met een unieke `product_id`.
+Een zoekterm is geen unieke productidentiteit. Productnamen kunnen in de huidige database dubbel voorkomen. Daarom leidt een handmatige zoekopdracht **direct naar de leverancierslijst bij precies één overeenkomend product**, zoals het verplichte backendscenario verlangt. Bij meerdere overeenkomende medicijnen worden **geen leveranciers of bestelknoppen** getoond totdat de medewerker op basis van artikelnummer het juiste product selecteert. Zo ontstaan geen verkeerde leverancier-productcombinaties. Het inkoopoverzicht linkt rechtstreeks met een unieke `product_id`.
 
-Bij een minimumvoorraad van 0 zijn nooit tekorten zichtbaar voor het betreffende product omdat fysieke voorraad niet negatief is. Dit gedrag wordt duidelijk in de interface uitgelegd; de casus schrijft niet expliciet een minimum van 1 voor. Er worden geen automatische inkoopbestellingen, nieuwe inkoopstatussen of voorraadontvangsten geÃ¯ntroduceerd.
+Bij een minimumvoorraad van 0 zijn nooit tekorten zichtbaar voor het betreffende product omdat fysieke voorraad niet negatief is. Dit gedrag wordt duidelijk in de interface uitgelegd; de casus schrijft niet expliciet een minimum van 1 voor. Er worden geen automatische inkoopbestellingen, nieuwe inkoopstatussen of voorraadontvangsten geïntroduceerd.
 
 ## Verificatie op Floris test, 31 oktober 2026
 
-- **55 Python-tests geslaagd** na de nieuwste aanpassing.
-- **MySQL 8.4 + Flask tegen geÃ¯soleerde testdatabase geslaagd**: 28 statements voor het schema uitgevoerd; twee producten met dezelfde naam, afzonderlijke artikelcodes en prijzen getest.
+- **56 Python-tests geslaagd** na de nieuwste aanpassing.
+- **MySQL 8.4 + Flask tegen geïsoleerde testdatabase geslaagd**: 28 statements voor het schema uitgevoerd; twee producten met dezelfde naam, afzonderlijke artikelcodes en prijzen getest.
 - Test: meerdere magazijnlocaties optellen, nul magazijnlocaties, uit assortiment verwijderde producten uitsluiten, minimum 0, foutieve drempel weigeren, minimumdrempel opslaan zonder fysieke voorraad aan te passen, leveranciers op product-id en oplopende inkoopprijs, correcte contactgegevens, ongeldige en onbekende product-id.
-- Test: handmatige naamzoekopdracht toont beide overeenkomende producten afzonderlijk, zonder leveranciers of bestelknop; leveranciers zijn na keuze alleen van het geselecteerde product.
+- Test: een unieke productnaam leidt direct naar de leverancierslijst; bij meerdere overeenkomende producten toont de zoekopdracht ze afzonderlijk zonder leveranciers of bestelknop. Na keuze verschijnen alleen leveranciers van het geselecteerde product.
 - `code/database/queries.sql` bevat de schermqueries met voorbeeldwaarden overeenkomstig de repositoryqueries.
 
 ## Afhankelijkheden en mergecontrole

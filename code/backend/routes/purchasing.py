@@ -31,6 +31,11 @@ def suppliers():
         raise DomainError("Ongeldig productnummer.")
     service = SupplierService(SupplierRepository(get_connection())) if (product_id is not None or product_name) else None
     products = service.products_matching_name(product_name) if service and product_id is None else []
+    # The required purchasing scenario takes a product name and returns suppliers.
+    # Skip a redundant selection step if only one medicine matches.
+    # For ambiguous names, keep the article-number selection to avoid wrong orders.
+    if product_id is None and len(products) == 1:
+        product_id = products[0]["product_id"]
     offers = service.offers_for_product(product_id=product_id) if service and product_id is not None else []
     return render_template("suppliers.html", product_name=product_name,
                            product_id=product_id, products=products, offers=offers)

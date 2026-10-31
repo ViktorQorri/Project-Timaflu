@@ -95,6 +95,19 @@ class SupplierLookupTests(TestCase):
                 self.assertNotIn("Bevestigde order vastleggen", html)
                 self.assertEqual(db.return_value.cur.params, ("Medication",))
 
+    def test_unique_product_name_directly_shows_supplier_list(self):
+        """Case requirement: product name in, sorted suppliers out."""
+        app = create_app()
+        app.testing = True
+        with app.test_client() as client:
+            with patch("routes.purchasing.get_connection", return_value=Connection(self.rows)) as db:
+                response = client.get("/suppliers?product=Medication%20A")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(b"Supplier A", response.data)
+                self.assertIn(b"Bevestigde order vastleggen", response.data)
+                self.assertNotIn(b"Kies het juiste medicijn", response.data)
+                self.assertEqual(db.return_value.cur.params, (1,))
+
     def test_supplier_page_renders_only_selected_product_offers(self):
         app = create_app()
         app.testing = True
