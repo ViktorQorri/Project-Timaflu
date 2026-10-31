@@ -1,54 +1,54 @@
 @startuml
-title SD02 - Reorder product below minimum stock (UC02 / AD02)
+title SD02 - Product bijbestellen bij voorraadtekort (UC02 / AD02)
 autonumber
-actor "Purchasing employee" as Purchasing
+actor "Inkoopmedewerker" as Purchasing
 participant "product:Product" as Product
 participant "location:WarehouseLocation" as Location
 participant "offer:SupplierOffer" as Offer
-actor "Manufacturer" as Manufacturer
+actor "Fabrikant" as Manufacturer
 participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
 Purchasing -> Product: checkMinimumStock()
 activate Product
-Product -> Location: Read quantity
+Product -> Location: Lees fysieke voorraad
 Location --> Product: currentPhysicalStock
-Product --> Purchasing: currentPhysicalStock, minimumStock
+Product --> Purchasing: huidigeFysiekeVoorraad, minimumVoorraad
 deactivate Product
-alt Below minimum stock
-  note right of Purchasing: Select product and desired quantity.
+alt Onder minimumvoorraad
+  note right of Purchasing: Kies product en gewenst aantal.
   Purchasing -> Product: findSuppliersByPrice()
   activate Product
-  Product -> Offer: Read purchasePrice and linked Supplier
-  Offer --> Product: ranked supplier offers
-  Product --> Purchasing: offers ordered by price
+  Product -> Offer: Lees inkoopprijs en gekoppelde fabrikant
+  Offer --> Product: op prijs gerangschikte offertes
+  Product --> Purchasing: leveranciers op inkoopprijs gesorteerd
   deactivate Product
-  loop For each remaining manufacturer, cheapest first
-    Purchasing -> Manufacturer: Request availability for selected quantity
-    Manufacturer --> Purchasing: available / unavailable / discontinued
-    alt Manufacturer is able to deliver
-      Purchasing -> Manufacturer: Confirm purchase
-      Manufacturer --> Purchasing: purchase confirmed
+  loop Volgende fabrikant, van goedkoop naar duur
+    Purchasing -> Manufacturer: Vraag beschikbaarheid voor gewenst aantal
+    Manufacturer --> Purchasing: leverbaar / niet leverbaar / uit productie
+    alt Fabrikant kan leveren
+      Purchasing -> Manufacturer: Bevestig bestelling bij fabrikant
+      Manufacturer --> Purchasing: bestelling bevestigd
       Purchasing -> PurchaseOrder: placeWithSupplier()
-      PurchaseOrder --> Purchasing: confirmed order recorded
-      break Order confirmed; stop contacting manufacturers
+      PurchaseOrder --> Purchasing: bevestigde inkoopbestelling geregistreerd
+      break Bestelling bevestigd: stop leverancierslus
       end
-    else Manufacturer cannot deliver
-      opt Manufacturer permanently discontinued this product
+    else Fabrikant kan niet leveren
+      opt Fabrikant levert dit product definitief niet meer
         Purchasing -> Product: removeSupplier(supplier)
-        Product --> Purchasing: manufacturer link removed
+        Product --> Purchasing: leverancierskoppeling verwijderd
       end
-      note right of Purchasing: Continue with the next cheapest offer.
+      note right of Purchasing: Ga verder met de eerstvolgende prijs.
     end
   end
-  alt No manufacturer could confirm supply
-    Purchasing -> Purchasing: Remove medicine from internal reorder list
+  alt Geen fabrikant kan leveren
+    Purchasing -> Purchasing: Verwijder medicijn uit interne bestellijst
     note right of Purchasing
-      No purchase order is recorded.
-      The medicine remains in the sales assortment.
+      Er wordt geen inkooporder geregistreerd.
+      Het medicijn blijft in het verkoopassortiment.
     end note
-  else Purchase confirmed by a manufacturer
-    note right of Purchasing: Keep the confirmed purchase order on record.
+  else Fabrikant heeft bestelling bevestigd
+    note right of Purchasing: Behoud de geregistreerde inkooporder.
   end
-else Stock is sufficient
-  note right of Purchasing: No purchase order required.
+else Voorraad is voldoende
+  note right of Purchasing: Geen inkooporder nodig.
 end
 @enduml

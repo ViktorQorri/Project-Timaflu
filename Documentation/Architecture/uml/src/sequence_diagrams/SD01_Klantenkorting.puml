@@ -1,8 +1,8 @@
 @startuml
-title SD01 - Calculate order discounts (UC05 / AD05 / AD28)
+title SD01 - Orderkortingen berekenen (UC05 / AD05 / AD28)
 autonumber
 
-actor "Sales employee" as Sales
+actor "Verkoopmedewerker" as Sales
 participant "order:Order" as O
 participant "customer:Customer" as C
 participant "discount:CustomerDiscount" as D
@@ -10,32 +10,32 @@ participant "discount:CustomerDiscount" as D
 Sales -> O: calculateTotalAmount()
 activate O
 O -> O: calculateOrderDiscount()
-note right of O: 5% order discount from EUR 500 (case: orders).
+note right of O: 5% bestellingskorting vanaf EUR 500 (casus).
 
-alt First order of customer
+alt Eerste bestelling van klant
   O -> O: calculateOneTimeDiscount()
   note right of O
-    First order: 10% discount (Product-description).
-    Do not apply the same first-order allowance twice.
+    Eerste bestelling: 10% korting (productbeschrijving).
+    Pas dezelfde eersteorderkorting niet dubbel toe.
   end note
-else Returning customer
-  note right of O: No first-order discount.
+else Bestaande klant
+  note right of O: Geen eersteorderkorting.
 end
 
 O -> C: calculateAnnualRevenue(previousYear)
 activate C
-C --> O: revenue from paid purchases in preceding year
+C --> O: omzet uit volledig betaalde facturen van vorig jaar
 deactivate C
 O -> D: determinePercentage(previousYearRevenue, currentYear)
 activate D
-D --> O: 5%, 10% or 15% (case turnover table)
+D --> O: 5%, 10% of 15% volgens omzettabel in casus
 deactivate D
 O -> O: calculateCustomerDiscount()
 note right of O
-  Apply customer discount after the order discount
-  and the one-time discount, if applicable.
-  Annual percentage is set on 31 December for next year.
+  Bereken klantenkorting na de bestellingskorting
+  en eventuele eenmalige korting.
+  Jaarpercentage wordt op 31 december voor volgend jaar vastgesteld.
 end note
-O --> Sales: order subtotal, three discount amounts, final total
+O --> Sales: orderbedrag, afzonderlijke kortingen en eindtotaal
 deactivate O
 @enduml
