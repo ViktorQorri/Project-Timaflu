@@ -19,7 +19,7 @@ class PurchaseOrderRepository:
                     """SELECT 1 FROM LeveranciersAanbod AS a
                        JOIN Product AS p ON p.product_id = a.product_id
                        WHERE a.leverancier_id = %s AND a.product_id = %s
-                         AND p.in_assortiment = TRUE""",
+                         AND p.in_assortiment = TRUE AND p.intern_bestelbaar = TRUE""",
                     (supplier_id, product_id),
                 )
                 if cursor.fetchone() is None:

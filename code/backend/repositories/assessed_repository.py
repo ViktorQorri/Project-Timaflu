@@ -86,6 +86,32 @@ class AssessedRepository:
             """,(day,))
             return c.fetchall()
 
+    def record_first_attempt_delivery(self, delivery_id, delivery_day, signature_confirmed):
+        """Register a signed successful first visit without a second attempt."""
+        if signature_confirmed != "yes":
+            raise DomainError("Bevestig dat de klant voor ontvangst heeft getekend.")
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND lp.pogingnummer=1 AND r.ritdatum=%s
+                       FOR UPDATE""", (delivery_id, delivery_day))
+                row = cursor.fetchone()
+                if row is None or row["resultaat"] is not None:
+                    raise DomainError("De eerste bezorgpoging ontbreekt of is al afgehandeld.")
+                cursor.execute(
+                    """UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
+                       WHERE levering_id=%s AND pogingnummer=1""", (delivery_id,))
+                cursor.execute(
+                    """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
+                    (delivery_id,))
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
     def schedule_second_attempt(self, delivery_id, planned_time, delivery_day):
         """First absence: reschedule for the same delivery date, without an outcome."""
         with self.db.cursor(dictionary=True) as c:
@@ -101,7 +127,7 @@ class AssessedRepository:
                 row = c.fetchone()
                 if not row:
                     raise DomainError("Levering niet in het rooster voor deze datum.")
-                if row["pogingnummer"] != 1 or row["resultaat"] == "afgeleverd":
+                if row["pogingnummer"] != 1 or row["resultaat"] is not None:
                     raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
                 planned_seconds = planned_time.hour * 3600 + planned_time.minute * 60 + planned_time.second
                 if planned_seconds <= row["first_attempt_seconds"]:
