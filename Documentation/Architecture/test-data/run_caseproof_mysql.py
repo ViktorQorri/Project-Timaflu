@@ -88,7 +88,7 @@ def write_measured_evidence(evidence):
         "Deze tabellen zijn door MySQL 8.4 teruggegeven voor fictieve gegevens "
         "in een nieuw gemaakte en na afloop verwijderde lokale testdatabase.\n"
         "Het uitvoerbare bewijs staat in run_caseproof_mysql.py; hiermee zijn ook "
-        "de vijf bijbehorende Flask-pagina's met echte MySQL-verbindingen getest.\n\n"
+        "zeven procespagina's met echte MySQL-verbindingen getest.\n\n"
         +evidence+
         "\n## Interpretatie en beperkingen\n\n"
         "- De testdatabase bevat alleen fictieve, niet-productiegegevens.\n"

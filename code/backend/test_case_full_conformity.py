@@ -184,6 +184,17 @@ class CaseConformityTests(TestCase):
         self.assertEqual(len(stub.calls),1)
         self.assertEqual(stub.calls[0][0],3)
 
+    def test_measured_query_samples_mirror_screen_fields(self):
+        root=Path(__file__).resolve().parents[2]
+        examples=(root/"Documentation/Architecture/test-data/selects_assessed.sql").read_text(encoding="utf-8")
+        for fragment in ("k.eenmalige_korting_toegezegd",
+                         "a.adres AS klantadres",
+                         "f.betalingsregeling_geaccepteerd",
+                         "f.incasso_ingeschakeld",
+                         "f.betaald_op IS NULL",
+                         "p.opvolging_afgesloten=FALSE"):
+            self.assertIn(fragment,examples)
+
     def test_mobile_distribution_is_semantically_labelled_without_javascript(self):
         root=Path(__file__).resolve().parents[2]
         html=(root/"code/frontend/templates/deliveries.html").read_text(encoding="utf-8")
