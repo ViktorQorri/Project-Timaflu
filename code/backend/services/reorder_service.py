@@ -31,5 +31,12 @@ class ReorderService:
     def record_confirmed(self, product_id, supplier_id, quantity, confirmed):
         if confirmed != "yes":
             raise DomainError("Bevestig eerst dat je de fabrikant hebt gesproken.")
-        # Repository validates the supplier-product relation in the transaction.
+        overview = self.overview(product_id)
+        try:
+            chosen_supplier = int(supplier_id)
+        except (TypeError, ValueError):
+            raise DomainError("Kies een bestaande leverancier.")
+        if not any(int(offer["leverancier_id"]) == chosen_supplier for offer in overview["offers"]):
+            raise DomainError("De leverancier levert het gekozen product niet.")
+        # The repository rechecks the supplier-product relation before the write.
         return self.purchase_order_service.record_order(supplier_id, product_id, quantity)

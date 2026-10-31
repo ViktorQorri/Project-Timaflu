@@ -38,6 +38,7 @@ class StockRepository:
                           COALESCE(SUM(m.aantal), 0) AS voorraad
                    FROM Product AS p
                    LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+                   WHERE p.in_assortiment = TRUE
                    GROUP BY p.product_id, p.artikelnummer, p.productnaam,
                             p.minimumvoorraad
                    ORDER BY p.productnaam, p.product_id"""
@@ -51,7 +52,7 @@ class StockRepository:
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT product_id FROM Product WHERE product_id = %s FOR UPDATE",
+                    "SELECT product_id FROM Product WHERE product_id = %s AND in_assortiment = TRUE FOR UPDATE",
                     (product_id,),
                 )
                 if cursor.fetchone() is None:

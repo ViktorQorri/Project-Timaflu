@@ -37,6 +37,16 @@ class Purchases:
         self.calls.append((supplier_id, product_id, quantity))
         return 44
 
+    def recorded_orders(self):
+        return [{
+            "inkoopbestelling_id": 44,
+            "besteld_op": "2026-10-31 18:00:00",
+            "status_naam": "besteld",
+            "leverancier": "Goedkoop",
+            "productnaam": "Medicijn A",
+            "aantal": 8,
+        }]
+
 
 class ReorderTests(TestCase):
     def setUp(self):
@@ -58,6 +68,13 @@ class ReorderTests(TestCase):
             self.service.record_confirmed("7", "2", "8", None)
         self.assertEqual(self.purchases.calls, [])
         self.assertEqual(self.service.record_confirmed("7", "2", "8", "yes"), 44)
+
+    def test_confirmed_order_requires_current_shortage_and_matching_supplier(self):
+        with self.assertRaises(DomainError):
+            self.service.record_confirmed("8", "2", "8", "yes")
+        with self.assertRaises(DomainError):
+            self.service.record_confirmed("7", "99", "8", "yes")
+        self.assertEqual(self.purchases.calls, [])
 
     def test_get_renders_and_post_requires_confirmation(self):
         app = create_app()

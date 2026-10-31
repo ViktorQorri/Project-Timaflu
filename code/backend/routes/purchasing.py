@@ -80,6 +80,46 @@ def remove_product_from_reorder_list():
     flash("Medicijn uit interne bestellijst verwijderd, niet uit het verkoopassortiment.", "success")
     return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
 
+def _reorder_service():
+    connection = get_connection()
+    return ReorderService(
+        StockService(StockRepository(connection)),
+        SupplierService(SupplierRepository(connection)),
+        PurchaseOrderService(PurchaseOrderRepository(connection)),
+    )
+
+
+@purchasing.route("/reorder", methods=["GET", "POST"])
+def reorder():
+    """Prepare shortages and only persist purchases explicitly confirmed manually."""
+    service = _reorder_service()
+    if request.method == "POST":
+        order_id = service.record_confirmed(
+            request.form.get("product_id"),
+            request.form.get("supplier_id"),
+            request.form.get("quantity"),
+            request.form.get("confirmed"),
+        )
+        flash(f"Inkooporder {order_id} is geregistreerd.", "success")
+        return redirect(url_for("purchasing.reorder"))
+    result = service.overview(request.args.get("product_id"))
+    return render_template("reorder.html", **result)
+
+@purchasing.get("/stock/minimums")
+def stock_minimums():
+    """Manage minimum stock alerts for every catalog item."""
+    service = StockService(StockRepository(get_connection()))
+    return render_template("stock_minimums.html", products=service.minimums())
+
+
+@purchasing.post("/stock/minimums/<int:product_id>")
+def set_stock_minimum(product_id):
+    """Store a manually chosen threshold and return to the overview."""
+    service = StockService(StockRepository(get_connection()))
+    service.set_minimum(product_id, request.form.get("minimumvoorraad"))
+    flash("Minimumvoorraad bijgewerkt.", "success")
+    return redirect(url_for("purchasing.stock_minimums"))
+
 PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",
     "number_of_retail_packages", "short_description", "long_description",
@@ -263,46 +303,6 @@ def manufacturer_prices(supplier_id):
         error=error,
     ), (400 if error else 200)
 
-@purchasing.get("/stock/minimums")
-def stock_minimums():
-    """Manage minimum stock alerts for every catalog item."""
-    service = StockService(StockRepository(get_connection()))
-    return render_template("stock_minimums.html", products=service.minimums())
-
-
-@purchasing.post("/stock/minimums/<int:product_id>")
-def set_stock_minimum(product_id):
-    """Store a manually chosen threshold and return to the overview."""
-    service = StockService(StockRepository(get_connection()))
-    service.set_minimum(product_id, request.form.get("minimumvoorraad"))
-    flash("Minimumvoorraad bijgewerkt.", "success")
-    return redirect(url_for("purchasing.stock_minimums"))
-
-def _reorder_service():
-    connection = get_connection()
-    return ReorderService(
-        StockService(StockRepository(connection)),
-        SupplierService(SupplierRepository(connection)),
-        PurchaseOrderService(PurchaseOrderRepository(connection)),
-    )
-
-
-@purchasing.route("/reorder", methods=["GET", "POST"])
-def reorder():
-    """Prepare shortages and only persist purchases explicitly confirmed manually."""
-    service = _reorder_service()
-    if request.method == "POST":
-        order_id = service.record_confirmed(
-            request.form.get("product_id"),
-            request.form.get("supplier_id"),
-            request.form.get("quantity"),
-            request.form.get("confirmed"),
-        )
-        flash(f"Inkooporder {order_id} is geregistreerd.", "success")
-        return redirect(url_for("purchasing.reorder"))
-    result = service.overview(request.args.get("product_id"))
-    return render_template("reorder.html", **result)
-
 @purchasing.post("/manufacturers/<int:supplier_id>/prices/<int:product_id>/remove")
 def manufacturer_offer_remove(supplier_id, product_id):
     """Unlink one discontinued supplier offer after explicit confirmation."""
@@ -311,3 +311,4 @@ def manufacturer_offer_remove(supplier_id, product_id):
     _manufacturer_service().remove_offer(supplier_id, product_id)
     flash("Leverancierskoppeling verwijderd; product blijft in het assortiment.", "success")
     return redirect(url_for("purchasing.manufacturer_prices", supplier_id=supplier_id))
+
