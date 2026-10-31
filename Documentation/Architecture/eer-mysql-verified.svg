@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1641" viewBox="0 0 1980 1641">
+<rect width="100%" height="100%" fill="#fff"/>
+<defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="none" stroke="#A0ACBD"/></marker></defs>
+<path d="M212,688 L212,492" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,190 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,190 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,190 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,190 L982,612" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,456 L982,190" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,456 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1752,576 L1752,260" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,1070 L982,190" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,1070 L982,904" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,1236 L982,1070" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,1236 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1752,260 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1190 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1336 L596,1190" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1336 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1512 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,266 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,266 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,844 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,858 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1044 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,1044 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,402 L982,190" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,774 L1366,402" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,774 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,774 L1752,260" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,578 L1366,402" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,578 L1366,256" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,662 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,492 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,492 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M596,496 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1366,256 L1366,100" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,1382 L982,1070" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,748 L982,456" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,748 L982,456" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<rect x="40" y="45" width="343" height="89" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Adres</text>
+<text x="50" y="94" font-family="monospace" font-size="11" fill="#263548">PK adres_id : int</text>
+<text x="50" y="114" font-family="monospace" font-size="11" fill="#263548">adres : varchar(255)</text>
+<rect x="40" y="181" width="343" height="169" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="181" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="201" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Klant</text>
+<text x="50" y="230" font-family="monospace" font-size="11" fill="#263548">PK klant_id : int</text>
+<text x="50" y="250" font-family="monospace" font-size="11" fill="#263548">bedrijfsnaam : varchar(100)</text>
+<text x="50" y="270" font-family="monospace" font-size="11" fill="#263548">telefoonnummer : varchar(25)</text>
+<text x="50" y="290" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
+<text x="50" y="310" font-family="monospace" font-size="11" fill="#263548">FK afleveradres_id : int</text>
+<text x="50" y="330" font-family="monospace" font-size="11" fill="#263548">FK betaaladres_id : int</text>
+<rect x="40" y="397" width="343" height="189" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="397" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="417" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">PotentieleKlant</text>
+<text x="50" y="446" font-family="monospace" font-size="11" fill="#263548">PK potentiele_klant_id : int</text>
+<text x="50" y="466" font-family="monospace" font-size="11" fill="#263548">bedrijfsnaam : varchar(100)</text>
+<text x="50" y="486" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
+<text x="50" y="506" font-family="monospace" font-size="11" fill="#263548">contactgegevens : varchar(255)</text>
+<text x="50" y="526" font-family="monospace" font-size="11" fill="#263548">FK adres_id : int</text>
+<text x="50" y="546" font-family="monospace" font-size="11" fill="#263548">FK klant_id : int</text>
+<text x="50" y="566" font-family="monospace" font-size="10" fill="#5A3A72">UQ klant_id: klant_id</text>
+<rect x="40" y="633" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="633" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="653" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Acquisitiebezoek</text>
+<text x="50" y="682" font-family="monospace" font-size="11" fill="#263548">PK bezoek_id : int</text>
+<text x="50" y="702" font-family="monospace" font-size="11" fill="#263548">FK potentiele_klant_id : int</text>
+<text x="50" y="722" font-family="monospace" font-size="11" fill="#263548">bezoekdatum : date</text>
+<rect x="40" y="789" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="789" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="809" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Klantkorting</text>
+<text x="50" y="838" font-family="monospace" font-size="11" fill="#263548">PK FK klant_id : int</text>
+<text x="50" y="858" font-family="monospace" font-size="11" fill="#263548">PK kalenderjaar : smallint</text>
+<text x="50" y="878" font-family="monospace" font-size="11" fill="#263548">percentage : decimal(5,2)</text>
+<rect x="425" y="45" width="343" height="349" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Product</text>
+<text x="435" y="94" font-family="monospace" font-size="11" fill="#263548">PK product_id : int</text>
+<text x="435" y="114" font-family="monospace" font-size="11" fill="#263548">artikelnummer : varchar(50)</text>
+<text x="435" y="134" font-family="monospace" font-size="11" fill="#263548">bestelcode : varchar(50)</text>
+<text x="435" y="154" font-family="monospace" font-size="11" fill="#263548">productnaam : varchar(100)</text>
+<text x="435" y="174" font-family="monospace" font-size="11" fill="#263548">prijs_per_grootverpakking : decimal(10,2)</text>
+<text x="435" y="194" font-family="monospace" font-size="11" fill="#263548">verpakkingssoort : varchar(50)</text>
+<text x="435" y="214" font-family="monospace" font-size="11" fill="#263548">aantal_detailverpakkingen : int</text>
+<text x="435" y="234" font-family="monospace" font-size="11" fill="#263548">korte_omschrijving : varchar(255)</text>
+<text x="435" y="254" font-family="monospace" font-size="11" fill="#263548">lange_omschrijving : text</text>
+<text x="435" y="274" font-family="monospace" font-size="11" fill="#263548">minimale_bestelhoeveelheid : int</text>
+<text x="435" y="294" font-family="monospace" font-size="11" fill="#263548">minimumvoorraad : int</text>
+<text x="435" y="314" font-family="monospace" font-size="11" fill="#263548">intern_bestelbaar : tinyint(1)</text>
+<text x="435" y="334" font-family="monospace" font-size="11" fill="#263548">in_assortiment : tinyint(1)</text>
+<text x="435" y="354" font-family="monospace" font-size="10" fill="#5A3A72">UQ artikelnummer: artikelnummer</text>
+<text x="435" y="374" font-family="monospace" font-size="10" fill="#5A3A72">UQ bestelcode: bestelcode</text>
+<rect x="425" y="441" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="441" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="461" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">ProductWerkzameStof</text>
+<text x="435" y="490" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="435" y="510" font-family="monospace" font-size="11" fill="#263548">PK stofnaam : varchar(100)</text>
+<text x="435" y="530" font-family="monospace" font-size="11" fill="#263548">hoeveelheid : varchar(50)</text>
+<rect x="425" y="597" width="343" height="129" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="597" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="617" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Magazijnlocatie</text>
+<text x="435" y="646" font-family="monospace" font-size="11" fill="#263548">PK gang : char(1)</text>
+<text x="435" y="666" font-family="monospace" font-size="11" fill="#263548">PK schapnummer : int</text>
+<text x="435" y="686" font-family="monospace" font-size="11" fill="#263548">FK product_id : int</text>
+<text x="435" y="706" font-family="monospace" font-size="11" fill="#263548">aantal : int</text>
+<rect x="425" y="773" width="343" height="169" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="773" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="793" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Leverancier</text>
+<text x="435" y="822" font-family="monospace" font-size="11" fill="#263548">PK leverancier_id : int</text>
+<text x="435" y="842" font-family="monospace" font-size="11" fill="#263548">naam : varchar(100)</text>
+<text x="435" y="862" font-family="monospace" font-size="11" fill="#263548">FK adres_id : int</text>
+<text x="435" y="882" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
+<text x="435" y="902" font-family="monospace" font-size="11" fill="#263548">telefoonnummer : varchar(25)</text>
+<text x="435" y="922" font-family="monospace" font-size="11" fill="#263548">internetadres : varchar(255)</text>
+<rect x="425" y="989" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="989" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="1009" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">LeveranciersAanbod</text>
+<text x="435" y="1038" font-family="monospace" font-size="11" fill="#263548">PK FK leverancier_id : int</text>
+<text x="435" y="1058" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="435" y="1078" font-family="monospace" font-size="11" fill="#263548">inkoopprijs : decimal(10,2)</text>
+<rect x="425" y="1145" width="343" height="89" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="1145" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="1165" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Inkoopbestelling</text>
+<text x="435" y="1194" font-family="monospace" font-size="11" fill="#263548">PK inkoopbestelling_id : int</text>
+<text x="435" y="1214" font-family="monospace" font-size="11" fill="#263548">FK leverancier_id : int</text>
+<rect x="425" y="1281" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="1281" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="1301" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Inkoopbestelregel</text>
+<text x="435" y="1330" font-family="monospace" font-size="11" fill="#263548">PK FK inkoopbestelling_id : int</text>
+<text x="435" y="1350" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="435" y="1370" font-family="monospace" font-size="11" fill="#263548">aantal : int</text>
+<rect x="425" y="1437" width="343" height="149" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="425" y="1437" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="435" y="1457" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Inkoopfactuur</text>
+<text x="435" y="1486" font-family="monospace" font-size="11" fill="#263548">PK inkoopfactuur_id : int</text>
+<text x="435" y="1506" font-family="monospace" font-size="11" fill="#263548">FK leverancier_id : int</text>
+<text x="435" y="1526" font-family="monospace" font-size="11" fill="#263548">factuurdatum : date</text>
+<text x="435" y="1546" font-family="monospace" font-size="11" fill="#263548">bedrag : decimal(10,2)</text>
+<text x="435" y="1566" font-family="monospace" font-size="11" fill="#263548">betaald_op : date</text>
+<rect x="810" y="45" width="343" height="289" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Bestelling</text>
+<text x="820" y="94" font-family="monospace" font-size="11" fill="#263548">PK bestelling_id : int</text>
+<text x="820" y="114" font-family="monospace" font-size="11" fill="#263548">FK klant_id : int</text>
+<text x="820" y="134" font-family="monospace" font-size="11" fill="#263548">FK afleveradres_id : int</text>
+<text x="820" y="154" font-family="monospace" font-size="11" fill="#263548">FK betaaladres_id : int</text>
+<text x="820" y="174" font-family="monospace" font-size="11" fill="#263548">besteld_op : datetime</text>
+<text x="820" y="194" font-family="monospace" font-size="11" fill="#263548">gewenste_leverdatum : date</text>
+<text x="820" y="214" font-family="monospace" font-size="11" fill="#263548">dagdeel : enum('ochtend','middag')</text>
+<text x="820" y="234" font-family="monospace" font-size="11" fill="#263548">spoed : tinyint(1)</text>
+<text x="820" y="254" font-family="monospace" font-size="11" fill="#263548">FK status_naam : varchar(40)</text>
+<text x="820" y="274" font-family="monospace" font-size="11" fill="#263548">eenmalige_korting_toegepast : tinyint(1)</text>
+<text x="820" y="294" font-family="monospace" font-size="11" fill="#263548">extra_bezorgkosten : decimal(10,2)</text>
+<text x="820" y="314" font-family="monospace" font-size="11" fill="#263548">toelichting_extra_bezorgkosten : varchar(255)</text>
+<rect x="810" y="381" width="343" height="149" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="381" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="401" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Bestelregel</text>
+<text x="820" y="430" font-family="monospace" font-size="11" fill="#263548">PK FK bestelling_id : int</text>
+<text x="820" y="450" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="820" y="470" font-family="monospace" font-size="11" fill="#263548">aantal : int</text>
+<text x="820" y="490" font-family="monospace" font-size="11" fill="#263548">prijs_per_eenheid : decimal(10,2)</text>
+<text x="820" y="510" font-family="monospace" font-size="11" fill="#263548">afnemen_bij_tekort : tinyint(1)</text>
+<rect x="810" y="577" width="343" height="69" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="577" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="597" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">OrderStatus</text>
+<text x="820" y="626" font-family="monospace" font-size="11" fill="#263548">PK naam : varchar(40)</text>
+<rect x="810" y="693" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="693" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="713" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Voorraadreservering</text>
+<text x="820" y="742" font-family="monospace" font-size="11" fill="#263548">PK FK bestelling_id : int</text>
+<text x="820" y="762" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="820" y="782" font-family="monospace" font-size="11" fill="#263548">aantal : int</text>
+<rect x="810" y="849" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="849" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="869" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Robot</text>
+<text x="820" y="898" font-family="monospace" font-size="11" fill="#263548">PK robot_id : int</text>
+<text x="820" y="918" font-family="monospace" font-size="11" fill="#263548">gang : char(1)</text>
+<text x="820" y="938" font-family="monospace" font-size="10" fill="#5A3A72">UQ gang: gang</text>
+<rect x="810" y="1005" width="343" height="129" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="1005" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="1025" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Deelorder</text>
+<text x="820" y="1054" font-family="monospace" font-size="11" fill="#263548">PK deelorder_id : int</text>
+<text x="820" y="1074" font-family="monospace" font-size="11" fill="#263548">FK bestelling_id : int</text>
+<text x="820" y="1094" font-family="monospace" font-size="11" fill="#263548">FK robot_id : int</text>
+<text x="820" y="1114" font-family="monospace" font-size="11" fill="#263548">afgerond : tinyint(1)</text>
+<rect x="810" y="1181" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="1181" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="1201" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Deelorderregel</text>
+<text x="820" y="1230" font-family="monospace" font-size="11" fill="#263548">PK FK deelorder_id : int</text>
+<text x="820" y="1250" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="820" y="1270" font-family="monospace" font-size="11" fill="#263548">aantal : int</text>
+<rect x="810" y="1337" width="343" height="89" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="810" y="1337" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="820" y="1357" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Verzamelbak</text>
+<text x="820" y="1386" font-family="monospace" font-size="11" fill="#263548">PK unieke_code : varchar(50)</text>
+<text x="820" y="1406" font-family="monospace" font-size="11" fill="#263548">FK deelorder_id : int</text>
+<rect x="1195" y="45" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1195" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1205" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Koerier</text>
+<text x="1205" y="94" font-family="monospace" font-size="11" fill="#263548">PK koerier_id : int</text>
+<text x="1205" y="114" font-family="monospace" font-size="11" fill="#263548">naam : varchar(100)</text>
+<text x="1205" y="134" font-family="monospace" font-size="11" fill="#263548">beschikbaar : tinyint(1)</text>
+<rect x="1195" y="201" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1195" y="201" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1205" y="221" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Rit</text>
+<text x="1205" y="250" font-family="monospace" font-size="11" fill="#263548">PK rit_id : int</text>
+<text x="1205" y="270" font-family="monospace" font-size="11" fill="#263548">FK koerier_id : int</text>
+<text x="1205" y="290" font-family="monospace" font-size="11" fill="#263548">ritdatum : date</text>
+<rect x="1195" y="357" width="343" height="89" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1195" y="357" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1205" y="377" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Levering</text>
+<text x="1205" y="406" font-family="monospace" font-size="11" fill="#263548">PK levering_id : int</text>
+<text x="1205" y="426" font-family="monospace" font-size="11" fill="#263548">FK bestelling_id : int</text>
+<rect x="1195" y="493" width="343" height="169" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1195" y="493" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1205" y="513" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Leverpoging</text>
+<text x="1205" y="542" font-family="monospace" font-size="11" fill="#263548">PK FK levering_id : int</text>
+<text x="1205" y="562" font-family="monospace" font-size="11" fill="#263548">PK pogingnummer : int</text>
+<text x="1205" y="582" font-family="monospace" font-size="11" fill="#263548">FK rit_id : int</text>
+<text x="1205" y="602" font-family="monospace" font-size="11" fill="#263548">geplande_tijd : time</text>
+<text x="1205" y="622" font-family="monospace" font-size="11" fill="#263548">resultaat : enum('afgeleverd','niet aanwezig')</text>
+<text x="1205" y="642" font-family="monospace" font-size="11" fill="#263548">ontvangst_getekend : tinyint(1)</text>
+<rect x="1195" y="709" width="343" height="129" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1195" y="709" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1205" y="729" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Leveringregel</text>
+<text x="1205" y="758" font-family="monospace" font-size="11" fill="#263548">PK FK levering_id : int</text>
+<text x="1205" y="778" font-family="monospace" font-size="11" fill="#263548">PK FK product_id : int</text>
+<text x="1205" y="798" font-family="monospace" font-size="11" fill="#263548">aantal_geleverd : int</text>
+<text x="1205" y="818" font-family="monospace" font-size="11" fill="#263548">FK factuur_id : int</text>
+<rect x="1580" y="45" width="343" height="429" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1580" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1590" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Factuur</text>
+<text x="1590" y="94" font-family="monospace" font-size="11" fill="#263548">PK factuur_id : int</text>
+<text x="1590" y="114" font-family="monospace" font-size="11" fill="#263548">FK klant_id : int</text>
+<text x="1590" y="134" font-family="monospace" font-size="11" fill="#263548">factuurdatum : date</text>
+<text x="1590" y="154" font-family="monospace" font-size="11" fill="#263548">week_start : date</text>
+<text x="1590" y="174" font-family="monospace" font-size="11" fill="#263548">afzenderadres : varchar(255)</text>
+<text x="1590" y="194" font-family="monospace" font-size="11" fill="#263548">factuuradres : varchar(255)</text>
+<text x="1590" y="214" font-family="monospace" font-size="11" fill="#263548">betaald_op : date</text>
+<text x="1590" y="234" font-family="monospace" font-size="11" fill="#263548">betalingsregeling_geaccepteerd : tinyint(1)</text>
+<text x="1590" y="254" font-family="monospace" font-size="11" fill="#263548">incasso_ingeschakeld : tinyint(1)</text>
+<text x="1590" y="274" font-family="monospace" font-size="11" fill="#263548">bedrag_excl_btw : decimal(10,2)</text>
+<text x="1590" y="294" font-family="monospace" font-size="11" fill="#263548">btw_bedrag : decimal(10,2)</text>
+<text x="1590" y="314" font-family="monospace" font-size="11" fill="#263548">bedrag_incl_btw : decimal(10,2)</text>
+<text x="1590" y="334" font-family="monospace" font-size="11" fill="#263548">bestellingskorting : decimal(10,2)</text>
+<text x="1590" y="354" font-family="monospace" font-size="11" fill="#263548">bedrag_na_bestellingskorting : decimal(10,2)</text>
+<text x="1590" y="374" font-family="monospace" font-size="11" fill="#263548">eenmalige_korting : decimal(10,2)</text>
+<text x="1590" y="394" font-family="monospace" font-size="11" fill="#263548">bedrag_na_eenmalige_korting : decimal(10,2)</text>
+<text x="1590" y="414" font-family="monospace" font-size="11" fill="#263548">klantenkorting : decimal(10,2)</text>
+<text x="1590" y="434" font-family="monospace" font-size="11" fill="#263548">totaal_bedrag : decimal(10,2)</text>
+<text x="1590" y="454" font-family="monospace" font-size="10" fill="#5A3A72">UQ uq_factuur_klant_week: klant_id,week_start</text>
+<rect x="1580" y="521" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="1580" y="521" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="1590" y="541" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Betalingsherinnering</text>
+<text x="1590" y="570" font-family="monospace" font-size="11" fill="#263548">PK FK factuur_id : int</text>
+<text x="1590" y="590" font-family="monospace" font-size="11" fill="#263548">PK volgnummer : int</text>
+<text x="1590" y="610" font-family="monospace" font-size="11" fill="#263548">verstuurd_op : date</text>
+</svg>

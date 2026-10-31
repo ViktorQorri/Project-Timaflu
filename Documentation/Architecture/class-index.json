@@ -1,0 +1,549 @@
+[
+  {
+    "module": "domain.business",
+    "class": "CustomerDiscount",
+    "methods": [
+      "determinePercentage"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "Order",
+    "methods": [
+      "__init__",
+      "calculateOrderDiscount",
+      "calculateOneTimeDiscount",
+      "calculateCustomerDiscount",
+      "calculateTotalAmount",
+      "setDeliveryTime",
+      "changeOrderStatus",
+      "recordAdditionalDeliveryCosts",
+      "recordOrder",
+      "recordCustomerApproval",
+      "markAsUrgent",
+      "getOrderStatus",
+      "splitIntoSuborders",
+      "viewCollectionBins",
+      "packageOrder"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "Invoice",
+    "methods": [
+      "__init__",
+      "createWeeklyInvoice",
+      "createWeeklyInvoiceForOrders",
+      "checkPaymentArrears",
+      "proposePaymentPlan",
+      "enableDebtCollection",
+      "sendToCustomer",
+      "recordFullPayment"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "PaymentReminder",
+    "methods": [
+      "__init__",
+      "send"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "Customer",
+    "methods": [
+      "__init__",
+      "checkOrderBlock",
+      "calculateAnnualRevenue",
+      "updateDetails"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "DeliveryAttempt",
+    "methods": [
+      "__init__",
+      "markRecipientAbsent",
+      "markDelivered",
+      "recordReceiptSignature"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "Route",
+    "methods": [
+      "__init__",
+      "showSchedule",
+      "adjustSchedule",
+      "assignToCourier"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "AcquisitionVisit",
+    "methods": [
+      "recordVisit"
+    ]
+  },
+  {
+    "module": "domain.business",
+    "class": "ProspectiveCustomer",
+    "methods": [
+      "__init__",
+      "hasPlacedOrder",
+      "checkFollowUpAfterOneMonth",
+      "offerOneTimeDiscount",
+      "createCustomerAccount"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Address",
+    "methods": [
+      "__init__",
+      "updateAddress"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "OrderLine",
+    "methods": [
+      "__init__",
+      "adjustQuantity",
+      "recordShortageChoice"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "StockReservation",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "OrderStatus",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "ProductActiveIngredient",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Supplier",
+    "methods": [
+      "__init__",
+      "updateDetails"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "SupplierOffer",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "PurchaseOrder",
+    "methods": [
+      "__init__",
+      "placeWithSupplier"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "PurchaseOrderLine",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Aisle",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "WarehouseLocation",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Robot",
+    "methods": [
+      "__init__",
+      "receiveSuborder",
+      "pickCollectionBin",
+      "scanCollectionBin",
+      "collectMedicines",
+      "placeBinOnConveyor",
+      "markSuborderComplete"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Suborder",
+    "methods": [
+      "__init__",
+      "checkCompleteness",
+      "assignToRobot"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "SuborderLine",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "CollectionBin",
+    "methods": [
+      "__init__",
+      "registerForSuborder"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Courier",
+    "methods": [
+      "__init__",
+      "reportArrival",
+      "reportAvailability",
+      "viewAssignedRoutes",
+      "lookUpCustomerPhoneNumber",
+      "lookUpDeliveryTime"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "Delivery",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "DeliveryLine",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
+    "module": "domain.case_stubs",
+    "class": "PurchaseInvoice",
+    "methods": [
+      "__init__",
+      "pay"
+    ]
+  },
+  {
+    "module": "domain.errors",
+    "class": "DomainError",
+    "methods": []
+  },
+  {
+    "module": "domain.errors",
+    "class": "NotFoundError",
+    "methods": []
+  },
+  {
+    "module": "domain.errors",
+    "class": "ConflictError",
+    "methods": []
+  },
+  {
+    "module": "domain.product",
+    "class": "ProductActiveIngredient",
+    "methods": []
+  },
+  {
+    "module": "domain.product",
+    "class": "Product",
+    "methods": [
+      "checkStock",
+      "checkMinimumStock",
+      "findSuppliersByPrice",
+      "removeSupplier",
+      "removeFromAssortment"
+    ]
+  },
+  {
+    "module": "domain.product",
+    "class": "SupplierOffer",
+    "methods": []
+  },
+  {
+    "module": "domain.supplier",
+    "class": "Supplier",
+    "methods": []
+  },
+  {
+    "module": "repositories.assessed_repository",
+    "class": "AssessedRepository",
+    "methods": [
+      "__init__",
+      "customer_revenue",
+      "customer_order_count",
+      "invoice_for_customer",
+      "delivery_schedule",
+      "record_first_attempt_delivery",
+      "schedule_second_attempt",
+      "record_second_attempt_outcome",
+      "record_failed_delivery_followup",
+      "prospect_followups",
+      "record_visit",
+      "register_prospect_customer",
+      "close_prospect_followup",
+      "record_payment_action",
+      "save_invoice_snapshot"
+    ]
+  },
+  {
+    "module": "repositories.health_repository",
+    "class": "HealthRepository",
+    "methods": [
+      "__init__",
+      "ping"
+    ]
+  },
+  {
+    "module": "repositories.manufacturer_repository",
+    "class": "ManufacturerRepository",
+    "methods": [
+      "__init__",
+      "all",
+      "get",
+      "create",
+      "update",
+      "products",
+      "offers",
+      "set_price",
+      "remove_offer"
+    ]
+  },
+  {
+    "module": "repositories.picking_bin_repository",
+    "class": "PickingBinRepository",
+    "methods": [
+      "__init__",
+      "list_bins",
+      "register"
+    ]
+  },
+  {
+    "module": "repositories.product_repository",
+    "class": "ProductRepository",
+    "methods": [
+      "__init__",
+      "list_in_assortment",
+      "get_by_id",
+      "find_code_owners",
+      "add",
+      "update",
+      "remove_from_assortment",
+      "_insert_ingredients",
+      "_product_values",
+      "_to_product",
+      "_to_ingredient"
+    ]
+  },
+  {
+    "module": "repositories.purchase_order_repository",
+    "class": "PurchaseOrderRepository",
+    "methods": [
+      "__init__",
+      "create"
+    ]
+  },
+  {
+    "module": "repositories.reservation_repository",
+    "class": "ReservationRepository",
+    "methods": [
+      "__init__",
+      "reserve_existing_line",
+      "release_existing_line"
+    ]
+  },
+  {
+    "module": "repositories.robot_order_repository",
+    "class": "RobotOrderRepository",
+    "methods": [
+      "__init__",
+      "robot_for_aisle",
+      "next_suborder",
+      "suborder_lines",
+      "complete",
+      "generate"
+    ]
+  },
+  {
+    "module": "repositories.sales_stock_repository",
+    "class": "SalesStockRepository",
+    "methods": [
+      "__init__",
+      "find_products"
+    ]
+  },
+  {
+    "module": "repositories.stock_repository",
+    "class": "StockRepository",
+    "methods": [
+      "__init__",
+      "list_stock_below_minimum",
+      "list_all_minimums",
+      "set_minimum"
+    ]
+  },
+  {
+    "module": "repositories.supplier_repository",
+    "class": "SupplierRepository",
+    "methods": [
+      "__init__",
+      "find_offers",
+      "remove_offer",
+      "remove_from_internal_reorder_list",
+      "list_all",
+      "get_by_id",
+      "_to_supplier"
+    ]
+  },
+  {
+    "module": "repositories.weekly_invoice_repository",
+    "class": "WeeklyInvoiceRepository",
+    "methods": [
+      "__init__",
+      "validate_week",
+      "eligible_customers",
+      "issue_week",
+      "_issue_customer",
+      "issued_invoice"
+    ]
+  },
+  {
+    "module": "services.health_service",
+    "class": "HealthService",
+    "methods": [
+      "__init__",
+      "database_is_reachable"
+    ]
+  },
+  {
+    "module": "services.manufacturer_service",
+    "class": "ManufacturerService",
+    "methods": [
+      "__init__",
+      "list_manufacturers",
+      "manufacturer",
+      "create",
+      "update",
+      "list_products",
+      "prices",
+      "set_price",
+      "_positive_id",
+      "_validate",
+      "remove_offer"
+    ]
+  },
+  {
+    "module": "services.picking_bin_service",
+    "class": "PickingBinService",
+    "methods": [
+      "__init__",
+      "bins",
+      "register"
+    ]
+  },
+  {
+    "module": "services.product_service",
+    "class": "ProductService",
+    "methods": [
+      "__init__",
+      "catalog",
+      "suppliers",
+      "get_product",
+      "add_product",
+      "update_product",
+      "remove_from_assortment",
+      "_check_codes_are_free"
+    ]
+  },
+  {
+    "module": "services.purchase_order_service",
+    "class": "PurchaseOrderService",
+    "methods": [
+      "__init__",
+      "record_order"
+    ]
+  },
+  {
+    "module": "services.reorder_service",
+    "class": "ReorderService",
+    "methods": [
+      "__init__",
+      "overview",
+      "record_confirmed"
+    ]
+  },
+  {
+    "module": "services.reservation_service",
+    "class": "ReservationService",
+    "methods": [
+      "__init__",
+      "_ids",
+      "reserve_confirmed_line",
+      "release_line"
+    ]
+  },
+  {
+    "module": "services.robot_order_service",
+    "class": "RobotOrderService",
+    "methods": [
+      "__init__",
+      "_id",
+      "_validate_robot",
+      "next_order",
+      "complete",
+      "generate_suborders"
+    ]
+  },
+  {
+    "module": "services.sales_stock_service",
+    "class": "SalesStockService",
+    "methods": [
+      "__init__",
+      "check"
+    ]
+  },
+  {
+    "module": "services.stock_service",
+    "class": "StockService",
+    "methods": [
+      "__init__",
+      "shortages",
+      "minimums",
+      "set_minimum"
+    ]
+  },
+  {
+    "module": "services.supplier_service",
+    "class": "SupplierService",
+    "methods": [
+      "__init__",
+      "offers_for_product"
+    ]
+  }
+]

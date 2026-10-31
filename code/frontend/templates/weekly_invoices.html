@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Weekfacturen{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Administratie</span>
+  <h1>Weekfacturen genereren</h1>
+  <p>Alleen werkelijk afgeleverde, ondertekende regels van een volledig afgesloten week worden gefactureerd. Een herhaalde opdracht maakt geen tweede factuur.</p>
+</section>
+{% if not sender_address %}
+<p class="flash flash-warning" role="alert">Het werkelijke afzenderadres ontbreekt. Stel TIMAFLU_ADDRESS in voordat je een factuur kunt uitgeven. De casus geeft geen straatadres.</p>
+{% else %}
+<p>Afzender op factuur: <strong>{{sender_address}}</strong></p>
+{% endif %}
+<form class="lookup-form" action="{{ url_for('weekly_invoices.weekly_overview') }}" method="get">
+  <label for="week-start">Maandag van de factuurweek</label>
+  <input type="date" name="week_start" id="week-start" value="{{week_start}}" required>
+  <button type="submit">Week controleren</button>
+</form>
+<p>Klanten met nog niet gefactureerde, getekende leveringen: <strong>{{customer_count}}</strong></p>
+<form method="post" action="{{ url_for('weekly_invoices.weekly_overview') }}">
+  <input type="hidden" name="week_start" value="{{week_start}}">
+  <button type="submit" {% if not sender_address or not customer_count %}disabled{% endif %}>Facturen eenmalig uitgeven en bedragen opslaan</button>
+</form>
+{% if created %}
+<h2>Nieuw uitgegeven facturen</h2>
+<ul>
+{% for invoice_id in created %}
+<li><a href="{{url_for('weekly_invoices.issued_invoice',invoice_id=invoice_id)}}">Factuur {{invoice_id}} bekijken</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

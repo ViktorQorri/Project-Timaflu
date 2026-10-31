@@ -1,4 +1,6 @@
 from pathlib import Path
+from datetime import date
+import click
 
 from flask import Flask, jsonify, render_template, request
 from mysql.connector import Error as DatabaseError
@@ -9,6 +11,7 @@ from db import close_connection
 from domain.errors import DomainError
 from routes.acquisition import acquisition
 from routes.administration import administration
+from routes.weekly_invoices import weekly_invoices
 from routes.api import api
 from routes.distribution import distribution
 from routes.home import home
@@ -51,9 +54,28 @@ def create_app(config=Config):
     app.register_blueprint(order_picking)
     app.register_blueprint(distribution)
     app.register_blueprint(administration)
+    app.register_blueprint(weekly_invoices)
     app.register_blueprint(acquisition)
     app.register_blueprint(reports)
     app.register_blueprint(api, url_prefix="/api")
+
+    @app.cli.command("issue-weekly-invoices")
+    @click.option("--week-start", required=True, help="Maandag jjjj-mm-dd van een afgesloten week")
+    def issue_weekly_invoices_cli(week_start):
+        """Use from a verified weekly scheduler; do not send email."""
+        from db import get_connection
+        from repositories.weekly_invoice_repository import WeeklyInvoiceRepository
+        try:
+            start = date.fromisoformat(week_start)
+        except ValueError as exc:
+            raise click.ClickException("Ongeldige week_start.") from exc
+        try:
+            ids = WeeklyInvoiceRepository(get_connection()).issue_week(
+                start, app.config["TIMAFLU_ADDRESS"]
+            )
+        except DomainError as exc:
+            raise click.ClickException(str(exc)) from exc
+        click.echo(f"Weekfacturen vastgelegd: {len(ids)}; IDs: {','.join(map(str, ids))}")
 
     register_error_handlers(app)
     return app

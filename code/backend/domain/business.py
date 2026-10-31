@@ -118,6 +118,38 @@ class Invoice:
                 "total_ex_vat": subtotal, "vat_9_percent": vat, "total_incl_vat": gross,
                 **discounts}
 
+    def createWeeklyInvoiceForOrders(self, customerName, customerAddress, orders, annualRevenue):
+        """Aggregate actual delivered order lines, calculating discounts per order.
+
+        The 5% threshold belongs to an order, not the sum of different orders.
+        10% applies only once to the first order, not again for acquisition.
+        """
+        if not orders:
+            from domain.errors import DomainError
+            raise DomainError("Geen afgeleverde regels om te factureren.")
+        fields = ("total_ex_vat", "vat_9_percent", "total_incl_vat",
+                  "order_discount", "total_after_order_discount",
+                  "first_order_discount", "total_after_first_order_discount",
+                  "customer_discount", "total")
+        totals = {key: Decimal("0.00") for key in fields}
+        all_lines = []
+        for order in orders:
+            detail = self.createWeeklyInvoice(
+                customerName, customerAddress, order["lines"],
+                annualRevenue, order["first_order"]
+            )
+            for key in fields:
+                totals[key] = euro(totals[key] + detail[key])
+            for line in detail["lines"]:
+                all_lines.append({**line, "order_id": order["order_id"]})
+        return {
+            "date": self.invoiceDate, "invoice_number": self.invoiceNumber,
+            "customer_number": self.customerNumber, "customer_name": customerName,
+            "customer_address": customerAddress, "lines": all_lines,
+            "subtotal": totals["total_incl_vat"],
+            **totals,
+        }
+
     def checkPaymentArrears(self, today):
         if self.paidOn:
             return "paid"
