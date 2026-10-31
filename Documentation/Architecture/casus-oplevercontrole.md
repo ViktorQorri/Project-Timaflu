@@ -52,11 +52,16 @@ historisch vastgelegde adressen en bedragen.
   Bij meerdere bestellingen in één week worden de kortingsberekeningen
   per bestelling gedaan en vervolgens opgeteld, niet over de volledige week.
 
-Bij een nieuwe order waarvan een deel pas later wordt geleverd, wordt de
-eenmalige eerste-orderkorting alleen op de **eerste gefactureerde levering**
-van die order toegepast. Dit voorkomt een tweede 10%-korting in de volgende
-week. De rubric zegt niet expliciet hoe te handelen bij gesplitste leveringen;
-dit is de gekozen, gedocumenteerde boekingsregel.
+Bij een eerste bestelling waarvan de producten in meerdere weken worden geleverd,
+wordt op **elk werkelijk afgeleverd deel van diezelfde eerste bestelling** 10%
+eenmalige korting berekend. De korting geldt niet voor latere bestellingen en
+wordt niet tweemaal op dezelfde leveringsregel toegepast. De database registreert
+de eerste toekenning slechts één keer. De 5%-grens van € 500 wordt bepaald op
+basis van de oorspronkelijke volledige bestelling; het percentage wordt alleen
+op het werkelijk geleverde bedrag toegepast. Hiermee veranderen de
+kortingsvoorwaarden niet door een gesplitste levering. Dit is een expliciete
+interpretatie voor deels geleverde orders, waarvan de bron het tijdstip van
+kortingstoepassing niet nader uitwerkt; zie de MySQL-regressietests.
 
 ## 3. Timaflu-adres, feit versus fictie
 
@@ -97,7 +102,7 @@ De oudere domein-PUML is een procesontwerp en niet de volledige broncode-index.
 
 ## 5. Test- en querybewijs
 
-- [query-output-per-screen.md](query-output-per-screen.md): alle 17 GET-schermen/API-
+- [query-output-per-screen.md](query-output-per-screen.md): alle 18 GET-schermen/API-
   controlepunten, HTTP-code en echte MySQL-queryuitvoer; statische schermen
   expliciet aangeduid.
 - [test_weekly_invoice_mysql.py](../../code/backend/test_weekly_invoice_mysql.py):
@@ -130,3 +135,11 @@ vastgelegd en met de docent worden gedeeld.
   `SECRET_KEY` en het feitelijke `TIMAFLU_ADDRESS` in, buiten Git.
 - Python-dependencies installeren en `python -m unittest discover`
   uitvoeren. Automatische productie-uitgifte alleen na scheduler-configuratie.
+
+## 7. Geactualiseerde casuscontrole op geïntegreerde main
+
+Het auditresultaat van de huidige code, de vijf afzonderlijke controlerondes,
+de vastgelegde MySQL-grensgevallen, het werkende klantenoverzicht en het
+orderstatusscherm staan in
+[main-casus-vijf-rondes-20261031.md](main-casus-vijf-rondes-20261031.md).
+Daarin staan ook de nog niet door code alleen te bewijzen processtappen.

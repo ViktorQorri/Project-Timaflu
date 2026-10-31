@@ -345,10 +345,20 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                     min_days=sequence*7
                     if (today-invoice["factuurdatum"]).days<min_days:
                         raise DomainError("Reminder is not due")
+                    cursor.execute(
+                        "SELECT verstuurd_op FROM Betalingsherinnering "
+                        "WHERE factuur_id=%s AND volgnummer=%s", (invoice_id, sequence))
+                    if cursor.fetchone():
+                        raise DomainError("Deze herinnering is al geregistreerd.")
                     if sequence==2:
-                        cursor.execute("SELECT 1 FROM Betalingsherinnering WHERE factuur_id=%s AND volgnummer=1",(invoice_id,))
-                        if not cursor.fetchone():
-                            raise DomainError("First reminder must be recorded before second")
+                        cursor.execute(
+                            "SELECT verstuurd_op FROM Betalingsherinnering "
+                            "WHERE factuur_id=%s AND volgnummer=1", (invoice_id,))
+                        first = cursor.fetchone()
+                        if not first:
+                            raise DomainError("Registreer eerst de eerste herinnering.")
+                        if (today - first["verstuurd_op"]).days < 7:
+                            raise DomainError("De tweede herinnering volgt pas minimaal een week later.")
                     cursor.execute(
                         "INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) "
                         "VALUES(%s,%s,%s)", (invoice_id,sequence,today))

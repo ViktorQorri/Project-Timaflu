@@ -1,0 +1,9 @@
+# Preserve reproducible generated SQL, diagram and evidence files on Windows and Linux.
+Documentation/Architecture/eer-mysql-verified.drawio text eol=lf
+Documentation/Architecture/eer-mysql-verified.svg text eol=lf
+Documentation/Architecture/eer-mysql-schema.json text eol=lf
+Documentation/Architecture/class-diagram-backend.puml text eol=lf
+Documentation/Architecture/class-diagram-backend.svg text eol=lf
+Documentation/Architecture/class-index.json text eol=lf
+Documentation/Architecture/query-output-per-screen.md text eol=lf
+code/database/queries.sql text eol=lf

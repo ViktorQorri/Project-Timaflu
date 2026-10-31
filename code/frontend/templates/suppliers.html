@@ -39,16 +39,15 @@
                   </form>
                 </td>
                 <td>
-                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>`n                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>`n                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>
-                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>
                   <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
                     <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
                     <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
                     <label><input type="checkbox" name="confirmed" value="yes" required>
-                      Fabrikant levert dit medicijn niet meer</label>
-                    <button type="submit">Leverancier loskoppelen</button>
+                      Deze fabrikant levert het medicijn niet meer</label>
+                    <button type="submit">Leverancier loskoppelen van medicijn</button>
                   </form>
+                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>
                   <form method="post" action="{{ url_for('purchasing.remove_product_from_reorder_list') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
                     <input type="hidden" name="product_name" value="{{ offer.productnaam }}">

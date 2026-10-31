@@ -108,6 +108,13 @@
           </fieldset>
         {% endif %}
 
+        {% if not editing %}
+          <label class="product-form__approval">
+            <input type="checkbox" name="director_approved" value="yes" required{% if form.director_approved == 'yes' %} checked{% endif %}>
+            De directie heeft besloten dat dit medicijn in het assortiment wordt opgenomen.
+          </label>
+        {% endif %}
+
         {% if error %}
           <p class="form-error" role="alert">{{ error }}</p>
         {% endif %}

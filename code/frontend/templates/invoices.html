@@ -66,6 +66,8 @@
       <option value="payment_plan_rejected">Betalingsregeling geweigerd, incasso</option>
       {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
     </select>
+    <label><input type="checkbox" name="offer_refused_confirmed" value="yes">
+      Alleen voor incasso: de betalingsregeling is daadwerkelijk aangeboden en door de klant geweigerd.</label>
     <label for="invoice-amount-{{f.invoice_number}}">Ontvangen bedrag (alleen bij volledig betaald)</label>
     <input id="invoice-amount-{{f.invoice_number}}" type="number" min="0" step="0.01" name="received_amount">
     <button type="submit">Actie registreren</button>

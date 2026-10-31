@@ -3,12 +3,38 @@
 {% block content %}
 <section class="page-intro">
   <span class="eyebrow">Verkoop</span>
-  <h1>Klanten</h1>
-  <p>Contactgegevens, factuuradressen en afleveradressen van apotheken vormen de basis voor het telefonisch opnemen van bestellingen.</p>
+  <h1>Apotheekklanten</h1>
+  <p>Zoek de centrale klantgegevens op voor telefonische verkoop en controleer het aflever- en factuuradres.</p>
 </section>
-<section class="page-panel" aria-labelledby="customers-info">
-  <h2 id="customers-info">Klantgegevens</h2>
-  <p>De verkoop gebruikt de klantgegevens om bestellingen correct vast te leggen. De invoer en administratie van klanten worden gekoppeld aan de klantmodule.</p>
-  <a class="button button--secondary" href="{{ url_for('sales.orders') }}">Naar orders</a>
+<section class="stock-dashboard">
+  <form method="get" action="{{ url_for('sales.customers') }}" class="lookup-form">
+    <label for="customer-query">Bedrijfsnaam</label>
+    <input id="customer-query" name="q" value="{{ query }}" maxlength="100" placeholder="Naam of deel van de naam">
+    <button type="submit">Klanten zoeken</button>
+  </form>
+  {% if customers %}
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Werkelijke klanten in de database</caption>
+      <thead><tr><th scope="col">Nummer</th><th scope="col">Apotheek</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Afleveradres</th><th scope="col">Factuuradres</th><th scope="col">Bestellingen</th></tr></thead>
+      <tbody>
+      {% for customer in customers %}
+      <tr>
+        <td>{{ customer.klant_id }}</td>
+        <th scope="row">{{ customer.bedrijfsnaam }}</th>
+        <td>{{ customer.contactpersoon or 'Niet bekend' }}</td>
+        <td>{{ customer.telefoonnummer or 'Niet bekend' }}</td>
+        <td>{{ customer.afleveradres }}</td>
+        <td>{{ customer.factuuradres }}</td>
+        <td><a href="{{ url_for('sales.order_status', customer_id=customer.klant_id) }}">Orderstatus</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p role="status">Geen klanten gevonden.</p>
+  {% endif %}
+  <p><a class="button button--secondary" href="{{ url_for('sales.orders') }}">Voorraad en kortingen controleren</a></p>
 </section>
 {% endblock %}

@@ -391,6 +391,15 @@
     ]
   },
   {
+    "module": "repositories.sales_case_repository",
+    "class": "SalesCaseRepository",
+    "methods": [
+      "__init__",
+      "customers",
+      "order_statuses"
+    ]
+  },
+  {
     "module": "repositories.sales_stock_repository",
     "class": "SalesStockRepository",
     "methods": [

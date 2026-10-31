@@ -10,6 +10,7 @@
   <p>{% if invoice.afzenderadres %}{{invoice.afzenderadres}}{% else %}Afzenderadres niet vastgelegd (historische factuur).{% endif %}</p></div>
   <div><strong>{{invoice.bedrijfsnaam}}</strong><p>{{invoice.adres}}</p></div>
 </div>
+<div class="stock-dashboard__table-wrap" role="region" aria-label="Factuurregels" tabindex="0">
 <table class="stock-dashboard__table">
 <caption>Daadwerkelijk geleverde producten</caption>
 <thead><tr><th>Bestelling</th><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
@@ -18,6 +19,7 @@
 <tr><td>{{line.order_id}}</td><td>{{line.quantity}}</td><td>€ {{line.unit_price}}</td><td>€ {{line.line_total}}</td></tr>
 {% else %}<tr><td colspan="4">Geen geleverde factuurregels</td></tr>{% endfor %}
 </tbody></table>
+</div>
 <dl class="invoice-totals">
 {% for label,value in [
 ('Totaal excl. btw',amounts.total_ex_vat),

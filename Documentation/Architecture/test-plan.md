@@ -90,3 +90,20 @@ De onderstaande resultaten zijn daadwerkelijk uitgevoerd op de lokale Laptop-ver
 | T03, T05, T06, T12 and full manual acceptance | Not fully verified together | Robot, concurrency and mobile visual/user acceptance still require integrated checks; selected T07-T09 database paths are now tested as above |
 
 Do not treat an HTTP 200, a mock, or a render test as proof of business correctness. Each PR must state whether a case was actually run, with concrete output, or remains a planned test.
+
+## T20-T27. Aanvullende controles op de huidige hoofdbranch
+
+Dit zijn regressiecontroles van expliciete bronprocessen, geen extra
+acceptatiecriteria uit userstories. Het actuele resultaat en de gebruikte
+commando's staan in main-casus-vijf-rondes-20261031.md.
+
+| Test | Bron en situatie | Verplicht resultaat |
+| --- | --- | --- |
+| T20 | Huidige processen > Voorraad: nieuw medicijn na directiebesluit | Product pas na expliciete bevestiging opnemen; directe backendaanroep mag niet om formulier heen |
+| T21 | Huidige processen > Acquisitie: geen interesse na een maand | Formulier kan de opvolging bevestigend afsluiten, zodat niet opnieuw wordt nagebeld |
+| T22 | Huidige processen > Inkoop: leverancier gestopt | Exact één werkende ontkoppelactie; product in assortiment behouden; interne bestellijst afzonderlijk beheren |
+| T23 | Huidige processen > Bestellingen en Administratie: gesplitste levering | Kortingsgrens op oorspronkelijke order, korting alleen op werkelijk geleverde aantallen; eersteorderkorting niet vervallen voor later deel van dezelfde order |
+| T24 | Huidige processen > Administratie: eerste/tweede herinnering en incasso | Geen dubbele herinneringen; tweede pas minimaal één week na eerste; incasso uitsluitend na bevestigde weigering |
+| T25 | Gewenste processen: centraal klantbeheer en statusinformatie | De klantenlijst en bestelstatus lezen rechtstreeks de juiste adressen, contactgegevens, status, leverdag en dagdeel uit MySQL |
+| T26 | Distributie en verkoop: ongeldig formulier | Foutieve invoer geeft een gecontroleerde 400 zonder onbedoelde mutatie of serverfout |
+| T27 | Productbeschrijving > frontend, werkelijke uitgegeven factuur | De factuurregels zijn bij 390 px in Chrome met toetsenbord bereikbaar zonder horizontale documentoverflow; daarnaast blijven het 768- en 1440-px-scherm bruikbaar |

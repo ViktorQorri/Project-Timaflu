@@ -36,6 +36,10 @@ jobs:
       - name: Unit and actual MySQL integration tests
         working-directory: code/backend
         run: python -m unittest discover -p "test_*.py" -v
+      - name: Case screen semantics and UML tests
+        run: |
+          python Documentation/Architecture/screens/test_case_screens.py
+          python -m unittest discover -s Documentation/Architecture/uml/tests -p "test_*.py"
       - name: Query synchronization and class diagram
         run: |
           python code/database/generate_weekly_queries.py --check
@@ -43,7 +47,7 @@ jobs:
       - name: Reproduce query output for every screen
         run: python code/database/audit_ui_queries.py
       - name: Validate final EER against live MySQL information_schema
-        run: python code/database/generate_eer.py --database timaflu_casus_test_94
+        run: python code/database/generate_eer.py --database timaflu_casus_test_94 --check
       - name: Save reproducible query evidence
         uses: actions/upload-artifact@v4
         with:
