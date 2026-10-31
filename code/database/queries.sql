@@ -51,7 +51,7 @@ LEFT JOIN (
 WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
 ORDER BY p.productnaam ASC;
 
--- ======
+-- =========================================
 -- Manage customers (issue #8, AD07), /customers
 -- Same queries as CustomerRepository, with example values instead of %s.
 -- =========================================
@@ -130,7 +130,7 @@ SELECT (SELECT COUNT(*) FROM Bestelling WHERE klant_id = 1) AS bestellingen,
        (SELECT COUNT(*) FROM PotentieleKlant WHERE klant_id = 1) AS acquisities;
 DELETE FROM Klantkorting WHERE klant_id = 1;
 DELETE FROM Klant WHERE klant_id = 1;
-=======
+
 -- Order discount calculation on the new order screen, /orders/new (issue #10, SD01).
 -- Same SELECTs as DiscountRepository with example parameters.
 -- Customer and product choices for the form.
@@ -192,7 +192,7 @@ VALUES (15, 1, 20, 45.00, NULL);
 -- Only for lines with enough stock; a short line is saved with afnemen_bij_tekort = TRUE.
 INSERT INTO Voorraadreservering (bestelling_id, product_id, aantal)
 VALUES (15, 1, 20);
-=======
+
 -- Registered picking bins for GET /order-picking
 -- Same SELECT as PickingBinRepository.list_bins(); this version uses no parameters.
 -- The bin location is the aisle of the robot that collects the sub-order.
@@ -216,7 +216,7 @@ FOR UPDATE;
 SELECT deelorder_id FROM Verzamelbak WHERE unieke_code = 'VB-0001';
 INSERT INTO Verzamelbak (unieke_code, deelorder_id) VALUES ('VB-0001', 1);
 -- The three statements are one transaction in the application.
-=======
+
 -- Order status report for management, GET /reports?from=...&to=...
 -- Same SELECT as OrderStatusReportRepository.list_orders() with example parameters.
 -- Example period 2026-10-01 up to and including 2026-10-31; the app passes NULL
@@ -233,7 +233,7 @@ WHERE ('2026-10-01' IS NULL OR b.besteld_op >= '2026-10-01')
 GROUP BY b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
          b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
 ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
-=======
+
 -- Order status lookup for informing the customer, GET /orders?order=...
 -- Same SELECT as OrderStatusNotificationRepository.search_orders() with example parameters.
 -- Search term '1': the backend passes the order number only when the term is a number,
@@ -276,7 +276,7 @@ LEFT JOIN Voorraadreservering AS vr
       AND vr.product_id = br.product_id
 WHERE br.bestelling_id = 1
 ORDER BY p.productnaam ASC;
-=======
+
 -- Sales reports for management, GET /reports/sales?start=...&end=...&grouping=...
 -- Keep these queries in sync with SalesReportRepository.
 -- Example period 2026-01-01 up to and including 2026-12-31: the backend passes
