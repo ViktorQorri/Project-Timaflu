@@ -9,7 +9,11 @@ actor "Sales employee" as Sales
 participant "customer:Customer" as Customer
 Acquisition -> Visit: recordVisit()
 Visit --> Acquisition: visit recorded with date and contact information
-note right of Acquisition: Follow-up is eligible only after at least one month.
+Acquisition -> Prospect: Request acquisition overview
+activate Prospect
+Prospect --> Acquisition: companies without orders visited at least one month ago, contact person and details
+deactivate Prospect
+note right of Acquisition: Only contacts in this overview are eligible for follow-up.
 Acquisition -> Prospect: checkFollowUpAfterOneMonth()
 activate Prospect
 Prospect -> Prospect: hasPlacedOrder()

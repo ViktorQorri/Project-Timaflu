@@ -5,6 +5,7 @@ actor "Purchasing employee" as Purchasing
 participant "product:Product" as Product
 participant "location:WarehouseLocation" as Location
 participant "offer:SupplierOffer" as Offer
+participant "supplier:Supplier" as Supplier
 actor "Manufacturer" as Manufacturer
 participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
 Purchasing -> Product: checkMinimumStock()
@@ -19,7 +20,9 @@ alt Below minimum stock
   activate Product
   Product -> Offer: Read purchasePrice and linked Supplier
   Offer --> Product: ranked supplier offers
-  Product --> Purchasing: offers ordered by price
+  Product -> Supplier: Read contactPerson and phoneNumber
+  Supplier --> Product: supplier contact details
+  Product --> Purchasing: suppliers cheapest first, contact person and phone
   deactivate Product
   loop For each remaining manufacturer, cheapest first
     Purchasing -> Manufacturer: Request availability for selected quantity
@@ -40,7 +43,8 @@ alt Below minimum stock
     end
   end
   alt No manufacturer could confirm supply
-    Purchasing -> Purchasing: Remove medicine from internal reorder list
+    Purchasing -> Product: removeFromAssortment()
+    Product --> Purchasing: medicine removed from internal reorder list
     note right of Purchasing
       No purchase order is recorded.
       The medicine remains in the sales assortment.
