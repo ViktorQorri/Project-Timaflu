@@ -1,7 +1,93 @@
 {% extends "base.html" %}
-
-{% block title %}Leveringen{% endblock %}
-
+{% block title %}Bezorgrooster{% endblock %}
 {% block content %}
-  <h1>Leveringen</h1>
+<section class="page-intro">
+  <span class="eyebrow">Distributie</span>
+  <h1>Bezorgrooster</h1>
+  <p>Registreer een eerste afwezigheid, plan de tweede bezorgpoging op dezelfde dag en leg pas na het tweede bezoek de uitkomst vast.</p>
+</section>
+<form method="get" class="lookup-form">
+  <div class="form-field">
+    <label for="delivery-date">Datum</label>
+    <input id="delivery-date" type="date" name="day" value="{{day}}" required>
+  </div>
+  <button type="submit">Rooster bekijken</button>
+</form>
+<section class="stock-dashboard stock-dashboard--deliveries">
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Ritten en bezorgpogingen op {{day}}</caption>
+      <thead><tr><th>Tijd</th><th>Bestelling</th><th>Klant</th><th>Adres</th><th>Contact</th><th>Status</th><th>Afhandeling</th></tr></thead>
+      <tbody>
+        {% for item in schedule %}
+        <tr>
+          <td data-label="Tijd">{{item.geplande_tijd}}</td>
+          <td data-label="Bestelling">{{item.bestelling_id}}</td>
+          <th scope="row" data-label="Klant">{{item.bedrijfsnaam}}</th>
+          <td data-label="Adres">{{item.adres}}</td>
+          <td data-label="Contact">{{item.contactpersoon}} / {{item.telefoonnummer}}</td>
+          <td data-label="Status">{{item.resultaat or 'Nog niet afgehandeld'}}</td>
+          <td data-label="Afhandeling">
+            {% if item.pogingnummer == 1 and not item.resultaat %}
+            <form method="post" action="{{url_for('distribution.first_attempt_delivered')}}">
+              <input type="hidden" name="day" value="{{day}}">
+              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+              <label><input type="checkbox" name="signature_confirmed" value="yes" required>
+                Ontvangstondertekening is bevestigd</label>
+              <button type="submit">Afgeleverd bij eerste bezoek</button>
+            </form>
+            <form method="post" action="{{url_for('distribution.second_attempt')}}">
+              <input type="hidden" name="day" value="{{day}}">
+              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+              <label for="retry-{{item.levering_id}}">Tijd tweede bezoek vandaag</label>
+              <input id="retry-{{item.levering_id}}" type="time" name="time" required>
+              <button type="submit">Niet aanwezig, tweede poging plannen</button>
+            </form>
+            {% elif item.pogingnummer == 2 and not item.resultaat %}
+            <form method="post" action="{{url_for('distribution.second_attempt_result')}}">
+              <input type="hidden" name="day" value="{{day}}">
+              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+              <label for="outcome-{{item.levering_id}}">Uitkomst tweede bezoek</label>
+              <select id="outcome-{{item.levering_id}}" name="outcome" required>
+                <option value="">Kies de uitkomst</option>
+                <option value="afgeleverd">Afgeleverd</option>
+                <option value="niet aanwezig">Opnieuw niet aanwezig</option>
+              </select>
+              <label><input type="checkbox" name="signature_confirmed" value="yes"> Klant heeft voor ontvangst getekend (verplicht bij aflevering)</label>
+              <button type="submit">Uitkomst registreren</button>
+            </form>
+            {% elif item.pogingnummer == 2 and item.resultaat == 'niet aanwezig' %}
+              <p>Niet afgeleverd. Verkoop neemt contact op met de klant over een nieuwe afspraak en eventuele extra kosten.</p>
+              <form method="post" action="{{url_for('distribution.failed_followup')}}">
+                <input type="hidden" name="day" value="{{day}}">
+                <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+                <label><input type="checkbox" name="customer_contact_confirmed" value="yes" required>
+                  Contact met klant bevestigd</label>
+                <label>Nieuwe leverdatum <input type="date" name="requested_date" required></label>
+                <label>Dagdeel
+                  <select name="time_slot" required>
+                    <option value="ochtend">Ochtend</option>
+                    <option value="middag">Middag</option>
+                  </select>
+                </label>
+                <label>Extra bezorgkosten in euro
+                  <input type="number" name="extra_cost" value="0.00" min="0" step="0.01" required>
+                </label>
+                <label>Toelichting extra kosten
+                  <textarea name="explanation" rows="2"></textarea>
+                </label>
+                <button type="submit">Nieuwe afspraak en kosten vastleggen</button>
+              </form>
+            {% else %}
+              <span class="status status--info">Afgehandeld</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">Geen ritten op deze datum.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}

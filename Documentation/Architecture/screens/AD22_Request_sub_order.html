@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deelorder aanvragen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body><div class="page">
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
+<section class="hero">
+<span class="overline">Orderpicking &middot; AD22</span>
+<h1>Deelorder aanvragen</h1>
+<p>De juiste volgende deelorder voor de eigen magazijngang ontvangen.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Magazijnrobot / systeem</span>
+<span><strong>Type:</strong> Systeem- of robotmonitor</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Read-only procesmonitor</span>
+<h2 id="input-heading">Systeeminformatie</h2>
+<p class="screen-note">Dit zijn getoonde systeemgegevens, geen handmatige invoervelden.</p><div class="screen-fields"><div class="screen-field"><label for="field-22-0">Robotnummer</label><input id="field-22-0" type="text" placeholder="Robotnummer" disabled></div>
+<div class="screen-field"><label for="field-22-1">Toegewezen magazijngang</label><input id="field-22-1" type="text" placeholder="Toegewezen magazijngang" disabled></div></div><p class="screen-note">Geen handmatige actie in dit proces.</p>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
+<thead><tr><th scope="col">Deelorder</th><th scope="col">Magazijngang</th><th scope="col">Medicijn</th><th scope="col">Aantal</th><th scope="col">Opslaglocatie</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../../brightspace/Current-processes.md#voorraad">Casus: voorraad en inkoop</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
+<a href="../uml/src/activity_diagrams/AD22_Request_sub_order.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD22_Request_sub_order.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--success" data-state-variant="1"><div class="state-header"><h3>Deelorder toegewezen</h3><span class="state-pill">Opdracht ontvangen</span></div><p class="state-message">Het systeem heeft de robot en magazijngang gecontroleerd en de deelorderregels en opslaglocaties doorgestuurd.</p><dl class="state-values"><dt>Robot</dt><dd>Geverifieerd</dd><dt>Magazijngang</dt><dd>Eigen gang</dd><dt>Opdracht</dt><dd>Volgende deelorder voor deze gang</dd></dl><p class="screen-note">Geen handmatige actie in deze processtatus.</p><p class="state-actor">Uitvoerder: Robot / systeem</p></article><article class="state-card state-card--neutral" data-state-variant="2"><div class="state-header"><h3>Geen deelorders</h3><span class="state-pill">Wachten</span></div><p class="state-message">Er staat momenteel geen passende deelorder klaar. De robot wacht op de volgende opdracht.</p><dl class="state-values"><dt>Volgende deelorder</dt><dd>Niet beschikbaar</dd></dl><p class="screen-note">Geen handmatige actie in deze processtatus.</p><p class="state-actor">Uitvoerder: Robot / systeem</p></article><article class="state-card state-card--danger" data-state-variant="3"><div class="state-header"><h3>Robot of gang ongeldig</h3><span class="state-pill">Verzoek afgewezen</span></div><p class="state-message">Het systeem weigert de aanvraag van een robot die niet bij de opgegeven gang hoort.</p><dl class="state-values"><dt>Robotverificatie</dt><dd>Niet geldig</dd></dl><p class="screen-note">Geen handmatige actie in deze processtatus.</p><p class="state-actor">Uitvoerder: Systeem</p></article></div></section>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Robot en magazijngang geldig</h3><p>Systeem kiest een open deelorder voor deze gang en stuurt de regels en locaties naar de robot.</p></article><article class="scenario"><h3>Geen deelorder beschikbaar</h3><p>Systeem meldt dat de robot op een volgende deelorder moet wachten.</p></article><article class="scenario"><h3>Robot of gang ongeldig</h3><p>Systeem wijst het verzoek af met een foutmelding.</p></article></div>
+<ul class="case-notes"><li>Dit is een monitorweergave van de backend-API, geen menselijke knop &#x27;volgende deelorder&#x27;.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
+</div></body></html>

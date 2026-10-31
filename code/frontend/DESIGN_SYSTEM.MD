@@ -1,6 +1,8 @@
 # Timaflu Design System
 
-Dit document beschrijft het visuele systeem en de interfacepatronen van het Timaflu-medewerkersportaal. Het is gebaseerd op de huidige implementatie in `src/App.tsx` en `src/index.css`.
+Dit document beschrijft het visuele systeem en de interfacepatronen van het Timaflu-medewerkersportaal. Het oorspronkelijke frontendprototype gebruikte `src/App.tsx` en `src/index.css`.
+
+> **Toepassing in de verplichte schoolfrontend:** Timaflu gebruikt Flask/Jinja met HTML en CSS, zonder React of JavaScript. De visuele tokens en responsive patronen worden hier toegepast in `code/frontend/static/css/ui-system.css`, `templates/base.html` en alle procespagina's. Login, demo-accounts, rolrechten en profielgegevens uit het prototype worden niet verzonnen: deze functies staan niet in de originele casus of de verplichte productbeschrijving. De navigatie toont daarom de bestaande procespagina's zonder fictieve ingelogde gebruiker.
 
 ## 1. Ontwerpprincipes
 

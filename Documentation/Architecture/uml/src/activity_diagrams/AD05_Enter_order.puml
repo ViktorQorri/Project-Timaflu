@@ -2,44 +2,75 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
+skinparam swimlaneWidth 220
+
 |Sales Employee|
 start
 :Look up customer;
 |System|
 :Show customer details;
-if (Customer blocked for unpaid invoices?) then ([yes])
-  :Show cannot place order;
+if (Customer blocked due to collection agency?) then ([yes])
+  :Show that new orders are blocked;
   stop
 endif
 |Sales Employee|
 repeat
-  :Enter product and requested quantity;
+  :Enter product and quantity requested by telephone;
   |System|
   :Check available stock (AD04);
   if (Enough stock?) then ([yes])
     :Add provisional order line;
   else ([no])
-    :Report shortage and backorder possibility;
+    :Report shortage to sales employee;
+    |Sales Employee|
+    :Explain shortage and backorder option to customer;
+    if (Customer wants this product as backorder?) then ([yes])
+      |System|
+      :Add provisional line marked backorder;
+    else ([no])
+      :Exclude unavailable product from order;
+    endif
   endif
   |Sales Employee|
 repeat while (Another product?) is ([yes])
 |System|
-:Calculate discounts and total;
-:Show total;
-|Sales Employee|
-if (Customer agrees?) then ([yes])
-  :Agree delivery date and morning/afternoon;
-  |System|
-  :In one transaction, recheck available stock;
-  if (Stock still sufficient?) then ([yes])
-    :Save order and order lines;
-    :Create reservations for available order lines;
-    :Show order number;
-  else ([no])
-    :Report changed availability and ask employee to revise order;
-  endif
+if (Any order lines remain?) then ([yes])
+  :Calculate order discount (5% if subtotal >= EUR 500);
+  :Apply first-order discount of 10% if this is the first order;
+  :Determine annual customer discount from previous-year paid purchases;
+  :Apply customer discount to the amount after earlier discounts;
+  :Show total and all applied discounts (SD01);
 else ([no])
-  :Cancel provisional order without stock reservations;
+  :Show no order to place;
+  stop
+endif
+|Sales Employee|
+while (Customer approves order and total?) is ([no])
+  if (Customer wants to modify current order?) then ([yes])
+    :Review each ordered medicine together with customer;
+    :Change provisional quantities or medicines;
+    |System|
+    :Check stock again for modified provisional lines (AD04);
+    :Recalculate all discounts and total (SD01);
+    :Show revised order and total;
+    |Sales Employee|
+  else ([cancel])
+    |System|
+    :Discard provisional order without stock reservations;
+    stop
+  endif
+endwhile ([yes])
+:Agree delivery date and morning/afternoon;
+|System|
+:Recheck availability and reservations transactionally;
+if (Availability changed?) then ([yes])
+  :Report changed availability and request new customer approval;
+  stop
+else ([no])
+  :Save order and lines;
+  :Reserve available quantities only;
+  :Mark unavailable quantities as backorder;
+  :Show order number and status;
 endif
 stop
 @enduml

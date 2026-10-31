@@ -1,0 +1,85 @@
+@startuml
+title SD05 - Acquisition visit and follow-up without orders (AD20 / AD21)
+autonumber
+
+actor "Acquisition employee" as Acquisition
+participant "visit:AcquisitionVisit" as Visit
+participant "prospect:ProspectiveCustomer" as Prospect
+actor "Pharmacy contact" as Pharmacy
+actor "Sales employee" as Sales
+participant "linkedCustomer:Customer" as ExistingCustomer
+
+== Register an acquisition visit (AD20) ==
+Acquisition -> Pharmacy: Arrange appointment for an introductory visit by phone
+Pharmacy --> Acquisition: appointment agreed
+Acquisition -> Pharmacy: Visit, present Timaflu, product catalogue and discount terms
+Acquisition -> Pharmacy: Hand over the information folder
+Pharmacy --> Acquisition: first visit completed
+Acquisition -> Visit: recordVisit(companyName, contactPerson, contactDetails, address, visitDate)
+activate Visit
+note right of Visit
+  Inputs: company name, contact person, contact details,
+  visit address and actual visit date.
+  Register only after the visit has taken place.
+end note
+alt Visit information complete and valid
+  Visit --> Acquisition: visit and prospective pharmacy recorded
+else Information missing or invalid
+  Visit --> Acquisition: validation error; visit not saved
+end
+deactivate Visit
+
+== Show acquisition follow-up overview (AD21) ==
+loop For each prospective pharmacy
+  Acquisition -> Prospect: checkFollowUpAfterOneMonth(lastVisitDate, today)
+  activate Prospect
+  Prospect -> Prospect: hasPlacedOrder()
+  note right of Prospect
+    Eligible only if the most recent visit was at least
+    ONE CALENDAR MONTH ago and no order was placed.
+    An existing customer account without orders is eligible.
+  end note
+  Prospect --> Acquisition: eligible or not eligible
+  deactivate Prospect
+end
+note over Acquisition, Prospect
+  Display overview: all eligible companies together with
+  their contact persons and contact details.
+  Do not include pharmacies that already ordered.
+end note
+
+alt No eligible prospect
+  note right of Acquisition: Show that no follow-ups are currently due.
+else Eligible prospective pharmacy selected
+  Acquisition -> Pharmacy: Call and offer the one-time extra 10% on the first order
+  Pharmacy --> Acquisition: interest and permission for a customer account
+  alt Interested and gives permission to create or reuse account
+    Acquisition -> Pharmacy: Ask for company name and billing/delivery address
+    Pharmacy --> Acquisition: company name, billing address and delivery address
+    Acquisition -> Prospect: offerOneTimeDiscount()
+    Prospect --> Acquisition: one-time first-order incentive recorded
+    Acquisition -> Sales: Transfer company name, billing/delivery addresses and incentive
+    alt Customer account already exists without an order
+      Sales -> ExistingCustomer: Set oneTimeDiscountGranted = true on existing account
+      ExistingCustomer --> Sales: existing account reused; no duplicate account
+    else No customer account exists yet
+      Sales -> Prospect: createCustomerAccount()
+      activate Prospect
+      create participant "newCustomer:Customer" as NewCustomer
+      Prospect -> NewCustomer: <<create>>
+      note right of NewCustomer
+        Consent given, valid billing and delivery addresses.
+        oneTimeDiscountGranted = true.
+      end note
+      NewCustomer --> Prospect: linked customer account
+      Prospect --> Sales: account created and linked
+      deactivate Prospect
+    end
+    Sales --> Acquisition: account linked; incentive will apply only once on first order
+  else Interested, but account permission refused
+    note right of Acquisition: Record missing consent; do not create an account or grant discount.
+  else Not interested
+    note right of Acquisition: Record refusal and stop follow-up; no further contact.
+  end
+end
+@enduml

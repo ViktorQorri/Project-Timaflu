@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factuur maken | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body><div class="page">
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
+<section class="hero">
+<span class="overline">Administratie &middot; AD16</span>
+<h1>Factuur maken</h1>
+<p>Wekelijks geleverde orders per klant bundelen en factureren.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Administratiemedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Gebruikersinterface</span>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-16-0">Klantnummer</label><input id="field-16-0" type="text" placeholder="Klantnummer" disabled></div>
+<div class="screen-field"><label for="field-16-1">Factuurdatum</label><input id="field-16-1" type="date" placeholder="Factuurdatum" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Conceptfactuur bekijken</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Factuur controleren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Factuur goedkeuren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
+<thead><tr><th scope="col">Bestelnummer</th><th scope="col">Geleverd medicijn</th><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../../brightspace/Current-processes.md#administratie">Casus: administratie</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a><a href="../../brightspace/Product-description.md#backend">Oplevereisen: backend</a>
+<a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+<section class="invoice-document" aria-labelledby="invoice-document-heading">
+<span class="overline">Verplicht factuurschermontwerp uit de productbeschrijving</span>
+<h2 id="invoice-document-heading">Conceptfactuur</h2>
+<div class="invoice-topline">
+<div><strong>Datum</strong><span>Uit factuurgegevens</span></div>
+<div><strong>Factuurnummer</strong><span>Uit factuurgegevens</span></div>
+</div>
+<div class="invoice-parties">
+<div><strong>Timaflu</strong><span>Adres Timaflu uit bedrijfsgegevens</span></div>
+<div><strong>Naam bedrijf (klant)</strong><span>Adres klant uit klantgegevens</span></div>
+</div>
+<p class="table-scroll-hint">Veeg horizontaal om de volledige factuurregels te bekijken.</p>
+<div class="invoice-lines-wrap" tabindex="0" role="region" aria-label="Factuurregels, horizontaal scrollbaar">
+<table class="invoice-lines" aria-label="Gefactureerde, geleverde bestelregels">
+<thead><tr>
+<th scope="col">Omschrijving medicijn</th>
+<th scope="col">Aantal</th>
+<th scope="col">Prijs per eenheid</th>
+<th scope="col">Regeltotaal</th>
+</tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geleverde regels en eventuele extra bezorgkosten worden uit het systeem geladen.
+</td></tr></tbody>
+</table>
+</div>
+<div class="invoice-summary">
+<h3>Factuurtotalen en kortingen</h3>
+<dl class="invoice-totals"><dt>Totaal excl btw</dt><dd>&euro; &hellip;</dd><dt>9% btw</dt><dd>&euro; &hellip;</dd><dt>Totaal incl btw</dt><dd>&euro; &hellip;</dd><dt>Bestellingskorting</dt><dd>&euro; &hellip;</dd><dt>Totaal incl bestellingskorting</dt><dd>&euro; &hellip;</dd><dt>Eenmalige korting</dt><dd>&euro; &hellip;</dd><dt>Totaal incl eenmalige korting</dt><dd>&euro; &hellip;</dd><dt>Klantenkorting</dt><dd>&euro; &hellip;</dd><dt>Totaal incl klantenkorting</dt><dd>&euro; &hellip;</dd></dl>
+</div>
+<p class="screen-note">De opmaak volgt Product-description.md. Bedragen, datum,
+factuurnummer, adresgegevens en bestelregels worden niet verzonnen. Extra
+bezorgkosten komen uitsluitend uit reeds geregistreerde gegevens.</p>
+</section>
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--info" data-state-variant="1"><div class="state-header"><h3>Wekelijkse factuurronde</h3><span class="state-pill">Te factureren</span></div><p class="state-message">Toon uitsluitend afgeleverde, nog niet gefactureerde orders, gebundeld per klant.</p><dl class="state-values"><dt>Klant</dt><dd>Nog niet geselecteerd</dd><dt>Geleverde orders</dt><dd>Uit database</dd><dt>Extra bezorgkosten</dt><dd>Indien geregistreerd</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Conceptfactuur openen</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--warning" data-state-variant="2"><div class="state-header"><h3>Conceptfactuur controleren</h3><span class="state-pill">Goedkeuring vereist</span></div><p class="state-message">Controleer de voorgeschreven factuurvelden, kortingstussenstanden, 9% btw en eventuele extra bezorgkosten.</p><dl class="state-values"><dt>Factuurnummer</dt><dd>Wordt uit systeem geladen</dd><dt>Bestelregels</dt><dd>Werkelijk geleverd</dd><dt>Totaal</dt><dd>Backendberekening</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Factuur goedkeuren</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--success" data-state-variant="3"><div class="state-header"><h3>Factuur goedgekeurd</h3><span class="state-pill">Gereed</span></div><p class="state-message">Na goedkeuring slaat de werkende applicatie de factuur op en markeert de betrokken orders als gefactureerd.</p><dl class="state-values"><dt>Factuur</dt><dd>Opgeslagen in systeem</dd><dt>Betrokken orders</dt><dd>Gemarkeerd als gefactureerd</dd></dl><p class="screen-note">Geen handmatige actie in deze processtatus.</p><p class="state-actor">Uitvoerder: Administratie / systeem</p></article></div></section>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Alleen geleverde, niet-gefactureerde orders</h3><p>Bundel de geleverde orders van één klant en tel eventuele extra bezorgkosten mee.</p></article><article class="scenario"><h3>Factuurvoorbeeld</h3><p>Toon klant- en Timaflu-adres, datum, factuurnummer, orderregels, 9% btw en de toepasselijke kortingen.</p></article><article class="scenario"><h3>Na goedkeuring</h3><p>Systeem slaat de factuur op, verzendt deze aan de klant en markeert de betrokken orders als gefactureerd.</p></article><article class="scenario"><h3>Geen te factureren orders</h3><p>Toon dat er geen nieuwe facturen te maken zijn.</p></article></div>
+<ul class="case-notes"><li>Een voorbeeldfactuur toont veldnamen en lege bedragen, geen gefingeerde transacties.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
+</div></body></html>

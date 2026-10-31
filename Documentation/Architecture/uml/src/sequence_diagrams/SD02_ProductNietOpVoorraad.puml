@@ -1,0 +1,81 @@
+@startuml
+title SD02 - Find suppliers and reorder unavailable products (AD02)
+autonumber
+
+actor "Purchasing employee" as Purchasing
+participant "product:Product" as Product
+participant "location:WarehouseLocation" as Location
+participant "offer:SupplierOffer" as Offer
+participant "supplier:Supplier" as Supplier
+actor "Supplier contact" as SupplierContact
+participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
+
+Purchasing -> Product: checkMinimumStock()
+activate Product
+note right of Product
+  Input: product name.
+  The desired purchasing process monitors minimum stock.
+end note
+Product -> Location: Read quantity across product locations
+Location --> Product: currentPhysicalStock
+Product --> Purchasing: currentPhysicalStock, minimumStock
+deactivate Product
+
+alt Product below minimum stock or unavailable
+  note right of Purchasing: Select product by name and enter desired quantity.
+  Purchasing -> Product: findSuppliersByPrice()
+  activate Product
+  Product -> Offer: Read purchasePrice and linked supplier
+  Offer --> Product: offers and prices for this product
+  Product -> Supplier: Read name, contactPerson and phoneNumber
+  Supplier --> Product: supplier names and contact details
+  Product --> Purchasing: suppliers ordered cheapest first, contact persons and phone numbers
+  deactivate Product
+
+  loop Contact remaining suppliers from cheapest to most expensive
+    Purchasing -> SupplierContact: Ask whether selected product and quantity can be supplied
+    SupplierContact --> Purchasing: available / unavailable / discontinued
+    alt Supplier can deliver
+      Purchasing -> SupplierContact: Confirm purchase by phone
+      SupplierContact --> Purchasing: purchase confirmed
+      Purchasing -> PurchaseOrder: placeWithSupplier()
+      activate PurchaseOrder
+      PurchaseOrder --> Purchasing: confirmed purchase recorded
+      deactivate PurchaseOrder
+      break Stop when a purchase is confirmed
+      end
+    else Supplier cannot deliver
+      opt Manufacturer has discontinued this medicine
+        Purchasing -> Product: removeSupplier(supplier)
+        Product --> Purchasing: product-supplier link removed
+      end
+      note right of Purchasing: Continue with the next cheapest supplier.
+    end
+  end
+
+  alt No supplier can confirm delivery
+    Purchasing -> Product: removeFromInternalReorderList()
+    activate Product
+    Product --> Purchasing: internalReorderEligible = false
+    deactivate Product
+    note over Purchasing, Product
+      Remove this medicine only from the INTERNAL reorder list.
+      No purchase order is recorded; the sales assortment is unchanged.
+      Do not remove it from the sales assortment (Current-processes: Voorraad).
+    end note
+  else Supplier confirmed delivery
+    note right of Purchasing: Keep the confirmed purchase order in the system.
+  end
+else Stock sufficient
+  note right of Purchasing: No replenishment purchase needed.
+end
+
+opt Employee explicitly chooses to remove this product from the assortment
+  Purchasing -> Product: removeFromAssortment()
+  Product --> Purchasing: product removed from sales assortment
+  note right of Purchasing
+    This is the separate product-removal option in
+    Product-description, NOT the no-supplier fallback.
+  end note
+end
+@enduml

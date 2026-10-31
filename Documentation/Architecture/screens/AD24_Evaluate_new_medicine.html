@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nieuw medicijn beoordelen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body><div class="page">
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
+<section class="hero">
+<span class="overline">Inkoop &middot; AD24</span>
+<h1>Nieuw medicijn beoordelen</h1>
+<p>Aanbiedingen voor nieuwe medicijnen laten beoordelen voordat ze in het assortiment komen.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Inkoopmedewerker / directie</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Gebruikersinterface</span>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-24-0">Medicijn</label><input id="field-24-0" type="text" placeholder="Medicijn" disabled></div>
+<div class="screen-field"><label for="field-24-1">Fabrikant</label><input id="field-24-1" type="text" placeholder="Fabrikant" disabled></div>
+<div class="screen-field"><label for="field-24-2">Inkoopprijs</label><input id="field-24-2" type="number" placeholder="Inkoopprijs" disabled></div>
+<div class="screen-field"><label for="field-24-3">Inkoopvoorwaarden</label><input id="field-24-3" type="text" placeholder="Inkoopvoorwaarden" disabled></div>
+<div class="screen-field"><label for="field-24-4">Hoeveelheden werkzame stoffen</label><input id="field-24-4" type="text" placeholder="Hoeveelheden werkzame stoffen" disabled></div>
+<div class="screen-field"><label for="field-24-5">Bestelcode</label><input id="field-24-5" type="text" placeholder="Bestelcode" disabled></div>
+<div class="screen-field"><label for="field-24-6">Prijs per grootverpakking</label><input id="field-24-6" type="number" placeholder="Prijs per grootverpakking" disabled></div>
+<div class="screen-field"><label for="field-24-7">Verpakkingssoort</label><input id="field-24-7" type="text" placeholder="Verpakkingssoort" disabled></div>
+<div class="screen-field"><label for="field-24-8">Detailverpakkingen per grootverpakking</label><input id="field-24-8" type="number" placeholder="Detailverpakkingen per grootverpakking" disabled></div>
+<div class="screen-field"><label for="field-24-9">Korte omschrijving</label><textarea id="field-24-9" rows="3" disabled></textarea></div>
+<div class="screen-field"><label for="field-24-10">Lange omschrijving</label><textarea id="field-24-10" rows="3" disabled></textarea></div>
+<div class="screen-field"><label for="field-24-11">Minimale bestelhoeveelheid</label><input id="field-24-11" type="number" placeholder="Minimale bestelhoeveelheid" disabled></div>
+<div class="screen-field"><label for="field-24-12">Minimumvoorraad voor voorraadbewaking</label><input id="field-24-12" type="number" placeholder="Minimumvoorraad voor voorraadbewaking" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Advies aan directie voorleggen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Goedgekeurd product registreren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Afgewezen aanbod registreren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
+<thead><tr><th scope="col">Medicijn</th><th scope="col">Fabrikant</th><th scope="col">Inkoopprijs</th><th scope="col">Beoordeling</th></tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../../brightspace/Current-processes.md#voorraad">Casus: voorraad en inkoop</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
+<a href="../uml/src/activity_diagrams/AD24_Evaluate_new_medicine.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD24_Evaluate_new_medicine.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+
+
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Niet geschikt</h3><p>Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen.</p></article><article class="scenario"><h3>Geschikt voor directiebeoordeling</h3><p>Inkoopmedewerker legt een advies voor; de directie keurt goed of wijst af.</p></article><article class="scenario"><h3>Goedgekeurd</h3><p>Valideer gegevens, leg de minimumvoorraad voor voorraadbewaking vast en werk productcatalogus, verkooplijst en interne bestellijst bij.</p></article><article class="scenario"><h3>Afgewezen of ongeldig</h3><p>Registreer afwijzing of toon validatiefout, zonder toevoeging aan assortiment.</p></article></div>
+
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
+</div></body></html>

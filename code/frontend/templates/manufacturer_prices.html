@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Inkoopprijzen{% endblock %}
+{% block content %}
+<section class="stock-dashboard">
+  <span class="eyebrow">Inkoop</span>
+  <h1>Inkoopprijzen van {{ manufacturer.naam }}</h1>
+  <p>Beheer per medicijn welke fabrikant levert en tegen welke inkoopprijs. Een ontkoppeling verwijdert alleen het aanbod, niet het medicijn.</p>
+  {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
+  <form class="lookup-form" method="post">
+    <div class="form-field">
+      <label for="product_id">Product</label>
+      <select name="product_id" id="product_id" required>
+        {% for item in products %}<option value="{{ item.product_id }}">{{ item.productnaam }} ({{ item.artikelnummer }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="price">Inkoopprijs (€)</label>
+      <input type="text" inputmode="decimal" name="price" id="price" required placeholder="12,50">
+    </div>
+    <button type="submit">Inkoopprijs opslaan</button>
+  </form>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Actueel aanbod</caption>
+      <thead><tr><th>Product</th><th>Inkoopprijs</th><th>Acties</th></tr></thead>
+      <tbody>
+      {% for offer in offers %}
+      <tr><th scope="row">{{ offer.productnaam }}</th><td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td>
+        <td><form method="post" action="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=manufacturer.leverancier_id, product_id=offer.product_id) }}">
+          <label><input type="checkbox" name="confirmed" value="yes" required> Fabrikant levert dit product niet meer</label>
+          <button type="submit">Leverancierskoppeling verwijderen</button>
+        </form></td></tr>
+      {% else %}<tr><td colspan="3">Geen producten gekoppeld.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p><a class="button button--secondary" href="{{ url_for('purchasing.manufacturers') }}">Terug naar fabrikanten</a></p>
+</section>
+{% endblock %}

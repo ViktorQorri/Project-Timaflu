@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fabrikantgegevens beheren | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body><div class="page">
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
+<section class="hero">
+<span class="overline">Inkoop &middot; AD01</span>
+<h1>Fabrikantgegevens beheren</h1>
+<p>Fabrikanten vanuit één centraal overzicht beheren.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Inkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Gebruikersinterface</span>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-1-0">Fabrikant</label><input id="field-1-0" type="text" placeholder="Fabrikant" disabled></div>
+<div class="screen-field"><label for="field-1-1">Adres</label><input id="field-1-1" type="text" placeholder="Adres" disabled></div>
+<div class="screen-field"><label for="field-1-2">Contactpersoon</label><input id="field-1-2" type="text" placeholder="Contactpersoon" disabled></div>
+<div class="screen-field"><label for="field-1-3">Telefoonnummer</label><input id="field-1-3" type="tel" placeholder="Telefoonnummer" disabled></div>
+<div class="screen-field"><label for="field-1-4">Website</label><input id="field-1-4" type="url" placeholder="Website" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Nieuwe fabrikant</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Wijzigingen opslaan</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Fabrikant verwijderen</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
+<thead><tr><th scope="col">Fabrikant</th><th scope="col">Adres</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Website</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../../brightspace/Current-processes.md#voorraad">Casus: voorraad en inkoop</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
+<a href="../uml/src/activity_diagrams/AD01_Manage_manufacturer_data.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD01_Manage_manufacturer_data.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+
+
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Toevoegen of wijzigen</h3><p>Het systeem valideert de ingevoerde fabrikantgegevens en toont na opslaan een bevestiging.</p></article><article class="scenario"><h3>Verwijderen</h3><p>Selecteer een bestaande fabrikant; na verwijderen toont het systeem een bevestiging.</p></article><article class="scenario"><h3>Ongeldige invoer</h3><p>Bij ongeldige gegevens verschijnt een foutmelding en worden wijzigingen niet opgeslagen.</p></article></div>
+<ul class="case-notes"><li>Toevoegen, wijzigen en verwijderen zijn alternatieve schermtoestanden, geen gelijktijdige transacties.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
+</div></body></html>
