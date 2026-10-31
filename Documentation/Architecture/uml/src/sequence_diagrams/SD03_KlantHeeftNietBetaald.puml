@@ -1,53 +1,53 @@
 @startuml
-title SD03 - Factuur en betalingsachterstand (UC16 / UC18 / AD16 / AD18)
+title SD03 - Invoice output and unpaid invoice handling (UC16 / UC18 / AD16 / AD18)
 autonumber
 
-actor "Administratiemedewerker" as Admin
+actor "Administration employee" as Admin
 participant "invoice:Invoice" as Invoice
 participant "reminder:PaymentReminder" as Reminder
-actor "Contactpersoon klant" as Contact
+actor "Customer contact" as Contact
 participant "customer:Customer" as Customer
 
-== Wekelijkse factuur met geleverde regels ==
+== Weekly invoice using delivered items ==
 Admin -> Invoice: createWeeklyInvoice(deliveredOrderLines)
 activate Invoice
 note right of Invoice
-  Gebruik echt geleverde producten, niet ontbrekende bestelregels.
-  Factuur toont datum, nummer, factuuradres,
-  aantallen, prijzen en regeltotalen, totaal excl. btw,
-  9% btw, totaal incl. btw, bestellingskorting,
-  totaal na bestellingskorting, eenmalige korting,
-  totaal na eenmalige korting, klantenkorting,
-  eindtotaal na klantenkorting.
+  Use actually delivered items, not unfulfilled order lines.
+  Invoice shows date, invoice number, customer billing address,
+  quantities, unit prices and line totals, total excl. VAT,
+  9% VAT, total incl. VAT, order discount,
+  total after order discount, one-time discount,
+  total after one-time discount, customer discount,
+  final amount after customer discount.
 end note
-Invoice --> Admin: factuur en volledige bedragenopbouw
+Invoice --> Admin: invoice details and full breakdown
 deactivate Invoice
 Admin -> Invoice: sendToCustomer()
-Invoice --> Admin: factuur verstuurd
+Invoice --> Admin: invoice issued
 
-== Wekelijkse controle betalingsachterstand ==
+== Weekly overdue-payment review ==
 Admin -> Invoice: checkPaymentArrears()
 activate Invoice
-Invoice --> Admin: betaaldatum, weken achterstand, herinneringen
+Invoice --> Admin: paidOn, weeks overdue, reminder history
 deactivate Invoice
-alt Betaald of nog niet vervallen
-  note right of Admin: Geen vervolgactie.
-else Een of twee weken niet betaald
+alt Paid or not yet overdue
+  note right of Admin: No follow-up action.
+else One or two unpaid weeks
   Admin -> Reminder: send()
-  Reminder --> Admin: eerste of tweede herinnering vastgelegd
-else Na drie weken nog niet betaald
+  Reminder --> Admin: first or second reminder recorded
+else Still unpaid after three weeks
   Admin -> Invoice: proposePaymentPlan()
-  Invoice --> Admin: voorstel standaard betalingsregeling
-  Admin -> Contact: Bel klant over betalingsregeling
-  Contact --> Admin: geaccepteerd / geweigerd
-  alt Klant accepteert betalingsregeling
+  Invoice --> Admin: standard payment plan proposal
+  Admin -> Contact: Call customer about payment plan
+  Contact --> Admin: accepted / declined
+  alt Customer accepts payment plan
     Admin -> Invoice: record accepted plan
-    Invoice --> Admin: betalingsregeling vastgelegd
-  else Klant weigert betalingsregeling
+    Invoice --> Admin: payment plan registered
+  else Customer declines
     Admin -> Invoice: enableDebtCollection()
-    Invoice --> Admin: incasso ingeschakeld
+    Invoice --> Admin: debt collection recorded
     Admin -> Customer: checkOrderBlock()
-    Customer --> Admin: nieuwe orders geblokkeerd tot volledig betaald
+    Customer --> Admin: further orders blocked until full payment
   end
 end
 @enduml

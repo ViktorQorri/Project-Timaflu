@@ -1,40 +1,40 @@
 @startuml
-title SD05 - Potentiele klant opvolgen (AD20 / AD21)
+title SD05 - Follow up prospective customer (AD20 / AD21)
 autonumber
-actor "Acquisitiemedewerker" as Acquisition
+actor "Acquisition employee" as Acquisition
 participant "visit:AcquisitionVisit" as Visit
 participant "prospect:ProspectiveCustomer" as Prospect
-actor "Contactpersoon apotheek" as Pharmacy
-actor "Verkoopmedewerker" as Sales
+actor "Pharmacy contact" as Pharmacy
+actor "Sales employee" as Sales
 participant "customer:Customer" as Customer
 Acquisition -> Visit: recordVisit()
-Visit --> Acquisition: bezoek met datum en contactgegevens vastgelegd
-note right of Acquisition: Opvolging na ten minste een maand.
+Visit --> Acquisition: visit recorded with date and contact information
+note right of Acquisition: Follow-up is eligible only after at least one month.
 Acquisition -> Prospect: checkFollowUpAfterOneMonth()
 activate Prospect
 Prospect -> Prospect: hasPlacedOrder()
-Prospect --> Acquisition: recht op opvolging en bestelstatus
+Prospect --> Acquisition: eligibility and order status
 deactivate Prospect
-alt Na een maand nog geen bestelling
-  Acquisition -> Pharmacy: Bel en bied 10% extra korting op eerste bestelling
-  Pharmacy --> Acquisition: belangstelling en toestemming account
-  alt Geinteresseerd en account toegestaan
+alt At least one month has elapsed and no order exists
+  Acquisition -> Pharmacy: Call and offer 10% extra on first order
+  Pharmacy --> Acquisition: interest and permission to create account
+  alt Interested and account creation permitted
     Acquisition -> Prospect: offerOneTimeDiscount()
-    Prospect --> Acquisition: eenmalige korting geregistreerd
-    Acquisition -> Sales: Geef bedrijf, factuur- en afleveradres en korting door
+    Prospect --> Acquisition: incentive recorded
+    Acquisition -> Sales: Transfer company, billing/delivery addresses and incentive
     Sales -> Prospect: createCustomerAccount()
     activate Prospect
     create participant "newCustomer:Customer" as NewCustomer
     Prospect -> NewCustomer: <<create>>
     note right of NewCustomer: oneTimeDiscountGranted = true
-    NewCustomer --> Prospect: klantaccount aangemaakt
-    Prospect --> Sales: nieuwe klantgegevens
+    NewCustomer --> Prospect: customer account created
+    Prospect --> Sales: new customer details
     deactivate Prospect
-    Sales --> Acquisition: klantaccount bevestigd
-  else Niet geinteresseerd of geen toestemming
-    note right of Acquisition: Geen verdere acquisitieactie.
+    Sales --> Acquisition: account registration confirmed
+  else Not interested or no permission
+    note right of Acquisition: Record outcome and close follow-up without more contact.
   end
-else Al besteld of opvolging nog niet nodig
-  note right of Acquisition: Geen extra opvolging nodig.
+else Already ordered or follow-up not yet due
+  note right of Acquisition: No incentive follow-up required.
 end
 @enduml
