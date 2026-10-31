@@ -15,6 +15,8 @@ UML_ROOT = Path(__file__).resolve().parents[1]
 SRC = UML_ROOT / "src" / "sequence_diagrams"
 EXPORT = UML_ROOT / "export" / "sequence_diagrams"
 DKD = UML_ROOT / "src" / "domain" / "dkd-timaflu.puml"
+USE_CASE = UML_ROOT / "src" / "use_cases" / "informatiesysteem.puml"
+USE_CASE_EXPORT = UML_ROOT / "export" / "use_cases" / "informatiesysteem.svg"
 NAMES = {
     "SD01": "SD01_Klantenkorting",
     "SD02": "SD02_ProductNietOpVoorraad",
@@ -93,7 +95,8 @@ class CaseTraceabilityTests(unittest.TestCase):
             "else Supplier confirmed delivery", 1
         )[0]
         self.assertNotIn("removeFromAssortment()", no_supply)
-        self.assertIn("Do not automatically remove", no_supply)
+        self.assertIn("Do not remove it from the sales assortment", no_supply)
+        self.assertIn("Purchasing -> Product: removeFromInternalReorderList()", no_supply)
 
     def test_sd03_all_invoice_fields_and_reminder_thresholds(self):
         sd = self.sources["SD03"]
@@ -106,7 +109,8 @@ class CaseTraceabilityTests(unittest.TestCase):
                      "at least 7 and under 14 days", "at least 14 and under 21 days",
                      "three weeks or more", "proposePaymentPlan()",
                      "enableDebtCollection()", "recordFullPayment(date)",
-                     "sendToCustomer()"]:
+                     "sendToCustomer()", "two separate EUR 300 orders",
+                     "Read per-order discounts agreed with customer"]:
             self.assertIn(term, sd, term)
 
     def test_sd04_two_separate_delivery_attempts(self):
@@ -116,7 +120,9 @@ class CaseTraceabilityTests(unittest.TestCase):
                      "first:DeliveryAttempt", "second:DeliveryAttempt",
                      "recordReceiptSignature()", "markDelivered(timestamp)",
                      "setDeliveryTime(date, timeSlot)",
-                     "recordAdditionalDeliveryCosts(amount, explanation)"]:
+                     "recordAdditionalDeliveryCosts(amount, explanation)",
+                     "Leave a notice at the delivery address",
+                     "signed proof of receipt"]:
             self.assertIn(term, sd, term)
         self.assertLess(sd.index("First: markRecipientAbsent()"),
                         sd.index("Route: adjustSchedule()"))
@@ -130,10 +136,86 @@ class CaseTraceabilityTests(unittest.TestCase):
                      "ONE CALENDAR MONTH", "hasPlacedOrder()",
                      "contact persons and contact details",
                      "existing customer account without orders is eligible",
-                     "10% on first order", "account consent",
+                     "one-time extra 10% on the first order",
+                     "permission for a customer account",
                      "billing/delivery addresses", "no duplicate account",
                      "createCustomerAccount()", "oneTimeDiscountGranted = true"]:
             self.assertIn(term.lower(), sd.lower(), term)
+
+    def test_use_case_acquisition_and_distribution_trace_to_case(self):
+        source = USE_CASE.read_text(encoding="utf-8")
+        for label in ("Acquisitiemedewerker", "Acquisitiebezoek registreren",
+                      "Acquisitieoverzicht bekijken", "Potentiele klant opvolgen",
+                      "Telefoonnummer klant opzoeken",
+                      "Tweede afleverpoging registreren"):
+            self.assertIn(label, source)
+        ET.parse(USE_CASE_EXPORT)
+
+    def test_sd01_uses_paid_revenue_and_single_first_order_incentive(self):
+        sd = self.sources["SD01"]
+        self.assertIn("amounts ACTUALLY PAID", sd)
+        self.assertIn("Do not use gross order values or unpaid invoices", sd)
+        self.assertIn("SAME single 10% one-time discount", sd)
+        self.assertIn("oneTimeDiscountApplied", sd)
+        self.assertLess(sd.index("Order: calculateOneTimeDiscount()"),
+                        sd.index("Order: calculateCustomerDiscount()"))
+
+    def test_sd02_no_supplier_is_not_assortment_removal(self):
+        sd = self.sources["SD02"]
+        no_supply = sd.split("alt No supplier can confirm delivery", 1)[1].split(
+            "else Supplier confirmed delivery", 1
+        )[0]
+        self.assertIn("Purchasing -> Product: removeFromInternalReorderList()", no_supply)
+        self.assertIn("internalReorderEligible = false", no_supply)
+        self.assertNotIn("Purchasing -> Product: removeFromAssortment()", no_supply)
+        self.assertIn("opt Employee explicitly chooses", sd)
+        self.assertIn("Purchasing -> Product: removeFromAssortment()", sd)
+        domain = DKD.read_text(encoding="utf-8")
+        self.assertIn("internalReorderEligible", domain)
+        self.assertIn("removeFromInternalReorderList()", domain)
+
+    def test_sd03_collection_is_a_action_and_block_is_checked_only_at_order_entry(self):
+        sd = self.sources["SD03"]
+        self.assertIn("Admin -> Agency: Engage debt collection", sd)
+        self.assertIn("Invoice: enableDebtCollection()", sd)
+        self.assertNotIn("Admin -> Customer: checkOrderBlock()", sd)
+        self.assertIn("Customer.checkOrderBlock() in SD01 READS this state", sd)
+        self.assertIn("Admin -> Invoice: recordFullPayment(date)", sd)
+
+    def test_sd03_weekly_invoice_never_recalculates_threshold(self):
+        sd = self.sources["SD03"]
+        self.assertIn("Read per-order discounts agreed with customer", sd)
+        self.assertIn("two separate EUR 300 orders", sd)
+        self.assertIn("does", sd.lower())
+        self.assertIn("Do not apply any discount again to the weekly subtotal", sd)
+        self.assertLess(sd.index("Invoice -> DeliveryLine"),
+                        sd.index("Invoice -> Order: Read per-order discounts"))
+
+    def test_sd04_signature_precedes_delivery_mark_in_both_attempts(self):
+        sd = self.sources["SD04"]
+        self.assertEqual(sd.count("Request signature for the received medicines"), 2)
+        self.assertEqual(sd.count("signed proof of receipt"), 2)
+        self.assertIn("Leave a notice at the delivery address", sd)
+        first = sd.split("alt Customer can still receive during first visit", 1)[1].split(
+            "else Customer cannot receive during first visit", 1
+        )[0]
+        second = sd.split("alt Recipient present at second attempt", 1)[1].split(
+            "else Recipient absent at second attempt", 1
+        )[0]
+        for part in (first, second):
+            self.assertLess(part.index("Request signature"), part.index("recordReceiptSignature()"))
+            self.assertLess(part.index("recordReceiptSignature()"), part.index("markDelivered(timestamp)"))
+
+    def test_sd05_initial_visit_and_consent_precede_incentive(self):
+        sd = self.sources["SD05"]
+        for term in ("Arrange appointment", "product catalogue and discount terms",
+                     "information folder", "Ask for company name and billing/delivery address",
+                     "no duplicate account"):
+            self.assertIn(term, sd)
+        self.assertLess(sd.index("Hand over the information folder"),
+                        sd.index("Visit: recordVisit("))
+        self.assertLess(sd.index("permission for a customer account"),
+                        sd.index("Prospect: offerOneTimeDiscount()"))
 
 
 if __name__ == "__main__":

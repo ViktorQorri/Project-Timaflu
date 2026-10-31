@@ -54,11 +54,14 @@ alt Product below minimum stock or unavailable
   end
 
   alt No supplier can confirm delivery
+    Purchasing -> Product: removeFromInternalReorderList()
+    activate Product
+    Product --> Purchasing: internalReorderEligible = false
+    deactivate Product
     note over Purchasing, Product
-      Remove the medicine from the INTERNAL reorder list.
-      Do not create a purchase order.
-      Do not automatically remove it from the sales assortment.
-      (Current-processes: Voorraad; AD02.)
+      Remove this medicine only from the INTERNAL reorder list.
+      No purchase order is recorded; the sales assortment is unchanged.
+      Do not remove it from the sales assortment (Current-processes: Voorraad).
     end note
   else Supplier confirmed delivery
     note right of Purchasing: Keep the confirmed purchase order in the system.

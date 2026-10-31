@@ -102,11 +102,13 @@ class Product {
     longDescription
     minimumOrderQuantity
     minimumStock
+    internalReorderEligible
     --
     checkStock()
     checkMinimumStock()
     findSuppliersByPrice()
     removeSupplier(supplier)
+    removeFromInternalReorderList()
     removeFromAssortment()
 }
 
