@@ -45,21 +45,32 @@ else ([no])
   stop
 endif
 |Sales Employee|
-if (Customer approves order and total?) then ([yes])
-  :Agree delivery date and morning/afternoon;
-  |System|
-  :Recheck availability and reservations transactionally;
-  if (Availability changed?) then ([yes])
-    :Report changed availability for employee to discuss;
+while (Customer approves order and total?) is ([no])
+  if (Customer wants to modify current order?) then ([yes])
+    :Review each ordered medicine together with customer;
+    :Change provisional quantities or medicines;
+    |System|
+    :Check stock again for modified provisional lines (AD04);
+    :Recalculate all discounts and total (SD01);
+    :Show revised order and total;
+    |Sales Employee|
+  else ([cancel])
+    |System|
+    :Discard provisional order without stock reservations;
     stop
-  else ([no])
-    :Save order and lines;
-    :Reserve available quantities only;
-    :Mark unavailable quantities as backorder;
-    :Show order number and status;
   endif
+endwhile ([yes])
+:Agree delivery date and morning/afternoon;
+|System|
+:Recheck availability and reservations transactionally;
+if (Availability changed?) then ([yes])
+  :Report changed availability and request new customer approval;
+  stop
 else ([no])
-  :Discard provisional order without reservation;
+  :Save order and lines;
+  :Reserve available quantities only;
+  :Mark unavailable quantities as backorder;
+  :Show order number and status;
 endif
 stop
 @enduml
