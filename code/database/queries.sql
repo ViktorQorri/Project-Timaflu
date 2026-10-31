@@ -411,3 +411,27 @@ UPDATE Factuur SET
     klantenkorting=1.96, totaal_bedrag=37.28
 WHERE factuur_id=1;
 -- The amounts here illustrate the SQL shape, not any live customer's discount.
+
+-- Registered picking bins for GET /order-picking
+-- Same SELECT as PickingBinRepository.list_bins(); this version uses no parameters.
+-- The bin location is the aisle of the robot that collects the sub-order.
+SELECT v.unieke_code, v.deelorder_id, d.bestelling_id,
+       d.robot_id, r.gang, d.afgerond
+FROM Verzamelbak AS v
+JOIN Deelorder AS d ON d.deelorder_id = v.deelorder_id
+JOIN Robot AS r ON r.robot_id = d.robot_id
+ORDER BY d.bestelling_id ASC, v.deelorder_id ASC, v.unieke_code ASC;
+
+-- Registering a scanned picking bin, POST /api/picking-bins
+-- Same statements as PickingBinRepository.register() with example values:
+-- bin code 'VB-0001', sub-order 1, aisle 'A'.
+-- Before the INSERT the application rejects a missing or completed sub-order,
+-- an aisle other than r.gang, and a bin code that is already registered.
+SELECT d.deelorder_id, d.bestelling_id, d.afgerond, r.gang
+FROM Deelorder AS d
+JOIN Robot AS r ON r.robot_id = d.robot_id
+WHERE d.deelorder_id = 1
+FOR UPDATE;
+SELECT deelorder_id FROM Verzamelbak WHERE unieke_code = 'VB-0001';
+INSERT INTO Verzamelbak (unieke_code, deelorder_id) VALUES ('VB-0001', 1);
+-- The three statements are one transaction in the application.
