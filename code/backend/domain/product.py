@@ -31,6 +31,29 @@ class Product:
     minimum_stock: int
     active_ingredients: list[ProductActiveIngredient] = field(default_factory=list)
     in_assortment: bool = True
+    supplier_offers: list["SupplierOffer"] = field(default_factory=list)
+
+    def checkStock(self, physical_stock, reserved_stock=0, requested_quantity=1):
+        """Check physical inventory less recorded reservations (AD04)."""
+        return max(0, int(physical_stock) - int(reserved_stock)) >= int(requested_quantity)
+
+    def checkMinimumStock(self, physical_stock):
+        """Flag a medicine below its configured physical minimum (AD03)."""
+        return int(physical_stock) < self.minimum_stock
+
+    def findSuppliersByPrice(self):
+        """Rank linked supplier offers by price; no supplier is contacted automatically."""
+        return sorted(self.supplier_offers, key=lambda offer: (offer.purchase_price, offer.supplier_id))
+
+    def removeSupplier(self, supplier_id):
+        """Modify this in-memory offer collection; persistence belongs to the repository."""
+        before = len(self.supplier_offers)
+        self.supplier_offers = [offer for offer in self.supplier_offers if offer.supplier_id != supplier_id]
+        return before - len(self.supplier_offers)
+
+    def removeFromAssortment(self):
+        """Mark this domain instance inactive without erasing historical database rows."""
+        self.in_assortment = False
 
 
 @dataclass
