@@ -4,8 +4,8 @@
 <h1>Acquisitiebezoek registreren</h1>
 <form method="post" action="{{url_for('acquisition.record_visit')}}">
 <label>Bedrijf <input name="company" required></label>
-<label>Contactpersoon <input name="contact"></label>
-<label>Contactgegevens <input name="details"></label>
+<label>Contactpersoon <input name="contact" required></label>
+<label>Contactgegevens <input name="details" required></label>
 <label>Adres <input name="address" required></label>
 <label>Bezoekdatum <input name="visit_date" type="date" required></label>
 <button>Bezoek opslaan</button></form>

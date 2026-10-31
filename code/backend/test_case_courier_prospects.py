@@ -29,7 +29,8 @@ class Cursor:
     def fetchone(self):
         query=self.statements[-1][0]
         if "SELECT lp.rit_id, lp.pogingnummer" in query:
-            return {"rit_id": 5, "pogingnummer": 1, "resultaat": self.state.get("first")}
+            return {"rit_id": 5, "pogingnummer": 1, "resultaat": self.state.get("first"),
+                    "first_attempt_seconds": 10 * 3600}
         if "SELECT lp.resultaat" in query:
             return {"resultaat":self.state.get("second_result")} if self.state.get("second_exists") else None
         raise AssertionError(query)
@@ -54,6 +55,17 @@ class CaseProcessTests(TestCase):
         self.assertEqual(db.commits,1)
         self.assertIn("VALUES (%s,2,%s,%s,NULL,NULL)",db.cursor_instance.statements[-1][0])
         self.assertEqual(db.cursor_instance.statements[0][1],(4,date(2026,10,30)))
+
+    def test_second_visit_must_be_later_on_the_same_day(self):
+        for invalid_time in (time(9, 0), time(10, 0)):
+            db = Connection()
+            with self.assertRaises(DomainError):
+                AssessedRepository(db).schedule_second_attempt(
+                    4, invalid_time, date(2026, 10, 30)
+                )
+            self.assertEqual(db.commits, 0)
+            self.assertFalse(db.state["second_exists"])
+            self.assertEqual(db.state["first"], None)
 
     def test_outcome_requires_explicit_signature_and_pending_second_visit(self):
         db=Connection({"second_exists":True})
@@ -96,6 +108,21 @@ class CaseProcessTests(TestCase):
                     })
                     self.assertEqual(r.status_code,302)
                     self.assertEqual(service.finished[0],(4,date(2026,10,30),"afgeleverd","yes"))
+
+    def test_acquisition_visit_requires_contact_details_and_valid_date(self):
+        app=create_app()
+        app.config.update(TESTING=True, SECRET_KEY="test-only")
+        with app.test_client() as client:
+            for invalid in (
+                {"company":"Apotheek", "address":"Straat", "visit_date":"2026-10-01"},
+                {"company":"Apotheek", "contact":"Persoon", "address":"Straat", "visit_date":"2026-10-01"},
+                {"company":"Apotheek", "contact":"Persoon", "details":"06123", "address":"Straat", "visit_date":"ongeldig"},
+            ):
+                response=client.post("/acquisition/visits", data=invalid)
+                self.assertEqual(response.status_code,400, invalid)
+        source=(app.jinja_loader.get_source(app.jinja_env,"acquisition.html"))[0]
+        self.assertIn('name="contact" required', source)
+        self.assertIn('name="details" required', source)
 
     def test_prospect_sql_checks_actual_order_not_just_account(self):
         from pathlib import Path

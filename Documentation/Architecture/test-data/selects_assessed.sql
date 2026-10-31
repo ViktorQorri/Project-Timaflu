@@ -22,12 +22,12 @@ SELECT f.factuur_id,f.factuurdatum,f.betaald_op,
 k.bedrijfsnaam,a.adres
 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
 JOIN Adres a ON a.adres_id=k.betaaladres_id
-WHERE f.klant_id=1 ORDER BY f.factuurdatum DESC;
+WHERE f.klant_id=1 AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC;
 SELECT '03. Administratie: werkelijk geleverde factuurregels' AS proces;
 SELECT l.aantal_geleverd AS quantity,b.prijs_per_eenheid AS unit_price
 FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id
 JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
-WHERE l.factuur_id=1;
+WHERE l.factuur_id=2;
 SELECT '04. Distributie: rooster voor 31 oktober' AS proces;
 SELECT lp.levering_id,lp.pogingnummer,lp.geplande_tijd,lp.resultaat,
 b.bestelling_id,k.bedrijfsnaam,k.contactpersoon,k.telefoonnummer,
@@ -40,10 +40,10 @@ JOIN Adres a ON a.adres_id=b.afleveradres_id
 WHERE r.ritdatum='2026-10-31' ORDER BY lp.geplande_tijd;
 SELECT '05. Acquisitie: nog geen order, bezoek ouder dan een maand' AS proces;
 SELECT p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,
-p.contactgegevens,a.adres,MAX(v.bezoekdatum) AS bezoekdatum
+p.contactgegevens,a.adres,p.klant_id,MAX(v.bezoekdatum) AS bezoekdatum
 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
 JOIN Adres a ON a.adres_id=p.adres_id
-WHERE p.klant_id IS NULL
-GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+WHERE NOT EXISTS (SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id)
+GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
 HAVING MAX(v.bezoekdatum)<='2026-09-30'
 ORDER BY bezoekdatum;

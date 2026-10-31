@@ -56,7 +56,8 @@ class AssessedRepository:
                        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=%s ORDER BY f.factuurdatum DESC
+                WHERE f.klant_id=%s AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC
             """, (customer_id,))
             invoices=c.fetchall()
             for invoice in invoices:
@@ -90,7 +91,8 @@ class AssessedRepository:
         with self.db.cursor(dictionary=True) as c:
             try:
                 c.execute(
-                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat,
+                              TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds
                        FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
                        WHERE lp.levering_id=%s AND r.ritdatum=%s
                        ORDER BY lp.pogingnummer DESC FOR UPDATE""",
@@ -101,6 +103,9 @@ class AssessedRepository:
                     raise DomainError("Levering niet in het rooster voor deze datum.")
                 if row["pogingnummer"] != 1 or row["resultaat"] == "afgeleverd":
                     raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
+                planned_seconds = planned_time.hour * 3600 + planned_time.minute * 60 + planned_time.second
+                if planned_seconds <= row["first_attempt_seconds"]:
+                    raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
                 c.execute(
                     """UPDATE Leverpoging SET resultaat='niet aanwezig',
                               ontvangst_getekend=FALSE
@@ -245,6 +250,8 @@ class AssessedRepository:
                         "UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, "
                         "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
                 elif action=="mark_paid":
+                    if invoice["betaald_op"]:
+                        raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
                     cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
                                    (today,invoice_id))
                 else:
