@@ -43,7 +43,9 @@ SELECT p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,
 p.contactgegevens,a.adres,p.klant_id,MAX(v.bezoekdatum) AS bezoekdatum
 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
 JOIN Adres a ON a.adres_id=p.adres_id
-WHERE NOT EXISTS (SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id)
+WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (
+  SELECT 1 FROM Bestelling b WHERE b.klant_id=p.klant_id
+)
 GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
 HAVING MAX(v.bezoekdatum)<='2026-09-30'
 ORDER BY bezoekdatum;

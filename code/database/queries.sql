@@ -76,7 +76,8 @@ ORDER BY p.productnaam ASC;
 
 -- AssessedRepository.customer_revenue
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT k.klant_id, k.bedrijfsnaam, a.adres AS klantadres FROM Klant k
+SELECT k.klant_id, k.bedrijfsnaam,
+                                k.eenmalige_korting_toegezegd, a.adres AS klantadres FROM Klant k
                          JOIN Adres a ON a.adres_id=k.betaaladres_id
                          WHERE k.klant_id=1;
 -- Query 2 (illustrative input, not a claimed database result)
@@ -110,7 +111,7 @@ SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepte
        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=1 AND f.betaald_op IS NULL
+WHERE f.klant_id=1 AND f.betaald_op IS NULL
                 ORDER BY f.factuurdatum DESC;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
@@ -170,6 +171,21 @@ UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=1
 -- Query 3 (illustrative input, not a claimed database result)
 UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
                            SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+-- If the second attempt also fails, do not leave the order marked dispatched or delivered.
+UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='niet afgeleverd' WHERE l.levering_id=1;
+
+-- AssessedRepository.record_failed_delivery_followup
+-- Sales confirms the new delivery agreement after two failed attempts.
+SELECT b.bestelling_id, r.ritdatum FROM Bestelling b
+                       JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       JOIN Leverpoging lp ON lp.levering_id=l.levering_id AND lp.pogingnummer=2
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE l.levering_id=1 AND lp.resultaat='niet aanwezig'
+                       FOR UPDATE;
+UPDATE Bestelling SET gewenste_leverdatum='2026-11-02', dagdeel='ochtend',
+                       extra_bezorgkosten=10.00, toelichting_extra_bezorgkosten='Klant tweemaal afwezig'
+                       WHERE bestelling_id=1;
 
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)
@@ -178,7 +194,7 @@ SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
                        MAX(v.bezoekdatum) AS bezoekdatum
                 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
                 JOIN Adres a ON a.adres_id=p.adres_id
-                WHERE NOT EXISTS (
+                WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (
                     SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
                 )
                 GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
@@ -196,15 +212,31 @@ INSERT INTO Acquisitiebezoek (potentiele_klant_id,bezoekdatum) VALUES (1,'2026-0
 -- AssessedRepository.register_prospect_customer
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT * FROM PotentieleKlant WHERE potentiele_klant_id=1 FOR UPDATE;
--- Query 2 (illustrative input, not a claimed database result)
+-- Query 2: the most recent visit must have taken place at least a calendar month earlier.
+SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek
+WHERE potentiele_klant_id=1;
+-- Query 3 (illustrative input, not a claimed database result)
 INSERT INTO Adres (adres) VALUES ('Factuuradres 1');
 -- Query 3 (illustrative input, not a claimed database result)
 INSERT INTO Adres (adres) VALUES ('Afleveradres 1');
 -- Query 4 (illustrative input, not a claimed database result)
-INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
-                             VALUES('Testapotheek','0612345678','Contact',1,2);
+INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id,eenmalige_korting_toegezegd)
+                             VALUES('Testapotheek','0612345678','Contact',1,2,TRUE);
 -- Query 5 (illustrative input, not a claimed database result)
-UPDATE PotentieleKlant SET klant_id=1 WHERE potentiele_klant_id=1;
+UPDATE PotentieleKlant SET klant_id=1, opvolging_afgesloten=TRUE WHERE potentiele_klant_id=1;
+
+-- AssessedRepository.close_prospect_followup (only after a month and explicit refusal)
+-- Query 1: lock the prospective customer to avoid simultaneous conversion.
+SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant
+WHERE potentiele_klant_id=1 FOR UPDATE;
+-- Query 2: last visit must be at least one month old.
+SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek
+WHERE potentiele_klant_id=1;
+-- Query 3: only when linked to an existing customer; do not retry someone who ordered.
+SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=1;
+-- Query 4: no more acquisition once interest is declined.
+UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE
+WHERE potentiele_klant_id=1;
 
 -- AssessedRepository.record_payment_action
 -- Query 1 (illustrative input, not a claimed database result)

@@ -10,6 +10,7 @@
   <h2>{{ customer.bedrijfsnaam }}</h2>
   <p>{{ customer.klantadres }}</p>
   <p>Betaalde jaaromzet vorig kalenderjaar: € {{ annual_revenue }}</p>
+  {% if customer.eenmalige_korting_toegezegd %}<p>Acquisitie heeft een eenmalige korting van 10% op de eerste bestelling toegezegd.</p>{% endif %}
   <p>Eerste bestelling: {{ 'Ja' if first_order else 'Nee' }}</p>
   <dl class="invoice-totals">
     <dt>Bestelbedrag</dt><dd>€ {{ discount.subtotal }}</dd>

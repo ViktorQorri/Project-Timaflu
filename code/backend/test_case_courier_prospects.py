@@ -84,7 +84,8 @@ class CaseProcessTests(TestCase):
         AssessedRepository(db).record_second_attempt_outcome(4,date(2026,10,30),"niet aanwezig",None)
         self.assertFalse(db.state["signed"])
         self.assertEqual(db.state["second_result"],"niet aanwezig")
-        self.assertFalse(any("UPDATE Bestelling" in q for q,_ in db.cursor_instance.statements))
+        self.assertTrue(any("status_naam='niet afgeleverd'" in q
+                            for q,_ in db.cursor_instance.statements))
 
     def test_courier_web_routes_are_separate(self):
         app=create_app()
