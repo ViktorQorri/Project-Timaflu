@@ -1,0 +1,241 @@
+/* Start: Issue #10 - order entry with automatic discount calculation, using the existing Timaflu design tokens. */
+.discount-link {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.discount-form {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0 32px;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+}
+.discount-form__field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+.discount-form__field label,
+.discount-form__lines legend {
+  font-weight: 700;
+}
+.discount-form select,
+.discount-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+.discount-form select:focus,
+.discount-form input:focus {
+  outline: 3px solid var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+.discount-form__lines {
+  display: grid;
+  gap: 12px;
+  border: 0;
+}
+.discount-form__lines legend {
+  margin-bottom: 12px;
+}
+.discount-form__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  align-items: end;
+  gap: 12px;
+}
+.discount-form__submit {
+  justify-self: start;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  box-shadow: var(--shadow-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.discount-form__submit:hover {
+  background: var(--color-primary-dark);
+}
+.discount-error {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 700;
+}
+.discount-result {
+  display: grid;
+  gap: 24px;
+}
+.discount-summary {
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.discount-summary__basis {
+  margin: 8px 0 20px;
+  color: var(--color-text-muted);
+}
+.discount-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  font-weight: 700;
+}
+.discount-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-line-light);
+}
+.discount-summary__row dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.discount-summary__row--muted {
+  color: var(--color-text-muted);
+}
+.discount-summary__row--discount dd {
+  color: var(--color-success);
+  font-weight: 700;
+}
+.discount-summary__row--total {
+  border-bottom: 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+}
+.order-form {
+  display: grid;
+  gap: 24px;
+}
+.order-form .discount-form {
+  margin: 0;
+}
+.order-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.order-add-line {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.order-add-line:hover {
+  border-color: var(--color-primary);
+}
+.order-remove-line {
+  min-height: 48px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 0 16px;
+  background: var(--color-surface);
+  color: var(--color-danger);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.order-remove-line:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+/* Default button for Enter, kept out of sight but not display: none so the browser still uses it. */
+.order-form__default {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
+.order-line__article {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+.order-stock {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-weight: 700;
+}
+.order-stock--short {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.order-backorder,
+.order-delivery__urgent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.order-delivery legend {
+  /* A floated legend is laid out inside the card instead of on its top border. */
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+}
+.order-delivery .discount-summary__basis {
+  margin: 0;
+}
+.order-delivery__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end;
+  gap: 16px;
+}
+.order-delivery__urgent {
+  min-height: 48px;
+  margin-top: 0;
+}
+.discount-form input[type="checkbox"] {
+  width: auto;
+  min-height: 0;
+}
+@media (max-width: 760px) {
+  .discount-form__line {
+    grid-template-columns: minmax(0, 1fr) 96px;
+  }
+  .order-remove-line {
+    grid-column: 1 / -1;
+    justify-self: end;
+    min-height: 40px;
+  }
+  .discount-form__submit {
+    justify-self: stretch;
+  }
+}
+/* End: Issue #10 order discount calculation. */

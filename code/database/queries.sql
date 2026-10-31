@@ -454,3 +454,69 @@ SELECT (SELECT COUNT(*) FROM Bestelling WHERE klant_id = 1) AS bestellingen,
        (SELECT COUNT(*) FROM PotentieleKlant WHERE klant_id = 1) AS acquisities;
 DELETE FROM Klantkorting WHERE klant_id = 1;
 DELETE FROM Klant WHERE klant_id = 1;
+-- Order discount calculation on the new order screen, /orders/new (issue #10, SD01).
+-- Same SELECTs as DiscountRepository with example parameters.
+-- Customer and product choices for the form.
+SELECT klant_id, bedrijfsnaam
+FROM Klant
+ORDER BY bedrijfsnaam ASC;
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+FROM Product
+WHERE in_assortiment = TRUE
+ORDER BY productnaam ASC;
+-- The chosen customer and the catalog price of each order line.
+SELECT klant_id, bedrijfsnaam
+FROM Klant
+WHERE klant_id = 1;
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+FROM Product
+WHERE product_id = 1 AND in_assortiment = TRUE;
+-- SD01 countPreviousOrders(customer): 0 means first order, 10% one-time discount.
+SELECT COUNT(*) AS aantal_bestellingen
+FROM Bestelling
+WHERE klant_id = 1;
+-- SD01 sumPurchases(previousYear): persisted net paid invoice totals for Tabel 1.
+-- Missing historical totals are detected rather than treated as zero.
+SELECT COUNT(*) AS paid_count,
+       COUNT(f.totaal_bedrag) AS known_amount_count,
+       COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet
+FROM Factuur AS f
+WHERE f.klant_id = 1
+  AND f.betaald_op >= '2025-01-01'
+  AND f.betaald_op < '2026-01-01';
+
+-- Enter a telephone order, /orders/new (issues #9 and #10, AD05 Enter order).
+-- Same queries as OrderRepository with example parameters.
+-- A customer whose unpaid invoice is with the debt collection agency cannot order.
+SELECT COUNT(*) AS aantal_facturen
+FROM Factuur
+WHERE klant_id = 1 AND betaald_op IS NULL AND incasso_ingeschakeld = TRUE;
+-- Available stock of one product: physical stock minus reservations.
+SELECT GREATEST(
+    COALESCE((SELECT SUM(aantal) FROM Magazijnlocatie WHERE product_id = 1), 0)
+    - COALESCE((SELECT SUM(aantal) FROM Voorraadreservering WHERE product_id = 1), 0),
+    0) AS beschikbaar;
+-- Saving the order, run as one transaction. Lock the customer and read its addresses.
+SELECT klant_id, afleveradres_id, betaaladres_id
+FROM Klant
+WHERE klant_id = 1
+FOR UPDATE;
+-- First order: no earlier orders (same query as countPreviousOrders above).
+SELECT COUNT(*) AS aantal_bestellingen
+FROM Bestelling
+WHERE klant_id = 1;
+-- Per product, in product order: lock it, read the price, then count the available stock again.
+SELECT product_id, prijs_per_grootverpakking
+FROM Product
+WHERE product_id = 1 AND in_assortiment = TRUE
+FOR UPDATE;
+INSERT INTO Bestelling (klant_id, afleveradres_id, betaaladres_id, besteld_op,
+                        gewenste_leverdatum, dagdeel, spoed, status_naam,
+                        eenmalige_korting_toegepast)
+VALUES (1, 1, 2, NOW(), '2026-11-02', 'ochtend', FALSE, NULL, FALSE);
+INSERT INTO Bestelregel (bestelling_id, product_id, aantal, prijs_per_eenheid,
+                         afnemen_bij_tekort)
+VALUES (15, 1, 20, 45.00, NULL);
+-- Only for lines with enough stock; a short line is saved with afnemen_bij_tekort = TRUE.
+INSERT INTO Voorraadreservering (bestelling_id, product_id, aantal)
+VALUES (15, 1, 20);

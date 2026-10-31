@@ -7,12 +7,19 @@ from domain.business import Order
 from domain.errors import ConflictError, DomainError, ValidationError
 from repositories.assessed_repository import AssessedRepository
 from repositories.customer_repository import CustomerRepository
+from repositories.discount_repository import DiscountRepository
+from repositories.order_repository import OrderRepository
 from repositories.sales_stock_repository import SalesStockRepository
 from services.customer_service import CustomerService
+from services.discount_service import DiscountService
+from services.order_service import PARTS_OF_DAY, OrderService
 from services.sales_stock_service import SalesStockService
 
 
 sales = Blueprint("sales", __name__)
+
+ORDER_LINE_ROWS = 3
+MAX_ORDER_LINE_ROWS = 20
 
 
 def customer_service():
@@ -129,4 +136,97 @@ def calculate_order_discount():
         annual_revenue=revenue,
         first_order=first_order,
         discount=result,
+    )
+
+
+@sales.get("/orders/new")
+def new_order():
+    """Enter a telephone order with stock checks and calculated discounts."""
+    service = _order_service()
+    form = _order_form(request.args)
+    calculation, error, status = None, None, 200
+    if not form["edit_lines"] and (
+        form["customer_id"] or any(product_id for product_id, _ in form["lines"])
+    ):
+        try:
+            calculation = service.prepare(
+                form["customer_id"], form["lines"], form["backorders"]
+            )
+        except DomainError as domain_error:
+            error, status = str(domain_error), domain_error.status_code
+    return _render_order(service, form, calculation, error), status
+
+
+@sales.post("/orders/new")
+def place_order():
+    """Save the order the customer agreed to, with its lines and reservations."""
+    service = _order_service()
+    form = _order_form(request.form)
+    try:
+        saved = service.place(
+            form["customer_id"],
+            form["lines"],
+            form["backorders"],
+            form["delivery_date"],
+            form["part_of_day"],
+            form["urgent"],
+        )
+    except DomainError as domain_error:
+        try:
+            calculation = service.prepare(
+                form["customer_id"], form["lines"], form["backorders"]
+            )
+        except DomainError:
+            calculation = None
+        return _render_order(service, form, calculation, str(domain_error)), domain_error.status_code
+    message = (
+        f"Order {saved['order_id']} is opgeslagen. Levering op "
+        f"{saved['delivery_date']:%d-%m-%Y} in de {saved['part_of_day']}."
+    )
+    if saved["backorders"]:
+        message += " Regels zonder voorraad staan als backorder."
+    flash(message, "success")
+    return redirect(url_for("sales.new_order"))
+
+
+def _order_service():
+    connection = get_connection()
+    return OrderService(
+        OrderRepository(connection),
+        DiscountService(DiscountRepository(connection)),
+    )
+
+
+def _order_form(values):
+    lines = list(zip(values.getlist("product_id"), values.getlist("quantity")))
+    remove_line = values.get("remove_line", type=int)
+    if remove_line is not None and 0 <= remove_line < len(lines):
+        del lines[remove_line]
+    return {
+        "customer_id": values.get("customer_id", "", type=str).strip(),
+        "lines": lines,
+        "backorders": values.getlist("backorder"),
+        "delivery_date": values.get("delivery_date", "", type=str),
+        "part_of_day": values.get("part_of_day", "", type=str),
+        "urgent": values.get("urgent") == "1",
+        "add_line": values.get("add_line") == "1",
+        "edit_lines": values.get("add_line") == "1" or remove_line is not None,
+    }
+
+
+def _render_order(service, form, calculation, error):
+    line_rows = min(
+        max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"]),
+        MAX_ORDER_LINE_ROWS,
+    )
+    return render_template(
+        "order_new.html",
+        form=form,
+        calculation=calculation,
+        error=error,
+        line_rows=line_rows,
+        max_line_rows=MAX_ORDER_LINE_ROWS,
+        parts_of_day=PARTS_OF_DAY,
+        today=date.today().isoformat(),
+        **service.discount_service.form_options(),
     )
