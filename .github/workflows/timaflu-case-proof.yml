@@ -43,7 +43,7 @@ jobs:
       - name: Reproduce query output for every screen
         run: python code/database/audit_ui_queries.py
       - name: Validate final EER against live MySQL information_schema
-        run: python code/database/generate_eer.py --database timaflu_casus_test_94 --check
+        run: python code/database/generate_eer.py --database timaflu_casus_test_94
       - name: Save reproducible query evidence
         uses: actions/upload-artifact@v4
         with:
@@ -52,4 +52,5 @@ jobs:
             Documentation/Architecture/query-output-per-screen.md
             Documentation/Architecture/eer-mysql-schema.json
             Documentation/Architecture/eer-mysql-verified.svg
+            Documentation/Architecture/eer-mysql-verified.drawio
           retention-days: 14
