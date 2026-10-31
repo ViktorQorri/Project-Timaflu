@@ -102,12 +102,17 @@ class Product {
     longDescription
     minimumOrderQuantity
     minimumStock
+<<<<<<< HEAD
     inAssortment
+=======
+    internalReorderEligible
+>>>>>>> origin/sequence-diagrammen
     --
     checkStock()
     checkMinimumStock()
     findSuppliersByPrice()
     removeSupplier(supplier)
+    removeFromInternalReorderList()
     removeFromAssortment()
 }
 

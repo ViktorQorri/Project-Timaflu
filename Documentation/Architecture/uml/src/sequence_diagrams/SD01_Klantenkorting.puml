@@ -1,41 +1,81 @@
 @startuml
-title SD01 - Calculate order discounts (UC05 / AD05 / AD28)
+title SD01 - Calculate order discounts (AD05 / AD28)
 autonumber
 
 actor "Sales employee" as Sales
-participant "order:Order" as O
-participant "customer:Customer" as C
-participant "discount:CustomerDiscount" as D
+actor "Year-end system process" as YearEnd
+participant "customer:Customer" as Customer
+participant "discount:CustomerDiscount" as Discount
+participant "order:Order" as Order
 
-Sales -> O: calculateTotalAmount()
-activate O
-O -> O: calculateOrderDiscount()
-note right of O: 5% order discount from EUR 500 (case: orders).
-
-alt First order of customer
-  O -> O: calculateOneTimeDiscount()
-  note right of O
-    First order: 10% discount (Product-description).
-    Do not apply the same first-order allowance twice.
+== Annual discount determination (AD28) ==
+loop Each customer on 31 December
+  YearEnd -> Customer: calculateAnnualRevenue()
+  activate Customer
+  note right of Customer
+    Annual turnover is the amounts ACTUALLY PAID
+    on fully paid invoices in the year ending on 31 December.
+    Do not use gross order values or unpaid invoices.
   end note
-else Returning customer
-  note right of O: No first-order discount.
+  Customer --> YearEnd: annualRevenue
+  deactivate Customer
+  YearEnd -> Discount: determinePercentage(annualRevenue, nextYear)
+  activate Discount
+  note right of Discount
+    < EUR 10,000: 5%
+    >= EUR 10,000 and < EUR 20,000: 10%
+    >= EUR 20,000: 15%
+    Store this rate for the next calendar year (AD28).
+  end note
+  Discount --> YearEnd: computed rate (5%, 10% or 15%)
+  YearEnd -> Discount: Store calendarYear = nextYear and percentage = computed rate
+  Discount --> YearEnd: next-year rate recorded
+  deactivate Discount
 end
 
-O -> C: calculateAnnualRevenue(previousYear)
-activate C
-C --> O: revenue from paid purchases in preceding year
-deactivate C
-O -> D: determinePercentage(previousYearRevenue, currentYear)
-activate D
-D --> O: 5%, 10% or 15% (case turnover table)
-deactivate D
-O -> O: calculateCustomerDiscount()
-note right of O
-  Apply customer discount after the order discount
-  and the one-time discount, if applicable.
-  Annual percentage is set on 31 December for next year.
-end note
-O --> Sales: order subtotal, three discount amounts, final total
-deactivate O
+== Calculate a telephone order (AD05) ==
+Sales -> Customer: checkOrderBlock()
+activate Customer
+Customer --> Sales: blocked or allowed
+deactivate Customer
+alt Blocked because debt collection is active
+  note right of Sales: Reject new orders until the full outstanding balance is paid.
+else Customer may order
+  Sales -> Order: calculateTotalAmount()
+  activate Order
+  note right of Order
+    Inputs: customer name, customer address and
+    sum of ordered product prices (subtotal).
+    No order is saved until the customer approves (AD05).
+  end note
+  Order -> Order: calculateOrderDiscount()
+  note right of Order
+    If subtotal >= EUR 500, subtract 5% of subtotal;
+    otherwise order discount = EUR 0.
+  end note
+  alt First order and allowance not already applied on a previous order
+    Order -> Order: calculateOneTimeDiscount()
+    note right of Order
+      Subtract 10% of the amount AFTER the order discount.
+      The acquisition offer and ordinary first-order allowance
+      are the SAME single 10% one-time discount (invoice field).
+      oneTimeDiscountGranted = true means eligible, not consumed;
+      On successful order approval/save, set the order's
+      oneTimeDiscountApplied flag and do not apply it again.
+    end note
+  else Returning order or allowance already applied
+    note right of Order: No one-time first-order discount.
+  end
+  Order -> Discount: Read stored customer rate for the order calendar year
+  activate Discount
+  Discount --> Order: customer discount percentage (5%, 10% or 15%)
+  deactivate Discount
+  Order -> Order: calculateCustomerDiscount()
+  note right of Order
+    Subtract customer discount from the amount remaining
+    after the order discount and one-time discount.
+  end note
+  Order --> Sales: subtotal, order discount, one-time discount, customer discount, final total
+  deactivate Order
+end
 @enduml
