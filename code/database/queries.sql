@@ -6,6 +6,7 @@ SELECT p.product_id, p.artikelnummer, p.productnaam,
        COALESCE(SUM(m.aantal), 0) AS voorraad
 FROM Product AS p
 LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
 GROUP BY p.product_id, p.artikelnummer, p.productnaam,
          p.minimumvoorraad
 HAVING voorraad < p.minimumvoorraad
@@ -19,13 +20,15 @@ SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%'
+WHERE p.productnaam LIKE '%Medication%' AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
 -- The supplier-product relationship is validated by PurchaseOrderRepository.
-SELECT 1 FROM LeveranciersAanbod
-WHERE leverancier_id = 1 AND product_id = 1;
+SELECT 1 FROM LeveranciersAanbod AS a
+JOIN Product AS p ON p.product_id = a.product_id
+WHERE a.leverancier_id = 1 AND a.product_id = 1
+  AND p.in_assortiment = TRUE;
 INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
@@ -48,5 +51,108 @@ LEFT JOIN (
     SELECT product_id, SUM(aantal) AS gereserveerd
     FROM Voorraadreservering GROUP BY product_id
 ) AS r ON r.product_id = p.product_id
-WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
+WHERE (p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%')
+  AND p.in_assortiment = TRUE
 ORDER BY p.productnaam ASC;
+
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 AND in_assortiment = TRUE FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
+
+-- Product catalog, GET /products (issue #13)
+-- Same SELECTs as ProductRepository.list_in_assortment(). No parameters.
+SELECT p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
+       p.prijs_per_grootverpakking, p.verpakkingssoort, p.aantal_detailverpakkingen,
+       p.korte_omschrijving, p.lange_omschrijving, p.minimale_bestelhoeveelheid,
+       p.minimumvoorraad, p.in_assortiment
+FROM Product AS p
+WHERE p.in_assortiment = TRUE
+ORDER BY p.productnaam ASC, p.artikelnummer ASC;
+
+SELECT w.product_id, w.stofnaam, w.hoeveelheid
+FROM ProductWerkzameStof AS w
+JOIN Product AS p ON p.product_id = w.product_id
+WHERE p.in_assortiment = TRUE
+ORDER BY w.stofnaam ASC;
+
+-- Add product form, GET /products/new: the suppliers to choose from.
+-- Same SELECT as SupplierRepository.list_all().
+SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+FROM Leverancier
+ORDER BY naam ASC;
+
+-- Add product, POST /products/new: check the chosen supplier exists.
+-- Same SELECT as SupplierRepository.get_by_id() with example parameter 1.
+SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+FROM Leverancier
+WHERE leverancier_id = 1;
+
+-- Add or edit product: is the article number or order code already in use?
+-- Same SELECT as ProductRepository.find_code_owners(). Example: a new product,
+-- so the product to skip is NULL. When editing, NULL is the edited product_id.
+SELECT product_id, artikelnummer, bestelcode, productnaam, in_assortiment
+FROM Product
+WHERE (artikelnummer = 'TIM-1001' OR bestelcode = 'BC-1001')
+  AND (NULL IS NULL OR product_id <> NULL);
+
+-- Add product, POST /products/new: ProductRepository.add().
+-- The three statements are one transaction in the application.
+INSERT INTO Product (
+    artikelnummer, bestelcode, productnaam, prijs_per_grootverpakking,
+    verpakkingssoort, aantal_detailverpakkingen, korte_omschrijving,
+    lange_omschrijving, minimale_bestelhoeveelheid, minimumvoorraad
+)
+VALUES ('TIM-1001', 'BC-1001', 'Paracetamol 500 mg', 24.50, 'box', 20,
+        'Pain relief and fever reduction', 'Tablets for mild to moderate pain.', 5, 40);
+-- One INSERT per entered active ingredient.
+INSERT INTO ProductWerkzameStof (product_id, stofnaam, hoeveelheid)
+VALUES (LAST_INSERT_ID(), 'paracetamol', '500 mg');
+-- In the application the new product_id comes from cursor.lastrowid.
+INSERT INTO LeveranciersAanbod (leverancier_id, product_id, inkoopprijs)
+VALUES (1, (SELECT product_id FROM Product WHERE artikelnummer = 'TIM-1001'), 18.75);
+
+-- Edit product form, GET /products/<id>/edit: ProductRepository.get_by_id()
+-- with example parameter 1.
+SELECT p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
+       p.prijs_per_grootverpakking, p.verpakkingssoort, p.aantal_detailverpakkingen,
+       p.korte_omschrijving, p.lange_omschrijving, p.minimale_bestelhoeveelheid,
+       p.minimumvoorraad, p.in_assortiment
+FROM Product AS p
+WHERE p.product_id = 1 AND p.in_assortiment = TRUE;
+
+SELECT product_id, stofnaam, hoeveelheid
+FROM ProductWerkzameStof
+WHERE product_id = 1
+ORDER BY stofnaam ASC;
+
+-- Edit product, POST /products/<id>/edit: ProductRepository.update()
+-- with example product 1. All statements are one transaction in the application;
+-- the active ingredients are replaced as a whole.
+SELECT product_id FROM Product
+WHERE product_id = 1 AND in_assortiment = TRUE FOR UPDATE;
+UPDATE Product
+SET artikelnummer = 'TIM-1001', bestelcode = 'BC-1001', productnaam = 'Paracetamol 500 mg',
+    prijs_per_grootverpakking = 25.00, verpakkingssoort = 'box',
+    aantal_detailverpakkingen = 20, korte_omschrijving = 'Pain relief and fever reduction',
+    lange_omschrijving = 'Tablets for mild to moderate pain.', minimale_bestelhoeveelheid = 5,
+    minimumvoorraad = 50
+WHERE product_id = 1;
+DELETE FROM ProductWerkzameStof WHERE product_id = 1;
+INSERT INTO ProductWerkzameStof (product_id, stofnaam, hoeveelheid)
+VALUES (1, 'paracetamol', '500 mg');
+
+-- Remove product, POST /products/<id>/remove: ProductRepository.remove_from_assortment()
+-- with example product 1. The row stays, so orders, deliveries and invoices keep working.
+UPDATE Product SET in_assortiment = FALSE
+WHERE product_id = 1 AND in_assortiment = TRUE;
