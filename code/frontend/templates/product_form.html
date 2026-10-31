@@ -6,7 +6,7 @@
   {% set editing = product is defined %}
   {% set names = form.ingredient_name or [] %}
   {% set quantities = form.ingredient_quantity or [] %}
-  {% set ingredient_rows = [names|length, quantities|length]|max + 2 %}
+  {% set ingredient_rows = [2, names|length, quantities|length, form.ingredient_rows|default(2)|int]|max %}
   <section class="stock-dashboard" aria-labelledby="product-form-title">
     <header class="stock-dashboard__intro">
       <div>
@@ -72,6 +72,7 @@
 
         <fieldset class="product-form__group">
           <legend>Werkzame stoffen</legend>
+          <input type="hidden" name="ingredient_rows" value="{{ ingredient_rows }}">
           <p class="product-form__hint">Minimaal één. Laat rijen die je niet nodig hebt leeg.</p>
           {% for index in range(ingredient_rows) %}
             <div class="product-form__ingredient">
@@ -83,6 +84,9 @@
               </label>
             </div>
           {% endfor %}
+          <button type="submit" name="form_action" value="add_ingredient" formnovalidate>
+            Nog een werkzame stof toevoegen
+          </button>
         </fieldset>
 
         {% if not editing %}
