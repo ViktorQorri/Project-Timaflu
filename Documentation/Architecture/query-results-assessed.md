@@ -26,16 +26,16 @@ applicatie volledig werken, en deze uitvoer bevat **geen verzonnen resultaten**.
 +----------+--------------------+
 |        1 | Testapotheek Breda |
 +----------+--------------------+
-+---------------------------------------------------------+
-| proces                                                  |
-+---------------------------------------------------------+
-| 01. Verkoop: betaalde jaaromzet 2025, bruto regelbedrag |
-+---------------------------------------------------------+
-+--------+
-| annual |
-+--------+
-|  40.00 |
-+--------+
++--------------------------------------------+
+| proces                                     |
++--------------------------------------------+
+| 01. Verkoop: netto betaalde jaaromzet 2025 |
++--------------------------------------------+
++------------+--------------------+--------+
+| paid_count | known_amount_count | annual |
++------------+--------------------+--------+
+|          1 |                  1 |  37.28 |
++------------+--------------------+--------+
 +------------------------------------------------+
 | proces                                         |
 +------------------------------------------------+
@@ -52,11 +52,11 @@ applicatie volledig werken, en deze uitvoer bevat **geen verzonnen resultaten**.
 +-----------------------------------------+
 | 03. Administratie: factuurkop en status |
 +-----------------------------------------+
-+------------+--------------+------------+--------------------+-----------------------------+
-| factuur_id | factuurdatum | betaald_op | bedrijfsnaam       | adres                       |
-+------------+--------------+------------+--------------------+-----------------------------+
-|          1 | 2025-09-05   | 2025-10-10 | Testapotheek Breda | Testapotheekstraat 1, Breda |
-+------------+--------------+------------+--------------------+-----------------------------+
++------------+--------------+------------+-----------------+------------+-----------------+--------------------+------------------------------+-------------------+-----------------------------+----------------+---------------+--------------------+-----------------------------+
+| factuur_id | factuurdatum | betaald_op | bedrag_excl_btw | btw_bedrag | bedrag_incl_btw | bestellingskorting | bedrag_na_bestellingskorting | eenmalige_korting | bedrag_na_eenmalige_korting | klantenkorting | totaal_bedrag | bedrijfsnaam       | adres                       |
++------------+--------------+------------+-----------------+------------+-----------------+--------------------+------------------------------+-------------------+-----------------------------+----------------+---------------+--------------------+-----------------------------+
+|          1 | 2025-09-05   | 2025-10-10 |           40.00 |       3.60 |           43.60 |               0.00 |                        43.60 |              4.36 |                       39.24 |           1.96 |         37.28 | Testapotheek Breda | Testapotheekstraat 1, Breda |
++------------+--------------+------------+-----------------+------------+-----------------+--------------------+------------------------------+-------------------+-----------------------------+----------------+---------------+--------------------+-----------------------------+
 +------------------------------------------------------+
 | proces                                               |
 +------------------------------------------------------+
@@ -91,15 +91,13 @@ applicatie volledig werken, en deze uitvoer bevat **geen verzonnen resultaten**.
 
 ## Nog open voor de eindoplevering
 
-- De huidige jaaromzetquery telt bruto geleverde regels van betaalde facturen;
-  zonder opgeslagen kortingsbedragen is dit niet aantoonbaar de netto betaalde omzet.
+- De jaaromzetquery telt het historisch vastgelegde **netto betaalde** factuurtotaal.
+  Als een betaalde legacy-factuur geen snapshot heeft, weigert de backend een betrouwbare jaaromzet te verzinnen.
 - `AssessedRepository.invoice_for_customer()` haalt echte geleverde regels op,
-  maar het historisch toegepaste kortingsbedrag is nog niet in `Factuur` vastgelegd.
-  De hier getoonde factuurregels mogen daarom niet als een gevalideerd definitief
-  factuurtotaal worden gepresenteerd.
-- Volgens `AGENTS.md` is er een bronconflict: `SupplierRepository.find_offers()`
-  vereist `p.intern_bestelbaar = TRUE`, maar de overeenkomstige voorbeeldquery
-  in `queries.sql` mist deze voorwaarde. De leidende versie moet worden bevestigd
-  voordat dit definitief wordt gesynchroniseerd.
+  en leest de eenmaal vastgelegde bedragen uit `Factuur`.
+  Onbekende bedragen van oudere facturen blijven expliciet onbekend en worden niet stilzwijgend herberekend.
+- `SupplierRepository.find_offers()` en `queries.sql` hanteren beide
+  `intern_bestelbaar = TRUE` én `in_assortiment = TRUE`: de interne inkooplijst
+  is een andere productstatus dan de verkoopcatalogus. Dit volgt de casus.
 - De uitvoer van alle overige schermquery's moet eveneens op de uiteindelijke
   samengestelde database worden vastgelegd.

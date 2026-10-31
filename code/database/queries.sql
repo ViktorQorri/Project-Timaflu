@@ -6,6 +6,7 @@ SELECT p.product_id, p.artikelnummer, p.productnaam,
        COALESCE(SUM(m.aantal), 0) AS voorraad
 FROM Product AS p
 LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
 GROUP BY p.product_id, p.artikelnummer, p.productnaam,
          p.minimumvoorraad
 HAVING voorraad < p.minimumvoorraad
@@ -19,7 +20,7 @@ SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%' AND p.intern_bestelbaar = TRUE
+WHERE p.productnaam LIKE '%Medication%' AND p.intern_bestelbaar = TRUE AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
 
@@ -35,8 +36,10 @@ UPDATE Product SET intern_bestelbaar=FALSE WHERE product_id=1;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
 -- The supplier-product relationship is validated by PurchaseOrderRepository.
-SELECT 1 FROM LeveranciersAanbod
-WHERE leverancier_id = 1 AND product_id = 1;
+SELECT 1 FROM LeveranciersAanbod AS a
+JOIN Product AS p ON p.product_id = a.product_id
+WHERE a.leverancier_id = 1 AND a.product_id = 1
+  AND p.in_assortiment = TRUE;
 INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
@@ -59,7 +62,8 @@ LEFT JOIN (
     SELECT product_id, SUM(aantal) AS gereserveerd
     FROM Voorraadreservering GROUP BY product_id
 ) AS r ON r.product_id = p.product_id
-WHERE p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%'
+WHERE (p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%')
+  AND p.in_assortiment = TRUE
 ORDER BY p.productnaam ASC;
 
 -- AssessedRepository SQL for the five required backend scenarios.
@@ -73,11 +77,11 @@ SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=1;
 SELECT 1 FROM Factuur WHERE klant_id=1
                          AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
                          LIMIT 1;
--- Query 3 (illustrative input, not a claimed database result)
-SELECT COALESCE(SUM(l.aantal_geleverd * b.prijs_per_eenheid),0) AS annual
-                FROM Factuur f JOIN Leveringregel l ON l.factuur_id=f.factuur_id
-                JOIN Levering v ON v.levering_id=l.levering_id
-                JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
+-- Query 3 (net paid invoice amounts; missing totals are detected in repository)
+SELECT COUNT(*) AS paid_count,
+                       COUNT(f.totaal_bedrag) AS known_amount_count,
+                       COALESCE(SUM(f.totaal_bedrag),0) AS annual
+                FROM Factuur AS f
                 WHERE f.klant_id=1 AND f.betaald_op>= '2025-01-01' AND f.betaald_op< '2026-01-01';
 
 -- AssessedRepository.customer_order_count
@@ -87,7 +91,17 @@ SELECT COUNT(*) FROM Bestelling WHERE klant_id=1;
 -- AssessedRepository.invoice_for_customer
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
-                       f.incasso_ingeschakeld, k.bedrijfsnaam, a.adres
+                       f.incasso_ingeschakeld,
+       f.bedrag_excl_btw,
+       f.btw_bedrag,
+       f.bedrag_incl_btw,
+       f.bestellingskorting,
+       f.bedrag_na_bestellingskorting,
+       f.eenmalige_korting,
+       f.bedrag_na_eenmalige_korting,
+       f.klantenkorting,
+       f.totaal_bedrag,
+       k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
                 WHERE f.klant_id=1 ORDER BY f.factuurdatum DESC;
@@ -169,3 +183,103 @@ UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
 UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, incasso_ingeschakeld=TRUE WHERE factuur_id=1;
 -- Query 6 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betaald_op='2026-10-30' WHERE factuur_id=1;
+
+-- Product catalog, GET /products (issue #13)
+-- Same SELECTs as ProductRepository.list_in_assortment(). No parameters.
+SELECT p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
+       p.prijs_per_grootverpakking, p.verpakkingssoort, p.aantal_detailverpakkingen,
+       p.korte_omschrijving, p.lange_omschrijving, p.minimale_bestelhoeveelheid,
+       p.minimumvoorraad, p.in_assortiment
+FROM Product AS p
+WHERE p.in_assortiment = TRUE
+ORDER BY p.productnaam ASC, p.artikelnummer ASC;
+
+SELECT w.product_id, w.stofnaam, w.hoeveelheid
+FROM ProductWerkzameStof AS w
+JOIN Product AS p ON p.product_id = w.product_id
+WHERE p.in_assortiment = TRUE
+ORDER BY w.stofnaam ASC;
+
+-- Add product form, GET /products/new: the suppliers to choose from.
+-- Same SELECT as SupplierRepository.list_all().
+SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+FROM Leverancier
+ORDER BY naam ASC;
+
+-- Add product, POST /products/new: check the chosen supplier exists.
+-- Same SELECT as SupplierRepository.get_by_id() with example parameter 1.
+SELECT leverancier_id, naam, contactpersoon, telefoonnummer, internetadres
+FROM Leverancier
+WHERE leverancier_id = 1;
+
+-- Add or edit product: is the article number or order code already in use?
+-- Same SELECT as ProductRepository.find_code_owners(). Example: a new product,
+-- so the product to skip is NULL. When editing, NULL is the edited product_id.
+SELECT product_id, artikelnummer, bestelcode, productnaam, in_assortiment
+FROM Product
+WHERE (artikelnummer = 'TIM-1001' OR bestelcode = 'BC-1001')
+  AND (NULL IS NULL OR product_id <> NULL);
+
+-- Add product, POST /products/new: ProductRepository.add().
+-- The three statements are one transaction in the application.
+INSERT INTO Product (
+    artikelnummer, bestelcode, productnaam, prijs_per_grootverpakking,
+    verpakkingssoort, aantal_detailverpakkingen, korte_omschrijving,
+    lange_omschrijving, minimale_bestelhoeveelheid, minimumvoorraad
+)
+VALUES ('TIM-1001', 'BC-1001', 'Paracetamol 500 mg', 24.50, 'box', 20,
+        'Pain relief and fever reduction', 'Tablets for mild to moderate pain.', 5, 40);
+-- One INSERT per entered active ingredient.
+INSERT INTO ProductWerkzameStof (product_id, stofnaam, hoeveelheid)
+VALUES (LAST_INSERT_ID(), 'paracetamol', '500 mg');
+-- In the application the new product_id comes from cursor.lastrowid.
+INSERT INTO LeveranciersAanbod (leverancier_id, product_id, inkoopprijs)
+VALUES (1, (SELECT product_id FROM Product WHERE artikelnummer = 'TIM-1001'), 18.75);
+
+-- Edit product form, GET /products/<id>/edit: ProductRepository.get_by_id()
+-- with example parameter 1.
+SELECT p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
+       p.prijs_per_grootverpakking, p.verpakkingssoort, p.aantal_detailverpakkingen,
+       p.korte_omschrijving, p.lange_omschrijving, p.minimale_bestelhoeveelheid,
+       p.minimumvoorraad, p.in_assortiment
+FROM Product AS p
+WHERE p.product_id = 1 AND p.in_assortiment = TRUE;
+
+SELECT product_id, stofnaam, hoeveelheid
+FROM ProductWerkzameStof
+WHERE product_id = 1
+ORDER BY stofnaam ASC;
+
+-- Edit product, POST /products/<id>/edit: ProductRepository.update()
+-- with example product 1. All statements are one transaction in the application;
+-- the active ingredients are replaced as a whole.
+SELECT product_id FROM Product
+WHERE product_id = 1 AND in_assortiment = TRUE FOR UPDATE;
+UPDATE Product
+SET artikelnummer = 'TIM-1001', bestelcode = 'BC-1001', productnaam = 'Paracetamol 500 mg',
+    prijs_per_grootverpakking = 25.00, verpakkingssoort = 'box',
+    aantal_detailverpakkingen = 20, korte_omschrijving = 'Pain relief and fever reduction',
+    lange_omschrijving = 'Tablets for mild to moderate pain.', minimale_bestelhoeveelheid = 5,
+    minimumvoorraad = 50
+WHERE product_id = 1;
+DELETE FROM ProductWerkzameStof WHERE product_id = 1;
+INSERT INTO ProductWerkzameStof (product_id, stofnaam, hoeveelheid)
+VALUES (1, 'paracetamol', '500 mg');
+
+-- Remove product, POST /products/<id>/remove: ProductRepository.remove_from_assortment()
+-- with example product 1. The row stays, so orders, deliveries and invoices keep working.
+UPDATE Product SET in_assortiment = FALSE
+WHERE product_id = 1 AND in_assortiment = TRUE;
+
+
+-- Persist a completed and explicitly calculated weekly invoice once.
+-- This UPDATE may only run after the original order discounts are known.
+-- The application checks that the snapshot has not previously been recorded.
+SELECT factuur_id, totaal_bedrag FROM Factuur WHERE factuur_id=1 FOR UPDATE;
+UPDATE Factuur SET
+    bedrag_excl_btw=40.00, btw_bedrag=3.60, bedrag_incl_btw=43.60,
+    bestellingskorting=0.00, bedrag_na_bestellingskorting=43.60,
+    eenmalige_korting=4.36, bedrag_na_eenmalige_korting=39.24,
+    klantenkorting=1.96, totaal_bedrag=37.28
+WHERE factuur_id=1;
+-- The amounts here illustrate the SQL shape, not any live customer's discount.

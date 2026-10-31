@@ -1,45 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Suppliers{% endblock %}
+{% block title %}Leveranciers{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="supplier-title">
-  <h1 id="supplier-title">Find suppliers for a medicine</h1>
-  <p class="stock-dashboard__subtitle">Compare suppliers by purchase price. Contact the chosen manufacturer yourself before recording an order.</p>
+  <h1 id="supplier-title">Leveranciers voor een medicijn zoeken</h1>
+  <p class="stock-dashboard__subtitle">Vergelijk leveranciers op inkoopprijs. Neem eerst zelf contact op met de fabrikant voordat je een inkooporder vastlegt.</p>
   <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="supplier-lookup">
-    <label for="product-name">Medicine name</label>
+    <label for="product-name">Naam van het medicijn</label>
     <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
-    <button type="submit">Find suppliers</button>
+    <button type="submit">Leveranciers zoeken</button>
   </form>
   {% if product_name %}
     {% if offers %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Supplier offers for {{ product_name }}, ordered by purchase price</caption>
-          <thead><tr><th scope="col">Medicine</th><th scope="col">Supplier</th><th scope="col">Contact person</th><th scope="col">Phone number</th><th scope="col">Beheer</th><th scope="col" class="stock-dashboard__number">Purchase price</th><th scope="col">Manual purchase order</th></tr></thead>
+          <caption>Leveranciers voor {{ product_name }}, goedkoopste bovenaan</caption>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th><th scope="col">Leveranciersbeheer</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
                 <th scope="row">{{ offer.productnaam }}</th>
                 <td>{{ offer.leverancier }}</td>
-                <td>{{ offer.contactpersoon or 'Not recorded' }}</td>
-                <td>{{ offer.telefoonnummer or 'Not recorded' }}</td>
-                <td>
-                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
-                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
-                    <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
-                    <button>Verwijder leverancier van product</button>
-                  </form>
-                  <form method="post" action="{{ url_for('purchasing.remove_product_from_reorder_list') }}">
-                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
-                    <button>Verwijder uit interne bestellijst</button>
-                  </form>
-                </td>
+                <td>{{ offer.contactpersoon or 'Niet bekend' }}</td>
+                <td>{{ offer.telefoonnummer or 'Niet bekend' }}</td>
                 <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
                 <td>
                   <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
                     <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
-                    <label>Quantity <input name="quantity" type="number" min="1" step="1" required></label>
-                    <button type="submit">Record confirmed order</button>
+                    <label>Aantal <input name="quantity" type="number" min="1" step="1" required></label>
+                    <button type="submit">Bevestigde order vastleggen</button>
+                  </form>
+                </td>
+                <td>
+                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
+                    <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
+                    <label><input type="checkbox" name="confirmed" value="yes" required>
+                      Fabrikant levert dit medicijn niet meer</label>
+                    <button type="submit">Leverancier loskoppelen</button>
+                  </form>
+                  <form method="post" action="{{ url_for('purchasing.remove_product_from_reorder_list') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
+                    <label><input type="checkbox" name="confirmed" value="yes" required>
+                      Alle fabrikanten zijn benaderd en kunnen niet leveren</label>
+                    <button type="submit">Verwijder uit interne bestellijst</button>
                   </form>
                 </td>
               </tr>
@@ -48,7 +54,7 @@
         </table>
       </div>
     {% else %}
-      <p role="status">No suppliers found for this medicine.</p>
+      <p role="status">Geen leveranciers gevonden voor dit medicijn.</p>
     {% endif %}
   {% endif %}
 </section>

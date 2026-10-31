@@ -18,6 +18,13 @@ INSERT INTO Bestelregel(bestelling_id,product_id,aantal,prijs_per_eenheid)
 VALUES (1,1,2,20.00);
 INSERT INTO Factuur(klant_id,factuurdatum,betaald_op)
 VALUES (1,'2025-09-05','2025-10-10');
+-- This fictional invoice was explicitly calculated once, using the
+-- case's first-order discount of 10% and 5% customer discount.
+UPDATE Factuur SET bedrag_excl_btw=40.00, btw_bedrag=3.60,
+    bedrag_incl_btw=43.60, bestellingskorting=0.00,
+    bedrag_na_bestellingskorting=43.60, eenmalige_korting=4.36,
+    bedrag_na_eenmalige_korting=39.24, klantenkorting=1.96,
+    totaal_bedrag=37.28 WHERE factuur_id=1;
 INSERT INTO Levering(bestelling_id) VALUES(1);
 INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd,factuur_id)
 VALUES(1,1,2,1);

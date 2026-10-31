@@ -102,6 +102,7 @@ class Product {
     longDescription
     minimumOrderQuantity
     minimumStock
+    inAssortment
     --
     checkStock()
     checkMinimumStock()
@@ -221,6 +222,8 @@ class Invoice {
     paidOn [0..1]
     paymentPlanAccepted [0..1]
     debtCollectionEnabled
+    actualInvoiceTotals [0..1]
+    appliedDiscounts [0..1]
     --
     createWeeklyInvoice()
     sendToCustomer()
@@ -266,7 +269,6 @@ Product "1" -[norank]-> "0..*" SupplierOffer : offered in
 Supplier "1" -[norank]-> "0..*" PurchaseOrder : receives
 PurchaseOrder "1" -[norank]-> "1..*" PurchaseOrderLine : contains
 PurchaseOrderLine "0..*" -[norank]-> "1" Product : orders
-OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
 Aisle "1" -[norank]-> "40" WarehouseLocation : contains
 Aisle "1" -[norank]-> "1" Robot : serviced by
 Product "0..1" -[norank]-> "0..*" WarehouseLocation : stored at

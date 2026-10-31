@@ -16,12 +16,14 @@ class PurchaseOrderRepository:
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
-                    """SELECT 1 FROM LeveranciersAanbod
-                       WHERE leverancier_id = %s AND product_id = %s""",
+                    """SELECT 1 FROM LeveranciersAanbod AS a
+                       JOIN Product AS p ON p.product_id = a.product_id
+                       WHERE a.leverancier_id = %s AND a.product_id = %s
+                         AND p.in_assortiment = TRUE""",
                     (supplier_id, product_id),
                 )
                 if cursor.fetchone() is None:
-                    raise DomainError("This supplier does not offer the selected product.")
+                    raise DomainError("Deze leverancier levert het gekozen product niet.")
                 cursor.execute(
                     "INSERT INTO Inkoopbestelling (leverancier_id) VALUES (%s)",
                     (supplier_id,),

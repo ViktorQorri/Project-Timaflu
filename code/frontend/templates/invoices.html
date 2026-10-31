@@ -9,12 +9,20 @@
   <p>{{f.date}} — {{f.customer_name}} — {{f.customer_address}}</p>
   <table><thead><tr><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
     <tbody>{% for r in f.lines %}<tr><td>{{r.quantity}}</td><td>{{r.unit_price}}</td><td>{{r.line_total}}</td></tr>{% endfor %}</tbody></table>
-  <p>Totaal excl. btw: {{f.total_ex_vat}}</p><p>9% btw: {{f.vat_9_percent}}</p>
-  <p>Totaal incl. btw: {{f.total_incl_vat}}</p>
-  <p>Bestellingskorting: {{f.order_discount}}</p>
-  <p>Eenmalige korting: {{f.first_order_discount}}</p>
-  <p>Klantenkorting: {{f.customer_discount}}</p>
-  <strong>Totaal: {{f.total}}</strong>
+  <p>Totaal excl. btw: {{ f.total_ex_vat if f.total_ex_vat is not none else 'Niet vastgelegd' }}</p><p>9% btw: {{ f.vat_9_percent if f.vat_9_percent is not none else 'Niet vastgelegd' }}</p>
+  <p>Totaal incl. btw: {{ f.total_incl_vat if f.total_incl_vat is not none else 'Niet vastgelegd' }}</p>
+  <p>Bestellingskorting: {{ f.order_discount if f.order_discount is not none else 'Niet vastgelegd' }}</p>
+  <p>Eenmalige korting: {{ f.first_order_discount if f.first_order_discount is not none else 'Niet vastgelegd' }}</p>
+  <p>Klantenkorting: {{ f.customer_discount if f.customer_discount is not none else 'Niet vastgelegd' }}</p>
+  <strong>Totaal: {{ f.total if f.total is not none else 'Niet vastgelegd' }}</strong>
+  {% if not f.snapshot_complete %}
+  <p class="flash flash-warning" role="status">
+    Historische korting of totaal ontbreekt. Het eerder verstuurde definitieve
+    factuurbedrag kan niet worden herberekend uit alleen de geleverde regels.
+  </p>
+  {% endif %}
+  <p>Bedrag na bestellingskorting: {{ f.total_after_order_discount if f.total_after_order_discount is not none else 'Niet vastgelegd' }}</p>
+  <p>Bedrag na eenmalige korting: {{ f.total_after_first_order_discount if f.total_after_first_order_discount is not none else 'Niet vastgelegd' }}</p>
   <p>Betalingsopvolging: {{f.action}}</p>
   <form method="post" action="{{url_for('administration.invoice_action')}}">
   <input type="hidden" name="invoice_id" value="{{f.invoice_number}}">
@@ -24,7 +32,7 @@
      <option value="reminder2">Tweede herinnering</option>
      <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
      <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
-     <option value="mark_paid">Volledig betaald</option>
+     {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
   </select></label>
   <label>Ontvangen bedrag (alleen bij volledig betaald) <input type="number" min="0" step="0.01" name="received_amount"></label>
   <button>Registreer</button>

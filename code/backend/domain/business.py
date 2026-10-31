@@ -95,7 +95,8 @@ class Invoice:
         self.paymentPlanAccepted = None
         self.debtCollectionEnabled = False
 
-    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue=0, firstOrder=False):
+    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder):
+        """Use explicitly confirmed discount inputs; never default historical facts."""
         items = []
         for line in lines:
             qty = int(line["quantity"])
@@ -107,7 +108,11 @@ class Invoice:
         vat = euro(subtotal * Decimal("0.09"))
         gross = subtotal + vat
         discounts = Order(gross, annualRevenue, firstOrder).calculateTotalAmount()
-        return {"date": self.invoiceDate, "invoice_number": self.invoiceNumber,
+        after_order = euro(gross - discounts["order_discount"])
+        after_first_order = euro(after_order - discounts["first_order_discount"])
+        return {"total_after_order_discount": after_order,
+                "total_after_first_order_discount": after_first_order,
+                "date": self.invoiceDate, "invoice_number": self.invoiceNumber,
                 "customer_number": self.customerNumber, "customer_name": customerName,
                 "customer_address": customerAddress, "lines": items,
                 "total_ex_vat": subtotal, "vat_9_percent": vat, "total_incl_vat": gross,

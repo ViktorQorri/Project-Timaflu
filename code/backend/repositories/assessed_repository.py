@@ -19,13 +19,18 @@ class AssessedRepository:
             if c.fetchone():
                 raise DomainError("Customer cannot order during active debt collection")
             c.execute("""
-                SELECT COALESCE(SUM(l.aantal_geleverd * b.prijs_per_eenheid),0) AS annual
-                FROM Factuur f JOIN Leveringregel l ON l.factuur_id=f.factuur_id
-                JOIN Levering v ON v.levering_id=l.levering_id
-                JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
+                SELECT COUNT(*) AS paid_count,
+                       COUNT(f.totaal_bedrag) AS known_amount_count,
+                       COALESCE(SUM(f.totaal_bedrag),0) AS annual
+                FROM Factuur AS f
                 WHERE f.klant_id=%s AND f.betaald_op>= %s AND f.betaald_op< %s
             """, (customer_id, date(year,1,1), date(year+1,1,1)))
-            return customer, c.fetchone()["annual"]
+            result = c.fetchone()
+            if result["paid_count"] != result["known_amount_count"]:
+                raise DomainError(
+                    "De netto betaalde jaaromzet is niet betrouwbaar vastgelegd voor alle facturen."
+                )
+            return customer, result["annual"]
 
     def customer_order_count(self, customer_id):
         with self.db.cursor() as c:
@@ -36,7 +41,17 @@ class AssessedRepository:
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
                 SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
-                       f.incasso_ingeschakeld, k.bedrijfsnaam, a.adres
+                       f.incasso_ingeschakeld,
+                       f.bedrag_excl_btw,
+                       f.btw_bedrag,
+                       f.bedrag_incl_btw,
+                       f.bestellingskorting,
+                       f.bedrag_na_bestellingskorting,
+                       f.eenmalige_korting,
+                       f.bedrag_na_eenmalige_korting,
+                       f.klantenkorting,
+                       f.totaal_bedrag,
+                       k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
                 WHERE f.klant_id=%s ORDER BY f.factuurdatum DESC
@@ -188,3 +203,27 @@ class AssessedRepository:
             except Exception:
                 self.db.rollback()
                 raise
+
+    def save_invoice_snapshot(self, invoice_id, invoice_data):
+        """Store the issued invoice amounts once, not recomputed at payment time."""
+        from domain.business import euro
+        values = tuple(euro(invoice_data[field]) for _, field in [('bedrag_excl_btw', 'total_ex_vat'), ('btw_bedrag', 'vat_9_percent'), ('bedrag_incl_btw', 'total_incl_vat'), ('bestellingskorting', 'order_discount'), ('bedrag_na_bestellingskorting', 'total_after_order_discount'), ('eenmalige_korting', 'first_order_discount'), ('bedrag_na_eenmalige_korting', 'total_after_first_order_discount'), ('klantenkorting', 'customer_discount'), ('totaal_bedrag', 'total')])
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT factuur_id, totaal_bedrag FROM Factuur WHERE factuur_id=%s FOR UPDATE",
+                    (invoice_id,),
+                )
+                current = cursor.fetchone()
+                if current is None:
+                    raise DomainError("Factuur niet gevonden.")
+                if current["totaal_bedrag"] is not None:
+                    raise DomainError("Het factuurbedrag is al definitief vastgelegd.")
+                cursor.execute(
+                    """UPDATE Factuur SET bedrag_excl_btw=%s, btw_bedrag=%s, bedrag_incl_btw=%s, bestellingskorting=%s, bedrag_na_bestellingskorting=%s, eenmalige_korting=%s, bedrag_na_eenmalige_korting=%s, klantenkorting=%s, totaal_bedrag=%s WHERE factuur_id=%s""",
+                    values + (invoice_id,),
+                )
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise

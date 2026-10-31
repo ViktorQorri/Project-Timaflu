@@ -14,8 +14,34 @@ def invoices():
         repo=AssessedRepository(get_connection())
         for row in repo.invoice_for_customer(customer_id):
             invoice=Invoice(customer_id,str(row["factuur_id"]),row["factuurdatum"],row["betaald_op"])
-            doc=invoice.createWeeklyInvoice(row["bedrijfsnaam"],row["adres"],row["lines"])
-            doc["action"]=invoice.checkPaymentArrears(date.today())
+            from domain.business import euro
+            # The invoice has already been issued. Never invent historical
+            # annual revenue, one-time eligibility or applied discounts.
+            line_items = [
+                {**line, "line_total": euro(line["quantity"] * line["unit_price"])}
+                for line in row["lines"]
+            ]
+            snapshots = {
+                "total_ex_vat": row["bedrag_excl_btw"],
+                "vat_9_percent": row["btw_bedrag"],
+                "total_incl_vat": row["bedrag_incl_btw"],
+                "order_discount": row["bestellingskorting"],
+                "total_after_order_discount": row["bedrag_na_bestellingskorting"],
+                "first_order_discount": row["eenmalige_korting"],
+                "total_after_first_order_discount": row["bedrag_na_eenmalige_korting"],
+                "customer_discount": row["klantenkorting"],
+                "total": row["totaal_bedrag"],
+            }
+            doc = {
+                "invoice_number": row["factuur_id"],
+                "date": row["factuurdatum"],
+                "customer_name": row["bedrijfsnaam"],
+                "customer_address": row["adres"],
+                "lines": line_items,
+                "snapshot_complete": all(value is not None for value in snapshots.values()),
+                "action": invoice.checkPaymentArrears(date.today()),
+                **snapshots,
+            }
             rows.append(doc)
     return render_template("invoices.html",invoices=rows,customer_id=customer_id)
 
@@ -41,10 +67,15 @@ def invoice_action():
         matched=next((row for row in invoices_for_customer if row["factuur_id"]==invoice_id),None)
         if matched is None:
             raise DomainError("Invoice does not belong to selected customer")
-        calculated=Invoice(customer_id,str(invoice_id),matched["factuurdatum"],matched["betaald_op"]).createWeeklyInvoice(
-            matched["bedrijfsnaam"],matched["adres"],matched["lines"])
-        if received != calculated["total"]:
-            raise DomainError("Partial payments are not permitted")
+        # Only the exact, originally persisted invoice amount can prove
+        # a full payment, not a recalculation with guessed discounts.
+        if matched["totaal_bedrag"] is None:
+            raise DomainError(
+                "Het oorspronkelijke factuurtotaal is niet vastgelegd. "
+                "Een volledige betaling kan niet automatisch worden gecontroleerd."
+            )
+        if received != euro(matched["totaal_bedrag"]):
+            raise DomainError("Gedeeltelijke betalingen zijn niet toegestaan.")
     repo.record_payment_action(invoice_id,action,date.today())
     flash("Factuur bijgewerkt.","success")
     return redirect(url_for("administration.invoices",customer_id=customer_id))

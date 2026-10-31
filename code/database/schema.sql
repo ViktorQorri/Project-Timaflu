@@ -85,6 +85,9 @@ CREATE TABLE Product (
     minimale_bestelhoeveelheid INT NOT NULL,
     minimumvoorraad INT NOT NULL,
     intern_bestelbaar BOOLEAN NOT NULL DEFAULT TRUE,
+-- FALSE = verwijderd uit het assortiment. De rij blijft bestaan,
+    -- omdat bestellingen, leveringen en facturen ernaar verwijzen.
+    in_assortiment BOOLEAN NOT NULL DEFAULT TRUE,
 
     CHECK (prijs_per_grootverpakking >= 0),
     CHECK (aantal_detailverpakkingen > 0),
@@ -464,6 +467,15 @@ CREATE TABLE Factuur (
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    bedrag_excl_btw DECIMAL(10,2) NULL,
+    btw_bedrag DECIMAL(10,2) NULL,
+    bedrag_incl_btw DECIMAL(10,2) NULL,
+    bestellingskorting DECIMAL(10,2) NULL,
+    bedrag_na_bestellingskorting DECIMAL(10,2) NULL,
+    eenmalige_korting DECIMAL(10,2) NULL,
+    bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
+    klantenkorting DECIMAL(10,2) NULL,
+    totaal_bedrag DECIMAL(10,2) NULL,
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
