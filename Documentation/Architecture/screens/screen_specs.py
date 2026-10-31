@@ -56,18 +56,23 @@ SCREENS = {
         ["Beschikbaar = fysieke voorraad minus actieve reserveringen."]),
     5: screen(
         "Verkoopmedewerker", "Een telefonische order met voorraadcontrole, korting en klantakkoord vastleggen.",
-        [f("Klant opzoeken"), f("Afleveradres uit klantgegevens", "display"),
+        [f("Klant opzoeken"), f("Besteldatum", "display"),
+         f("Afleveradres uit klantgegevens", "display"),
          f("Factuuradres uit klantgegevens", "display"),
          f("Medicijn of artikelnummer"), f("Aantal", "number"),
+         f("Minimale bestelhoeveelheid van artikel", "display"),
+         f("Spoedbestelling", "checkbox"),
          f("Leverdatum", "date"), f("Dagdeel", "select", ("Ochtend", "Middag"))],
         ["Artikelnummer", "Medicijn", "Aantal", "Prijs per eenheid", "Regeltotaal"],
         ["Klant opzoeken", "Bestelregel toevoegen", "Totaal voorleggen", "Order bevestigen", "Voorlopige order annuleren"],
         [("Klant met betalingsblokkade", "Bij openstaande onbetaalde facturen met een blokkade is een nieuwe bestelling niet toegestaan."),
          ("Voorraadtekort", "Laat het tekort en de mogelijkheid van een backorder zien voordat een bestelregel wordt bevestigd."),
+         ("Spoedbestelling", "Markeer een telefonische spoedorder direct als spoed, controleer de voorraad en toon de beoogde bezorging binnen maximaal drie uur."),
          ("Klantakkoord", "Toon berekende bestel- en klantenkorting, totaalbedrag en afgesproken leverdatum en dagdeel."),
          ("Laatste voorraadcontrole", "Controleer beschikbaarheid opnieuw bij vastleggen; reserveer beschikbare artikelen uitsluitend als de order wordt opgeslagen."),
          ("Geen akkoord of gewijzigde voorraad", "Annuleer zonder reserveringen of laat de verkoopmedewerker de bestelling aanpassen.")],
-        ["Telefonische verkoop blijft bestaan.", "Bestellingskorting bij € 500 of meer: 5%. Eenmalige korting en jaarlijkse klantenkorting zijn afzonderlijk zichtbaar."],
+        ["Telefonische verkoop blijft bestaan.", "Bij het opnemen van de order toont het systeem de artikelcode en minimale bestelhoeveelheid uit de bestaande productcatalogus.",
+         "Bestellingskorting bij € 500 of meer: 5%. Eenmalige korting bij toepasselijke acquisitie en jaarlijkse klantenkorting zijn afzonderlijk zichtbaar."],
         invoice=True),
     6: screen(
         "Verkoopmedewerker", "Een klant de actuele status en leverinformatie van zijn bestelling kunnen geven.",
@@ -75,6 +80,7 @@ SCREENS = {
         ["Bestelnummer", "Klant", "Orderstatus", "Backorder", "Leverdatum", "Dagdeel"],
         ["Bestellingen opzoeken", "Bestelling openen"],
         [("Order gevonden", "Toon orderregels, eventuele backorders en afgesproken leverdatum en dagdeel."),
+         ("Voorbeelden van orderstatus", "De gewenste situatie noemt wordt verzameld, verstuurd, backorder en afgeleverd. De concrete status van een order komt uit het systeem."),
          ("Geen order gevonden", "Toon een duidelijke lege resultaatmelding.")],
         ["Een getoonde status komt uit de orderregistratie, niet uit fictieve voorbeelddata."]),
     7: screen(
@@ -96,14 +102,15 @@ SCREENS = {
          ("Geen bakken aanwezig", "Toon een lege-statusmelding, niet een verzonnen order.")]),
     9: screen(
         "Distributiemedewerker", "Complete orders uit verzamelbakken verpakken en voor bezorging gereedzetten.",
-        [f("Complete bestelling"), f("Aantal dozen", "number")],
+        [f("Complete bestelling"), f("Aantal dozen", "number"), f("Spoedindicatie van order", "display")],
         ["Verzamelbak", "Medicijn", "Aantal", "Bijbehorende bestelling"],
         ["Verpakking bevestigen", "Adreslabel afdrukken"],
         [("Alleen complete order", "Toon bij de geselecteerde complete order de bijbehorende verzamelbakken en bestelregels."),
-         ("Adresetiket", "Adreslabel bevat klantnaam, afleveradres en telefoonnummer."),
+         ("Adresetiket", "Adreslabel bevat klantnaam en afleveradres. De koerier kan het telefoonnummer apart via AD15 opzoeken."),
          ("Spoedbestelling", "Bij een spoedorder verschijnt daarnaast het extra spoedlabel."),
          ("Gereed", "Na bevestiging wordt de orderstatus bijgewerkt en een bezorgrit toegewezen.")],
-        ["Het daadwerkelijke inpakken en bevestigen gebeurt door een distributiemedewerker."]),
+        ["Het daadwerkelijke inpakken en bevestigen gebeurt door een distributiemedewerker.",
+         "De koerier zoekt het telefoonnummer via het systeem op; afdrukken op de adressticker is geen eis uit de gewenste situatie."]),
     10: screen(
         "Magazijnrobot / systeem", "Een gescande verzamelbak aan de juiste deelorder koppelen.",
         [f("Robotnummer"), f("Deelordernummer"), f("Unieke verzamelbakcode")],
@@ -224,8 +231,10 @@ SCREENS = {
         ["Medicijn", "Opslaglocatie", "Gevraagd aantal", "Verzameld aantal", "Verzamelbak"],
         [], [("Bak registreren", "Robot scant de bakcode via AD10 voordat er medicijnen verzameld worden."),
              ("Bak vol of deelorder nog niet compleet", "Plaats de bak op de rollerbaan en gebruik indien nodig een nieuwe bak."),
+             ("Medicijn op meerdere locaties", "Eén medicijn kan op meerdere opslaglocaties liggen. Per opslaglocatie staat nooit meer dan één soort medicijn."),
              ("Deelorder afgerond", "Robot meldt werkelijk verzamelde aantallen via AD11; distributie kan de bak- en deelorderstatus bekijken.")],
-        ["De fysieke robot verzamelt producten automatisch; dit is alleen een read-only voortgangsscherm."],
+        ["De fysieke robot verzamelt producten automatisch; dit is alleen een read-only voortgangsscherm.",
+         "Elke magazijngang heeft één robot. Eén bestelling kan daardoor door verschillende robots per eigen gang worden verzameld."],
         mode="robot"),
     24: screen(
         "Inkoopmedewerker / directie", "Aanbiedingen voor nieuwe medicijnen laten beoordelen voordat ze in het assortiment komen.",
@@ -233,12 +242,13 @@ SCREENS = {
          f("Hoeveelheden werkzame stoffen"), f("Bestelcode"), f("Prijs per grootverpakking", "number"),
          f("Verpakkingssoort"), f("Detailverpakkingen per grootverpakking", "number"),
          f("Korte omschrijving", "textarea"), f("Lange omschrijving", "textarea"),
-         f("Minimale bestelhoeveelheid", "number")],
+         f("Minimale bestelhoeveelheid", "number"),
+         f("Minimumvoorraad voor voorraadbewaking", "number")],
         ["Medicijn", "Fabrikant", "Inkoopprijs", "Beoordeling"],
         ["Advies aan directie voorleggen", "Goedgekeurd product registreren", "Afgewezen aanbod registreren"],
         [("Niet geschikt", "Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen."),
          ("Geschikt voor directiebeoordeling", "Inkoopmedewerker legt een advies voor; de directie keurt goed of wijst af."),
-         ("Goedgekeurd", "Valideer gegevens en werk productcatalogus, verkooplijst en interne bestellijst bij."),
+         ("Goedgekeurd", "Valideer gegevens, leg de minimumvoorraad voor voorraadbewaking vast en werk productcatalogus, verkooplijst en interne bestellijst bij."),
          ("Afgewezen of ongeldig", "Registreer afwijzing of toon validatiefout, zonder toevoeging aan assortiment.")]),
     25: screen(
         "Administratiemedewerker", "Na de wekelijkse klantfacturatie openstaande leveranciersfacturen betalen.",
@@ -261,10 +271,11 @@ SCREENS = {
          ("Reguliere bestelling", "Koppel aan een koerier in de juiste regio en het afgesproken dagdeel, bij ophalen vóór 17.00 uur."),
          ("Geen passende reguliere rit", "Zet de order in de wachtrij voor de eerstvolgende passende ophaal- en bezorgmogelijkheid.")],
         ["Reguliere koeriers halen op tot uiterlijk 17.00 uur; beschikbare koeriers kunnen ook na 17.00 uur een spoedrit ophalen.",
-         "De oorspronkelijke casus noemt voor reguliere bestellingen vóór 16.00 uur levering de volgende dag vóór 12.00 uur, en spoedlevering binnen maximaal drie uur. De gewenste situatie laat ook datum en dagdeel afspreken."]),
+         "De oorspronkelijke situatie kende de standaardlevering voor 16.00 uur besteld = de volgende dag voor 12.00 uur. In de gewenste situatie wordt het levermoment juist met de klant afgesproken als datum en ochtend of middag; de oude standaardtermijn is niet verplicht voor iedere nieuwe bestelling.",
+         "Spoedbestellingen moeten volgens de casus binnen maximaal drie uur worden afgeleverd; bij spoed vervalt de regiogebonden indeling."]),
     27: screen(
         "Koerier / verkoopmedewerker", "Twee bezorgpogingen en de opvolging van een mislukte levering ondersteunen.",
-        [f("Bestelnummer"), f("Telefoonnummer klant", "tel"),
+        [f("Bestelnummer"), f("Telefoonnummer klant", "display"),
          f("Nieuwe leverdatum", "date"), f("Nieuw dagdeel", "select", ("Ochtend", "Middag")),
          f("Extra bezorgkosten", "number"), f("Toelichting", "textarea")],
         ["Bestelnummer", "Eerste poging", "Tweede poging", "Afleverstatus", "Extra kosten"],
@@ -333,3 +344,51 @@ PROCESS_GROUPS = {
 
 assert set(SCREENS) == set(TITLES) == set(range(1, 29))
 assert sorted(n for group in PROCESS_GROUPS.values() for n in group) == list(range(1, 29))
+
+
+# Casusbronnen per ontwerp. De gewenste situatie is leidend wanneer de oude
+# werkwijze wordt vervangen. Product-description.md bevat de oplevereisen;
+# activity diagrams en userstories zijn geen bron voor nieuwe bedrijfsregels.
+CASE_SOURCES = {
+    "bestellingen": ("Casus: bestellingen", "../../brightspace/Current-processes.md#bestellingen"),
+    "voorraad": ("Casus: voorraad en inkoop", "../../brightspace/Current-processes.md#voorraad"),
+    "distributie": ("Casus: distributie", "../../brightspace/Current-processes.md#distributie"),
+    "administratie": ("Casus: administratie", "../../brightspace/Current-processes.md#administratie"),
+    "acquisitie": ("Casus: acquisitie", "../../brightspace/Current-processes.md#acquisitie"),
+    "gewenst": ("Casus: gewenste situatie", "../../brightspace/Desired-process.md#de-nieuwe-situatie"),
+    "product": ("Oplevereisen: backend", "../../brightspace/Product-description.md#backend"),
+    "ontwerpen": ("Oplevereisen: schermontwerpen", "../../brightspace/Product-description.md#schermontwerpen"),
+}
+
+SCREEN_CASE_KEYS = {
+    1: ("voorraad", "gewenst"),
+    2: ("voorraad", "gewenst", "product"),
+    3: ("voorraad", "gewenst"),
+    4: ("bestellingen", "gewenst"),
+    5: ("bestellingen", "gewenst", "product"),
+    6: ("bestellingen", "gewenst"),
+    7: ("bestellingen", "gewenst"),
+    8: ("bestellingen", "gewenst"),
+    9: ("bestellingen", "distributie", "gewenst"),
+    10: ("voorraad", "gewenst"),
+    11: ("voorraad", "gewenst"),
+    12: ("distributie", "gewenst", "product"),
+    13: ("distributie", "gewenst"),
+    14: ("distributie", "gewenst"),
+    15: ("distributie", "gewenst"),
+    16: ("administratie", "gewenst", "product"),
+    17: ("administratie", "gewenst"),
+    18: ("administratie", "gewenst", "product"),
+    19: ("administratie", "product"),
+    20: ("acquisitie", "product"),
+    21: ("acquisitie", "product"),
+    22: ("voorraad", "gewenst"),
+    23: ("voorraad", "gewenst"),
+    24: ("voorraad", "gewenst"),
+    25: ("administratie",),
+    26: ("distributie", "gewenst", "product"),
+    27: ("distributie", "gewenst", "product"),
+    28: ("bestellingen", "administratie"),
+}
+assert set(SCREEN_CASE_KEYS) == set(range(1, 29))
+assert all(k in CASE_SOURCES for ks in SCREEN_CASE_KEYS.values() for k in ks)

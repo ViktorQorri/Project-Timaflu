@@ -5,7 +5,7 @@ Acties zijn bewust disabled: dit is het ontwerp, niet de applicatie.
 """
 from html import escape
 
-from screen_specs import SCREENS
+from screen_specs import SCREENS, CASE_SOURCES, SCREEN_CASE_KEYS
 from screen_states import SCREEN_STATES
 
 
@@ -18,6 +18,21 @@ def button(label):
             f'title="Alleen ontwerpschets, geen werkende actie">{e(label)}</button>')
 
 
+def display_source(label):
+    lower = label.lower()
+    if "handtekening" in lower:
+        return "Wordt bij aflevering door de klant vastgelegd"
+    if "besteldatum" in lower:
+        return "Wordt automatisch vastgelegd bij het opnemen van de order"
+    if "minimale bestel" in lower:
+        return "Wordt uit de productcatalogus geladen"
+    if "spoedindicatie" in lower:
+        return "Wordt uit de geselecteerde bestelling geladen"
+    if any(word in lower for word in ("afleveradres", "factuuradres", "telefoonnummer")):
+        return "Wordt uit de klantgegevens geladen"
+    return "Wordt uit de bestaande systeemregistratie geladen"
+
+
 def input_control(number, index, field):
     label, kind, options = field
     fid = f"field-{number}-{index}"
@@ -25,7 +40,7 @@ def input_control(number, index, field):
         return (
             '<div class="screen-field">'
             f'<span class="field-label">{e(label)}</span>'
-            '<div class="screen-display">Wordt uit klantgegevens geladen</div>'
+            f'<div class="screen-display">{e(display_source(label))}</div>'
             '</div>'
         )
     if kind == "checkbox":
@@ -95,7 +110,8 @@ def render_invoice_document():
 <div><strong>Timaflu</strong><span>Adres Timaflu uit bedrijfsgegevens</span></div>
 <div><strong>Naam bedrijf (klant)</strong><span>Adres klant uit klantgegevens</span></div>
 </div>
-<div class="invoice-lines-wrap">
+<p class="table-scroll-hint">Veeg horizontaal om de volledige factuurregels te bekijken.</p>
+<div class="invoice-lines-wrap" tabindex="0" role="region" aria-label="Factuurregels, horizontaal scrollbaar">
 <table class="invoice-lines" aria-label="Gefactureerde, geleverde bestelregels">
 <thead><tr>
 <th scope="col">Omschrijving medicijn</th>
@@ -175,7 +191,8 @@ def render_delivery_schedule():
 <input id="delivery-roster-date" type="date" disabled>
 </div>
 </div>
-<div class="screen-table-wrap">
+<p class="table-scroll-hint">Veeg horizontaal om alle kolommen van het bezorgrooster te zien.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Bezorgrooster, horizontaal scrollbaar">
 <table aria-label="Rooster van toegewezen ritten">
 <thead><tr>
 <th scope="col">Tijd / dagdeel</th><th scope="col">Klantnaam</th>
@@ -240,20 +257,52 @@ def render(number, stem, title, group, wrap):
         for name, desc in spec["variants"]
     )
     notes = "".join(f'<li>{e(note)}</li>' for note in spec["notes"])
+    case_links = "".join(
+        f'<a href="{e(CASE_SOURCES[key][1])}">{e(CASE_SOURCES[key][0])}</a>'
+        for key in SCREEN_CASE_KEYS[number]
+    )
     read_only = spec["mode"] in ("robot", "automatic")
-    if read_only:
+    if number == 27:
+        # De koerier registreert pogingen; uitsluitend verkoop maakt de
+        # nieuwe leverafspraak en legt de extra bezorgkosten vast.
+        courier = "".join(input_control(number, i, spec["fields"][i])
+                          for i in (0, 1))
+        sales = "".join(input_control(number, i, spec["fields"][i])
+                        for i in range(2, len(spec["fields"])))
+        form = (
+            '<section class="role-block" aria-labelledby="courier-role">'
+            '<h3 id="courier-role">Koerier: eerste en tweede bezorgpoging</h3>'
+            '<p>Bestelnummer en het opzoekbare klanttelefoonnummer voor een '
+            'gesloten deur.</p>'
+            f'<div class="screen-fields">{courier}</div>'
+            '<div class="screen-actions">'
+            + "".join(button(action) for action in spec["actions"][:2])
+            + '</div></section>'
+            '<section class="role-block" aria-labelledby="sales-role">'
+            '<h3 id="sales-role">Verkoop: afspraak na twee mislukte pogingen</h3>'
+            '<p>Pas nadat de koerier de niet-geleverde medicijnen heeft '
+            'teruggebracht, legt verkoop het nieuwe moment en de extra kosten '
+            'met toelichting vast.</p>'
+            f'<div class="screen-fields">{sales}</div>'
+            '<div class="screen-actions">'
+            + "".join(button(action) for action in spec["actions"][2:])
+            + '</div></section>'
+        )
+        action_area = ""
+    elif read_only:
         form = ('<p class="screen-note">Dit zijn getoonde systeemgegevens, '
                 'geen handmatige invoervelden.</p>'
                 + f'<div class="screen-fields">{fields}</div>')
+        action_area = '<p class="screen-note">Geen handmatige actie in dit proces.</p>'
     else:
         form = (f'<div class="screen-fields">{fields}</div>' if fields else
                 '<p class="screen-note">Dit scherm start vanuit een overzicht '
                 'zonder handmatige invoer.</p>')
-    action_area = (
-        f'<div class="screen-actions">{actions}</div>'
-        if actions else
-        '<p class="screen-note">Geen handmatige actie in dit proces.</p>'
-    )
+        action_area = (
+            f'<div class="screen-actions">{actions}</div>'
+            if actions else
+            '<p class="screen-note">Geen handmatige actie in dit proces.</p>'
+        )
     details = []
     if number == 2:
         details.append(render_supplier_management())
@@ -286,12 +335,14 @@ Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 <section class="screen-panel" aria-labelledby="output-heading">
 <span class="overline">Resultaten</span>
 <h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
 <thead><tr>{headings}</tr></thead>
 <tbody><tr><td colspan="{len(spec['columns'])}" class="empty-row">
 Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
 </td></tr></tbody></table></div>
 <div class="source-links">
+{case_links}
 <a href="../uml/src/activity_diagrams/{e(stem)}.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/{e(stem)}.svg">Activity diagram (SVG)</a>
 </div>

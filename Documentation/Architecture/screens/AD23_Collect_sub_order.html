@@ -34,12 +34,14 @@ Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 <section class="screen-panel" aria-labelledby="output-heading">
 <span class="overline">Resultaten</span>
 <h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
 <thead><tr><th scope="col">Medicijn</th><th scope="col">Opslaglocatie</th><th scope="col">Gevraagd aantal</th><th scope="col">Verzameld aantal</th><th scope="col">Verzamelbak</th></tr></thead>
 <tbody><tr><td colspan="5" class="empty-row">
 Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
 </td></tr></tbody></table></div>
 <div class="source-links">
+<a href="../../brightspace/Current-processes.md#voorraad">Casus: voorraad en inkoop</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
 <a href="../uml/src/activity_diagrams/AD23_Collect_sub_order.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD23_Collect_sub_order.svg">Activity diagram (SVG)</a>
 </div>
@@ -49,8 +51,8 @@ Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de data
 <section class="scenario-panel" aria-labelledby="scenario-heading">
 <span class="overline">Herleidbaarheid naar casus en proces</span>
 <h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
-<div class="scenario-grid"><article class="scenario"><h3>Bak registreren</h3><p>Robot scant de bakcode via AD10 voordat er medicijnen verzameld worden.</p></article><article class="scenario"><h3>Bak vol of deelorder nog niet compleet</h3><p>Plaats de bak op de rollerbaan en gebruik indien nodig een nieuwe bak.</p></article><article class="scenario"><h3>Deelorder afgerond</h3><p>Robot meldt werkelijk verzamelde aantallen via AD11; distributie kan de bak- en deelorderstatus bekijken.</p></article></div>
-<ul class="case-notes"><li>De fysieke robot verzamelt producten automatisch; dit is alleen een read-only voortgangsscherm.</li></ul>
+<div class="scenario-grid"><article class="scenario"><h3>Bak registreren</h3><p>Robot scant de bakcode via AD10 voordat er medicijnen verzameld worden.</p></article><article class="scenario"><h3>Bak vol of deelorder nog niet compleet</h3><p>Plaats de bak op de rollerbaan en gebruik indien nodig een nieuwe bak.</p></article><article class="scenario"><h3>Medicijn op meerdere locaties</h3><p>Eén medicijn kan op meerdere opslaglocaties liggen. Per opslaglocatie staat nooit meer dan één soort medicijn.</p></article><article class="scenario"><h3>Deelorder afgerond</h3><p>Robot meldt werkelijk verzamelde aantallen via AD11; distributie kan de bak- en deelorderstatus bekijken.</p></article></div>
+<ul class="case-notes"><li>De fysieke robot verzamelt producten automatisch; dit is alleen een read-only voortgangsscherm.</li><li>Elke magazijngang heeft één robot. Eén bestelling kan daardoor door verschillende robots per eigen gang worden verzameld.</li></ul>
 </section>
 </main>
 <footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>

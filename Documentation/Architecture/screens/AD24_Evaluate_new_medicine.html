@@ -36,19 +36,22 @@
 <div class="screen-field"><label for="field-24-8">Detailverpakkingen per grootverpakking</label><input id="field-24-8" type="number" placeholder="Detailverpakkingen per grootverpakking" disabled></div>
 <div class="screen-field"><label for="field-24-9">Korte omschrijving</label><textarea id="field-24-9" rows="3" disabled></textarea></div>
 <div class="screen-field"><label for="field-24-10">Lange omschrijving</label><textarea id="field-24-10" rows="3" disabled></textarea></div>
-<div class="screen-field"><label for="field-24-11">Minimale bestelhoeveelheid</label><input id="field-24-11" type="number" placeholder="Minimale bestelhoeveelheid" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Advies aan directie voorleggen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Goedgekeurd product registreren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Afgewezen aanbod registreren</button></div>
+<div class="screen-field"><label for="field-24-11">Minimale bestelhoeveelheid</label><input id="field-24-11" type="number" placeholder="Minimale bestelhoeveelheid" disabled></div>
+<div class="screen-field"><label for="field-24-12">Minimumvoorraad voor voorraadbewaking</label><input id="field-24-12" type="number" placeholder="Minimumvoorraad voor voorraadbewaking" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Advies aan directie voorleggen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Goedgekeurd product registreren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Afgewezen aanbod registreren</button></div>
 <p class="screen-note">Deze statische schets is niet de werkende applicatie.
 Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
 <span class="overline">Resultaten</span>
 <h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
 <thead><tr><th scope="col">Medicijn</th><th scope="col">Fabrikant</th><th scope="col">Inkoopprijs</th><th scope="col">Beoordeling</th></tr></thead>
 <tbody><tr><td colspan="4" class="empty-row">
 Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
 </td></tr></tbody></table></div>
 <div class="source-links">
+<a href="../../brightspace/Current-processes.md#voorraad">Casus: voorraad en inkoop</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
 <a href="../uml/src/activity_diagrams/AD24_Evaluate_new_medicine.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD24_Evaluate_new_medicine.svg">Activity diagram (SVG)</a>
 </div>
@@ -58,7 +61,7 @@ Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de data
 <section class="scenario-panel" aria-labelledby="scenario-heading">
 <span class="overline">Herleidbaarheid naar casus en proces</span>
 <h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
-<div class="scenario-grid"><article class="scenario"><h3>Niet geschikt</h3><p>Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen.</p></article><article class="scenario"><h3>Geschikt voor directiebeoordeling</h3><p>Inkoopmedewerker legt een advies voor; de directie keurt goed of wijst af.</p></article><article class="scenario"><h3>Goedgekeurd</h3><p>Valideer gegevens en werk productcatalogus, verkooplijst en interne bestellijst bij.</p></article><article class="scenario"><h3>Afgewezen of ongeldig</h3><p>Registreer afwijzing of toon validatiefout, zonder toevoeging aan assortiment.</p></article></div>
+<div class="scenario-grid"><article class="scenario"><h3>Niet geschikt</h3><p>Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen.</p></article><article class="scenario"><h3>Geschikt voor directiebeoordeling</h3><p>Inkoopmedewerker legt een advies voor; de directie keurt goed of wijst af.</p></article><article class="scenario"><h3>Goedgekeurd</h3><p>Valideer gegevens, leg de minimumvoorraad voor voorraadbewaking vast en werk productcatalogus, verkooplijst en interne bestellijst bij.</p></article><article class="scenario"><h3>Afgewezen of ongeldig</h3><p>Registreer afwijzing of toon validatiefout, zonder toevoeging aan assortiment.</p></article></div>
 
 </section>
 </main>
