@@ -56,7 +56,8 @@ class AssessedRepository:
                        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=%s ORDER BY f.factuurdatum DESC
+                WHERE f.klant_id=%s AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC
             """, (customer_id,))
             invoices=c.fetchall()
             for invoice in invoices:
@@ -85,12 +86,39 @@ class AssessedRepository:
             """,(day,))
             return c.fetchall()
 
+    def record_first_attempt_delivery(self, delivery_id, delivery_day, signature_confirmed):
+        """Register a signed successful first visit without a second attempt."""
+        if signature_confirmed != "yes":
+            raise DomainError("Bevestig dat de klant voor ontvangst heeft getekend.")
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND lp.pogingnummer=1 AND r.ritdatum=%s
+                       FOR UPDATE""", (delivery_id, delivery_day))
+                row = cursor.fetchone()
+                if row is None or row["resultaat"] is not None:
+                    raise DomainError("De eerste bezorgpoging ontbreekt of is al afgehandeld.")
+                cursor.execute(
+                    """UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
+                       WHERE levering_id=%s AND pogingnummer=1""", (delivery_id,))
+                cursor.execute(
+                    """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
+                    (delivery_id,))
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
     def schedule_second_attempt(self, delivery_id, planned_time, delivery_day):
         """First absence: reschedule for the same delivery date, without an outcome."""
         with self.db.cursor(dictionary=True) as c:
             try:
                 c.execute(
-                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat,
+                              TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds
                        FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
                        WHERE lp.levering_id=%s AND r.ritdatum=%s
                        ORDER BY lp.pogingnummer DESC FOR UPDATE""",
@@ -99,8 +127,11 @@ class AssessedRepository:
                 row = c.fetchone()
                 if not row:
                     raise DomainError("Levering niet in het rooster voor deze datum.")
-                if row["pogingnummer"] != 1 or row["resultaat"] == "afgeleverd":
+                if row["pogingnummer"] != 1 or row["resultaat"] is not None:
                     raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
+                planned_seconds = planned_time.hour * 3600 + planned_time.minute * 60 + planned_time.second
+                if planned_seconds <= row["first_attempt_seconds"]:
+                    raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
                 c.execute(
                     """UPDATE Leverpoging SET resultaat='niet aanwezig',
                               ontvangst_getekend=FALSE
@@ -245,6 +276,8 @@ class AssessedRepository:
                         "UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, "
                         "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
                 elif action=="mark_paid":
+                    if invoice["betaald_op"]:
+                        raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
                     cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
                                    (today,invoice_id))
                 else:

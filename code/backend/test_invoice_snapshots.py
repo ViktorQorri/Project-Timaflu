@@ -104,6 +104,22 @@ class HistoricalInvoiceTests(TestCase):
                     self.assertEqual(resp.status_code,400)
         self.assertFalse(stub.recorded)
 
+    def test_all_invoice_actions_check_customer_ownership(self):
+        app=create_app()
+        app.config.update(TESTING=True, SECRET_KEY="test-key")
+        stub=RepositoryStub(True)
+        with patch("routes.administration.get_connection",return_value=object()):
+            with patch("routes.administration.AssessedRepository",return_value=stub):
+                with app.test_client() as client:
+                    for action in ("reminder1", "reminder2", "payment_plan_accepted",
+                                   "payment_plan_rejected", "mark_paid"):
+                        response=client.post("/invoices/actions",data={
+                            "invoice_id":"10", "customer_id":"1",
+                            "action":action, "received_amount":"37.28",
+                        })
+                        self.assertEqual(response.status_code,400,action)
+        self.assertEqual(stub.recorded,[])
+
     def test_persisted_invoice_total_is_checked_without_recalculation(self):
         app=create_app()
         app.config.update(TESTING=True, SECRET_KEY="test-key")

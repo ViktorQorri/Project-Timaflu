@@ -57,16 +57,18 @@ def invoice_action():
     if action not in ("reminder1","reminder2","payment_plan_accepted","payment_plan_rejected","mark_paid"):
         raise DomainError("Unknown invoice action")
     repo=AssessedRepository(get_connection())
+    # Validate invoice ownership for every mutation, not only mark_paid.
+    # Otherwise a forged form can modify another customer's invoice.
+    invoices_for_customer=repo.invoice_for_customer(customer_id)
+    matched=next((row for row in invoices_for_customer if row["factuur_id"]==invoice_id),None)
+    if matched is None:
+        raise DomainError("Invoice does not belong to selected customer")
     if action=="mark_paid":
         from domain.business import euro
         try:
             received=euro(request.form["received_amount"])
         except (ValueError,KeyError) as exc:
             raise DomainError("Valid payment amount required") from exc
-        invoices_for_customer=repo.invoice_for_customer(customer_id)
-        matched=next((row for row in invoices_for_customer if row["factuur_id"]==invoice_id),None)
-        if matched is None:
-            raise DomainError("Invoice does not belong to selected customer")
         # Only the exact, originally persisted invoice amount can prove
         # a full payment, not a recalculation with guessed discounts.
         if matched["totaal_bedrag"] is None:

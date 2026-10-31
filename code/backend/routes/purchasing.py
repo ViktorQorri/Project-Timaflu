@@ -38,6 +38,8 @@ def suppliers():
 @purchasing.post("/purchase-orders")
 def record_purchase_order():
     """Record a purchase after the employee confirms contacting a supplier."""
+    if request.form.get("supplier_contact_confirmed") != "yes":
+        raise DomainError("Bevestig eerst het handmatige contact met de leverancier.")
     service = PurchaseOrderService(PurchaseOrderRepository(get_connection()))
     order_id = service.record_order(
         request.form.get("supplier_id"),
