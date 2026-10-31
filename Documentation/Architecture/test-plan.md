@@ -38,6 +38,20 @@ All data below is fictional. Run these cases against a non-production MySQL inst
 | T11, AD03 / Product.minimumvoorraad | Physical stock 2, minimum 5 | Open shortages, change minimum to 1, refresh | Initially shortage 3 displayed, after threshold change it disappears; physical stock remains 2 |
 | T12, responsive | Phone-sized viewport 390 px and desktop 1440 px | Open picking and distribution, tab through controls and submit forms | No clipped controls, visible focus, comprehensible labels, no JavaScript dependency |
 
+## Aanvullende acceptatiegevallen uit de oorspronkelijke casus
+
+De volgende tests volgen uitsluitend Current-processes.md, Desired-process.md en Product-description.md, en vormen geen aanvullende eisen uit GitHub-userstories.
+
+| ID / bron | Invoer en stappen | Verwacht resultaat | Resultaat |
+|---|---|---|---|
+| T13, Distributie en Productbeschrijving scenario 4 | Klant is aanwezig bij het eerste bezoek; ondertekening bevestigen; aflevering registreren en dezelfde actie herhalen | Eerste levering wordt afgeleverd, orderstatus bijgewerkt, geen tweede bezoek gepland; dubbel registreren geweigerd | Niet uitgevoerd |
+| T14, Inkoop en Productbeschrijving scenario 2 | Probeer bestelling te registreren zonder voorafgaand contact; herhaal na handmatig leverancierscontact | Zonder bevestiging geen bestelling; na bevestiging uitsluitend interne registratie, geen automatische leverancierverzending | Niet uitgevoerd |
+| T15, Acquisitie en Productbeschrijving scenario 5 | Bezoek zonder contactgegevens opslaan; daarna volledig bezoek opslaan; na maand opvolging opvragen | Verplichte contactgegevens aanwezig; prospect zonder order blijft opvolgbaar, ook als er al een account is | Niet uitgevoerd |
+| T16, Administratie en Productbeschrijving scenario 3 | Factuur opzoeken, herinneringen na eerste en tweede week, betalingsregeling na drie weken, incasso na weigering | Juiste volgorde; geen gedeeltelijke betaling of incasso voor de gestelde termijn; historische bedragen niet herberekend met aannames | Niet uitgevoerd |
+| T17, Acquisitie en AD21 | Na een maand nabellen; afwijzing vastleggen; opvolglijst opnieuw openen | Geen automatische verdere opvolging na afwijzing; bestaand account niet dupliceren | Niet uitgevoerd |
+
+De originele casus verplicht geen automatische leveranciersverzending, individuele medicijnscans, of ontvangst van inkomende voorraad. Deze functionaliteit wordt niet als acceptatievoorwaarde toegevoegd.
+
 ## Evidence and result register
 
 | Check | Result | Evidence or limitation |
