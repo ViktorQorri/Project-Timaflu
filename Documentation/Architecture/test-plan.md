@@ -60,14 +60,16 @@ De onderstaande resultaten zijn daadwerkelijk uitgevoerd op de lokale Laptop-ver
 
 | Onderdeel | Gecontroleerde versie en omgeving | Uitkomst |
 | --- | --- | --- |
-| PR #94 Python-regressies | Backendcommit 985d86c en de opvolgende bewijscommit; code/backend, unittest-discovery | **86 van 86 tests geslaagd** |
-| MySQL 8.4-integration | run_caseproof_mysql.py op PR #94; schema.sql + fixtures_assessed.sql | **17 benoemde controles geslaagd** voor de vijf verplichte scenario's; zeven procespagina's HTTP 200 |
-| Query-resultaten | query-results-assessed.md, gemeten op codecommit 985d86c | Uitvoer uit echte MySQL SELECTs, inclusief openstaande factuur en leveranciersvolgorde |
+| PR #94 Python-regressies | Backendcommit 0cb154b met de samengevoegde review #117 en opvolgende bewijscommit; code/backend, unittest-discovery | **91 van 91 tests geslaagd** |
+| MySQL 8.4-integration | run_caseproof_mysql.py op PR #94; schema.sql + fixtures_assessed.sql | **18 benoemde controles geslaagd** voor de vijf verplichte scenario's; zeven procespagina's HTTP 200 |
+| Query-resultaten | query-results-assessed.md, gemeten op codecommit 0cb154b | Uitvoer uit echte MySQL SELECTs, inclusief openstaande factuur en leveranciersvolgorde |
 | Migraties | run_caseproof_migrations.py: schema uit commit d936cd3, daarna twee casusmigraties | Geslaagd; beide kolommen en de bezorgstatus aanwezig, historische fictieve data behouden |
-| Samengestelde branch | Tijdelijke worktree: integration/floris29-case-reviewed plus actuele PR #94-code, één base.html-conflict handmatig opgelost | **123 van 123 Python-tests geslaagd** en de MySQL-integratiecontrole geslaagd; niets naar integratiebranch gepusht |
+| Samengestelde branch | Tijdelijke worktree: integration/floris29-case-reviewed plus actuele PR #94-code, één base.html-conflict handmatig opgelost | **128 van 128 Python-tests geslaagd** en de MySQL-integratiecontrole geslaagd; niets naar integratiebranch gepusht |
 | PR #104-documentatiebranch | Unit-tests voor bestaande main-code, zonder de nieuwe PR #94-code samen te voegen | Laatste gemeten baseline: 19 van 19; dit is geen bewijs voor de samengestelde applicatie |
 
 **Nog niet volledig aangetoond:** echte gebruikersacceptatie op 390 en 1440 pixels met toetsenbordbediening, werkelijke robot-/koerierinteractie, de volledig geïntegreerde online database en de SQL-uitvoer van alle overige schermen. De mobiele distributieweergave is nu wel technisch responsive opgebouwd zonder frontend JavaScript, maar een statische codecontrole vervangt geen handmatige visuele acceptatietest.
+
+**Samenloop van reviews:** tijdens de controle is PR #117 met aanvullende tests voor onbetaalde facturen en de bezorgvolgorde in PR #94 samengevoegd. De nieuwe casuscontrole behoudt deze wijzigingen, controleert nu expliciet dat een bestaande klant zonder order opvolgbaar blijft, en bewaart beide historische MySQL-uitvoeren met hun eigen herkomst. De 91 en 128 tests en de 18 MySQL-controles zijn uitgevoerd na deze samenvoeging.
 
 **Merge-afhankelijkheid:** bij een proefintegratie van de actuele backend met integration/floris29-case-reviewed ontstond uitsluitend een conflict in code/frontend/templates/base.html door de stijlverwijzingen. In de tijdelijke testworktree is dit opgelost door zowel het extra_styles-block als de picking-bins-stylesheet te behouden. Dit is nog geen merge naar main of naar de gedeelde integratiebranch.
 
