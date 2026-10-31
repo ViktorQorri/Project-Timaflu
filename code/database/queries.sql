@@ -19,8 +19,19 @@ SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%'
+WHERE p.productnaam LIKE '%Medication%' AND p.intern_bestelbaar = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
+
+
+
+-- Purchasing: unlink a manufacturer that no longer supplies the medicine.
+-- Mirrors SupplierRepository.remove_offer() with example identifiers.
+DELETE FROM LeveranciersAanbod WHERE product_id=1 AND leverancier_id=2;
+
+-- When all manufacturers have stopped supplying the medicine, remove the
+-- internal reorder entry while preserving the sales catalog and history.
+-- Mirrors SupplierRepository.remove_from_internal_reorder_list().
+UPDATE Product SET intern_bestelbaar=FALSE WHERE product_id=1;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
 -- The supplier-product relationship is validated by PurchaseOrderRepository.
