@@ -84,7 +84,8 @@ CREATE TABLE Product (
     lange_omschrijving TEXT,
     minimale_bestelhoeveelheid INT NOT NULL,
     minimumvoorraad INT NOT NULL,
-    -- FALSE = verwijderd uit het assortiment. De rij blijft bestaan,
+    intern_bestelbaar BOOLEAN NOT NULL DEFAULT TRUE,
+-- FALSE = verwijderd uit het assortiment. De rij blijft bestaan,
     -- omdat bestellingen, leveringen en facturen ernaar verwijzen.
     in_assortiment BOOLEAN NOT NULL DEFAULT TRUE,
 
@@ -466,6 +467,15 @@ CREATE TABLE Factuur (
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    bedrag_excl_btw DECIMAL(10,2) NULL,
+    btw_bedrag DECIMAL(10,2) NULL,
+    bedrag_incl_btw DECIMAL(10,2) NULL,
+    bestellingskorting DECIMAL(10,2) NULL,
+    bedrag_na_bestellingskorting DECIMAL(10,2) NULL,
+    eenmalige_korting DECIMAL(10,2) NULL,
+    bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
+    klantenkorting DECIMAL(10,2) NULL,
+    totaal_bedrag DECIMAL(10,2) NULL,
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
@@ -519,6 +529,17 @@ CREATE TABLE Betalingsherinnering (
     CHECK (volgnummer IN (1, 2))
 );
 
+
+-- Inkoopfacturen: expliciet onderdeel van de administratie uit de casus.
+CREATE TABLE Inkoopfactuur (
+    inkoopfactuur_id INT AUTO_INCREMENT PRIMARY KEY,
+    leverancier_id INT NOT NULL,
+    factuurdatum DATE NOT NULL,
+    bedrag DECIMAL(10,2) NOT NULL,
+    betaald_op DATE,
+    FOREIGN KEY (leverancier_id) REFERENCES Leverancier(leverancier_id),
+    CHECK (bedrag >= 0)
+);
 
 -- =========================================
 -- ORDERSTATUSSEN UIT DE CASUS

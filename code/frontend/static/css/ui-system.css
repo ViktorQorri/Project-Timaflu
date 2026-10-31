@@ -512,4 +512,25 @@ table caption, .stock-dashboard__table caption { color: var(--muted); font-size:
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+/* Timaflu case process forms and invoice fields. START */
+.stacked-form { display: grid; justify-items: start; gap: 12px; max-width: 700px; }
+.stacked-form > .form-field { width: 100%; margin: 0; }
+.stacked-form > .form-field > :is(input,select,textarea) { width: 100%; }
+.stacked-form > label { max-width: 640px; font-size: 12px; }
+.stacked-form > button { margin-top: 6px; }
+.stock-dashboard + .stock-dashboard { margin-top: 20px; }
+.stock-dashboard .page-panel { border-radius: 10px; padding: 22px; }
+.stock-dashboard .page-panel + .page-panel { margin-top: 15px; }
+.invoice-parties { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; margin-bottom: 24px; }
+.invoice-parties strong { display: block; margin-bottom: 4px; font-size: 13px; }
+.invoice-parties p { margin-bottom: 14px; color: var(--muted); }
+.invoice-totals { display: grid; grid-template-columns: minmax(0,1fr) minmax(100px,auto); gap: 8px 24px; max-width: 630px; margin: 24px 0; padding: 18px; border-radius: 10px; background: var(--bg); }
+.invoice-totals dt { font-size: 13px; color: var(--muted); }
+.invoice-totals dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.invoice-totals dt:last-of-type, .invoice-totals dd:last-of-type { color: var(--navy); font-weight: 800; }
+@media(max-width:760px) {
+  .invoice-parties { grid-template-columns: 1fr; }
+  .invoice-totals { gap: 8px 12px; padding: 14px; }
+}
+/* Timaflu case process forms and invoice fields. END */
 /* Timaflu frontend design system. End: shared layout and semantic component styles. */

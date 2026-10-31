@@ -48,6 +48,38 @@ def record_purchase_order():
     return redirect(url_for("purchasing.suppliers"))
 
 
+@purchasing.post("/suppliers/remove-offer")
+def remove_offer():
+    product_id = request.form.get("product_id", type=int)
+    supplier_id = request.form.get("supplier_id", type=int)
+    if not product_id or not supplier_id or min(product_id, supplier_id) < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product and supplier required.")
+    from domain.errors import DomainError
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig dat deze leverancier het medicijn niet meer levert.")
+    removed = SupplierRepository(get_connection()).remove_offer(product_id, supplier_id)
+    if not removed:
+        raise DomainError("Deze leverancierskoppeling is niet gevonden.")
+    flash("Leverancierskoppeling verwijderd; medicijn blijft in de catalogus.", "success")
+    return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
+
+
+@purchasing.post("/suppliers/remove-product")
+def remove_product_from_reorder_list():
+    product_id = request.form.get("product_id", type=int)
+    if not product_id or product_id < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product required.")
+    from domain.errors import DomainError
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig dat geen van de fabrikanten het medicijn kan leveren.")
+    changed = SupplierRepository(get_connection()).remove_from_internal_reorder_list(product_id)
+    if not changed:
+        raise DomainError("Medicijn niet gevonden in de interne bestellijst.")
+    flash("Medicijn uit interne bestellijst verwijderd, niet uit het verkoopassortiment.", "success")
+    return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
+
 PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",
     "number_of_retail_packages", "short_description", "long_description",

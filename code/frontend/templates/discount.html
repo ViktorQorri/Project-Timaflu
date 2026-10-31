@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Kortingsberekening{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Verkoop</span>
+  <h1>Kortingsberekening</h1>
+  <p>Orderbedrag en kortingen op basis van de geselecteerde klant. Het is een berekening, nog geen vastgelegde bestelling.</p>
+</section>
+<section class="stock-dashboard">
+  <h2>{{ customer.bedrijfsnaam }}</h2>
+  <p>{{ customer.klantadres }}</p>
+  <p>Betaalde jaaromzet vorig kalenderjaar: € {{ annual_revenue }}</p>
+  <p>Eerste bestelling: {{ 'Ja' if first_order else 'Nee' }}</p>
+  <dl class="invoice-totals">
+    <dt>Bestelbedrag</dt><dd>€ {{ discount.subtotal }}</dd>
+    <dt>Bestellingskorting</dt><dd>€ {{ discount.order_discount }}</dd>
+    <dt>Eenmalige korting</dt><dd>€ {{ discount.first_order_discount }}</dd>
+    <dt>Klantenkorting</dt><dd>€ {{ discount.customer_discount }}</dd>
+    <dt><strong>Te betalen</strong></dt><dd><strong>€ {{ discount.total }}</strong></dd>
+  </dl>
+  <a class="button button--secondary" href="{{ url_for('sales.orders') }}">Terug naar verkoop</a>
+</section>
+{% endblock %}

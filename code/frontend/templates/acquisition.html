@@ -2,12 +2,66 @@
 {% block title %}Acquisitie{% endblock %}
 {% block content %}
 <section class="page-intro">
-  <span class="eyebrow">Klantrelaties</span>
-  <h1>Acquisitie</h1>
-  <p>De accountmanager bezoekt nieuwe apotheken, licht de productcatalogus toe en controleert na een maand of een potentiële klant een bestelling heeft geplaatst.</p>
+  <span class="eyebrow">Acquisitie</span>
+  <h1>Acquisitiebezoek en opvolging</h1>
+  <p>Leg een bezoek aan een potentiële apotheek vast en controleer na een maand of de apotheek daadwerkelijk een bestelling heeft geplaatst.</p>
 </section>
-<section class="page-panel" aria-labelledby="acquisition-process">
-  <h2 id="acquisition-process">Opvolging van nieuwe apotheken</h2>
-  <p>Bij een vervolgcontact kan de accountmanager een eenmalige korting op de eerste bestelling aanbieden, onder de voorwaarden uit de casus.</p>
+<section class="stock-dashboard" aria-labelledby="visit-heading">
+  <h2 id="visit-heading">Bezoek registreren</h2>
+  <form class="stacked-form" method="post" action="{{ url_for('acquisition.record_visit') }}">
+    <div class="form-field">
+      <label for="visit-company">Bedrijf</label>
+      <input id="visit-company" name="company" required>
+    </div>
+    <div class="form-field">
+      <label for="visit-contact">Contactpersoon</label>
+      <input id="visit-contact" name="contact">
+    </div>
+    <div class="form-field">
+      <label for="visit-details">Contactgegevens</label>
+      <input id="visit-details" name="details">
+    </div>
+    <div class="form-field">
+      <label for="visit-address">Adres</label>
+      <input id="visit-address" name="address" required>
+    </div>
+    <div class="form-field">
+      <label for="visit-date">Bezoekdatum</label>
+      <input id="visit-date" name="visit_date" type="date" required>
+    </div>
+    <button type="submit">Bezoek opslaan</button>
+  </form>
+</section>
+<section class="stock-dashboard" aria-labelledby="followups-heading">
+  <h2 id="followups-heading">Opvolgen na minimaal één maand zonder bestelling</h2>
+  {% for prospect in prospects %}
+  <article class="page-panel" aria-labelledby="prospect-{{ prospect.potentiele_klant_id }}">
+    <h3 id="prospect-{{ prospect.potentiele_klant_id }}">{{ prospect.bedrijfsnaam }}</h3>
+    <p>{{ prospect.contactpersoon }} / {{ prospect.contactgegevens }}</p>
+    <p>{{ prospect.adres }}. Laatste bezoek: {{ prospect.bezoekdatum }}</p>
+    {% if prospect.klant_id %}
+      <p role="status">Deze apotheek heeft al een klantaccount, maar heeft nog geen bestelling geplaatst. Bel de contactpersoon; maak geen dubbel account aan.</p>
+    {% else %}
+      <form class="stacked-form" method="post" action="{{ url_for('acquisition.create_customer') }}">
+        <input type="hidden" name="prospect_id" value="{{ prospect.potentiele_klant_id }}">
+        <div class="form-field">
+          <label for="billing-{{ prospect.potentiele_klant_id }}">Factuuradres</label>
+          <input id="billing-{{ prospect.potentiele_klant_id }}" name="billing_address" required>
+        </div>
+        <div class="form-field">
+          <label for="delivery-{{ prospect.potentiele_klant_id }}">Afleveradres</label>
+          <input id="delivery-{{ prospect.potentiele_klant_id }}" name="delivery_address" required>
+        </div>
+        <label><input type="checkbox" name="consent" value="yes" required> Klant geeft toestemming voor account en eenmalige korting</label>
+        <button type="submit">Klantaccount aanmaken</button>
+      </form>
+    {% endif %}
+  </article>
+  {% else %}
+    <div class="stock-dashboard__empty" role="status">
+      <h3>Geen opvolging nodig</h3>
+      <p>Er zijn momenteel geen apotheken die minimaal één maand geleden zijn bezocht en nog geen bestelling hebben geplaatst.</p>
+    </div>
+  {% endfor %}
 </section>
 {% endblock %}

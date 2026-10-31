@@ -18,7 +18,7 @@
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <caption>Leveranciers voor {{ product_name }}, goedkoopste bovenaan</caption>
-          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th></tr></thead>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th><th scope="col">Leveranciersbeheer</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
@@ -33,6 +33,23 @@
                     <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
                     <label>Aantal <input name="quantity" type="number" min="1" step="1" required></label>
                     <button type="submit">Bevestigde order vastleggen</button>
+                  </form>
+                </td>
+                <td>
+                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
+                    <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
+                    <label><input type="checkbox" name="confirmed" value="yes" required>
+                      Fabrikant levert dit medicijn niet meer</label>
+                    <button type="submit">Leverancier loskoppelen</button>
+                  </form>
+                  <form method="post" action="{{ url_for('purchasing.remove_product_from_reorder_list') }}">
+                    <input type="hidden" name="product_id" value="{{ offer.product_id }}">
+                    <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
+                    <label><input type="checkbox" name="confirmed" value="yes" required>
+                      Alle fabrikanten zijn benaderd en kunnen niet leveren</label>
+                    <button type="submit">Verwijder uit interne bestellijst</button>
                   </form>
                 </td>
               </tr>

@@ -4,6 +4,7 @@ Visual rules follow the supplied design system. No frontend JavaScript,
 invented user roles or demonstration credentials are required by the case.
 """
 from pathlib import Path
+from contextlib import ExitStack
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -55,13 +56,23 @@ class DesignSystemTests(TestCase):
     def test_dashboard_and_mobile_process_layout(self):
         app = create_app()
         app.config.update(TESTING=True)
-        with patch("routes.home.get_connection", return_value=object()):
-            with patch("routes.home.HealthService"):
-                with app.test_client() as client:
-                    for route in ("/", "/customers", "/order-picking", "/deliveries",
-                                  "/invoices", "/acquisition", "/reports"):
-                        response = client.get(route)
-                        self.assertEqual(response.status_code, 200, route)
-                        self.assertIn(b"ui-system.css", response.data, route)
-                        self.assertIn(b"mobile-navigation", response.data, route)
-                        self.assertIn(b"main-content", response.data, route)
+        # A template render test should isolate database access. Real MySQL route
+        # behavior is tested separately in the repository integration suite.
+        with ExitStack() as stack:
+            for module in ("home", "order_picking", "distribution", "acquisition"):
+                stack.enter_context(patch(f"routes.{module}.get_connection", return_value=object()))
+            stack.enter_context(patch("routes.home.HealthService"))
+            bins = stack.enter_context(patch("routes.order_picking.PickingBinService"))
+            bins.return_value.bins.return_value = []
+            deliveries = stack.enter_context(patch("routes.distribution.AssessedRepository"))
+            deliveries.return_value.delivery_schedule.return_value = []
+            acquisition = stack.enter_context(patch("routes.acquisition.AssessedRepository"))
+            acquisition.return_value.prospect_followups.return_value = []
+            with app.test_client() as client:
+                for route in ("/", "/customers", "/order-picking", "/deliveries",
+                              "/invoices", "/acquisition", "/reports"):
+                    response = client.get(route)
+                    self.assertEqual(response.status_code, 200, route)
+                    self.assertIn(b"ui-system.css", response.data, route)
+                    self.assertIn(b"mobile-navigation", response.data, route)
+                    self.assertIn(b"main-content", response.data, route)
