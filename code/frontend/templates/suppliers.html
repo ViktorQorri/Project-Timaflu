@@ -29,6 +29,8 @@
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
                     <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
                     <label>Aantal <input name="quantity" type="number" min="1" step="1" required></label>
+                    <label><input type="checkbox" name="confirmed" value="yes" required>
+                      Ik heb contact gehad met de leverancier en deze bestelling is bevestigd</label>
                     <button type="submit">Bevestigde order vastleggen</button>
                   </form>
                 </td>
