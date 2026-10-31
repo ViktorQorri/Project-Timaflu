@@ -62,6 +62,12 @@ case (Manage supplied products)
     if (Confirmed?) then (yes)
       :Remove only this manufacturer-medicine link;
       :Keep manufacturer and medicine records;
+      if (Any supplier remains for this medicine?) then (yes)
+        :Keep supplier comparison available;
+      else (no)
+        :No further supplier-based reorder option;
+        :Keep stock shortage visible;
+      endif
       :Show confirmation;
     else (no)
       :Keep existing link;

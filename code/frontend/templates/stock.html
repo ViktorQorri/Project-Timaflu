@@ -18,7 +18,7 @@
     {% if shortages %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Producten die bijbesteld moeten worden, grootste tekort bovenaan</caption>
+          <caption>Alle voorraadtekorten, grootste tekort bovenaan. Alleen producten met een leverancier kunnen worden bijbesteld.</caption>
           <thead>
             <tr>
               <th scope="col">Product</th>
@@ -26,6 +26,7 @@
               <th scope="col" class="stock-dashboard__number">Voorraad</th>
               <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
               <th scope="col" class="stock-dashboard__number">Tekort</th>
+              <th scope="col">Inkoop</th>
             </tr>
           </thead>
           <tbody>
@@ -37,6 +38,13 @@
                 <td class="stock-dashboard__number">{{ item.minimumvoorraad }}</td>
                 <td class="stock-dashboard__number">
                   <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
+                </td>
+                <td>
+                  {% if item.heeft_leverancier %}
+                    <a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Leveranciers vergelijken</a>
+                  {% else %}
+                    <span>Geen leverancier; niet bijbestellen</span>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}

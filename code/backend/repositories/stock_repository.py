@@ -13,11 +13,17 @@ class StockRepository:
         LEFT JOIN includes catalog products without any warehouse location.
         Products removed from the assortment are not reordered, so they are left out.
         All quantities use the same units as Magazijnlocatie.aantal.
+        Supplier presence is derived from current offers: a product without an offer
+        remains a shortage, but is not shown as reorderable.
         """
         query = """
             SELECT p.product_id, p.artikelnummer, p.productnaam,
                    p.minimumvoorraad,
-                   COALESCE(SUM(m.aantal), 0) AS voorraad
+                   COALESCE(SUM(m.aantal), 0) AS voorraad,
+                   EXISTS (
+                       SELECT 1 FROM LeveranciersAanbod AS a
+                       WHERE a.product_id = p.product_id
+                   ) AS heeft_leverancier
             FROM Product AS p
             LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
             WHERE p.in_assortiment = TRUE
