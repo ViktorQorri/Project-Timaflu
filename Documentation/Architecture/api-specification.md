@@ -8,13 +8,15 @@ The JSON API that the warehouse robots use. Browsers use the HTML pages instead 
 2. [Errors](#errors)
 3. [GET /api/health](#get-apihealth)
 4. [POST /api/picking-bins](#post-apipicking-bins)
-5. [Planned endpoints](#planned-endpoints)
+5. [GET /api/robots/{robot_id}/next](#get-apirobotsrobot_idnext)
+6. [POST /api/robots/{robot_id}/complete](#post-apirobotsrobot_idcomplete)
+7. [POST /api/orders/{order_id}/suborders](#post-apiordersorder_idsuborders)
 
 ## General agreements
 
 - Base path: `/api`. All routes are in `code/backend/routes/api.py`.
 - Requests and answers are JSON (`Content-Type: application/json`). Field names are English and match the domain classes.
-- Calls that change data are `POST`. The robot sends its aisle (`"A"` to `"H"`) in every call that changes data.
+- Calls that change data are `POST`. Robot calls that change a sub-order include its aisle (`"A"` to `"H"`).
 - Every answer has an HTTP status code that matches the result:
 
 | Status | Meaning |
@@ -109,12 +111,54 @@ The first three checks run before any query. The rest run in one transaction tha
 
 **What is stored:** one row in `Verzamelbak` (`unieke_code`, `deelorder_id`). The query is in `PickingBinRepository.register()` and in `code/database/queries.sql`. The `/order-picking` page reads the same data to show which order is in which bins.
 
-## Planned endpoints
+## GET /api/robots/{robot_id}/next
 
-These calls follow from [Robot communication](architecture.md#robot-communication) and the order picking activity diagram. They are not built or specified yet:
+Returns the next unfinished sub-order assigned to the robot and its product lines.
 
-- Get the next partial order for this aisle.
-- Report that a bin is full and on the conveyor belt.
-- Report that the partial order is complete, so a new one can be assigned.
+**Request:** no body. The `aisle` query parameter is required.
 
-Add each one to this document in the same format when it is built.
+```http
+GET /api/robots/1/next?aisle=A
+```
+
+**Response 200, when a sub-order is available:**
+
+```json
+{"suborder": {"deelorder_id": 7, "bestelling_id": 3}, "lines": [{"product_id": 4, "productnaam": "Medicijn", "aantal": 2}]}
+```
+
+When no sub-order is available, `suborder` is `null` and `lines` is an empty array.
+
+**Errors:** 400 for a missing or invalid aisle; 404 when the robot is not assigned to that aisle.
+
+## POST /api/robots/{robot_id}/complete
+
+Marks an unfinished sub-order complete after at least one picking bin and one sub-order line are recorded.
+
+**Request:**
+
+```json
+{"aisle": "A", "suborder_id": 7}
+```
+
+**Response 200:**
+
+```json
+{"deelorder_id": 7, "afgerond": true}
+```
+
+**Errors:** 400 for a non-object body or invalid aisle/identifier; 404 when the robot is not assigned to the aisle or the sub-order does not belong to it; 409 when the sub-order is already complete, has no lines, or has no registered bin.
+
+## POST /api/orders/{order_id}/suborders
+
+Splits an order's reserved quantities across robot aisles. The order-picking screen exposes this action to an employee; the API supports the same operation for integrations.
+
+**Request:** no body.
+
+**Response 201:**
+
+```json
+{"suborders": [{"robot_id": 1, "suborder_id": 40, "lines": [{"product_id": 4, "aantal": 2}]}]}
+```
+
+**Errors:** 400 for an invalid order identifier; 404 when the order or a reserved product does not exist; 409 when the order is not ready, its sub-orders already exist, or available warehouse stock cannot fulfill its reservations.

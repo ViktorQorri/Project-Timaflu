@@ -151,22 +151,47 @@ class PickingBinPageTests(TestCase):
     def test_page_lists_bins_and_empty_state(self):
         with self.app.test_client() as client:
             with patch("routes.order_picking.get_connection", return_value=FakeConnection(rows=[BIN_ROW])):
-                response = client.get("/order-picking")
+                with patch("routes.order_picking.RobotOrderRepository.orders_ready_for_dispatch", return_value=[]):
+                    response = client.get("/order-picking")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"VB-0001", response.data)
                 self.assertIn(b"Gang B", response.data)
                 self.assertIn(b"Wordt verzameld", response.data)
             with patch("routes.order_picking.get_connection", return_value=FakeConnection()):
-                response = client.get("/order-picking")
+                with patch("routes.order_picking.RobotOrderRepository.orders_ready_for_dispatch", return_value=[]):
+                    response = client.get("/order-picking")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Nog geen verzamelbakken", response.data)
 
-    def test_page_has_no_registration_form(self):
+    def test_page_offers_dispatch_for_unassigned_orders(self):
+        order = {
+            "bestelling_id": 3,
+            "bedrijfsnaam": "Apotheek",
+            "gewenste_leverdatum": "2026-11-02",
+            "dagdeel": "ochtend",
+            "spoed": False,
+        }
         with self.app.test_client() as client:
             with patch("routes.order_picking.get_connection", return_value=FakeConnection()):
-                response = client.get("/order-picking")
-                self.assertNotIn(b"<form", response.data)
-                self.assertEqual(client.post("/order-picking/bins").status_code, 404)
+                with patch("routes.order_picking.RobotOrderRepository.orders_ready_for_dispatch", return_value=[order]):
+                    response = client.get("/order-picking")
+        self.assertIn(b"Verdeel over robots", response.data)
+        self.assertIn(b"/order-picking/orders/3/dispatch", response.data)
+
+    def test_dispatch_route_generates_robot_suborders(self):
+        with self.app.test_client() as client:
+            with patch("routes.order_picking.get_connection", return_value=FakeConnection()):
+                with patch("routes.order_picking.RobotOrderService.generate_suborders", return_value=[{"robot_id": 1}]) as generate:
+                    response = client.post("/order-picking/orders/3/dispatch")
+        self.assertEqual(response.status_code, 302)
+        generate.assert_called_once_with(3)
+
+    def test_order_page_has_no_old_bin_registration_route(self):
+        with self.app.test_client() as client:
+            with patch("routes.order_picking.get_connection", return_value=FakeConnection()):
+                with patch("routes.order_picking.RobotOrderRepository.orders_ready_for_dispatch", return_value=[]):
+                    response = client.post("/order-picking/bins")
+        self.assertEqual(response.status_code, 404)
 
 
 class PickingBinApiTests(TestCase):
