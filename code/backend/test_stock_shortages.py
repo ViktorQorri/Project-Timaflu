@@ -52,6 +52,7 @@ class StockShortageTests(TestCase):
         connection = FakeConnection(self.rows)
         self.assertEqual(StockRepository(connection).list_stock_below_minimum(), self.rows)
         self.assertIn("LEFT JOIN Magazijnlocatie", connection.cursor_instance.sql)
+        self.assertIn("p.in_assortiment = TRUE", connection.cursor_instance.sql)
         self.assertIn("HAVING voorraad < p.minimumvoorraad", connection.cursor_instance.sql)
 
     def test_service_calculates_shortage(self):
