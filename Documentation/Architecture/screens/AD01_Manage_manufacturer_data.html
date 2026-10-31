@@ -2,17 +2,41 @@
 <html lang="nl">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fabrikantgegevens beheren | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
-<body><div class="page"><header class="top">
-<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
-</header><section class="hero">
-<div class="overline">Inkoop · AD01</div>
+<body><div class="page">
+<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<section class="hero">
+<span class="overline">Inkoop · AD01</span>
 <h1>Fabrikantgegevens beheren</h1>
-<p>Conceptscherm op basis van AD01_Manage_manufacturer_data.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<p>Schermontwerp voor de activiteit AD01_Manage_manufacturer_data. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
 <main class="board" id="main">
-<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Inkoopmedewerker</span><span class="pill">Systeem</span>
-<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
-<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD01_Manage_manufacturer_data.puml">Bron (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD01_Manage_manufacturer_data.svg">Activity diagram (SVG)</a></div></aside>
-<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
-<div class="process"><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Open manufacturer overview</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Show list of manufacturers</p></div><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Enter new manufacturer data</p></div><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Select manufacturer</p></div><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Edit manufacturer data</p></div><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Select manufacturer</p></div><div class="step step--action"><h3>Inkoopmedewerker • actie</h3><p>Choose remove</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Remove manufacturer</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Show confirmation</p></div><div class="step step--feedback"><h3>Systeem • resultaat</h3><p>Proces stopt</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Validate data</p></div><div class="step step--decision"><h3>Systeem • keuze</h3><p>if (Data valid?)</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Save changes</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Show confirmation</p></div><div class="step step--decision"><h3>Systeem • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Show error message</p></div><div class="step step--feedback"><h3>Systeem • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Gebruikersinterface</span>
+<h2 id="input-heading">Gegevens en handelingen</h2>
+<div class="screen-fields"><div class="screen-field">
+<label for="field-1-0">Fabrikant</label>
+<input id="field-1-0" type="text" placeholder="Vul fabrikant in" disabled></div>
+<div class="screen-field">
+<label for="field-1-1">Adres</label>
+<input id="field-1-1" type="text" placeholder="Vul adres in" disabled></div>
+<div class="screen-field">
+<label for="field-1-2">Contactpersoon</label>
+<input id="field-1-2" type="text" placeholder="Vul contactpersoon in" disabled></div>
+<div class="screen-field">
+<label for="field-1-3">Telefoonnummer</label>
+<input id="field-1-3" type="text" placeholder="Vul telefoonnummer in" disabled></div>
+<div class="screen-field">
+<label for="field-1-4">Website</label>
+<input id="field-1-4" type="text" placeholder="Vul website in" disabled></div></div>
+<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Fabrikantgegevens opslaan</button>
+<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Overzicht</span>
+<h2 id="output-heading">Bijbehorende gegevens</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Fabrikant</th><th scope='col'>Contactpersoon</th><th scope='col'>Telefoonnummer</th><th scope='col'>Website</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD01_Manage_manufacturer_data.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD01_Manage_manufacturer_data.svg">Activity diagram (SVG)</a></div>
+</section></main>
+<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+</div></body></html>

@@ -2,17 +2,32 @@
 <html lang="nl">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Factuur maken | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
-<body><div class="page"><header class="top">
-<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
-</header><section class="hero">
-<div class="overline">Administratie · AD16</div>
+<body><div class="page">
+<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<section class="hero">
+<span class="overline">Administratie · AD16</span>
 <h1>Factuur maken</h1>
-<p>Conceptscherm op basis van AD16_Create_invoice.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<p>Schermontwerp voor de activiteit AD16_Create_invoice. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
 <main class="board" id="main">
-<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Administratiemedewerker</span><span class="pill">Systeem</span>
-<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
-<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Bron (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a></div></aside>
-<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
-<div class="process"><div class="step step--action"><h3>Administratiemedewerker • actie</h3><p>Start weekly invoicing</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Execute AD UC17 View delivered orders</p></div><div class="step step--decision"><h3>Systeem • keuze</h3><p>if (Uninvoiced delivered\norders available?)</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Bundle delivered orders of customer</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Calculate total of delivered products plus extra costs</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Show draft invoice</p></div><div class="step step--action"><h3>Administratiemedewerker • actie</h3><p>Check and approve invoice</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Save invoice</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Send invoice to customer</p></div><div class="step step--action"><h3>Systeem • actie</h3><p>Set orders to &quot;invoiced&quot;</p></div><div class="step step--decision"><h3>Systeem • keuze</h3><p>repeat while (Another customer with\nuninvoiced delivered orders?)</p></div><div class="step step--decision"><h3>Systeem • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--feedback"><h3>Systeem • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>
+<section class="screen-panel" aria-labelledby="input-heading">
+<span class="overline">Gebruikersinterface</span>
+<h2 id="input-heading">Gegevens en handelingen</h2>
+<div class="screen-fields"><div class="screen-field">
+<label for="field-16-0">Klantnummer</label>
+<input id="field-16-0" type="text" placeholder="Vul klantnummer in" disabled></div>
+<div class="screen-field">
+<label for="field-16-1">Factuurdatum</label>
+<input id="field-16-1" type="date" placeholder="Vul factuurdatum in" disabled></div></div>
+<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Factuur controleren</button>
+<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+</section>
+<section class="screen-panel" aria-labelledby="output-heading">
+<span class="overline">Overzicht</span>
+<h2 id="output-heading">Bijbehorende gegevens</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Geleverd medicijn</th><th scope='col'>Aantal</th><th scope='col'>Prijs</th><th scope='col'>Regeltotaal</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a></div>
+</section></main>
+<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+</div></body></html>
