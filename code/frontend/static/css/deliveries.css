@@ -1,0 +1,90 @@
+/* Start: Mobiele distributieweergave uit de oorspronkelijke Timaflu-casus. */
+.stock-dashboard--deliveries .stock-dashboard__table form {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 100%;
+}
+.stock-dashboard--deliveries .stock-dashboard__table input:not([type="checkbox"]),
+.stock-dashboard--deliveries .stock-dashboard__table select,
+.stock-dashboard--deliveries .stock-dashboard__table textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 0.65rem;
+  font: inherit;
+}
+.stock-dashboard--deliveries .stock-dashboard__table button {
+  max-width: 100%;
+  padding: 0.7rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+.stock-dashboard--deliveries .stock-dashboard__table td,
+.stock-dashboard--deliveries .stock-dashboard__table th {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .stock-dashboard--deliveries {
+    padding: 1rem 0.75rem;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table-wrap {
+    overflow-x: visible;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table {
+    min-width: 0;
+    display: block;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table tbody,
+  .stock-dashboard--deliveries .stock-dashboard__table tr {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table tr {
+    border-bottom: 2px solid var(--color-line);
+    padding: 0.75rem 0;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table td,
+  .stock-dashboard--deliveries .stock-dashboard__table th[scope="row"] {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 35%) minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: start;
+    padding: 0.45rem 0.85rem;
+    border: none;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table td[data-label]::before,
+  .stock-dashboard--deliveries .stock-dashboard__table th[data-label]::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-weight: 700;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table td[data-label="Afhandeling"] {
+    display: block;
+    padding-top: 1rem;
+  }
+  .stock-dashboard--deliveries .stock-dashboard__table td[data-label="Afhandeling"]::before {
+    display: block;
+    margin-bottom: 0.65rem;
+  }
+}
+/* Einde: Mobiele distributieweergave zonder JavaScript. */

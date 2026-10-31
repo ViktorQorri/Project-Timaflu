@@ -29,7 +29,8 @@ class Cursor:
     def fetchone(self):
         query=self.statements[-1][0]
         if "SELECT lp.rit_id, lp.pogingnummer" in query:
-            return {"rit_id": 5, "pogingnummer": 1, "resultaat": self.state.get("first")}
+            return {"rit_id": 5, "pogingnummer": 1, "resultaat": self.state.get("first"),
+                    "first_attempt_seconds": 10 * 3600}
         if "SELECT lp.resultaat" in query:
             return {"resultaat":self.state.get("second_result")} if self.state.get("second_exists") else None
         raise AssertionError(query)
@@ -72,7 +73,8 @@ class CaseProcessTests(TestCase):
         AssessedRepository(db).record_second_attempt_outcome(4,date(2026,10,30),"niet aanwezig",None)
         self.assertFalse(db.state["signed"])
         self.assertEqual(db.state["second_result"],"niet aanwezig")
-        self.assertFalse(any("UPDATE Bestelling" in q for q,_ in db.cursor_instance.statements))
+        self.assertTrue(any("status_naam='niet afgeleverd'" in q
+                            for q,_ in db.cursor_instance.statements))
 
     def test_courier_web_routes_are_separate(self):
         app=create_app()

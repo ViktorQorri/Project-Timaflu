@@ -162,6 +162,7 @@ class Customer:
         self.deliveryAddress = deliveryAddress
         self.billingAddress = billingAddress
         self.blocked = False
+        self.oneTimeDiscountGranted = False
 
     def checkOrderBlock(self):
         return self.blocked
@@ -224,9 +225,10 @@ class AcquisitionVisit:
 
 
 class ProspectiveCustomer:
-    def __init__(self, companyName, ordered=False):
+    def __init__(self, companyName, ordered=False, followUpClosed=False):
         self.companyName = companyName
         self.ordered = ordered
+        self.followUpClosed = followUpClosed
 
     def hasPlacedOrder(self):
         return self.ordered
@@ -235,7 +237,7 @@ class ProspectiveCustomer:
         m = today.month - 1 or 12
         y = today.year - int(today.month == 1)
         cutoff = date(y, m, min(today.day, monthrange(y, m)[1]))
-        return not self.hasPlacedOrder() and lastVisitDate <= cutoff
+        return not self.hasPlacedOrder() and not self.followUpClosed and lastVisitDate <= cutoff
 
     def offerOneTimeDiscount(self):
         return Decimal("0.10")

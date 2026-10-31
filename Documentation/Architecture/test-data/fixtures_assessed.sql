@@ -28,6 +28,25 @@ UPDATE Factuur SET bedrag_excl_btw=40.00, btw_bedrag=3.60,
 INSERT INTO Levering(bestelling_id) VALUES(1);
 INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd,factuur_id)
 VALUES(1,1,2,1);
+
+-- Distinct unpaid 2026 invoice: only real delivered lines and explicit historical totals.
+INSERT INTO Bestelling(klant_id,afleveradres_id,betaaladres_id,besteld_op,gewenste_leverdatum,dagdeel,spoed,status_naam)
+VALUES (1,1,1,'2026-10-08 09:00:00','2026-10-09','ochtend',FALSE,'afgeleverd');
+INSERT INTO Bestelregel(bestelling_id,product_id,aantal,prijs_per_eenheid)
+VALUES (2,1,2,20.00);
+INSERT INTO Factuur(klant_id,factuurdatum,betaald_op)
+VALUES (1,'2026-10-10',NULL);
+-- Previous-year net paid turnover is 37.28, so customer discount is 5%.
+-- This is not a first order. The test total was explicitly calculated.
+UPDATE Factuur SET bedrag_excl_btw=40.00, btw_bedrag=3.60,
+    bedrag_incl_btw=43.60, bestellingskorting=0.00,
+    bedrag_na_bestellingskorting=43.60, eenmalige_korting=0.00,
+    bedrag_na_eenmalige_korting=43.60, klantenkorting=2.18,
+    totaal_bedrag=41.42 WHERE factuur_id=2;
+INSERT INTO Levering(bestelling_id) VALUES(2);
+INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd,factuur_id)
+VALUES(2,1,2,2);
+
 INSERT INTO Koerier(naam,beschikbaar) VALUES ('Testkoerier',TRUE);
 INSERT INTO Rit(koerier_id,ritdatum) VALUES(1,'2026-10-31');
 INSERT INTO Leverpoging(levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)

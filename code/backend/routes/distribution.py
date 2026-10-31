@@ -51,3 +51,19 @@ def second_attempt_result():
     )
     flash("Uitkomst van de tweede bezorgpoging geregistreerd.", "success")
     return redirect(url_for("distribution.deliveries",day=day.isoformat()))
+
+@distribution.post("/deliveries/failed-followup")
+def failed_followup():
+    """Record the new date and any costs after sales has spoken to the customer."""
+    try:
+        delivery_id = int(request.form["delivery_id"])
+        requested_date = date.fromisoformat(request.form["requested_date"])
+    except (KeyError, ValueError) as exc:
+        raise DomainError("Geldige leveringsgegevens zijn verplicht.") from exc
+    if delivery_id < 1 or request.form.get("customer_contact_confirmed") != "yes":
+        raise DomainError("Bevestig eerst het contact met de klant.")
+    AssessedRepository(get_connection()).record_failed_delivery_followup(
+        delivery_id, requested_date, request.form.get("time_slot"),
+        request.form.get("extra_cost"), request.form.get("explanation", ""))
+    flash("Nieuwe leverafspraak en eventuele bezorgkosten vastgelegd.", "success")
+    return redirect(url_for("distribution.deliveries", day=request.form.get("day")))

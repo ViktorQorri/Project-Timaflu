@@ -20,6 +20,7 @@ CREATE TABLE Klant (
     bedrijfsnaam VARCHAR(100) NOT NULL,
     telefoonnummer VARCHAR(25),
     contactpersoon VARCHAR(100),
+    eenmalige_korting_toegezegd BOOLEAN NOT NULL DEFAULT FALSE,
     afleveradres_id INT NOT NULL,
     betaaladres_id INT NOT NULL,
 
@@ -43,6 +44,7 @@ CREATE TABLE PotentieleKlant (
     contactgegevens VARCHAR(255),
     adres_id INT NOT NULL,
     klant_id INT UNIQUE,
+    opvolging_afgesloten BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (adres_id)
         REFERENCES Adres(adres_id),
@@ -550,5 +552,6 @@ VALUES
     ('wordt verzameld'),
     ('verstuurd'),
     ('backorder'),
-    ('afgeleverd');
+    ('afgeleverd'),
+    ('niet afgeleverd');
 

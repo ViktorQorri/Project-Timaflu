@@ -23,6 +23,13 @@
 <label>Afleveradres <input name="delivery_address" required></label>
 <label><input type="checkbox" name="consent" value="yes" required> Akkoord met klantaccount en eenmalige korting</label>
 <button>Klantaccount aanmaken</button></form>
-{% endif %}</section>
+{% endif %}
+<form method="post" action="{{url_for('acquisition.decline_followup')}}">
+  <input type="hidden" name="prospect_id" value="{{prospect.potentiele_klant_id}}">
+  <label><input type="checkbox" name="declined" value="yes" required>
+    De apotheek heeft na het vervolggesprek geen interesse; verdere acquisitie stopt</label>
+  <button type="submit">Opvolging afsluiten</button>
+</form>
+</section>
 {% else %}<p>Geen opvolging nodig.</p>{% endfor %}
 {% endblock %}

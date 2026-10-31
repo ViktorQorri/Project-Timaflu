@@ -5,6 +5,9 @@
 <p>Klantadres: {{customer.klantadres}}</p>
 <p>Betaalde jaaromzet vorig kalenderjaar: € {{annual_revenue}}</p>
 <p>Eerste bestelling: {{'ja' if first_order else 'nee'}}</p>
+{% if customer.eenmalige_korting_toegezegd %}
+<p>Acquisitie heeft een eenmalige korting van 10% op de eerste bestelling toegezegd.</p>
+{% endif %}
 <dl>
 <dt>Bestelbedrag</dt><dd>€ {{discount.subtotal}}</dd>
 <dt>Bestellingskorting</dt><dd>€ {{discount.order_discount}}</dd>
