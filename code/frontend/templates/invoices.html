@@ -1,42 +1,77 @@
 {% extends "base.html" %}
-{% block title %}Facturen{% endblock %}
+{% block title %}Openstaande facturen{% endblock %}
 {% block content %}
-<h1>Openstaande facturen</h1>
-<form method="get"><label>Klantnummer <input type="number" min="1" name="customer_id" required value="{{customer_id or ''}}"></label><button>Opzoeken</button></form>
+<section class="page-intro">
+  <span class="eyebrow">Administratie</span>
+  <h1>Openstaande facturen</h1>
+  <p>Zoek de facturen van een klant op. De bedragen hieronder worden uit de vastgelegde factuurgegevens gelezen en niet achteraf met geschatte kortingen herberekend.</p>
+</section>
+<form method="get" class="lookup-form">
+  <div class="form-field">
+    <label for="invoice-customer">Klantnummer</label>
+    <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{customer_id or ''}}">
+  </div>
+  <button type="submit">Facturen opzoeken</button>
+</form>
 {% for f in invoices %}
-<section>
-  <h2>Factuur {{f.invoice_number}}</h2>
-  <p>{{f.date}} — {{f.customer_name}} — {{f.customer_address}}</p>
-  <table><thead><tr><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
-    <tbody>{% for r in f.lines %}<tr><td>{{r.quantity}}</td><td>{{r.unit_price}}</td><td>{{r.line_total}}</td></tr>{% endfor %}</tbody></table>
-  <p>Totaal excl. btw: {{ f.total_ex_vat if f.total_ex_vat is not none else 'Niet vastgelegd' }}</p><p>9% btw: {{ f.vat_9_percent if f.vat_9_percent is not none else 'Niet vastgelegd' }}</p>
-  <p>Totaal incl. btw: {{ f.total_incl_vat if f.total_incl_vat is not none else 'Niet vastgelegd' }}</p>
-  <p>Bestellingskorting: {{ f.order_discount if f.order_discount is not none else 'Niet vastgelegd' }}</p>
-  <p>Eenmalige korting: {{ f.first_order_discount if f.first_order_discount is not none else 'Niet vastgelegd' }}</p>
-  <p>Klantenkorting: {{ f.customer_discount if f.customer_discount is not none else 'Niet vastgelegd' }}</p>
-  <strong>Totaal: {{ f.total if f.total is not none else 'Niet vastgelegd' }}</strong>
+<section class="stock-dashboard" aria-labelledby="invoice-{{f.invoice_number}}">
+  <header class="stock-dashboard__intro">
+    <div><span class="eyebrow">Factuur</span><h2 id="invoice-{{f.invoice_number}}">Factuur {{f.invoice_number}}</h2></div>
+  </header>
+  <div class="invoice-parties">
+    <div><strong>Datum</strong><p>{{f.date}}</p><strong>Timaflu</strong><p>Afzenderadres: niet opgenomen in de casus</p></div>
+    <div><strong>Factuurnummer</strong><p>{{f.invoice_number}}</p><strong>{{f.customer_name}}</strong><p>{{f.customer_address}}</p></div>
+  </div>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Daadwerkelijk geleverde producten</caption>
+      <thead><tr><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
+      <tbody>
+        {% for line in f.lines %}
+        <tr><td>{{line.quantity}}</td><td>€ {{line.unit_price}}</td><td>€ {{line.line_total}}</td></tr>
+        {% else %}
+        <tr><td colspan="3">Geen geleverde regels vastgelegd.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <dl class="invoice-totals">
+    {% for label,value in [
+      ('Totaal excl. btw',f.total_ex_vat),
+      ('9% btw',f.vat_9_percent),
+      ('Totaal incl. btw',f.total_incl_vat),
+      ('Bestellingskorting',f.order_discount),
+      ('Totaal incl. bestellingskorting',f.total_after_order_discount),
+      ('Eenmalige korting',f.first_order_discount),
+      ('Totaal incl. eenmalige korting',f.total_after_first_order_discount),
+      ('Klantenkorting',f.customer_discount),
+      ('Totaal incl. klantenkorting',f.total)
+    ] %}
+    <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
+    {% endfor %}
+  </dl>
   {% if not f.snapshot_complete %}
-  <p class="flash flash-warning" role="status">
-    Historische korting of totaal ontbreekt. Het eerder verstuurde definitieve
-    factuurbedrag kan niet worden herberekend uit alleen de geleverde regels.
-  </p>
+  <p class="flash flash-warning" role="status">Een historisch factuurbedrag of een toegepaste korting is niet vastgelegd. Een eerder verzonden bedrag mag niet worden herberekend met aangenomen korting.</p>
   {% endif %}
-  <p>Bedrag na bestellingskorting: {{ f.total_after_order_discount if f.total_after_order_discount is not none else 'Niet vastgelegd' }}</p>
-  <p>Bedrag na eenmalige korting: {{ f.total_after_first_order_discount if f.total_after_first_order_discount is not none else 'Niet vastgelegd' }}</p>
-  <p>Betalingsopvolging: {{f.action}}</p>
-  <form method="post" action="{{url_for('administration.invoice_action')}}">
-  <input type="hidden" name="invoice_id" value="{{f.invoice_number}}">
-  <input type="hidden" name="customer_id" value="{{customer_id}}">
-  <label>Actie <select name="action">
-     <option value="reminder1">Eerste herinnering</option>
-     <option value="reminder2">Tweede herinnering</option>
-     <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
-     <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
-     {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
-  </select></label>
-  <label>Ontvangen bedrag (alleen bij volledig betaald) <input type="number" min="0" step="0.01" name="received_amount"></label>
-  <button>Registreer</button>
+  <h3>Betalingsopvolging</h3>
+  <p>{{f.action}}</p>
+  <form method="post" action="{{url_for('administration.invoice_action')}}" class="stacked-form">
+    <input type="hidden" name="invoice_id" value="{{f.invoice_number}}">
+    <input type="hidden" name="customer_id" value="{{customer_id}}">
+    <label for="invoice-action-{{f.invoice_number}}">Actie</label>
+    <select id="invoice-action-{{f.invoice_number}}" name="action">
+      <option value="reminder1">Eerste herinnering</option>
+      <option value="reminder2">Tweede herinnering</option>
+      <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
+      <option value="payment_plan_rejected">Betalingsregeling geweigerd, incasso</option>
+      {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
+    </select>
+    <label for="invoice-amount-{{f.invoice_number}}">Ontvangen bedrag (alleen bij volledig betaald)</label>
+    <input id="invoice-amount-{{f.invoice_number}}" type="number" min="0" step="0.01" name="received_amount">
+    <button type="submit">Actie registreren</button>
   </form>
 </section>
-{% else %}{% if customer_id %}<p>Geen facturen gevonden.</p>{% endif %}{% endfor %}
+{% else %}
+{% if customer_id %}<p role="status">Geen facturen gevonden.</p>{% endif %}
+{% endfor %}
 {% endblock %}

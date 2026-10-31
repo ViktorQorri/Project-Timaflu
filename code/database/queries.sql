@@ -72,7 +72,9 @@ ORDER BY p.productnaam ASC;
 
 -- AssessedRepository.customer_revenue
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=1;
+SELECT k.klant_id, k.bedrijfsnaam, a.adres AS klantadres FROM Klant k
+                         JOIN Adres a ON a.adres_id=k.betaaladres_id
+                         WHERE k.klant_id=1;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT 1 FROM Factuur WHERE klant_id=1
                          AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
@@ -124,28 +126,45 @@ SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
                 JOIN Adres a ON a.adres_id=b.afleveradres_id
                 WHERE r.ritdatum='2026-10-30' ORDER BY lp.geplande_tijd;
 
--- AssessedRepository.register_delivery_attempt
+-- AssessedRepository.schedule_second_attempt
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
-                             FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
-                             WHERE lp.levering_id=1 AND r.ritdatum=CURRENT_DATE()
-                             ORDER BY lp.pogingnummer DESC FOR UPDATE;
+                       FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND r.ritdatum='2026-10-30'
+                       ORDER BY lp.pogingnummer DESC FOR UPDATE;
 -- Query 2 (illustrative input, not a claimed database result)
-UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=1 AND pogingnummer=1;
+UPDATE Leverpoging SET resultaat='niet aanwezig',
+                              ontvangst_getekend=FALSE
+                       WHERE levering_id=1 AND pogingnummer=1;
 -- Query 3 (illustrative input, not a claimed database result)
-INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
-                             VALUES (1,2,1,'14:00:00','niet aanwezig',0);
--- Query 4 (illustrative input, not a claimed database result)
-UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+INSERT INTO Leverpoging
+                       (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
+                       VALUES (1,2,1,'14:00:00',NULL,NULL);
+
+-- AssessedRepository.record_second_attempt_outcome
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND lp.pogingnummer=2 AND r.ritdatum='2026-10-30'
+                       FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=1
+                       WHERE levering_id=1 AND pogingnummer=2;
+-- Query 3 (illustrative input, not a claimed database result)
+UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
 
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
-                       p.contactgegevens, a.adres, MAX(v.bezoekdatum) AS bezoekdatum
+                       p.contactgegevens, a.adres, p.klant_id,
+                       MAX(v.bezoekdatum) AS bezoekdatum
                 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
                 JOIN Adres a ON a.adres_id=p.adres_id
-                WHERE p.klant_id IS NULL
-                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
+                )
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
                 HAVING MAX(v.bezoekdatum)<='2026-09-30'
                 ORDER BY bezoekdatum;
 

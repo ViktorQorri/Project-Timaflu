@@ -2,6 +2,7 @@
 {% block title %}Kortingsberekening{% endblock %}
 {% block content %}
 <h1>Bestelling: kortingsberekening voor {{customer.bedrijfsnaam}}</h1>
+<p>Klantadres: {{customer.klantadres}}</p>
 <p>Betaalde jaaromzet vorig kalenderjaar: € {{annual_revenue}}</p>
 <p>Eerste bestelling: {{'ja' if first_order else 'nee'}}</p>
 <dl>

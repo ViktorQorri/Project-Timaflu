@@ -14,10 +14,24 @@ def deliveries():
 
 @distribution.post("/deliveries/second-attempt")
 def second_attempt():
+    """First absence: schedule same-day second visit without a final outcome."""
     day=date.fromisoformat(request.form["day"])
     delivery_id=int(request.form["delivery_id"])
-    delivered=request.form.get("outcome")=="afgeleverd"
     planned=time.fromisoformat(request.form["time"])
-    AssessedRepository(get_connection()).register_delivery_attempt(delivery_id,delivered,planned)
-    flash("Tweede bezorgpoging geregistreerd.","success")
+    AssessedRepository(get_connection()).schedule_second_attempt(delivery_id,planned,day)
+    flash("Eerste afwezigheid vastgelegd; tweede poging op dezelfde dag ingepland.", "success")
+    return redirect(url_for("distribution.deliveries",day=day.isoformat()))
+
+
+@distribution.post("/deliveries/second-attempt/result")
+def second_attempt_result():
+    """Record delivery or second absence only after the courier returns."""
+    day=date.fromisoformat(request.form["day"])
+    delivery_id=int(request.form["delivery_id"])
+    outcome=request.form.get("outcome","")
+    confirmed=request.form.get("signature_confirmed")
+    AssessedRepository(get_connection()).record_second_attempt_outcome(
+        delivery_id,day,outcome,confirmed
+    )
+    flash("Uitkomst van de tweede bezorgpoging geregistreerd.", "success")
     return redirect(url_for("distribution.deliveries",day=day.isoformat()))

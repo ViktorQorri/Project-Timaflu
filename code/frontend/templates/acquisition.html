@@ -14,11 +14,15 @@
 <section><strong>{{prospect.bedrijfsnaam}}</strong>
 <p>{{prospect.contactpersoon}} — {{prospect.contactgegevens}} — {{prospect.adres}}</p>
 <p>Bezoek: {{prospect.bezoekdatum}}</p>
+{% if prospect.klant_id %}
+<p role="status">Er bestaat al een klantaccount, maar er is nog geen bestelling geplaatst. Neem telefonisch contact op. Maak geen dubbel account aan.</p>
+{% else %}
 <form method="post" action="{{url_for('acquisition.create_customer')}}">
 <input type="hidden" name="prospect_id" value="{{prospect.potentiele_klant_id}}">
 <label>Factuuradres <input name="billing_address" required></label>
 <label>Afleveradres <input name="delivery_address" required></label>
 <label><input type="checkbox" name="consent" value="yes" required> Akkoord met klantaccount en eenmalige korting</label>
-<button>Klantaccount aanmaken</button></form></section>
+<button>Klantaccount aanmaken</button></form>
+{% endif %}</section>
 {% else %}<p>Geen opvolging nodig.</p>{% endfor %}
 {% endblock %}

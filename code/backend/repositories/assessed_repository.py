@@ -9,7 +9,9 @@ class AssessedRepository:
 
     def customer_revenue(self, customer_id, year):
         with self.db.cursor(dictionary=True) as c:
-            c.execute("SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=%s", (customer_id,))
+            c.execute("""SELECT k.klant_id, k.bedrijfsnaam, a.adres AS klantadres FROM Klant k
+                         JOIN Adres a ON a.adres_id=k.betaaladres_id
+                         WHERE k.klant_id=%s""", (customer_id,))
             customer = c.fetchone()
             if not customer:
                 raise DomainError("Unknown customer")
@@ -83,27 +85,72 @@ class AssessedRepository:
             """,(day,))
             return c.fetchall()
 
-    def register_delivery_attempt(self, delivery_id, delivered, attempt_time):
-        with self.db.cursor() as c:
+    def schedule_second_attempt(self, delivery_id, planned_time, delivery_day):
+        """First absence: reschedule for the same delivery date, without an outcome."""
+        with self.db.cursor(dictionary=True) as c:
             try:
-                c.execute("""SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
-                             FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
-                             WHERE lp.levering_id=%s AND r.ritdatum=CURRENT_DATE()
-                             ORDER BY lp.pogingnummer DESC FOR UPDATE""", (delivery_id,))
-                last=c.fetchone()
-                if not last:
-                    raise DomainError("Delivery not scheduled")
-                ride, attempt, previous_result=last
-                if previous_result=="afgeleverd":
-                    raise DomainError("Delivery is already completed")
-                if attempt >= 2:
-                    raise DomainError("Maximum two attempts")
-                c.execute("UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=%s AND pogingnummer=%s",(delivery_id,attempt))
-                c.execute("""INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
-                             VALUES (%s,2,%s,%s,%s,%s)""",
-                          (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",bool(delivered)))
-                if delivered:
-                    c.execute("UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=%s",(delivery_id,))
+                c.execute(
+                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+                       FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND r.ritdatum=%s
+                       ORDER BY lp.pogingnummer DESC FOR UPDATE""",
+                    (delivery_id, delivery_day),
+                )
+                row = c.fetchone()
+                if not row:
+                    raise DomainError("Levering niet in het rooster voor deze datum.")
+                if row["pogingnummer"] != 1 or row["resultaat"] == "afgeleverd":
+                    raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
+                c.execute(
+                    """UPDATE Leverpoging SET resultaat='niet aanwezig',
+                              ontvangst_getekend=FALSE
+                       WHERE levering_id=%s AND pogingnummer=1""",
+                    (delivery_id,),
+                )
+                c.execute(
+                    """INSERT INTO Leverpoging
+                       (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
+                       VALUES (%s,2,%s,%s,NULL,NULL)""",
+                    (delivery_id, row["rit_id"], planned_time),
+                )
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def record_second_attempt_outcome(self, delivery_id, delivery_day, outcome, signature_confirmed):
+        """Record second visit only after it takes place; never invent a signature."""
+        if outcome not in ("afgeleverd", "niet aanwezig"):
+            raise DomainError("Ongeldige afleveruitkomst.")
+        if outcome == "afgeleverd" and signature_confirmed != "yes":
+            raise DomainError("Bevestig dat de klant voor ontvangst heeft getekend.")
+        if outcome == "niet aanwezig" and signature_confirmed == "yes":
+            raise DomainError("Zonder aflevering kan geen ontvangst worden bevestigd.")
+        with self.db.cursor(dictionary=True) as c:
+            try:
+                c.execute(
+                    """SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND lp.pogingnummer=2 AND r.ritdatum=%s
+                       FOR UPDATE""",
+                    (delivery_id, delivery_day),
+                )
+                row = c.fetchone()
+                if not row:
+                    raise DomainError("Geen tweede bezorgpoging gepland voor deze dag.")
+                if row["resultaat"] is not None:
+                    raise DomainError("Tweede bezorgpoging is al afgehandeld.")
+                c.execute(
+                    """UPDATE Leverpoging SET resultaat=%s, ontvangst_getekend=%s
+                       WHERE levering_id=%s AND pogingnummer=2""",
+                    (outcome, outcome == "afgeleverd", delivery_id),
+                )
+                if outcome == "afgeleverd":
+                    c.execute(
+                        """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
+                        (delivery_id,),
+                    )
                 self.db.commit()
             except Exception:
                 self.db.rollback()
@@ -113,11 +160,14 @@ class AssessedRepository:
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
                 SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
-                       p.contactgegevens, a.adres, MAX(v.bezoekdatum) AS bezoekdatum
+                       p.contactgegevens, a.adres, p.klant_id,
+                       MAX(v.bezoekdatum) AS bezoekdatum
                 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
                 JOIN Adres a ON a.adres_id=p.adres_id
-                WHERE p.klant_id IS NULL
-                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
+                )
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
                 HAVING MAX(v.bezoekdatum)<=%s
                 ORDER BY bezoekdatum
             """,(cutoff,))
