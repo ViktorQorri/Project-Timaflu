@@ -28,6 +28,7 @@ class ProspectiveCustomer {
     companyName
     contactPerson
     contactDetails
+    followUpStatus
     --
     hasPlacedOrder()
     checkFollowUpAfterOneMonth()

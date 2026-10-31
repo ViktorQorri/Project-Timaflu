@@ -285,7 +285,7 @@ Toegangsbeperkingen moeten visueel consequent zijn:
 - Begin acties met een werkwoord.
 - Gebruik consistente termen uit het bedrijfsproces.
 - Gebruik bijvoorbeeld altijd `Leveringen`, niet afwisselend `Transport` of `Bezorging`.
-- Gebruik statussen zoals `Wordt verzameld`, `Verstuurd`, `Backorder` en `Afgeleverd`.
+- Gebruik statussen zoals `Nieuw`, `Wordt verzameld`, `Backorder`, `Ingepakt`, `Verstuurd` en `Afgeleverd`.
 - Vermijd technische termen in de gebruikersinterface.
 
 ## 11. Implementatie

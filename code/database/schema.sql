@@ -20,6 +20,7 @@ CREATE TABLE Klant (
     bedrijfsnaam VARCHAR(100) NOT NULL,
     telefoonnummer VARCHAR(25),
     contactpersoon VARCHAR(100),
+    eenmalige_korting_toegekend BOOLEAN NOT NULL DEFAULT FALSE,
     afleveradres_id INT NOT NULL,
     betaaladres_id INT NOT NULL,
 
@@ -43,6 +44,8 @@ CREATE TABLE PotentieleKlant (
     contactgegevens VARCHAR(255),
     adres_id INT NOT NULL,
     klant_id INT UNIQUE,
+    status ENUM('open', 'geconverteerd', 'geen_interesse', 'geen_toestemming')
+        NOT NULL DEFAULT 'open',
 
     FOREIGN KEY (adres_id)
         REFERENCES Adres(adres_id),
@@ -236,7 +239,8 @@ CREATE TABLE Bestelling (
     gewenste_leverdatum DATE NOT NULL,
     dagdeel ENUM('ochtend', 'middag') NOT NULL,
     spoed BOOLEAN NOT NULL DEFAULT FALSE,
-    status_naam VARCHAR(40),
+    status_naam VARCHAR(40) NOT NULL DEFAULT 'nieuw',
+    aantal_verhuisdozen INT NOT NULL DEFAULT 0,
     eenmalige_korting_toegepast BOOLEAN
         NOT NULL DEFAULT FALSE,
     extra_bezorgkosten DECIMAL(10,2)
@@ -255,7 +259,8 @@ CREATE TABLE Bestelling (
     FOREIGN KEY (status_naam)
         REFERENCES OrderStatus(naam),
 
-    CHECK (extra_bezorgkosten >= 0)
+    CHECK (extra_bezorgkosten >= 0),
+    CHECK (aantal_verhuisdozen >= 0)
 );
 
 
@@ -523,8 +528,9 @@ CREATE TABLE Betalingsherinnering (
 
 INSERT INTO OrderStatus (naam)
 VALUES
+    ('nieuw'),
     ('wordt verzameld'),
-    ('verstuurd'),
     ('backorder'),
+    ('ingepakt'),
+    ('verstuurd'),
     ('afgeleverd');
-

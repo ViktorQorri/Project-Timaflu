@@ -21,6 +21,7 @@ code/
     static/css/         style.css
   database/
     schema.sql          creates the tables
+    migrations/         one-time updates for existing databases
 ```
 
 ## Run locally
@@ -36,6 +37,8 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    ```
 
 2. Run `database\schema.sql` against the `timaflu` database to create the tables.
+   For an existing database, apply each unapplied SQL file in `database\migrations\`
+   once, in filename order.
 
 3. Install the dependencies, from the `code` folder:
 
