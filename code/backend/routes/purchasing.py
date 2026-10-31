@@ -67,6 +67,7 @@ def reorder():
         flash(f"Inkooporder {order_id} is geregistreerd.", "success")
         return redirect(url_for("purchasing.reorder"))
     result = service.overview(request.args.get("product_id"))
+    result["recorded_orders"] = service.recorded_orders()
     return render_template("reorder.html", **result)
 
 @purchasing.get("/stock/minimums")

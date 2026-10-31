@@ -29,7 +29,7 @@ SELECT 1 FROM LeveranciersAanbod AS a
 JOIN Product AS p ON p.product_id = a.product_id
 WHERE a.leverancier_id = 1 AND a.product_id = 1
   AND p.in_assortiment = TRUE;
-INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
+INSERT INTO Inkoopbestelling (leverancier_id, besteld_op, status_naam) VALUES (1, CURRENT_TIMESTAMP, 'besteld');
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
 -- Both INSERT statements are one transaction in the application.
@@ -156,3 +156,12 @@ VALUES (1, 'paracetamol', '500 mg');
 -- with example product 1. The row stays, so orders, deliveries and invoices keep working.
 UPDATE Product SET in_assortiment = FALSE
 WHERE product_id = 1 AND in_assortiment = TRUE;
+
+-- GET /reorder: registered supplier orders; actual persisted date and current status.
+SELECT i.inkoopbestelling_id, i.besteld_op, i.status_naam,
+       l.naam AS leverancier, p.productnaam, r.aantal
+FROM Inkoopbestelling AS i
+JOIN Leverancier AS l ON l.leverancier_id = i.leverancier_id
+JOIN Inkoopbestelregel AS r ON r.inkoopbestelling_id = i.inkoopbestelling_id
+JOIN Product AS p ON p.product_id = r.product_id
+ORDER BY i.besteld_op DESC, i.inkoopbestelling_id DESC, p.productnaam;

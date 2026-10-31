@@ -40,3 +40,6 @@ class ReorderService:
             raise DomainError("De leverancier levert het gekozen product niet.")
         # The repository rechecks the supplier-product relation before the write.
         return self.purchase_order_service.record_order(supplier_id, product_id, quantity)
+
+    def recorded_orders(self):
+        return self.purchase_order_service.recorded_orders()

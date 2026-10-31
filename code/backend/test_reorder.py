@@ -37,6 +37,16 @@ class Purchases:
         self.calls.append((supplier_id, product_id, quantity))
         return 44
 
+    def recorded_orders(self):
+        return [{
+            "inkoopbestelling_id": 44,
+            "besteld_op": "2026-10-31 18:00:00",
+            "status_naam": "besteld",
+            "leverancier": "Goedkoop",
+            "productnaam": "Medicijn A",
+            "aantal": 8,
+        }]
+
 
 class ReorderTests(TestCase):
     def setUp(self):

@@ -186,6 +186,8 @@ CREATE TABLE LeveranciersAanbod (
 CREATE TABLE Inkoopbestelling (
     inkoopbestelling_id INT AUTO_INCREMENT PRIMARY KEY,
     leverancier_id INT NOT NULL,
+    besteld_op DATETIME NULL,
+    status_naam VARCHAR(30) NULL,
 
     FOREIGN KEY (leverancier_id)
         REFERENCES Leverancier(leverancier_id)

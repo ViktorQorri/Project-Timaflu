@@ -18,3 +18,6 @@ class PurchaseOrderService:
         if min(supplier_id, product_id, quantity) <= 0:
             raise DomainError("Leverancier, product en aantal moeten groter dan 0 zijn.")
         return self.repository.create(supplier_id, product_id, quantity)
+    def recorded_orders(self):
+        """Display the case-supported order status; receipt is outside project scope."""
+        return self.repository.list_recorded()

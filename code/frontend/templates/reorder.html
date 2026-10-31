@@ -52,4 +52,23 @@
   {% endif %}
   {% endif %}
 </section>
+<section class="stock-dashboard" aria-labelledby="supplier-orders-title">
+  <h2 id="supplier-orders-title">Vastgelegde inkoopbestellingen</h2>
+  <p>De status 'besteld' betekent uitsluitend dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <thead><tr><th>Bestelling</th><th>Vastgelegd op</th><th>Leverancier</th><th>Product</th><th>Aantal</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for item in recorded_orders|default([]) %}
+      <tr><th scope="row">{{ item.inkoopbestelling_id }}</th>
+        <td>{{ item.besteld_op or 'Onbekend' }}</td><td>{{ item.leverancier }}</td>
+        <td>{{ item.productnaam }}</td><td>{{ item.aantal }}</td>
+        <td>{{ item.status_naam or 'Onbekend' }}</td></tr>
+      {% else %}
+      <tr><td colspan="6">Er zijn nog geen inkoopbestellingen geregistreerd.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}
