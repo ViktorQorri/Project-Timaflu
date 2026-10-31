@@ -2,10 +2,11 @@
 
 from decimal import Decimal
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from app import create_app
-from domain.errors import DomainError
+from domain.errors import DomainError, NotFoundError
+from repositories.manufacturer_repository import ManufacturerRepository
 from services.manufacturer_service import ManufacturerService
 
 
@@ -83,6 +84,9 @@ class ManufacturerTests(TestCase):
                 response = client.get("/manufacturers/3/prices")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Medicijn", response.data)
+                self.assertIn(b'name="product_id"', response.data)
+                self.assertIn(b'/manufacturers/3/prices/2/remove', response.data)
+                self.assertIn(b'name="confirmed"', response.data)
                 response = client.post("/manufacturers/new", data={"naam": "X"})
                 self.assertEqual(response.status_code, 400)
                 self.assertIn(b"Naam en adres zijn verplicht", response.data)
@@ -90,6 +94,35 @@ class ManufacturerTests(TestCase):
                                        data={"product_id": "2", "price": "11,20"})
                 self.assertEqual(response.status_code, 302)
                 self.assertEqual(self.repo.priced[2], Decimal("11.20"))
+
+    def test_repository_unlinks_only_the_selected_supplier_product_offer(self):
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchone.return_value = (1,)
+
+        ManufacturerRepository(connection).remove_offer(3, 2)
+
+        statements = [call.args for call in cursor.execute.call_args_list]
+        self.assertEqual(len(statements), 2)
+        self.assertIn("FROM LeveranciersAanbod", statements[0][0])
+        self.assertEqual(
+            statements[1][0].split()[:3], ["DELETE", "FROM", "LeveranciersAanbod"]
+        )
+        self.assertEqual(statements[1][1], (3, 2))
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
+
+    def test_repository_does_not_delete_when_offer_is_missing(self):
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchone.return_value = None
+
+        with self.assertRaises(NotFoundError):
+            ManufacturerRepository(connection).remove_offer(3, 999)
+
+        self.assertEqual(cursor.execute.call_count, 1)
+        connection.commit.assert_not_called()
+        connection.rollback.assert_called_once()
 
     def test_remove_supplier_link_requires_explicit_confirmation(self):
         app = create_app()

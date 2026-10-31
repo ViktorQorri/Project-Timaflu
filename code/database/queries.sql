@@ -3,7 +3,11 @@
 -- This version uses no parameters; its result depends on current warehouse data.
 SELECT p.product_id, p.artikelnummer, p.productnaam,
        p.minimumvoorraad,
-       COALESCE(SUM(m.aantal), 0) AS voorraad
+       COALESCE(SUM(m.aantal), 0) AS voorraad,
+       EXISTS (
+           SELECT 1 FROM LeveranciersAanbod AS a
+           WHERE a.product_id = p.product_id
+       ) AS heeft_leverancier
 FROM Product AS p
 LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
 WHERE p.in_assortiment = TRUE
@@ -16,7 +20,7 @@ ORDER BY (p.minimumvoorraad - voorraad) DESC,
 -- Supplier offers for GET /suppliers?product=...
 -- Example parameter 'Medication': backend uses LIKE %s with value '%Medication%'.
 SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
-       l.contactpersoon, l.telefoonnummer, a.inkoopprijs
+       l.contactpersoon, l.telefoonnummer, l.internetadres, a.inkoopprijs
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
