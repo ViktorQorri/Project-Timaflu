@@ -669,3 +669,50 @@ SELECT 1 FROM LeveranciersAanbod
 WHERE leverancier_id = 1 AND product_id = 1 FOR UPDATE;
 DELETE FROM LeveranciersAanbod WHERE leverancier_id = 1 AND product_id = 1;
 -- The SELECT and DELETE run in one transaction in ManufacturerRepository.remove_offer().
+
+-- Issue #27: order status report, GET /reports.
+-- Optional date bounds are inclusive; the end date includes the whole day.
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam,
+       COUNT(r.product_id) AS aantal_regels
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+LEFT JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
+WHERE ('2026-10-01' IS NULL OR b.besteld_op >= '2026-10-01')
+  AND ('2026-10-31' IS NULL OR b.besteld_op < '2026-10-31' + INTERVAL 1 DAY)
+GROUP BY b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+         b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
+
+-- Issue #29: find orders for the sales employee to inform the customer.
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.status_naam
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+WHERE b.bestelling_id = 15 OR k.bedrijfsnaam LIKE '%Apotheek%'
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
+
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel,
+       b.status_naam, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+       l.afgeleverd_op
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+LEFT JOIN (
+    SELECT lv.bestelling_id, MAX(r.ritdatum) AS afgeleverd_op
+    FROM Levering AS lv
+    JOIN Leverpoging AS lp ON lp.levering_id = lv.levering_id
+    JOIN Rit AS r ON r.rit_id = lp.rit_id
+    WHERE lp.resultaat = 'afgeleverd'
+    GROUP BY lv.bestelling_id
+) AS l ON l.bestelling_id = b.bestelling_id
+WHERE b.bestelling_id = 15;
+
+SELECT p.product_id, p.artikelnummer, p.productnaam, br.aantal,
+       COALESCE(vr.aantal, 0) AS gereserveerd
+FROM Bestelregel AS br
+JOIN Product AS p ON p.product_id = br.product_id
+LEFT JOIN Voorraadreservering AS vr
+       ON vr.bestelling_id = br.bestelling_id
+      AND vr.product_id = br.product_id
+WHERE br.bestelling_id = 15
+ORDER BY p.productnaam ASC;

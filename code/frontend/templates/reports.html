@@ -1,7 +1,99 @@
 {% extends "base.html" %}
 
-{% block title %}Reports{% endblock %}
+{% block title %}Rapportages{% endblock %}
 
 {% block content %}
-  <h1>Reports</h1>
+  <section class="order-report" aria-labelledby="order-report-title">
+    <header class="order-report__intro">
+      <p class="order-report__eyebrow">Rapportages</p>
+      <h1 id="order-report-title">Orderstatusrapport</h1>
+      <p class="order-report__subtitle">Openstaande orders, backorders en afgeleverde orders op basis van de huidige orderstatus.</p>
+    </header>
+
+    <form method="get" action="{{ url_for('reports.index') }}" class="order-report__filter">
+      <div class="order-report__field">
+        <label for="report-from">Besteld vanaf</label>
+        <input id="report-from" name="from" type="date" value="{{ report.date_from or '' }}">
+      </div>
+      <div class="order-report__field">
+        <label for="report-to">Besteld tot en met</label>
+        <input id="report-to" name="to" type="date" value="{{ report.date_to or '' }}">
+      </div>
+      <button type="submit" class="order-report__button">Rapport tonen</button>
+      {% if report.date_from or report.date_to %}
+        <a class="order-report__reset" href="{{ url_for('reports.index') }}">Alle orders tonen</a>
+      {% endif %}
+    </form>
+
+    <p class="order-report__period">
+      {% if report.date_from and report.date_to %}
+        Orders besteld van {{ report.date_from.strftime('%d-%m-%Y') }} tot en met {{ report.date_to.strftime('%d-%m-%Y') }}.
+      {% elif report.date_from %}
+        Orders besteld vanaf {{ report.date_from.strftime('%d-%m-%Y') }}.
+      {% elif report.date_to %}
+        Orders besteld tot en met {{ report.date_to.strftime('%d-%m-%Y') }}.
+      {% else %}
+        Alle orders.
+      {% endif %}
+    </p>
+
+    <ul class="order-report__kpis" aria-label="Aantal orders per status">
+      <li class="order-report__kpi">
+        <span class="order-report__kpi-label">Totaal</span>
+        <span class="order-report__kpi-value">{{ report.total }}</span>
+        <span class="order-report__kpi-note">orders in deze periode</span>
+      </li>
+      {% for group in report.groups %}
+        <li class="order-report__kpi order-report__kpi--{{ group.key }}">
+          <span class="order-report__kpi-label">{{ group.label }}</span>
+          <span class="order-report__kpi-value">{{ group.orders|length }}</span>
+          <a class="order-report__kpi-note" href="#orders-{{ group.key }}">Bekijk lijst</a>
+        </li>
+      {% endfor %}
+    </ul>
+
+    {% for group in report.groups %}
+      <section class="order-report__group" id="orders-{{ group.key }}" aria-labelledby="orders-{{ group.key }}-title">
+        <h2 id="orders-{{ group.key }}-title">{{ group.label }} <span class="order-report__group-count">{{ group.orders|length }}</span></h2>
+        {% if group.orders %}
+          <div class="order-report__table-wrap">
+            <table class="order-report__table">
+              <caption>{{ group.label }}, nieuwste bestelling eerst</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Ordernummer</th>
+                  <th scope="col">Klant</th>
+                  <th scope="col">Besteld op</th>
+                  <th scope="col">Gewenste levering</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="order-report__number">Orderregels</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for order in group.orders %}
+                  <tr>
+                    <th scope="row">{{ order.bestelling_id }}</th>
+                    <td>{{ order.bedrijfsnaam }}</td>
+                    <td>{{ order.besteld_op.strftime('%d-%m-%Y %H:%M') }}</td>
+                    <td>
+                      {{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}
+                      {% if order.spoed %}<span class="order-report__urgent">Spoed</span>{% endif %}
+                    </td>
+                    <td>
+                      <span class="order-report__status order-report__status--{{ group.key }}">
+                        {{ order.status_naam|capitalize if order.status_naam else 'Nog geen status' }}
+                      </span>
+                    </td>
+                    <td class="order-report__number">{{ order.aantal_regels }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="order-report__empty" role="status">Geen {{ group.label|lower }} in deze periode.</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </section>
 {% endblock %}
