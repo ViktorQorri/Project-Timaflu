@@ -30,6 +30,22 @@ class SupplierRepository:
             cursor.execute(query, params)
             return cursor.fetchall()
 
+    def search_products_by_name(self, product_name):
+        """Find catalog medicines first; do not mix supplier offers for equal names.
+
+        Article number and product ID distinguish medicines with identical names.
+        LOCATE treats user input literally (including % and _), without LIKE wildcards.
+        """
+        query = """
+            SELECT p.product_id, p.productnaam, p.artikelnummer
+            FROM Product AS p
+            WHERE p.in_assortiment = TRUE AND LOCATE(%s, p.productnaam) > 0
+            ORDER BY p.productnaam ASC, p.artikelnummer ASC, p.product_id ASC
+        """
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (product_name,))
+            return cursor.fetchall()
+
     def list_all(self):
         """
         Returns:

@@ -9,11 +9,33 @@
     <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
     <button type="submit">Leveranciers zoeken</button>
   </form>
-  {% if searched %}
+  {% if product_id is none and product_name %}
+    {% if products %}
+      <h2>Kies het juiste medicijn</h2>
+      <p>Controleer het artikelnummer voordat je leveranciers vergelijkt. Medicijnen kunnen dezelfde naam hebben.</p>
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Medicijnen die overeenkomen met {{ product_name }}</caption>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Artikelnummer</th><th scope="col">Actie</th></tr></thead>
+          <tbody>
+            {% for item in products %}
+              <tr>
+                <th scope="row">{{ item.productnaam }}</th>
+                <td>{{ item.artikelnummer }}</td>
+                <td><a href="{{ url_for('purchasing.suppliers', product_id=item.product_id, product=product_name) }}">Leveranciers vergelijken</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p role="status">Geen medicijnen gevonden voor deze zoekopdracht.</p>
+    {% endif %}
+  {% elif product_id is not none %}
     {% if offers %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Leveranciers voor {{ offers[0].productnaam if product_id is not none else product_name }}, goedkoopste bovenaan</caption>
+          <caption>Leveranciers voor {{ offers[0].productnaam }} (product {{ product_id }}), goedkoopste bovenaan</caption>
           <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th></tr></thead>
           <tbody>
             {% for offer in offers %}

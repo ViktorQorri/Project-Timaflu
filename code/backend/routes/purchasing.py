@@ -30,9 +30,10 @@ def suppliers():
     if raw_id is not None and (product_id is None or product_id < 1 or str(product_id) != raw_id):
         raise DomainError("Ongeldig productnummer.")
     service = SupplierService(SupplierRepository(get_connection())) if (product_id is not None or product_name) else None
-    offers = service.offers_for_product(product_name, product_id=product_id) if service else []
+    products = service.products_matching_name(product_name) if service and product_id is None else []
+    offers = service.offers_for_product(product_id=product_id) if service and product_id is not None else []
     return render_template("suppliers.html", product_name=product_name,
-                           product_id=product_id, searched=service is not None, offers=offers)
+                           product_id=product_id, products=products, offers=offers)
 
 
 @purchasing.post("/purchase-orders")

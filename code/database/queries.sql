@@ -23,6 +23,18 @@ JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
 WHERE p.product_id = 1 AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
+-- Manual GET /suppliers?product=Medication: show distinct catalog medicines
+-- BEFORE presenting offers. Match user-entered text literally via LOCATE, not
+-- SQL LIKE. The user chooses an article number / product ID for the price list.
+-- Same SQL as SupplierRepository.search_products_by_name(), with example value.
+SELECT p.product_id, p.productnaam, p.artikelnummer
+FROM Product AS p
+WHERE p.in_assortiment = TRUE AND LOCATE('Medication', p.productnaam) > 0
+ORDER BY p.productnaam ASC, p.artikelnummer ASC, p.product_id ASC;
+
+-- Internal legacy offer lookup by exact name; never display all matching
+-- offers on the manual search screen without selecting a product ID first.
+-- Example below corresponds to SupplierRepository.find_offers(product_name=...).
 -- Manual GET /suppliers?product=Medication: exact name, never partial LIKE.
 -- Backend parameter: p.productnaam = %s, example 'Medication'.
 SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
