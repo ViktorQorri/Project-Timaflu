@@ -130,8 +130,6 @@ class SupplierOffer {
 }
 
 class PurchaseOrder {
-    orderedOn
-    status
     --
     placeWithSupplier()
 }

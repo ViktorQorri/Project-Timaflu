@@ -25,7 +25,7 @@ class PurchaseOrderRepository:
                 if cursor.fetchone() is None:
                     raise DomainError("Deze leverancier levert het gekozen product niet.")
                 cursor.execute(
-                    "INSERT INTO Inkoopbestelling (leverancier_id, besteld_op, status_naam) VALUES (%s, CURRENT_TIMESTAMP, 'besteld')",
+                    "INSERT INTO Inkoopbestelling (leverancier_id) VALUES (%s)",
                     (supplier_id,),
                 )
                 order_id = cursor.lastrowid
@@ -40,16 +40,3 @@ class PurchaseOrderRepository:
             except Exception:
                 connection.rollback()
                 raise
-
-    def list_recorded(self):
-        """List only digitally recorded supplier orders and their actual saved state."""
-        query = """SELECT i.inkoopbestelling_id, i.besteld_op, i.status_naam,
-                          l.naam AS leverancier, p.productnaam, r.aantal
-                   FROM Inkoopbestelling AS i
-                   JOIN Leverancier AS l ON l.leverancier_id = i.leverancier_id
-                   JOIN Inkoopbestelregel AS r ON r.inkoopbestelling_id = i.inkoopbestelling_id
-                   JOIN Product AS p ON p.product_id = r.product_id
-                   ORDER BY i.besteld_op DESC, i.inkoopbestelling_id DESC, p.productnaam"""
-        with self.connection.cursor(dictionary=True) as cursor:
-            cursor.execute(query)
-            return cursor.fetchall()
