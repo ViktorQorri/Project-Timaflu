@@ -20,6 +20,9 @@ GROUPS={
     "Acquisitie":{20,21},
 }
 
+TITLES={1: 'Fabrikantgegevens beheren', 2: 'Producten bijbestellen', 3: 'Minimumvoorraad controleren', 4: 'Voorraad controleren', 5: 'Bestelling invoeren', 6: 'Orderstatus bekijken', 7: 'Klantgegevens beheren', 8: 'Verzamelbakken bekijken', 9: 'Bestelling verpakken', 10: 'Verzamelbak registreren', 11: 'Deelorder afronden', 12: 'Levering registreren', 13: 'Toegewezen ritten bekijken', 14: 'Levertijd opzoeken', 15: 'Telefoonnummer klant opzoeken', 16: 'Factuur maken', 17: 'Afgeleverde bestellingen bekijken', 18: 'Openstaande facturen bekijken', 19: 'Betaling registreren', 20: 'Acquisitiebezoek registreren', 21: 'Potentiële klant opvolgen', 22: 'Deelorder aanvragen', 23: 'Deelorder verzamelen', 24: 'Nieuw medicijn beoordelen', 25: 'Inkoopfacturen betalen', 26: 'Bezorgritten toewijzen', 27: 'Mislukte levering afhandelen', 28: 'Jaarlijkse klantenkorting bijwerken'}
+ROLE_LABELS={'System': 'Systeem', 'Warehouse Robot': 'Magazijnrobot', 'Purchasing Employee': 'Inkoopmedewerker', 'Sales Employee': 'Verkoopmedewerker', 'Distribution Employee': 'Distributiemedewerker', 'Courier': 'Koerier', 'Administration Employee': 'Administratiemedewerker', 'Acquisition Employee': 'Acquisitiemedewerker', 'Management': 'Directie', 'Customer': 'Klant', 'Customer Contact': 'Contactpersoon klant', 'Warehouse Employee': 'Magazijnmedewerker'}
+
 def process_name(stem):
     number=int(stem[2:4])
     return next(group for group,ids in GROUPS.items() if number in ids)
@@ -61,16 +64,16 @@ def generate():
     index=[]
     for f in files:
         group=process_name(f.stem)
-        title=f.stem.split("_",1)[1].replace("_"," ")
+        title=TITLES[int(f.stem[2:4])]
         roles,actions=get_actions(f.read_text(encoding="utf-8-sig"))
         if not actions:
             raise ValueError(f"No readable steps found: {f.name}")
         steps="".join(
             f'<div class="step step--{("decision" if kind=="keuze" else "feedback" if kind=="resultaat" else "action")}">'
-            f'<h3>{escape(role)} • {escape(kind)}</h3><p>{escape(value)}</p></div>'
+            f'<h3>{escape(ROLE_LABELS.get(role,role))} • {escape(kind)}</h3><p>{escape(value)}</p></div>'
             for role,kind,value in actions
         )
-        labels="".join(f'<span class="pill">{escape(r)}</span>' for r in roles)
+        labels="".join(f'<span class="pill">{escape(ROLE_LABELS.get(r,r))}</span>' for r in roles)
         body=f"""<section class="hero">
 <div class="overline">{escape(group)} · {escape(f.stem[:4])}</div>
 <h1>{escape(title)}</h1>

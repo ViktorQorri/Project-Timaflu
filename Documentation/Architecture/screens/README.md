@@ -40,3 +40,20 @@ Open index.html voor een responsieve weergave. Deze documenten zijn geen werkend
 - CSS heeft een 760 px responsive breakpoint; mobiele picking- en distributieschermen gebruiken één kolom.
 - Geen JavaScript, dummyklanten, dummyprijzen of niet-functionele submitknoppen.
 - Geen wijziging van MySQL, backend of bedrijfsscenario's.
+
+## Browsercontrole op Floris test
+
+De volgende schermen zijn in Chrome met een echte Playwright-viewport gecontroleerd op
+390 px (mobiel), 768 px (tablet) en 1440 px (desktop): AD23 orderpicking,
+AD12 distributie, AD05 verkoop en de index. Bij alle twaalf weergaven was
+de horizontale documentbreedte gelijk aan de viewportbreedte: geen overflow.
+
+De screenshots zijn daadwerkelijk opgenomen op Floris test:
+- [Orderpicking mobiel](previews/AD23_Collect_sub_order_390.png)
+- [Orderpicking desktop](previews/AD23_Collect_sub_order_1440.png)
+- [Distributie mobiel](previews/AD12_Register_delivery_390.png)
+- [Distributie desktop](previews/AD12_Register_delivery_1440.png)
+
+De titels en rollen zijn naar het Nederlands vertaald. De afzonderlijke
+procesacties blijven letterlijk uit de PlantUML-bron afkomstig, zodat ze
+zonder verzonnen proceslogica te vergelijken zijn.
