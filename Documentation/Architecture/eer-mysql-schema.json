@@ -408,6 +408,12 @@
         "key": ""
       },
       {
+        "name": "eenmalige_korting_toegezegd",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
         "name": "afleveradres_id",
         "type": "int",
         "nullable": false,
@@ -666,6 +672,12 @@
         "type": "int",
         "nullable": true,
         "key": "UNI"
+      },
+      {
+        "name": "opvolging_afgesloten",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
       }
     ],
     "Product": [

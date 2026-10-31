@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1641" viewBox="0 0 1980 1641">
 <rect width="100%" height="100%" fill="#fff"/>
 <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="none" stroke="#A0ACBD"/></marker></defs>
-<path d="M212,688 L212,492" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M982,190 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,728 L212,522" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M982,190 L212,276" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,190 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,190 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,190 L982,612" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
@@ -13,14 +13,14 @@
 <path d="M982,1070 L982,904" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,1236 L982,1070" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,1236 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M1752,260 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M1752,260 L212,276" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1190 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1336 L596,1190" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1336 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1512 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M212,266 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M212,266 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M212,844 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,276 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,276 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,884 L212,276" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,858 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1044 L596,858" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,1044 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
@@ -31,8 +31,8 @@
 <path d="M1366,578 L1366,402" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M1366,578 L1366,256" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,662 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M212,492 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
-<path d="M212,492 L212,266" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,522 L212,90" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<path d="M212,522 L212,276" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M596,496 L596,220" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M1366,256 L1366,100" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
 <path d="M982,1382 L982,1070" stroke="#D0D6DF" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
@@ -43,37 +43,39 @@
 <text x="50" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Adres</text>
 <text x="50" y="94" font-family="monospace" font-size="11" fill="#263548">PK adres_id : int</text>
 <text x="50" y="114" font-family="monospace" font-size="11" fill="#263548">adres : varchar(255)</text>
-<rect x="40" y="181" width="343" height="169" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="181" width="343" height="189" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
 <rect x="40" y="181" width="343" height="29" rx="6" fill="#E8EEF8" />
 <text x="50" y="201" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Klant</text>
 <text x="50" y="230" font-family="monospace" font-size="11" fill="#263548">PK klant_id : int</text>
 <text x="50" y="250" font-family="monospace" font-size="11" fill="#263548">bedrijfsnaam : varchar(100)</text>
 <text x="50" y="270" font-family="monospace" font-size="11" fill="#263548">telefoonnummer : varchar(25)</text>
 <text x="50" y="290" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
-<text x="50" y="310" font-family="monospace" font-size="11" fill="#263548">FK afleveradres_id : int</text>
-<text x="50" y="330" font-family="monospace" font-size="11" fill="#263548">FK betaaladres_id : int</text>
-<rect x="40" y="397" width="343" height="189" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
-<rect x="40" y="397" width="343" height="29" rx="6" fill="#E8EEF8" />
-<text x="50" y="417" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">PotentieleKlant</text>
-<text x="50" y="446" font-family="monospace" font-size="11" fill="#263548">PK potentiele_klant_id : int</text>
-<text x="50" y="466" font-family="monospace" font-size="11" fill="#263548">bedrijfsnaam : varchar(100)</text>
-<text x="50" y="486" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
-<text x="50" y="506" font-family="monospace" font-size="11" fill="#263548">contactgegevens : varchar(255)</text>
-<text x="50" y="526" font-family="monospace" font-size="11" fill="#263548">FK adres_id : int</text>
-<text x="50" y="546" font-family="monospace" font-size="11" fill="#263548">FK klant_id : int</text>
-<text x="50" y="566" font-family="monospace" font-size="10" fill="#5A3A72">UQ klant_id: klant_id</text>
-<rect x="40" y="633" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
-<rect x="40" y="633" width="343" height="29" rx="6" fill="#E8EEF8" />
-<text x="50" y="653" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Acquisitiebezoek</text>
-<text x="50" y="682" font-family="monospace" font-size="11" fill="#263548">PK bezoek_id : int</text>
-<text x="50" y="702" font-family="monospace" font-size="11" fill="#263548">FK potentiele_klant_id : int</text>
-<text x="50" y="722" font-family="monospace" font-size="11" fill="#263548">bezoekdatum : date</text>
-<rect x="40" y="789" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
-<rect x="40" y="789" width="343" height="29" rx="6" fill="#E8EEF8" />
-<text x="50" y="809" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Klantkorting</text>
-<text x="50" y="838" font-family="monospace" font-size="11" fill="#263548">PK FK klant_id : int</text>
-<text x="50" y="858" font-family="monospace" font-size="11" fill="#263548">PK kalenderjaar : smallint</text>
-<text x="50" y="878" font-family="monospace" font-size="11" fill="#263548">percentage : decimal(5,2)</text>
+<text x="50" y="310" font-family="monospace" font-size="11" fill="#263548">eenmalige_korting_toegezegd : tinyint(1)</text>
+<text x="50" y="330" font-family="monospace" font-size="11" fill="#263548">FK afleveradres_id : int</text>
+<text x="50" y="350" font-family="monospace" font-size="11" fill="#263548">FK betaaladres_id : int</text>
+<rect x="40" y="417" width="343" height="209" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="417" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="437" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">PotentieleKlant</text>
+<text x="50" y="466" font-family="monospace" font-size="11" fill="#263548">PK potentiele_klant_id : int</text>
+<text x="50" y="486" font-family="monospace" font-size="11" fill="#263548">bedrijfsnaam : varchar(100)</text>
+<text x="50" y="506" font-family="monospace" font-size="11" fill="#263548">contactpersoon : varchar(100)</text>
+<text x="50" y="526" font-family="monospace" font-size="11" fill="#263548">contactgegevens : varchar(255)</text>
+<text x="50" y="546" font-family="monospace" font-size="11" fill="#263548">FK adres_id : int</text>
+<text x="50" y="566" font-family="monospace" font-size="11" fill="#263548">FK klant_id : int</text>
+<text x="50" y="586" font-family="monospace" font-size="11" fill="#263548">opvolging_afgesloten : tinyint(1)</text>
+<text x="50" y="606" font-family="monospace" font-size="10" fill="#5A3A72">UQ klant_id: klant_id</text>
+<rect x="40" y="673" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="673" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="693" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Acquisitiebezoek</text>
+<text x="50" y="722" font-family="monospace" font-size="11" fill="#263548">PK bezoek_id : int</text>
+<text x="50" y="742" font-family="monospace" font-size="11" fill="#263548">FK potentiele_klant_id : int</text>
+<text x="50" y="762" font-family="monospace" font-size="11" fill="#263548">bezoekdatum : date</text>
+<rect x="40" y="829" width="343" height="109" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
+<rect x="40" y="829" width="343" height="29" rx="6" fill="#E8EEF8" />
+<text x="50" y="849" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Klantkorting</text>
+<text x="50" y="878" font-family="monospace" font-size="11" fill="#263548">PK FK klant_id : int</text>
+<text x="50" y="898" font-family="monospace" font-size="11" fill="#263548">PK kalenderjaar : smallint</text>
+<text x="50" y="918" font-family="monospace" font-size="11" fill="#263548">percentage : decimal(5,2)</text>
 <rect x="425" y="45" width="343" height="349" rx="6" fill="white" stroke="#35465F" stroke-width="1.4"/>
 <rect x="425" y="45" width="343" height="29" rx="6" fill="#E8EEF8" />
 <text x="435" y="65" font-family="Arial" font-size="14" font-weight="bold" fill="#21314A">Product</text>
