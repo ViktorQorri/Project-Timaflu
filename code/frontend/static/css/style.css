@@ -64,5 +64,3 @@ table caption {text-align:left;margin-bottom:12px;color:var(--color-text-muted)}
 @media(max-width:760px) {.main-content {padding:24px 20px 40px}.header-inner {padding:12px 20px 0}.site-nav ul {gap:18px}.stock-dashboard,.card,.panel {padding:16px}th,td {padding:10px 12px}}
 @media(prefers-reduced-motion:reduce) {*,*::before,*::after {scroll-behavior:auto!important;transition:none!important}}
 /* Timaflu shared design foundation. END */
-
-[executed on device: mac.home (9dea5b57-ad23-4d05-8c7d-1c72169e2c80)]
