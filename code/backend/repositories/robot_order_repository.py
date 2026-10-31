@@ -59,6 +59,14 @@ class RobotOrderRepository:
                 if not count:
                     raise ConflictError("Registreer eerst minimaal een verzamelbak.")
                 cursor.execute(
+                    "SELECT COUNT(*) AS line_count FROM Deelorderregel WHERE deelorder_id = %s",
+                    (suborder_id,),
+                )
+                if not cursor.fetchone()["line_count"]:
+                    raise ConflictError("Deelorder zonder regels kan niet worden afgerond.")
+                # This endpoint accepts the robot's explicit completion message.
+                # Actual collected quantities are not separately scanned in the case/EER.
+                cursor.execute(
                     "UPDATE Deelorder SET afgerond = TRUE WHERE deelorder_id = %s",
                     (suborder_id,),
                 )

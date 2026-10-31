@@ -379,6 +379,7 @@ ORDER BY p.productnaam, dr.product_id;
 SELECT deelorder_id, afgerond
 FROM Deelorder WHERE deelorder_id = 1 AND robot_id = 1 FOR UPDATE;
 SELECT COUNT(*) AS bin_count FROM Verzamelbak WHERE deelorder_id = 1;
+SELECT COUNT(*) AS line_count FROM Deelorderregel WHERE deelorder_id = 1;
 UPDATE Deelorder SET afgerond = TRUE WHERE deelorder_id = 1;
 
 -- Issue #16: allocate reserved quantities across robots / warehouse aisles.
