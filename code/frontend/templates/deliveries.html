@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Bezorgrooster{% endblock %}
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+{% endblock %}
 {% block content %}
 <section class="page-intro">
   <span class="eyebrow">Distributie</span>

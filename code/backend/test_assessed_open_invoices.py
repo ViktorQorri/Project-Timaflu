@@ -71,5 +71,6 @@ class OpenInvoiceCaseTests(TestCase):
         self.assertIn("TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds", sql)
         samples = (Path(__file__).resolve().parents[2] / "Documentation" / "Architecture"
                    / "test-data" / "selects_assessed.sql").read_text(encoding="utf-8")
-        self.assertIn("WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (", samples)
+        self.assertIn("p.opvolging_afgesloten=FALSE AND NOT EXISTS", samples)
+        self.assertIn("SELECT 1 FROM Bestelling", samples)
         self.assertIn("WHERE f.klant_id=1 AND f.betaald_op IS NULL", samples)

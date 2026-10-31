@@ -16,10 +16,10 @@
 {% for f in invoices %}
 <section class="stock-dashboard" aria-labelledby="invoice-{{f.invoice_number}}">
   <header class="stock-dashboard__intro">
-    <div><span class="eyebrow">Factuur</span><h2 id="invoice-{{f.invoice_number}}">Factuur {{f.invoice_number}}</h2></div>
+    <div><span class="eyebrow">Factuur</span><h2 id="invoice-{{f.invoice_number}}"><a href="{{url_for('weekly_invoices.issued_invoice',invoice_id=f.invoice_number)}}">Factuur {{f.invoice_number}}</a></h2></div>
   </header>
   <div class="invoice-parties">
-    <div><strong>Datum</strong><p>{{f.date}}</p><strong>Timaflu</strong><p>Afzenderadres: niet opgenomen in de casus</p></div>
+    <div><strong>Datum</strong><p>{{f.date}}</p><strong>Timaflu</strong><p>{{f.sender_address or 'Afzenderadres: niet opgenomen in de casus'}}</p></div>
     <div><strong>Factuurnummer</strong><p>{{f.invoice_number}}</p><strong>{{f.customer_name}}</strong><p>{{f.customer_address}}</p></div>
   </div>
   <div class="stock-dashboard__table-wrap">

@@ -1,0 +1,56 @@
+name: Timaflu casuscontrole MySQL en UML
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/five-required-backend-scenarios
+  workflow_dispatch:
+
+jobs:
+  case-proof:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: TestTemporaryOnly94
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pTestTemporaryOnly94"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+    env:
+      TIMAFLU_TEST_ALLOW_RESET: isolated
+      TIMAFLU_TEST_MYSQL_HOST: 127.0.0.1
+      TIMAFLU_TEST_MYSQL_PORT: "3306"
+      TIMAFLU_TEST_MYSQL_PASSWORD: TestTemporaryOnly94
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Dependencies
+        run: python -m pip install -r code/backend/requirements.txt
+      - name: Unit and actual MySQL integration tests
+        working-directory: code/backend
+        run: python -m unittest discover -p "test_*.py" -v
+      - name: Query synchronization and class diagram
+        run: |
+          python code/database/generate_weekly_queries.py --check
+          python code/database/generate_backend_uml.py --check
+      - name: Reproduce query output for every screen
+        run: python code/database/audit_ui_queries.py
+      - name: Validate final EER against live MySQL information_schema
+        run: python code/database/generate_eer.py --database timaflu_casus_test_94
+      - name: Save reproducible query evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: timaflu-casus-mysql-evidence
+          path: |
+            Documentation/Architecture/query-output-per-screen.md
+            Documentation/Architecture/eer-mysql-schema.json
+            Documentation/Architecture/eer-mysql-verified.svg
+            Documentation/Architecture/eer-mysql-verified.drawio
+          retention-days: 14

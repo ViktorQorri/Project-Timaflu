@@ -501,3 +501,93 @@ SELECT deelorder_id FROM Verzamelbak WHERE unieke_code = 'VB-0001';
 INSERT INTO Verzamelbak (unieke_code, deelorder_id) VALUES ('VB-0001', 1);
 -- The three statements are one transaction in the application.
 
+-- BEGIN GENERATED WEEKLY INVOICE QUERIES
+-- WeeklyInvoiceRepository.eligible_customers example 1
+SELECT DISTINCT b.klant_id
+                FROM Leveringregel lr
+                JOIN Levering l ON l.levering_id=lr.levering_id
+                JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
+                WHERE lr.factuur_id IS NULL
+                  AND EXISTS (
+                    SELECT 1 FROM Leverpoging lp
+                    JOIN Rit r ON r.rit_id=lp.rit_id
+                    WHERE lp.levering_id=l.levering_id
+                      AND lp.resultaat='afgeleverd'
+                      AND lp.ontvangst_getekend=TRUE
+                      AND r.ritdatum BETWEEN '2026-10-19' AND '2026-10-25'
+                  )
+                ORDER BY b.klant_id;
+
+-- WeeklyInvoiceRepository._issue_customer example 1
+SELECT k.bedrijfsnaam, a.adres AS factuuradres
+                    FROM Klant k JOIN Adres a ON a.adres_id=k.betaaladres_id
+                    WHERE k.klant_id=1 FOR UPDATE;
+
+-- WeeklyInvoiceRepository._issue_customer example 2
+SELECT factuur_id FROM Factuur
+                    WHERE klant_id=1 AND week_start='2026-10-19' FOR UPDATE;
+
+-- WeeklyInvoiceRepository._issue_customer example 3
+SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
+                           br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                    FROM Leveringregel lr
+                    JOIN Levering l ON l.levering_id=lr.levering_id
+                    JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
+                    JOIN Bestelregel br ON br.bestelling_id=b.bestelling_id
+                                      AND br.product_id=lr.product_id
+                    WHERE b.klant_id=1 AND lr.factuur_id IS NULL
+                      AND EXISTS (
+                        SELECT 1 FROM Leverpoging lp
+                        JOIN Rit r ON r.rit_id=lp.rit_id
+                        WHERE lp.levering_id=l.levering_id
+                          AND lp.resultaat='afgeleverd'
+                          AND lp.ontvangst_getekend=TRUE
+                          AND r.ritdatum BETWEEN '2026-10-19' AND '2026-10-25'
+                      )
+                    ORDER BY b.besteld_op,b.bestelling_id,lr.levering_id,lr.product_id
+                    FOR UPDATE;
+
+-- WeeklyInvoiceRepository._issue_customer example 4
+SELECT COUNT(*) AS paid_count,
+                           COUNT(totaal_bedrag) AS known_amount_count,
+                           COALESCE(SUM(totaal_bedrag),0) AS annual
+                    FROM Factuur
+                    WHERE klant_id=1 AND betaald_op >= '2025-01-01' AND betaald_op < '2026-01-01';
+
+-- WeeklyInvoiceRepository._issue_customer example 5
+SELECT bestelling_id FROM Bestelling WHERE klant_id=1
+                    ORDER BY besteld_op,bestelling_id LIMIT 1;
+
+-- WeeklyInvoiceRepository._issue_customer example 6
+INSERT INTO Factuur
+                    (klant_id,factuurdatum,week_start,afzenderadres,factuuradres)
+                    VALUES (1,'2026-10-31','2026-10-19','Voorbeeldadres alleen voor test','Testapotheekstraat 1');
+
+-- WeeklyInvoiceRepository._issue_customer example 7
+UPDATE Leveringregel SET factuur_id=2
+                        WHERE levering_id=2 AND product_id=1 AND factuur_id IS NULL;
+
+-- WeeklyInvoiceRepository._issue_customer example 8
+UPDATE Bestelling
+                            SET eenmalige_korting_toegepast=TRUE
+                            WHERE bestelling_id=2 AND eenmalige_korting_toegepast=FALSE;
+
+-- WeeklyInvoiceRepository.issued_invoice example 1
+SELECT f.*, k.bedrijfsnaam,
+                       COALESCE(f.factuuradres,a.adres) AS adres
+                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                JOIN Adres a ON a.adres_id=k.betaaladres_id
+                WHERE f.factuur_id=2;
+
+-- WeeklyInvoiceRepository.issued_invoice example 2
+SELECT lr.aantal_geleverd AS quantity,
+                       br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id
+                FROM Leveringregel lr
+                JOIN Levering l ON l.levering_id=lr.levering_id
+                JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
+                JOIN Bestelregel br ON br.bestelling_id=b.bestelling_id
+                                  AND br.product_id=lr.product_id
+                WHERE lr.factuur_id=2
+                ORDER BY b.bestelling_id, lr.product_id;
+-- END GENERATED WEEKLY INVOICE QUERIES
