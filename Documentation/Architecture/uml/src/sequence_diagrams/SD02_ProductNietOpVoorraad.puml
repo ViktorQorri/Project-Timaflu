@@ -39,11 +39,14 @@ alt Below minimum stock
       note right of Purchasing: Continue with the next cheapest offer.
     end
   end
-  opt All manufacturers exhausted without a confirmed purchase
+  alt No manufacturer could confirm supply
+    Purchasing -> Purchasing: Remove medicine from internal reorder list
     note right of Purchasing
-      Remove the product from the internal reorder list.
-      Do not remove it from the overall assortment.
+      No purchase order is recorded.
+      The medicine remains in the sales assortment.
     end note
+  else Purchase confirmed by a manufacturer
+    note right of Purchasing: Keep the confirmed purchase order on record.
   end
 else Stock is sufficient
   note right of Purchasing: No purchase order required.
