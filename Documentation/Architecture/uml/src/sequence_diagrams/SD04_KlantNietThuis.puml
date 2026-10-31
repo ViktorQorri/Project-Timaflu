@@ -1,0 +1,50 @@
+@startuml
+title SD04 - Handle failed delivery (UC12 / AD27)
+autonumber
+actor "Courier" as Courier
+participant "route:Route" as Route
+actor "Customer contact" as Contact
+participant "first:DeliveryAttempt" as First
+participant "second:DeliveryAttempt" as Second
+participant "order:Order" as Order
+actor "Sales employee" as Sales
+Courier -> Route: showSchedule(date)
+Route --> Courier: assigned stops, address and delivery time
+Courier -> Courier: lookUpCustomerPhoneNumber(customer)
+Courier -> Contact: Call after first unanswered visit
+Contact --> Courier: availability
+alt Customer can receive during first visit
+  Courier -> First: recordReceiptSignature()
+  First --> Courier: signature saved
+  Courier -> First: markDelivered(timestamp)
+  First --> Courier: delivery registered
+  Courier -> Order: changeOrderStatus(delivered)
+  Order --> Courier: status updated
+else Customer cannot receive during first visit
+  Courier -> First: markRecipientAbsent()
+  First --> Courier: first attempt recorded
+  Courier -> Route: adjustSchedule()
+  Route --> Courier: second visit scheduled today
+  alt Customer receives delivery during second visit
+    Courier -> Second: recordReceiptSignature()
+    Second --> Courier: signature saved
+    Courier -> Second: markDelivered(timestamp)
+    Second --> Courier: delivery registered
+    Courier -> Order: changeOrderStatus(delivered)
+    Order --> Courier: status updated
+  else Customer absent during second visit
+    Courier -> Second: markRecipientAbsent()
+    Second --> Courier: second attempt recorded
+    Courier -> Order: changeOrderStatus(notDelivered)
+    Order --> Courier: status updated
+    note right of Courier: Return goods to the distribution area.
+    Courier -> Sales: Report failed delivery
+    Sales -> Contact: Agree new delivery date and time slot
+    Contact --> Sales: new date and time slot
+    Sales -> Order: setDeliveryTime(date, timeSlot)
+    Order --> Sales: appointment updated
+    Sales -> Order: recordAdditionalDeliveryCosts(amount, explanation)
+    Order --> Sales: additional costs recorded
+  end
+end
+@enduml

@@ -97,3 +97,9 @@ class MinimumStockTests(TestCase):
                                            data={"minimumvoorraad": "15"})
                     self.assertEqual(response.status_code, 302)
                     self.assertEqual(self.repo.saved[-1], (4, 15))
+
+    def test_repository_excludes_removed_assortment_products(self):
+        from test_stock_shortages import FakeConnection
+        db = FakeConnection([])
+        StockRepository(db).list_all_minimums()
+        self.assertIn("WHERE p.in_assortiment = TRUE", db.cursor_instance.sql)

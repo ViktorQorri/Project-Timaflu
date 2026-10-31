@@ -203,6 +203,21 @@ UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, incasso_ingeschakeld=TR
 -- Query 6 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betaald_op='2026-10-30' WHERE factuur_id=1;
 
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 AND in_assortiment = TRUE FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
+
 -- Product catalog, GET /products (issue #13)
 -- Same SELECTs as ProductRepository.list_in_assortment(). No parameters.
 SELECT p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
@@ -435,3 +450,4 @@ FOR UPDATE;
 SELECT deelorder_id FROM Verzamelbak WHERE unieke_code = 'VB-0001';
 INSERT INTO Verzamelbak (unieke_code, deelorder_id) VALUES ('VB-0001', 1);
 -- The three statements are one transaction in the application.
+
