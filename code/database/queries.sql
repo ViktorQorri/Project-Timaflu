@@ -244,3 +244,10 @@ ORDER BY m.gang, r.robot_id;
 INSERT INTO Deelorder (bestelling_id, robot_id) VALUES (1, 1);
 INSERT INTO Deelorderregel (deelorder_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 7, 3);
+
+-- Remove a manufacturer-product offer after manual confirmation; the product itself
+-- remains in the assortment (Current-processes.md, purchasing).
+SELECT 1 FROM LeveranciersAanbod
+WHERE leverancier_id = 1 AND product_id = 1 FOR UPDATE;
+DELETE FROM LeveranciersAanbod WHERE leverancier_id = 1 AND product_id = 1;
+-- The SELECT and DELETE run in one transaction in ManufacturerRepository.remove_offer().

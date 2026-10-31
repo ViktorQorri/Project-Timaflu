@@ -63,3 +63,9 @@ class ManufacturerService:
         if any(len(value) > lengths[key] for key, value in data.items()):
             raise DomainError("Een of meer velden zijn te lang.")
         return data
+
+    def remove_offer(self, supplier_id, product_id):
+        """Remove a manufacturer-product link, not the medicine from the assortment."""
+        self.repository.remove_offer(
+            self._positive_id(supplier_id), self._positive_id(product_id)
+        )

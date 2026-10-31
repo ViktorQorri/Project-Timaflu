@@ -270,3 +270,12 @@ def reorder():
         return redirect(url_for("purchasing.reorder"))
     result = service.overview(request.args.get("product_id"))
     return render_template("reorder.html", **result)
+
+@purchasing.post("/manufacturers/<int:supplier_id>/prices/<int:product_id>/remove")
+def manufacturer_offer_remove(supplier_id, product_id):
+    """Unlink one discontinued supplier offer after explicit confirmation."""
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig eerst dat deze fabrikant het product niet meer levert.")
+    _manufacturer_service().remove_offer(supplier_id, product_id)
+    flash("Leverancierskoppeling verwijderd; product blijft in het assortiment.", "success")
+    return redirect(url_for("purchasing.manufacturer_prices", supplier_id=supplier_id))

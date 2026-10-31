@@ -73,7 +73,7 @@ class ManufacturerRepository:
 
     def products(self):
         sql = """SELECT product_id, productnaam, artikelnummer
-                 FROM Product ORDER BY productnaam, product_id"""
+                 FROM Product WHERE in_assortiment = TRUE ORDER BY productnaam, product_id"""
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(sql)
             return cursor.fetchall()
@@ -82,7 +82,7 @@ class ManufacturerRepository:
         sql = """SELECT a.product_id, p.productnaam, a.inkoopprijs
                  FROM LeveranciersAanbod AS a
                  JOIN Product AS p ON p.product_id = a.product_id
-                 WHERE a.leverancier_id = %s
+                 WHERE a.leverancier_id = %s AND p.in_assortiment = TRUE
                  ORDER BY p.productnaam, a.product_id"""
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(sql, (supplier_id,))
@@ -99,7 +99,7 @@ class ManufacturerRepository:
                 if cursor.fetchone() is None:
                     raise NotFoundError("Leverancier niet gevonden.")
                 cursor.execute(
-                    "SELECT 1 FROM Product WHERE product_id = %s", (product_id,)
+                    "SELECT 1 FROM Product WHERE product_id = %s AND in_assortiment = TRUE", (product_id,)
                 )
                 if cursor.fetchone() is None:
                     raise NotFoundError("Product niet gevonden.")
@@ -109,6 +109,27 @@ class ManufacturerRepository:
                        VALUES (%s, %s, %s)
                        ON DUPLICATE KEY UPDATE inkoopprijs = VALUES(inkoopprijs)""",
                     (supplier_id, product_id, price),
+                )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def remove_offer(self, supplier_id, product_id):
+        """Disconnect discontinued manufacturer offer without deleting product history."""
+        from domain.errors import NotFoundError
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    """SELECT 1 FROM LeveranciersAanbod
+                       WHERE leverancier_id = %s AND product_id = %s FOR UPDATE""",
+                    (supplier_id, product_id),
+                )
+                if cursor.fetchone() is None:
+                    raise NotFoundError("Leveranciersaanbod niet gevonden.")
+                cursor.execute(
+                    "DELETE FROM LeveranciersAanbod WHERE leverancier_id = %s AND product_id = %s",
+                    (supplier_id, product_id),
                 )
             self.connection.commit()
         except Exception:
