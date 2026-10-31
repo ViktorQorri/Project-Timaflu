@@ -1,0 +1,1127 @@
+{
+  "tables": {
+    "Acquisitiebezoek": [
+      {
+        "name": "bezoek_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "potentiele_klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "bezoekdatum",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Adres": [
+      {
+        "name": "adres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "adres",
+        "type": "varchar(255)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Bestelling": [
+      {
+        "name": "bestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "afleveradres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "betaaladres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "besteld_op",
+        "type": "datetime",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "gewenste_leverdatum",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "dagdeel",
+        "type": "enum('ochtend','middag')",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "spoed",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "status_naam",
+        "type": "varchar(40)",
+        "nullable": true,
+        "key": "MUL"
+      },
+      {
+        "name": "eenmalige_korting_toegepast",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "extra_bezorgkosten",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "toelichting_extra_bezorgkosten",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "Bestelregel": [
+      {
+        "name": "bestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "aantal",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "prijs_per_eenheid",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "afnemen_bij_tekort",
+        "type": "tinyint(1)",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "Betalingsherinnering": [
+      {
+        "name": "factuur_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "volgnummer",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "verstuurd_op",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Deelorder": [
+      {
+        "name": "deelorder_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "bestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "robot_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "afgerond",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Deelorderregel": [
+      {
+        "name": "deelorder_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "aantal",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Factuur": [
+      {
+        "name": "factuur_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "factuurdatum",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "week_start",
+        "type": "date",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "afzenderadres",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "factuuradres",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "betaald_op",
+        "type": "date",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "betalingsregeling_geaccepteerd",
+        "type": "tinyint(1)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "incasso_ingeschakeld",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "bedrag_excl_btw",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "btw_bedrag",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "bedrag_incl_btw",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "bestellingskorting",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "bedrag_na_bestellingskorting",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "eenmalige_korting",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "bedrag_na_eenmalige_korting",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "klantenkorting",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "totaal_bedrag",
+        "type": "decimal(10,2)",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "Inkoopbestelling": [
+      {
+        "name": "inkoopbestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "leverancier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      }
+    ],
+    "Inkoopbestelregel": [
+      {
+        "name": "inkoopbestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "aantal",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Inkoopfactuur": [
+      {
+        "name": "inkoopfactuur_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "leverancier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "factuurdatum",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "bedrag",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "betaald_op",
+        "type": "date",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "Klant": [
+      {
+        "name": "klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "bedrijfsnaam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "telefoonnummer",
+        "type": "varchar(25)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "contactpersoon",
+        "type": "varchar(100)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "afleveradres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "betaaladres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      }
+    ],
+    "Klantkorting": [
+      {
+        "name": "klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "kalenderjaar",
+        "type": "smallint",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "percentage",
+        "type": "decimal(5,2)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Koerier": [
+      {
+        "name": "koerier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "naam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "beschikbaar",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Leverancier": [
+      {
+        "name": "leverancier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "naam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "adres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "contactpersoon",
+        "type": "varchar(100)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "telefoonnummer",
+        "type": "varchar(25)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "internetadres",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "LeveranciersAanbod": [
+      {
+        "name": "leverancier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "inkoopprijs",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Levering": [
+      {
+        "name": "levering_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "bestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      }
+    ],
+    "Leveringregel": [
+      {
+        "name": "levering_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "aantal_geleverd",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "factuur_id",
+        "type": "int",
+        "nullable": true,
+        "key": "MUL"
+      }
+    ],
+    "Leverpoging": [
+      {
+        "name": "levering_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "pogingnummer",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "rit_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "geplande_tijd",
+        "type": "time",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "resultaat",
+        "type": "enum('afgeleverd','niet aanwezig')",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "ontvangst_getekend",
+        "type": "tinyint(1)",
+        "nullable": true,
+        "key": ""
+      }
+    ],
+    "Magazijnlocatie": [
+      {
+        "name": "gang",
+        "type": "char(1)",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "schapnummer",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": true,
+        "key": "MUL"
+      },
+      {
+        "name": "aantal",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "OrderStatus": [
+      {
+        "name": "naam",
+        "type": "varchar(40)",
+        "nullable": false,
+        "key": "PRI"
+      }
+    ],
+    "PotentieleKlant": [
+      {
+        "name": "potentiele_klant_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "bedrijfsnaam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "contactpersoon",
+        "type": "varchar(100)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "contactgegevens",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "adres_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "klant_id",
+        "type": "int",
+        "nullable": true,
+        "key": "UNI"
+      }
+    ],
+    "Product": [
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "artikelnummer",
+        "type": "varchar(50)",
+        "nullable": false,
+        "key": "UNI"
+      },
+      {
+        "name": "bestelcode",
+        "type": "varchar(50)",
+        "nullable": false,
+        "key": "UNI"
+      },
+      {
+        "name": "productnaam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "prijs_per_grootverpakking",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "verpakkingssoort",
+        "type": "varchar(50)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "aantal_detailverpakkingen",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "korte_omschrijving",
+        "type": "varchar(255)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "lange_omschrijving",
+        "type": "text",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "minimale_bestelhoeveelheid",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "minimumvoorraad",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "intern_bestelbaar",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "in_assortiment",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "ProductWerkzameStof": [
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "stofnaam",
+        "type": "varchar(100)",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "hoeveelheid",
+        "type": "varchar(50)",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Rit": [
+      {
+        "name": "rit_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "koerier_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      },
+      {
+        "name": "ritdatum",
+        "type": "date",
+        "nullable": false,
+        "key": ""
+      }
+    ],
+    "Robot": [
+      {
+        "name": "robot_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "gang",
+        "type": "char(1)",
+        "nullable": true,
+        "key": "UNI"
+      }
+    ],
+    "Verzamelbak": [
+      {
+        "name": "unieke_code",
+        "type": "varchar(50)",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "deelorder_id",
+        "type": "int",
+        "nullable": false,
+        "key": "MUL"
+      }
+    ],
+    "Voorraadreservering": [
+      {
+        "name": "bestelling_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "product_id",
+        "type": "int",
+        "nullable": false,
+        "key": "PRI"
+      },
+      {
+        "name": "aantal",
+        "type": "int",
+        "nullable": false,
+        "key": ""
+      }
+    ]
+  },
+  "foreign_keys": [
+    {
+      "table": "Acquisitiebezoek",
+      "column": "potentiele_klant_id",
+      "target": "PotentieleKlant",
+      "target_column": "potentiele_klant_id",
+      "constraint": "Acquisitiebezoek_ibfk_1"
+    },
+    {
+      "table": "Bestelling",
+      "column": "klant_id",
+      "target": "Klant",
+      "target_column": "klant_id",
+      "constraint": "Bestelling_ibfk_1"
+    },
+    {
+      "table": "Bestelling",
+      "column": "afleveradres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "Bestelling_ibfk_2"
+    },
+    {
+      "table": "Bestelling",
+      "column": "betaaladres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "Bestelling_ibfk_3"
+    },
+    {
+      "table": "Bestelling",
+      "column": "status_naam",
+      "target": "OrderStatus",
+      "target_column": "naam",
+      "constraint": "Bestelling_ibfk_4"
+    },
+    {
+      "table": "Bestelregel",
+      "column": "bestelling_id",
+      "target": "Bestelling",
+      "target_column": "bestelling_id",
+      "constraint": "Bestelregel_ibfk_1"
+    },
+    {
+      "table": "Bestelregel",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "Bestelregel_ibfk_2"
+    },
+    {
+      "table": "Betalingsherinnering",
+      "column": "factuur_id",
+      "target": "Factuur",
+      "target_column": "factuur_id",
+      "constraint": "Betalingsherinnering_ibfk_1"
+    },
+    {
+      "table": "Deelorder",
+      "column": "bestelling_id",
+      "target": "Bestelling",
+      "target_column": "bestelling_id",
+      "constraint": "Deelorder_ibfk_1"
+    },
+    {
+      "table": "Deelorder",
+      "column": "robot_id",
+      "target": "Robot",
+      "target_column": "robot_id",
+      "constraint": "Deelorder_ibfk_2"
+    },
+    {
+      "table": "Deelorderregel",
+      "column": "deelorder_id",
+      "target": "Deelorder",
+      "target_column": "deelorder_id",
+      "constraint": "Deelorderregel_ibfk_1"
+    },
+    {
+      "table": "Deelorderregel",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "Deelorderregel_ibfk_2"
+    },
+    {
+      "table": "Factuur",
+      "column": "klant_id",
+      "target": "Klant",
+      "target_column": "klant_id",
+      "constraint": "Factuur_ibfk_1"
+    },
+    {
+      "table": "Inkoopbestelling",
+      "column": "leverancier_id",
+      "target": "Leverancier",
+      "target_column": "leverancier_id",
+      "constraint": "Inkoopbestelling_ibfk_1"
+    },
+    {
+      "table": "Inkoopbestelregel",
+      "column": "inkoopbestelling_id",
+      "target": "Inkoopbestelling",
+      "target_column": "inkoopbestelling_id",
+      "constraint": "Inkoopbestelregel_ibfk_1"
+    },
+    {
+      "table": "Inkoopbestelregel",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "Inkoopbestelregel_ibfk_2"
+    },
+    {
+      "table": "Inkoopfactuur",
+      "column": "leverancier_id",
+      "target": "Leverancier",
+      "target_column": "leverancier_id",
+      "constraint": "Inkoopfactuur_ibfk_1"
+    },
+    {
+      "table": "Klant",
+      "column": "afleveradres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "Klant_ibfk_1"
+    },
+    {
+      "table": "Klant",
+      "column": "betaaladres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "Klant_ibfk_2"
+    },
+    {
+      "table": "Klantkorting",
+      "column": "klant_id",
+      "target": "Klant",
+      "target_column": "klant_id",
+      "constraint": "Klantkorting_ibfk_1"
+    },
+    {
+      "table": "Leverancier",
+      "column": "adres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "Leverancier_ibfk_1"
+    },
+    {
+      "table": "LeveranciersAanbod",
+      "column": "leverancier_id",
+      "target": "Leverancier",
+      "target_column": "leverancier_id",
+      "constraint": "LeveranciersAanbod_ibfk_1"
+    },
+    {
+      "table": "LeveranciersAanbod",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "LeveranciersAanbod_ibfk_2"
+    },
+    {
+      "table": "Levering",
+      "column": "bestelling_id",
+      "target": "Bestelling",
+      "target_column": "bestelling_id",
+      "constraint": "Levering_ibfk_1"
+    },
+    {
+      "table": "Leveringregel",
+      "column": "levering_id",
+      "target": "Levering",
+      "target_column": "levering_id",
+      "constraint": "Leveringregel_ibfk_1"
+    },
+    {
+      "table": "Leveringregel",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "Leveringregel_ibfk_2"
+    },
+    {
+      "table": "Leveringregel",
+      "column": "factuur_id",
+      "target": "Factuur",
+      "target_column": "factuur_id",
+      "constraint": "Leveringregel_ibfk_3"
+    },
+    {
+      "table": "Leverpoging",
+      "column": "levering_id",
+      "target": "Levering",
+      "target_column": "levering_id",
+      "constraint": "Leverpoging_ibfk_1"
+    },
+    {
+      "table": "Leverpoging",
+      "column": "rit_id",
+      "target": "Rit",
+      "target_column": "rit_id",
+      "constraint": "Leverpoging_ibfk_2"
+    },
+    {
+      "table": "Magazijnlocatie",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "Magazijnlocatie_ibfk_1"
+    },
+    {
+      "table": "PotentieleKlant",
+      "column": "adres_id",
+      "target": "Adres",
+      "target_column": "adres_id",
+      "constraint": "PotentieleKlant_ibfk_1"
+    },
+    {
+      "table": "PotentieleKlant",
+      "column": "klant_id",
+      "target": "Klant",
+      "target_column": "klant_id",
+      "constraint": "PotentieleKlant_ibfk_2"
+    },
+    {
+      "table": "ProductWerkzameStof",
+      "column": "product_id",
+      "target": "Product",
+      "target_column": "product_id",
+      "constraint": "ProductWerkzameStof_ibfk_1"
+    },
+    {
+      "table": "Rit",
+      "column": "koerier_id",
+      "target": "Koerier",
+      "target_column": "koerier_id",
+      "constraint": "Rit_ibfk_1"
+    },
+    {
+      "table": "Verzamelbak",
+      "column": "deelorder_id",
+      "target": "Deelorder",
+      "target_column": "deelorder_id",
+      "constraint": "Verzamelbak_ibfk_1"
+    },
+    {
+      "table": "Voorraadreservering",
+      "column": "bestelling_id",
+      "target": "Bestelregel",
+      "target_column": "bestelling_id",
+      "constraint": "Voorraadreservering_ibfk_1"
+    },
+    {
+      "table": "Voorraadreservering",
+      "column": "product_id",
+      "target": "Bestelregel",
+      "target_column": "product_id",
+      "constraint": "Voorraadreservering_ibfk_1"
+    }
+  ],
+  "unique_keys": {
+    "Factuur": {
+      "uq_factuur_klant_week": [
+        "klant_id",
+        "week_start"
+      ]
+    },
+    "PotentieleKlant": {
+      "klant_id": [
+        "klant_id"
+      ]
+    },
+    "Product": {
+      "artikelnummer": [
+        "artikelnummer"
+      ],
+      "bestelcode": [
+        "bestelcode"
+      ]
+    },
+    "Robot": {
+      "gang": [
+        "gang"
+      ]
+    }
+  }
+}

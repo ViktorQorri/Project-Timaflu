@@ -42,7 +42,8 @@ class AssessedRepository:
     def invoice_for_customer(self, customer_id):
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
-                SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+                SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
+                       f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
                        f.bedrag_excl_btw,
                        f.btw_bedrag,
@@ -287,7 +288,7 @@ class AssessedRepository:
                 self.db.rollback()
                 raise
 
-    def save_invoice_snapshot(self, invoice_id, invoice_data):
+    def save_invoice_snapshot(self, invoice_id, invoice_data, commit=True):
         """Store the issued invoice amounts once, not recomputed at payment time."""
         from domain.business import euro
         values = tuple(euro(invoice_data[field]) for _, field in [('bedrag_excl_btw', 'total_ex_vat'), ('btw_bedrag', 'vat_9_percent'), ('bedrag_incl_btw', 'total_incl_vat'), ('bestellingskorting', 'order_discount'), ('bedrag_na_bestellingskorting', 'total_after_order_discount'), ('eenmalige_korting', 'first_order_discount'), ('bedrag_na_eenmalige_korting', 'total_after_first_order_discount'), ('klantenkorting', 'customer_discount'), ('totaal_bedrag', 'total')])
@@ -306,7 +307,8 @@ class AssessedRepository:
                     """UPDATE Factuur SET bedrag_excl_btw=%s, btw_bedrag=%s, bedrag_incl_btw=%s, bestellingskorting=%s, bedrag_na_bestellingskorting=%s, eenmalige_korting=%s, bedrag_na_eenmalige_korting=%s, klantenkorting=%s, totaal_bedrag=%s WHERE factuur_id=%s""",
                     values + (invoice_id,),
                 )
-            self.db.commit()
+            if commit:
+                self.db.commit()
         except Exception:
             self.db.rollback()
             raise

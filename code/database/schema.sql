@@ -464,6 +464,9 @@ CREATE TABLE Factuur (
     factuur_id INT AUTO_INCREMENT PRIMARY KEY,
     klant_id INT NOT NULL,
     factuurdatum DATE NOT NULL,
+    week_start DATE NULL,
+    afzenderadres VARCHAR(255) NULL,
+    factuuradres VARCHAR(255) NULL,
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
@@ -476,6 +479,7 @@ CREATE TABLE Factuur (
     bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
     klantenkorting DECIMAL(10,2) NULL,
     totaal_bedrag DECIMAL(10,2) NULL,
+    CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)

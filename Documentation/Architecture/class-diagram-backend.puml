@@ -1,0 +1,275 @@
+@startuml Timaflu_backend_live
+title Backendklassendiagram uit Python-broncode
+hide empty members
+skinparam linetype ortho
+left to right direction
+package "domain" {
+  class "domain.business.CustomerDiscount" as C0 {
+    +determinePercentage()
+  }
+  class "domain.business.Order" as C1 {
+    +__init__()
+    +calculateOrderDiscount()
+    +calculateOneTimeDiscount()
+    +calculateCustomerDiscount()
+    +calculateTotalAmount()
+    +setDeliveryTime()
+    +changeOrderStatus()
+    +recordAdditionalDeliveryCosts()
+    +recordOrder()
+    +recordCustomerApproval()
+    +markAsUrgent()
+    +getOrderStatus()
+    +splitIntoSuborders()
+    +viewCollectionBins()
+    +packageOrder()
+  }
+  class "domain.business.Invoice" as C2 {
+    +__init__()
+    +createWeeklyInvoice()
+    +createWeeklyInvoiceForOrders()
+    +checkPaymentArrears()
+    +proposePaymentPlan()
+    +enableDebtCollection()
+    +sendToCustomer()
+    +recordFullPayment()
+  }
+  class "domain.business.PaymentReminder" as C3 {
+    +__init__()
+    +send()
+  }
+  class "domain.business.Customer" as C4 {
+    +__init__()
+    +checkOrderBlock()
+    +calculateAnnualRevenue()
+    +updateDetails()
+  }
+  class "domain.business.DeliveryAttempt" as C5 {
+    +__init__()
+    +markRecipientAbsent()
+    +markDelivered()
+    +recordReceiptSignature()
+  }
+  class "domain.business.Route" as C6 {
+    +__init__()
+    +showSchedule()
+    +adjustSchedule()
+    +assignToCourier()
+  }
+  class "domain.business.AcquisitionVisit" as C7 {
+    +recordVisit()
+  }
+  class "domain.business.ProspectiveCustomer" as C8 {
+    +__init__()
+    +hasPlacedOrder()
+    +checkFollowUpAfterOneMonth()
+    +offerOneTimeDiscount()
+    +createCustomerAccount()
+  }
+  class "domain.case_stubs.Address" as C9 {
+    +__init__()
+    +updateAddress()
+  }
+  class "domain.case_stubs.OrderLine" as C10 {
+    +__init__()
+    +adjustQuantity()
+    +recordShortageChoice()
+  }
+  class "domain.case_stubs.StockReservation" as C11 {
+    +__init__()
+  }
+  class "domain.case_stubs.OrderStatus" as C12 {
+    +__init__()
+  }
+  class "domain.case_stubs.ProductActiveIngredient" as C13 {
+    +__init__()
+  }
+  class "domain.case_stubs.Supplier" as C14 {
+    +__init__()
+    +updateDetails()
+  }
+  class "domain.case_stubs.SupplierOffer" as C15 {
+    +__init__()
+  }
+  class "domain.case_stubs.PurchaseOrder" as C16 {
+    +__init__()
+    +placeWithSupplier()
+  }
+  class "domain.case_stubs.PurchaseOrderLine" as C17 {
+    +__init__()
+  }
+  class "domain.case_stubs.Aisle" as C18 {
+    +__init__()
+  }
+  class "domain.case_stubs.WarehouseLocation" as C19 {
+    +__init__()
+  }
+  class "domain.case_stubs.Robot" as C20 {
+    +__init__()
+    +receiveSuborder()
+    +pickCollectionBin()
+    +scanCollectionBin()
+    +collectMedicines()
+    +placeBinOnConveyor()
+    +markSuborderComplete()
+  }
+  class "domain.case_stubs.Suborder" as C21 {
+    +__init__()
+    +checkCompleteness()
+    +assignToRobot()
+  }
+  class "domain.case_stubs.SuborderLine" as C22 {
+    +__init__()
+  }
+  class "domain.case_stubs.CollectionBin" as C23 {
+    +__init__()
+    +registerForSuborder()
+  }
+  class "domain.case_stubs.Courier" as C24 {
+    +__init__()
+    +reportArrival()
+    +reportAvailability()
+    +viewAssignedRoutes()
+    +lookUpCustomerPhoneNumber()
+    +lookUpDeliveryTime()
+  }
+  class "domain.case_stubs.Delivery" as C25 {
+    +__init__()
+  }
+  class "domain.case_stubs.DeliveryLine" as C26 {
+    +__init__()
+  }
+  class "domain.case_stubs.PurchaseInvoice" as C27 {
+    +__init__()
+    +pay()
+  }
+  class "domain.errors.DomainError" as C28 {
+  }
+  class "domain.errors.NotFoundError" as C29 {
+  }
+  class "domain.errors.ConflictError" as C30 {
+  }
+  class "domain.product.ProductActiveIngredient" as C31 {
+  }
+  class "domain.product.Product" as C32 {
+    +checkStock()
+    +checkMinimumStock()
+    +findSuppliersByPrice()
+    +removeSupplier()
+    +removeFromAssortment()
+  }
+  class "domain.product.SupplierOffer" as C33 {
+  }
+  class "domain.supplier.Supplier" as C34 {
+  }
+}
+package "repositories" {
+  class "repositories.assessed_repository.AssessedRepository" as C35 {
+    +__init__()
+    +customer_revenue()
+    +customer_order_count()
+    +invoice_for_customer()
+    +delivery_schedule()
+    +record_first_attempt_delivery()
+    +schedule_second_attempt()
+    +record_second_attempt_outcome()
+    +prospect_followups()
+    +record_visit()
+    +register_prospect_customer()
+    +record_payment_action()
+    +save_invoice_snapshot()
+  }
+  class "repositories.health_repository.HealthRepository" as C36 {
+    +__init__()
+    +ping()
+  }
+  class "repositories.product_repository.ProductRepository" as C37 {
+    +__init__()
+    +list_in_assortment()
+    +get_by_id()
+    +find_code_owners()
+    +add()
+    +update()
+    +remove_from_assortment()
+    +_insert_ingredients()
+    +_product_values()
+    +_to_product()
+    +_to_ingredient()
+  }
+  class "repositories.purchase_order_repository.PurchaseOrderRepository" as C38 {
+    +__init__()
+    +create()
+  }
+  class "repositories.reservation_repository.ReservationRepository" as C39 {
+    +__init__()
+    +reserve_existing_line()
+    +release_existing_line()
+  }
+  class "repositories.sales_stock_repository.SalesStockRepository" as C40 {
+    +__init__()
+    +find_products()
+  }
+  class "repositories.stock_repository.StockRepository" as C41 {
+    +__init__()
+    +list_stock_below_minimum()
+  }
+  class "repositories.supplier_repository.SupplierRepository" as C42 {
+    +__init__()
+    +find_offers()
+    +remove_offer()
+    +remove_from_internal_reorder_list()
+    +list_all()
+    +get_by_id()
+    +_to_supplier()
+  }
+  class "repositories.weekly_invoice_repository.WeeklyInvoiceRepository" as C43 {
+    +__init__()
+    +validate_week()
+    +eligible_customers()
+    +issue_week()
+    +_issue_customer()
+    +issued_invoice()
+  }
+}
+package "services" {
+  class "services.health_service.HealthService" as C44 {
+    +__init__()
+    +database_is_reachable()
+  }
+  class "services.product_service.ProductService" as C45 {
+    +__init__()
+    +catalog()
+    +suppliers()
+    +get_product()
+    +add_product()
+    +update_product()
+    +remove_from_assortment()
+    +_check_codes_are_free()
+  }
+  class "services.purchase_order_service.PurchaseOrderService" as C46 {
+    +__init__()
+    +record_order()
+  }
+  class "services.reservation_service.ReservationService" as C47 {
+    +__init__()
+    +_ids()
+    +reserve_confirmed_line()
+    +release_line()
+  }
+  class "services.sales_stock_service.SalesStockService" as C48 {
+    +__init__()
+    +check()
+  }
+  class "services.stock_service.StockService" as C49 {
+    +__init__()
+    +shortages()
+  }
+  class "services.supplier_service.SupplierService" as C50 {
+    +__init__()
+    +offers_for_product()
+  }
+}
+C43 ..> C2 : gebruikt
+C43 ..> C35 : gebruikt
+C2 ..> C1 : gebruikt
+@enduml
