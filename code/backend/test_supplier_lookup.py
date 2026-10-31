@@ -64,7 +64,7 @@ class SupplierLookupTests(TestCase):
                 self.assertIn(b"Anna", response.data)
                 self.assertIn(b"https://bestellen.example", response.data)
                 self.assertIn(b"2,50", response.data)
-                self.assertIn(b"/manufacturers/3/prices/1/remove", response.data)
+                self.assertIn(b"/suppliers/remove-offer", response.data)
                 self.assertIn(b'name="confirmed"', response.data)
                 self.assertIn(b"/products/1/remove", response.data)
             with patch("routes.purchasing.get_connection", return_value=Connection([])):

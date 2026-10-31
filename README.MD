@@ -53,6 +53,8 @@ Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
 
 De actuele verificatie van facturatie, korting, EER, klassendiagram en alle schermqueries staat in [casus-oplevercontrole.md](Documentation/Architecture/casus-oplevercontrole.md). De definitieve EER is [eer-mysql-verified.drawio](Documentation/Architecture/eer-mysql-verified.drawio) en het backendklassendiagram is [class-diagram-backend.puml](Documentation/Architecture/class-diagram-backend.puml); beide zijn tegen de werkende database respectievelijk broncode gecontroleerd. Het oude `eer.mwb` is een verouderde ontwerpsnapshot en niet het actuele schema.
 
+Vijf afzonderlijke controlelagen voor de geïntegreerde hoofdbranch zijn opgenomen in [main-casus-vijf-rondes-20261031.md](Documentation/Architecture/main-casus-vijf-rondes-20261031.md). Niet aangetoonde processtappen worden daar afzonderlijk als open benoemd.
+
 ## Documentation
 
 | Document | Location |

@@ -68,8 +68,12 @@ class DesignSystemTests(TestCase):
             deliveries.return_value.delivery_schedule.return_value = []
             acquisition = stack.enter_context(patch("routes.acquisition.AssessedRepository"))
             acquisition.return_value.prospect_followups.return_value = []
+            stack.enter_context(patch("routes.sales.get_connection", return_value=object()))
+            customers = stack.enter_context(patch("routes.sales.SalesCaseRepository"))
+            customers.return_value.customers.return_value = []
+            customers.return_value.order_statuses.return_value = []
             with app.test_client() as client:
-                for route in ("/", "/customers", "/order-picking", "/deliveries",
+                for route in ("/", "/customers", "/orders/status", "/order-picking", "/deliveries",
                               "/invoices", "/acquisition", "/reports"):
                     response = client.get(route)
                     self.assertEqual(response.status_code, 200, route)

@@ -244,7 +244,9 @@ SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE 
 -- Query 2 (illustrative input, not a claimed database result)
 INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) VALUES(1,1,'2026-10-30');
 -- Query 3 (illustrative input, not a claimed database result)
-SELECT 1 FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+-- Hetzelfde SELECT wordt ook gebruikt voor volgnummer=2, om dubbele herinneringen te voorkomen.
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=2;
 -- Query 4 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
 -- Query 5 (illustrative input, not a claimed database result)
@@ -530,7 +532,10 @@ SELECT factuur_id FROM Factuur
 -- WeeklyInvoiceRepository._issue_customer example 3
 SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
-                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
+                           (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
+                            FROM Bestelregel AS ordered
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -591,3 +596,24 @@ SELECT lr.aantal_geleverd AS quantity,
                 WHERE lr.factuur_id=2
                 ORDER BY b.bestelling_id, lr.product_id;
 -- END GENERATED WEEKLY INVOICE QUERIES
+
+-- Ronde 4: actuele klantgegevens voor GET /customers, exact SalesCaseRepository.customers.
+-- Voorbeeld invoer: naamdeel 'Apotheek'.
+SELECT k.klant_id, k.bedrijfsnaam, k.telefoonnummer, k.contactpersoon,
+       delivery.adres AS afleveradres, billing.adres AS factuuradres
+FROM Klant AS k
+JOIN Adres AS delivery ON delivery.adres_id=k.afleveradres_id
+JOIN Adres AS billing ON billing.adres_id=k.betaaladres_id
+WHERE ('Apotheek' = '' OR k.bedrijfsnaam LIKE '%Apotheek%')
+ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC;
+
+-- Ronde 4: werkelijke bestelstatus voor GET /orders/status.
+-- Voorbeeld: alle klanten zonder filter.
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum,
+       b.dagdeel, b.spoed, b.status_naam,
+       k.klant_id, k.bedrijfsnaam, address.adres AS afleveradres
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id=b.klant_id
+JOIN Adres AS address ON address.adres_id=b.afleveradres_id
+WHERE (NULL IS NULL OR b.klant_id = NULL)
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;

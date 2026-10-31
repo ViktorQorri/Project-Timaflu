@@ -24,16 +24,24 @@ def first_attempt_delivered():
 
 @distribution.get("/deliveries")
 def deliveries():
-    day=date.fromisoformat(request.args.get("day",date.today().isoformat()))
+    try:
+        day=date.fromisoformat(request.args.get("day",date.today().isoformat()))
+    except (ValueError, TypeError) as exc:
+        raise DomainError("Ongeldige rooster- of leveringsdatum.") from exc
     schedule=AssessedRepository(get_connection()).delivery_schedule(day)
     return render_template("deliveries.html",day=day,schedule=schedule)
 
 @distribution.post("/deliveries/second-attempt")
 def second_attempt():
     """First absence: schedule same-day second visit without a final outcome."""
-    day=date.fromisoformat(request.form["day"])
-    delivery_id=int(request.form["delivery_id"])
-    planned=time.fromisoformat(request.form["time"])
+    try:
+        day=date.fromisoformat(request.form["day"])
+        delivery_id=int(request.form["delivery_id"])
+        planned=time.fromisoformat(request.form["time"])
+    except (KeyError, ValueError, TypeError) as exc:
+        raise DomainError("Datum, leveringnummer en tijd van de tweede poging zijn verplicht.") from exc
+    if delivery_id < 1:
+        raise DomainError("Leveringnummer moet positief zijn.")
     AssessedRepository(get_connection()).schedule_second_attempt(delivery_id,planned,day)
     flash("Eerste afwezigheid vastgelegd; tweede poging op dezelfde dag ingepland.", "success")
     return redirect(url_for("distribution.deliveries",day=day.isoformat()))
@@ -42,8 +50,13 @@ def second_attempt():
 @distribution.post("/deliveries/second-attempt/result")
 def second_attempt_result():
     """Record delivery or second absence only after the courier returns."""
-    day=date.fromisoformat(request.form["day"])
-    delivery_id=int(request.form["delivery_id"])
+    try:
+        day=date.fromisoformat(request.form["day"])
+        delivery_id=int(request.form["delivery_id"])
+    except (KeyError, ValueError, TypeError) as exc:
+        raise DomainError("Datum en leveringnummer zijn verplicht.") from exc
+    if delivery_id < 1:
+        raise DomainError("Leveringnummer moet positief zijn.")
     outcome=request.form.get("outcome","")
     confirmed=request.form.get("signature_confirmed")
     AssessedRepository(get_connection()).record_second_attempt_outcome(
@@ -58,7 +71,7 @@ def failed_followup():
     try:
         delivery_id = int(request.form["delivery_id"])
         requested_date = date.fromisoformat(request.form["requested_date"])
-    except (KeyError, ValueError) as exc:
+    except (KeyError, ValueError, TypeError) as exc:
         raise DomainError("Geldige leveringsgegevens zijn verplicht.") from exc
     if delivery_id < 1 or request.form.get("customer_contact_confirmed") != "yes":
         raise DomainError("Bevestig eerst het contact met de klant.")

@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import InvalidOperation
 from flask import Blueprint, render_template, request
 from db import get_connection
 from domain.business import Invoice
@@ -57,6 +58,8 @@ def invoice_action():
         raise DomainError("Invoice and customer are required")
     if action not in ("reminder1","reminder2","payment_plan_accepted","payment_plan_rejected","mark_paid"):
         raise DomainError("Unknown invoice action")
+    if action=="payment_plan_rejected" and request.form.get("offer_refused_confirmed") != "yes":
+        raise DomainError("Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd.")
     repo=AssessedRepository(get_connection())
     # Validate invoice ownership for every mutation, not only mark_paid.
     # Otherwise a forged form can modify another customer's invoice.
@@ -68,8 +71,8 @@ def invoice_action():
         from domain.business import euro
         try:
             received=euro(request.form["received_amount"])
-        except (ValueError,KeyError) as exc:
-            raise DomainError("Valid payment amount required") from exc
+        except (ValueError,KeyError,InvalidOperation) as exc:
+            raise DomainError("Vul een geldig volledig ontvangen bedrag in.") from exc
         # Only the exact, originally persisted invoice amount can prove
         # a full payment, not a recalculation with guessed discounts.
         if matched["totaal_bedrag"] is None:

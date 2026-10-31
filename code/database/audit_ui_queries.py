@@ -24,8 +24,9 @@ DATABASE = "timaflu_casus_test_94"
 OUT = ROOT / "Documentation/Architecture/query-output-per-screen.md"
 SCREENS = [
     ("/", "Home en databasecontrole"),
-    ("/customers", "Klanten (statisch scherm)"),
+    ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
     ("/orders?q=Testmedicijn&quantity=1", "Telefonische verkoop en beschikbaarheid"),
+    ("/orders/status", "Bestellingen en echte orderstatus"),
     ("/products", "Productcatalogus"),
     ("/products/new", "Product toevoegen: leverancierskeuze"),
     ("/products/1/edit", "Product bewerken"),

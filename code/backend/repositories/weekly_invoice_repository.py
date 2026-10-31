@@ -4,7 +4,8 @@ Uses one transaction per customer, with a customer row lock and a unique
 (customer, week) constraint. Already issued invoice amounts are immutable.
 """
 from datetime import date, timedelta
-from domain.business import Invoice
+from decimal import Decimal
+from domain.business import Invoice, euro
 from domain.errors import DomainError
 from repositories.assessed_repository import AssessedRepository
 
@@ -88,7 +89,10 @@ class WeeklyInvoiceRepository:
                 cursor.execute("""
                     SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
-                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
+                           (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
+                            FROM Bestelregel AS ordered
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -135,7 +139,11 @@ class WeeklyInvoiceRepository:
                     if order_id not in orders:
                         orders[order_id] = {
                             "order_id": order_id,
-                            "first_order": order_id == first_order_id and not row["first_used"],
+                            # Alle leveringen van dezelfde eerste bestelling krijgen de
+                            # eenmalige korting; nooit andere bestellingen.
+                            "first_order": order_id == first_order_id,
+                            "mark_first_used": order_id == first_order_id and not row["first_used"],
+                            "order_total": euro(Decimal(str(row["full_order_ex_vat"])) * Decimal("1.09")),
                             "lines": []
                         }
                     orders[order_id]["lines"].append({
@@ -169,7 +177,7 @@ class WeeklyInvoiceRepository:
                         raise DomainError("Factuurregel is intussen gewijzigd.")
 
                 for order in orders.values():
-                    if order["first_order"]:
+                    if order["mark_first_used"]:
                         cursor.execute("""
                             UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE

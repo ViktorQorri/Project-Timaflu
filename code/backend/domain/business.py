@@ -22,13 +22,15 @@ class CustomerDiscount:
 
 
 class Order:
-    def __init__(self, subtotal, annualRevenue=0, firstOrder=False):
+    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderTotal=None):
         self.subtotal = euro(subtotal)
+        # Bij deelfacturatie blijft de volledige bestelling beslissend voor de 500-eurogrens.
+        self.orderTotal = euro(orderTotal) if orderTotal is not None else self.subtotal
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
 
     def calculateOrderDiscount(self):
-        return euro(self.subtotal * Decimal("0.05")) if self.subtotal >= 500 else euro(0)
+        return euro(self.subtotal * Decimal("0.05")) if self.orderTotal >= 500 else euro(0)
 
     def calculateOneTimeDiscount(self):
         return euro((self.subtotal - self.calculateOrderDiscount()) * Decimal("0.10")) if self.firstOrder else euro(0)
@@ -95,7 +97,7 @@ class Invoice:
         self.paymentPlanAccepted = None
         self.debtCollectionEnabled = False
 
-    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder):
+    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder, orderTotal=None):
         """Use explicitly confirmed discount inputs; never default historical facts."""
         items = []
         for line in lines:
@@ -107,7 +109,7 @@ class Invoice:
         subtotal = euro(sum((line["line_total"] for line in items), Decimal(0)))
         vat = euro(subtotal * Decimal("0.09"))
         gross = subtotal + vat
-        discounts = Order(gross, annualRevenue, firstOrder).calculateTotalAmount()
+        discounts = Order(gross, annualRevenue, firstOrder, orderTotal).calculateTotalAmount()
         after_order = euro(gross - discounts["order_discount"])
         after_first_order = euro(after_order - discounts["first_order_discount"])
         return {"total_after_order_discount": after_order,
@@ -136,7 +138,7 @@ class Invoice:
         for order in orders:
             detail = self.createWeeklyInvoice(
                 customerName, customerAddress, order["lines"],
-                annualRevenue, order["first_order"]
+                annualRevenue, order["first_order"], order.get("order_total")
             )
             for key in fields:
                 totals[key] = euro(totals[key] + detail[key])
