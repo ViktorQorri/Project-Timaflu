@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register payment | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Administratie · AD19</div>
+<h1>Register payment</h1>
+<p>Conceptscherm op basis van AD19_Register_payment.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Administration Employee</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD19_Register_payment.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD19_Register_payment.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Administration Employee • actie</h3><p>Look up invoice</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Enter received amount</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Amount equals invoice amount?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Set invoice to paid</p></div><div class="step step--action"><h3>System • actie</h3><p>Add amount to customer&#x27;s annual revenue</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Customer blocked and all\noutstanding invoices paid?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Lift block</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Show confirmation</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Report that partial payment is not possible</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

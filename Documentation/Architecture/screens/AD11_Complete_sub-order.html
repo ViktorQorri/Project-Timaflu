@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complete sub-order | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Orderpicking · AD11</div>
+<h1>Complete sub-order</h1>
+<p>Conceptscherm op basis van AD11_Complete_sub-order.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Warehouse Robot</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD11_Complete_sub-order.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD11_Complete_sub-order.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Warehouse Robot • actie</h3><p>Report sub-order completed with collected quantities</p></div><div class="step step--action"><h3>System • actie</h3><p>Reduce stock by collected quantities</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (All products collected?)</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Correct stock and set missing lines to backorder</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (All sub-orders of order completed?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Update order status</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (New sub-order for this aisle?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Send sub-order to robot</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Set robot to waiting</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

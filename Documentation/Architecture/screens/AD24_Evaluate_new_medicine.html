@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluate new medicine | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Inkoop · AD24</div>
+<h1>Evaluate new medicine</h1>
+<p>Conceptscherm op basis van AD24_Evaluate_new_medicine.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Purchasing Employee</span><span class="pill">Management</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD24_Evaluate_new_medicine.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD24_Evaluate_new_medicine.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Finish pending product reorders</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Review offers for new medicines</p></div><div class="step step--decision"><h3>Purchasing Employee • keuze</h3><p>while (Another supplier offer?)</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Evaluate medicine, supplier and purchase conditions</p></div><div class="step step--decision"><h3>Purchasing Employee • keuze</h3><p>if (Suitable to propose?)</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Prepare advice for management</p></div><div class="step step--action"><h3>Management • actie</h3><p>Review advice</p></div><div class="step step--decision"><h3>Management • keuze</h3><p>if (Approve new medicine?)</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Enter product details and supplier information</p></div><div class="step step--action"><h3>System • actie</h3><p>Validate product and supplier data</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Data valid?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Add product to assortment</p></div><div class="step step--action"><h3>System • actie</h3><p>Update central product catalogue, sales list and internal reorder list</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Show validation error</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Record rejected offer</p></div><div class="step step--decision"><h3>Purchasing Employee • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>Purchasing Employee • actie</h3><p>Record unsuitable offer</p></div><div class="step step--feedback"><h3>Purchasing Employee • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

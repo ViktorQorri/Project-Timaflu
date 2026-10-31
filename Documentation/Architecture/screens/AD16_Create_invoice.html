@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create invoice | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Administratie · AD16</div>
+<h1>Create invoice</h1>
+<p>Conceptscherm op basis van AD16_Create_invoice.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Administration Employee</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Administration Employee • actie</h3><p>Start weekly invoicing</p></div><div class="step step--action"><h3>System • actie</h3><p>Execute AD UC17 View delivered orders</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Uninvoiced delivered\norders available?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Bundle delivered orders of customer</p></div><div class="step step--action"><h3>System • actie</h3><p>Calculate total of delivered products plus extra costs</p></div><div class="step step--action"><h3>System • actie</h3><p>Show draft invoice</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Check and approve invoice</p></div><div class="step step--action"><h3>System • actie</h3><p>Save invoice</p></div><div class="step step--action"><h3>System • actie</h3><p>Send invoice to customer</p></div><div class="step step--action"><h3>System • actie</h3><p>Set orders to &quot;invoiced&quot;</p></div><div class="step step--decision"><h3>System • keuze</h3><p>repeat while (Another customer with\nuninvoiced delivered orders?)</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

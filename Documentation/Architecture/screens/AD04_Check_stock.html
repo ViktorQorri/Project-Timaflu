@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check stock | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Verkoop · AD04</div>
+<h1>Check stock</h1>
+<p>Conceptscherm op basis van AD04_Check_stock.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Sales Employee</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD04_Check_stock.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD04_Check_stock.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Sales Employee • actie</h3><p>Search product by name or article number</p></div><div class="step step--action"><h3>System • actie</h3><p>Search product</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Product found?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Calculate available stock as physical stock minus active reservations</p></div><div class="step step--action"><h3>System • actie</h3><p>Show physical, reserved and available stock</p></div><div class="step step--action"><h3>Sales Employee • actie</h3><p>Enter requested quantity</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Requested quantity &gt; available stock?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Report insufficient stock to sales employee</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Confirm quantity is available</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Show product not found</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View delivered orders | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Administratie · AD17</div>
+<h1>View delivered orders</h1>
+<p>Conceptscherm op basis van AD17_View_delivered_orders.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Administration Employee</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD17_View_delivered_orders.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD17_View_delivered_orders.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Administration Employee • actie</h3><p>Open delivered orders overview</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Delivered, uninvoiced orders?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Show orders per customer with amount and delivery date</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Select order</p></div><div class="step step--action"><h3>System • actie</h3><p>Show delivered order lines and extra costs</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>Show message no orders</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>

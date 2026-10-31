@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View outstanding invoices | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<body><div class="page"><header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a><nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header><section class="hero">
+<div class="overline">Administratie · AD18</div>
+<h1>View outstanding invoices</h1>
+<p>Conceptscherm op basis van AD18_View_outstanding_invoices.puml. De stappen en keuzes hieronder komen uit de bron en tonen geen verzonnen testresultaten of werkende functies.</p></section>
+<main class="board" id="main">
+<aside class="panel"><h2>Betrokken rollen</h2><span class="pill">Administration Employee</span><span class="pill">System</span>
+<h2>Doel van dit ontwerp</h2><p>Een scanbare medewerkersweergave voor de beschreven processtappen.</p>
+<p class="warning">Dit is een schermontwerp, geen werkende applicatie. Alleen goedgekeurde processtappen mogen later als functionaliteit worden uitgewerkt.</p>
+<div class="source-links"><a href="../uml/src/activity_diagrams/AD18_View_outstanding_invoices.puml">Bron (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD18_View_outstanding_invoices.svg">Activity diagram (SVG)</a></div></aside>
+<section class="panel" aria-label="Procesgebonden schermindeling"><h2>Schermonderdelen</h2>
+<div class="process"><div class="step step--action"><h3>Administration Employee • actie</h3><p>Open outstanding invoices overview</p></div><div class="step step--action"><h3>System • actie</h3><p>Show unpaid invoices with number of weeks open</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Select invoice</p></div><div class="step step--decision"><h3>Administration Employee • keuze</h3><p>if (Open 3 weeks or more?)</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Call customer and propose standard payment plan</p></div><div class="step step--decision"><h3>Administration Employee • keuze</h3><p>if (Customer accepts\npayment plan?)</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Register payment plan</p></div><div class="step step--feedback"><h3>Administration Employee • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>Administration Employee • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>Administration Employee • actie</h3><p>Register debt collection agency</p></div><div class="step step--action"><h3>System • actie</h3><p>Block customer from new orders</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--decision"><h3>System • keuze</h3><p>if (Open 1 week or more?)</p></div><div class="step step--action"><h3>System • actie</h3><p>Send payment reminder</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div><div class="step step--decision"><h3>System • keuze</h3><p>Alternatieve uitkomst</p></div><div class="step step--action"><h3>System • actie</h3><p>No action</p></div><div class="step step--feedback"><h3>System • resultaat</h3><p>Proces stopt</p></div></div></section></main><footer>Procesgebonden wireframes • Bron: bestaande Timaflu-activity diagrams</footer></div></body></html>
