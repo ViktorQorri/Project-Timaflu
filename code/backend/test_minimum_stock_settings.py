@@ -93,6 +93,7 @@ class MinimumStockTests(TestCase):
                     self.assertEqual(response.status_code, 200)
                     self.assertIn(b"Medicijn A", response.data)
                     self.assertIn(b"Minimumvoorraad instellen", response.data)
+                    self.assertIn(b"0 betekent geen tekortsignalering", response.data)
                     response = client.post("/stock/minimums/4",
                                            data={"minimumvoorraad": "15"})
                     self.assertEqual(response.status_code, 302)

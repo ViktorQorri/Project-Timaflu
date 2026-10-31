@@ -13,14 +13,24 @@ HAVING voorraad < p.minimumvoorraad
 ORDER BY (p.minimumvoorraad - voorraad) DESC,
          p.productnaam ASC;
 
--- Supplier offers for GET /suppliers?product=...
--- Example parameter 'Medication': backend uses LIKE %s with value '%Medication%'.
+-- Supplier offers for GET /suppliers?product_id=1 (from the shortage dashboard).
+-- Backend parameter: p.product_id = %s, example 1.
 SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
        l.contactpersoon, l.telefoonnummer, a.inkoopprijs
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%' AND p.in_assortiment = TRUE
+WHERE p.product_id = 1 AND p.in_assortiment = TRUE
+ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
+
+-- Manual GET /suppliers?product=Medication: exact name, never partial LIKE.
+-- Backend parameter: p.productnaam = %s, example 'Medication'.
+SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
+       l.contactpersoon, l.telefoonnummer, a.inkoopprijs
+FROM Product AS p
+JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
+JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
+WHERE p.productnaam = 'Medication' AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.

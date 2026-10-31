@@ -25,9 +25,14 @@ def stock():
 def suppliers():
     """Show the suppliers page."""
     product_name = request.args.get("product", "", type=str).strip()
-    service = SupplierService(SupplierRepository(get_connection())) if product_name else None
-    offers = service.offers_for_product(product_name) if service else []
-    return render_template("suppliers.html", product_name=product_name, offers=offers)
+    raw_id = request.args.get("product_id")
+    product_id = request.args.get("product_id", type=int) if raw_id is not None else None
+    if raw_id is not None and (product_id is None or product_id < 1 or str(product_id) != raw_id):
+        raise DomainError("Ongeldig productnummer.")
+    service = SupplierService(SupplierRepository(get_connection())) if (product_id is not None or product_name) else None
+    offers = service.offers_for_product(product_name, product_id=product_id) if service else []
+    return render_template("suppliers.html", product_name=product_name,
+                           product_id=product_id, searched=service is not None, offers=offers)
 
 
 @purchasing.post("/purchase-orders")

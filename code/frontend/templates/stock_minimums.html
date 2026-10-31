@@ -3,7 +3,7 @@
 {% block content %}
 <section class="stock-dashboard">
   <h1>Minimumvoorraad instellen</h1>
-  <p class="stock-dashboard__subtitle">Stel per medicijn in wanneer het systeem een voorraadtekort moet signaleren. De werkelijke voorraad wordt niet aangepast.</p>
+  <p class="stock-dashboard__subtitle">Stel per medicijn de minimale fysieke voorraad in. De werkelijke voorraad wordt niet aangepast. Bij minimumvoorraad 0 verschijnt geen tekortmelding; gebruik 0 alleen als er bewust geen minimumvoorraad geldt.</p>
   <p><a href="{{ url_for('purchasing.stock') }}">Terug naar voorraadtekorten</a></p>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
@@ -25,7 +25,7 @@
         <td>
           <form method="post" action="{{ url_for('purchasing.set_stock_minimum', product_id=item.product_id) }}">
             <label for="minimum-{{ item.product_id }}">Minimumvoorraad</label>
-            <input id="minimum-{{ item.product_id }}" name="minimumvoorraad" type="number" min="0" step="1" value="{{ item.minimumvoorraad }}" required>
+            <input id="minimum-{{ item.product_id }}" name="minimumvoorraad" type="number" min="0" step="1" value="{{ item.minimumvoorraad }}" required aria-describedby="minimum-help-{{ item.product_id }}"><small id="minimum-help-{{ item.product_id }}">0 betekent geen tekortsignalering.</small>
             <button type="submit">Bijwerken</button>
           </form>
         </td>

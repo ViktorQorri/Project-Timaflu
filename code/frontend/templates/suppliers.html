@@ -9,11 +9,11 @@
     <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
     <button type="submit">Leveranciers zoeken</button>
   </form>
-  {% if product_name %}
+  {% if searched %}
     {% if offers %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Leveranciers voor {{ product_name }}, goedkoopste bovenaan</caption>
+          <caption>Leveranciers voor {{ offers[0].productnaam if product_id is not none else product_name }}, goedkoopste bovenaan</caption>
           <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th></tr></thead>
           <tbody>
             {% for offer in offers %}

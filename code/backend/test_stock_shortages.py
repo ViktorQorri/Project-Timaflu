@@ -72,7 +72,7 @@ class StockShortageTests(TestCase):
                 self.assertIn(b"Medicine A", response.data)
                 self.assertIn(b"TIM-4", response.data)
                 self.assertIn(b"Vergelijk leveranciers en prijzen", response.data)
-                self.assertIn(b"/suppliers?product=Medicine+A", response.data)
+                self.assertIn(b"/suppliers?product_id=4", response.data)
             with patch("routes.purchasing.get_connection", return_value=FakeConnection([])):
                 response = client.get("/stock")
                 self.assertEqual(response.status_code, 200)
