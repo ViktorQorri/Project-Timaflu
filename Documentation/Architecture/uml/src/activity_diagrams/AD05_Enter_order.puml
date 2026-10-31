@@ -35,8 +35,11 @@ repeat
 repeat while (Another product?) is ([yes])
 |System|
 if (Any order lines remain?) then ([yes])
-  :Calculate order discount, first-order discount and customer discount;
-  :Show total and applied discounts;
+  :Calculate order discount (5% if subtotal >= EUR 500);
+  :Apply first-order discount of 10% if this is the first order;
+  :Determine annual customer discount from previous-year paid purchases;
+  :Apply customer discount to the amount after earlier discounts;
+  :Show total and all applied discounts (SD01);
 else ([no])
   :Show no order to place;
   stop
