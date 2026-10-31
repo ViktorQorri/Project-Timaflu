@@ -1,0 +1,53 @@
+@startuml
+title SD03 - Invoice output and unpaid invoice handling (UC16 / UC18 / AD16 / AD18)
+autonumber
+
+actor "Administration employee" as Admin
+participant "invoice:Invoice" as Invoice
+participant "reminder:PaymentReminder" as Reminder
+actor "Customer contact" as Contact
+participant "customer:Customer" as Customer
+
+== Weekly invoice using delivered items ==
+Admin -> Invoice: createWeeklyInvoice(deliveredOrderLines)
+activate Invoice
+note right of Invoice
+  Use actually delivered items, not unfulfilled order lines.
+  Invoice shows date, invoice number, customer billing address,
+  quantities, unit prices and line totals, total excl. VAT,
+  9% VAT, total incl. VAT, order discount,
+  total after order discount, one-time discount,
+  total after one-time discount, customer discount,
+  final amount after customer discount.
+end note
+Invoice --> Admin: invoice details and full breakdown
+deactivate Invoice
+Admin -> Invoice: sendToCustomer()
+Invoice --> Admin: invoice issued
+
+== Weekly overdue-payment review ==
+Admin -> Invoice: checkPaymentArrears()
+activate Invoice
+Invoice --> Admin: paidOn, weeks overdue, reminder history
+deactivate Invoice
+alt Paid or not yet overdue
+  note right of Admin: No follow-up action.
+else One or two unpaid weeks
+  Admin -> Reminder: send()
+  Reminder --> Admin: first or second reminder recorded
+else Still unpaid after three weeks
+  Admin -> Invoice: proposePaymentPlan()
+  Invoice --> Admin: standard payment plan proposal
+  Admin -> Contact: Call customer about payment plan
+  Contact --> Admin: accepted / declined
+  alt Customer accepts payment plan
+    Admin -> Invoice: record accepted plan
+    Invoice --> Admin: payment plan registered
+  else Customer declines
+    Admin -> Invoice: enableDebtCollection()
+    Invoice --> Admin: debt collection recorded
+    Admin -> Customer: checkOrderBlock()
+    Customer --> Admin: further orders blocked until full payment
+  end
+end
+@enduml

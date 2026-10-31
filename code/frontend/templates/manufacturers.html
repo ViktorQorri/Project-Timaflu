@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Fabrikanten{% endblock %}
+{% block content %}
+<section class="stock-dashboard">
+  <header class="stock-dashboard__intro">
+    <div><p class="stock-dashboard__eyebrow">Inkoop</p><h1>Fabrikanten beheren</h1>
+      <p class="stock-dashboard__subtitle">Beheer leveranciersgegevens en hun aanbodprijzen.</p></div>
+    <a class="button" href="{{ url_for('purchasing.manufacturer_new') }}">Fabrikant toevoegen</a>
+  </header>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Overzicht van geregistreerde fabrikanten</caption>
+      <thead><tr><th>Naam</th><th>Adres</th><th>Contactpersoon</th><th>Telefoon</th><th>Acties</th></tr></thead>
+      <tbody>
+      {% for item in manufacturers %}
+        <tr><th scope="row">{{ item.naam }}</th><td>{{ item.adres }}</td><td>{{ item.contactpersoon or 'Niet ingevuld' }}</td>
+        <td>{{ item.telefoonnummer or 'Niet ingevuld' }}</td><td>
+          <a href="{{ url_for('purchasing.manufacturer_edit', supplier_id=item.leverancier_id) }}">Bewerken</a>
+          <a href="{{ url_for('purchasing.manufacturer_prices', supplier_id=item.leverancier_id) }}">Inkoopprijzen</a>
+        </td></tr>
+      {% else %}
+        <tr><td colspan="5">Er zijn nog geen fabrikanten geregistreerd.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,7 +1,51 @@
 {% extends "base.html" %}
-
 {% block title %}Home{% endblock %}
-
 {% block content %}
-  <h1>Timaflu</h1>
+<section class="page-hero">
+  <span class="eyebrow">Timaflu medewerkersportaal</span>
+  <h1>Overzicht van de bedrijfsprocessen</h1>
+  <p>Werk vanuit één plek aan de verkoop, inkoop, orderverzameling, distributie, administratie en acquisitie van Timaflu.</p>
+</section>
+<section aria-labelledby="quick-links-heading">
+  <h2 id="quick-links-heading">Snel naar</h2>
+  <div class="quick-links">
+    {% for endpoint, label, description, icon_name in [
+      ('sales.customers', 'Klanten', 'Apotheken en contactgegevens', 'users'),
+      ('sales.orders', 'Orders', 'Telefonische bestellingen', 'orders'),
+      ('purchasing.stock', 'Voorraad', 'Minimale voorraad bewaken', 'stock'),
+      ('order_picking.index', 'Orderpicking', 'Deelorders en verzamelbakken', 'stock'),
+      ('distribution.deliveries', 'Leveringen', 'Koeriers en aflevermomenten', 'truck'),
+      ('administration.invoices', 'Facturen', 'Geleverde producten factureren', 'invoice'),
+      ('acquisition.index', 'Acquisitie', 'Nieuwe apotheken benaderen', 'users'),
+      ('reports.index', 'Rapportages', 'Overzichten voor de organisatie', 'chart')
+    ] %}
+    <a class="quick-card" href="{{ url_for(endpoint) }}">
+      <span class="quick-card__icon"><svg class="ui-icon" aria-hidden="true"><use href="#tmf-{{ icon_name }}"></use></svg></span>
+      <span class="quick-card__name">{{ label }}</span>
+      <span class="quick-card__detail">{{ description }}</span>
+      <span class="quick-card__arrow"><svg class="ui-icon" aria-hidden="true"><use href="#tmf-arrow"></use></svg></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+<section aria-labelledby="workflow-heading">
+  <h2 id="workflow-heading">Zo werken de processen samen</h2>
+  <div class="workflow-grid">
+    <article class="workflow-panel">
+      <span class="eyebrow">Verkoop en inkoop</span>
+      <h3>Van klantvraag naar voorraad</h3>
+      <p>De verkoopmedewerker neemt telefonisch een bestelling aan. Inkoop ziet welke medicijnen onder de minimumvoorraad staan en vergelijkt fabrikanten.</p>
+    </article>
+    <article class="workflow-panel">
+      <span class="eyebrow">Magazijn en distributie</span>
+      <h3>Van deelorder naar levering</h3>
+      <p>Robots verzamelen medicijnen per magazijngang in verzamelbakken. De distributiehoek maakt bestellingen gereed voor de koeriers.</p>
+    </article>
+    <article class="workflow-panel">
+      <span class="eyebrow">Administratie en acquisitie</span>
+      <h3>Van levering naar klantrelatie</h3>
+      <p>De administratie factureert daadwerkelijk geleverde producten. Acquisitie onderhoudt het contact met bestaande en nieuwe apotheken.</p>
+    </article>
+  </div>
+</section>
 {% endblock %}

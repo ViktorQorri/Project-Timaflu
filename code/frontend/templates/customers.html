@@ -1,7 +1,14 @@
 {% extends "base.html" %}
-
-{% block title %}Customers{% endblock %}
-
+{% block title %}Klanten{% endblock %}
 {% block content %}
-  <h1>Customers</h1>
+<section class="page-intro">
+  <span class="eyebrow">Verkoop</span>
+  <h1>Klanten</h1>
+  <p>Contactgegevens, factuuradressen en afleveradressen van apotheken vormen de basis voor het telefonisch opnemen van bestellingen.</p>
+</section>
+<section class="page-panel" aria-labelledby="customers-info">
+  <h2 id="customers-info">Klantgegevens</h2>
+  <p>De verkoop gebruikt de klantgegevens om bestellingen correct vast te leggen. De invoer en administratie van klanten worden gekoppeld aan de klantmodule.</p>
+  <a class="button button--secondary" href="{{ url_for('sales.orders') }}">Naar orders</a>
+</section>
 {% endblock %}

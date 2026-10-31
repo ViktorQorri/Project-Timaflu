@@ -237,6 +237,8 @@ Agreements for the API:
 - Because several robots work on one order, the service must handle two robots updating the same order at about the same time. The database transaction decides the final state.
 - The distribution corner shows which order is in which crate. That screen reads the same data the robots write.
 
+The endpoints that are built, with their requests, responses and errors, are in the [API specification](api-specification.md).
+
 ## Database
 
 - MySQL, normalized, hosted online and filled with enough relevant data.

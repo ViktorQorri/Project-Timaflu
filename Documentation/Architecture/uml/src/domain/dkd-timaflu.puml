@@ -102,6 +102,7 @@ class Product {
     longDescription
     minimumOrderQuantity
     minimumStock
+    inAssortment
     --
     checkStock()
     checkMinimumStock()
@@ -221,6 +222,8 @@ class Invoice {
     paidOn [0..1]
     paymentPlanAccepted [0..1]
     debtCollectionEnabled
+    actualInvoiceTotals [0..1]
+    appliedDiscounts [0..1]
     --
     createWeeklyInvoice()
     sendToCustomer()
@@ -257,7 +260,7 @@ Order "0..*" -[norank]-> "1" Address : delivery address
 Order "0..*" -[norank]-> "1" Address : billing address
 Order "1" -[norank]-> "1..*" OrderLine : contains
 OrderLine "0..*" -[norank]-> "1" Product : orders
-OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
+
 Order "0..*" -[norank]-> "1" OrderStatus : has
 Product "1" -[norank]-> "1..*" ProductActiveIngredient : contains
 Supplier "0..*" -[norank]-> "1" Address : located at
@@ -266,21 +269,20 @@ Product "1" -[norank]-> "0..*" SupplierOffer : offered in
 Supplier "1" -[norank]-> "0..*" PurchaseOrder : receives
 PurchaseOrder "1" -[norank]-> "1..*" PurchaseOrderLine : contains
 PurchaseOrderLine "0..*" -[norank]-> "1" Product : orders
-OrderLine "1" -[norank]-> "0..1" StockReservation : reserves
 Aisle "1" -[norank]-> "40" WarehouseLocation : contains
 Aisle "1" -[norank]-> "1" Robot : serviced by
 Product "0..1" -[norank]-> "0..*" WarehouseLocation : stored at
 Order "1" -[norank]-> "0..*" Suborder : collected through
 Robot "1" -[norank]-> "0..*" Suborder : processes
 Suborder "1" -[norank]-> "1..*" SuborderLine : contains
-SuborderLine "0..*" -[norank]-> "1" OrderLine : collects part of
+SuborderLine "0..*" -[norank]-> "1" Product : collects
 Suborder "0..1" -[norank]-> "0..*" CollectionBin : registered for
 Courier "1" -[norank]-> "0..*" Route : drives
 Route "1" -[norank]-> "1..*" DeliveryAttempt : schedules
 Order "1" -[norank]-> "0..*" Delivery : fulfilled through
 Delivery "1" -[norank]-> "0..*" DeliveryAttempt : attempted in
 Delivery "1" -[norank]-> "1..*" DeliveryLine : contains
-DeliveryLine "0..*" -[norank]-> "1" OrderLine : delivers part of
+DeliveryLine "0..*" -[norank]-> "1" Product : delivers
 Customer "1" -[norank]-> "0..*" Invoice : receives weekly invoice
 Invoice "0..1" -[norank]-> "1..*" DeliveryLine : invoices
 Invoice "1" -[norank]-> "0..2" PaymentReminder : receives
