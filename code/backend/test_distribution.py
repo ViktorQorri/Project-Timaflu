@@ -1,10 +1,12 @@
 """Tests for grouping picking bins and releasing packed customer orders."""
 
+from datetime import date, time
 from unittest import TestCase
 from unittest.mock import patch
 
 from app import create_app
 from domain.errors import ConflictError, DomainError
+from repositories.assessed_repository import AssessedRepository
 from repositories.distribution_repository import DistributionRepository
 from services.distribution_service import DistributionService
 
@@ -165,6 +167,21 @@ class DistributionServiceTests(TestCase):
             DistributionService(NoWriteRepository()).pack_order(3, "0")
 
 
+class DeliveryAttemptRepositoryTests(TestCase):
+    def test_second_attempt_uses_selected_delivery_date(self):
+        connection = FakeConnection(one_rows=[(7, 1, None)])
+
+        AssessedRepository(connection).register_delivery_attempt(
+            5, date(2026, 10, 31), True, time(14, 30)
+        )
+
+        self.assertEqual(connection.commits, 1)
+        query, parameters = connection.cursor_instance.statements[0]
+        self.assertIn("r.ritdatum=%s", query)
+        self.assertEqual(parameters, (5, date(2026, 10, 31)))
+        self.assertEqual(connection.cursor_instance.statements[2][1], (5, 7, time(14, 30), "afgeleverd", True))
+
+
 class DistributionRouteTests(TestCase):
     def test_distribution_page_shows_order_and_collection_bin(self):
         app = create_app()
@@ -181,6 +198,29 @@ class DistributionRouteTests(TestCase):
         self.assertIn(b"Bestelling 3", response.data)
         self.assertIn(b"VB-1", response.data)
         self.assertIn(b"Verpakking registreren", response.data)
+
+    def test_second_attempt_uses_selected_date_and_outcome(self):
+        app = create_app()
+        app.testing = True
+        connection = FakeConnection()
+
+        with app.test_client() as client:
+            with patch("routes.distribution.get_connection", return_value=connection):
+                with patch("routes.distribution.AssessedRepository") as repository:
+                    response = client.post(
+                        "/deliveries/second-attempt",
+                        data={
+                            "day": "2026-10-31",
+                            "delivery_id": "5",
+                            "time": "14:30",
+                            "outcome": "afgeleverd",
+                        },
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        repository.return_value.register_delivery_attempt.assert_called_once_with(
+            5, date(2026, 10, 31), True, time(14, 30)
+        )
 
     def test_pack_route_redirects_after_recording_boxes(self):
         app = create_app()

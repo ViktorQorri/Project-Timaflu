@@ -1,96 +1,158 @@
 {% extends "base.html" %}
-
-{% block title %}Leveringen{% endblock %}
-
+{% block title %}Bezorgrooster{% endblock %}
 {% block content %}
   <section class="stock-dashboard" aria-labelledby="distribution-title">
     <div class="stock-dashboard__intro">
       <div>
         <p class="stock-dashboard__eyebrow">Distributiehoek</p>
-        <h1 id="distribution-title">Orders en verzamelbakken</h1>
-        <p class="stock-dashboard__subtitle">Bakken zijn per order gegroepeerd. Verpak pas als alle deelorders afgerond zijn.</p>
+        <h1 id="distribution-title">Leveringen en verzamelbakken</h1>
       </div>
-      <span class="stock-dashboard__count">{{ orders|length }} orders</span>
     </div>
 
-    {% if orders %}
-      {% for order in orders %}
-        <section class="stock-dashboard__table-wrap" aria-labelledby="order-{{ order.bestelling_id }}">
-          <div class="stock-dashboard__intro">
-            <div>
-              <h2 id="order-{{ order.bestelling_id }}">Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}</h2>
-              <p>{{ order.afleveradres }} · {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
-              {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
+    <section aria-labelledby="schedule-title">
+      <h2 id="schedule-title">Bezorgrooster</h2>
+      <form method="get" class="supplier-lookup">
+        <label for="delivery-day">Datum</label>
+        <input id="delivery-day" type="date" name="day" value="{{ day.isoformat() }}" required>
+        <button type="submit">Bekijken</button>
+      </form>
+
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Geplande bezorgpogingen op {{ day }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tijd</th>
+              <th scope="col">Bestelling</th>
+              <th scope="col">Klant</th>
+              <th scope="col">Adres</th>
+              <th scope="col">Contact</th>
+              <th scope="col">Resultaat</th>
+              <th scope="col">Tweede poging</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in schedule %}
+              <tr>
+                <td>{{ item.geplande_tijd }}</td>
+                <td>{{ item.bestelling_id }}</td>
+                <td>{{ item.bedrijfsnaam }}</td>
+                <td>{{ item.adres }}</td>
+                <td>{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
+                <td>{{ item.resultaat or "nog niet afgeleverd" }}</td>
+                <td>
+                  {% if item.can_register_second_attempt %}
+                    <form method="post" action="{{ url_for('distribution.second_attempt') }}">
+                      <input type="hidden" name="day" value="{{ day.isoformat() }}">
+                      <input type="hidden" name="delivery_id" value="{{ item.levering_id }}">
+                      <label for="second-time-{{ item.levering_id }}">Tijd</label>
+                      <input id="second-time-{{ item.levering_id }}" type="time" name="time" required>
+                      <label for="second-outcome-{{ item.levering_id }}">Resultaat</label>
+                      <select id="second-outcome-{{ item.levering_id }}" name="outcome">
+                        <option value="afgeleverd">Afgeleverd</option>
+                        <option value="niet aanwezig">Niet afgeleverd</option>
+                      </select>
+                      <button type="submit">Registreer tweede poging</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="7">Geen ritten.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="orders-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="orders-title">Orders en verzamelbakken</h2>
+          <p class="stock-dashboard__subtitle">Bakken zijn per order gegroepeerd. Verpak pas als alle deelorders afgerond zijn.</p>
+        </div>
+        <span class="stock-dashboard__count">{{ orders|length }} orders</span>
+      </div>
+
+      {% if orders %}
+        {% for order in orders %}
+          <section class="stock-dashboard__table-wrap" aria-labelledby="order-{{ order.bestelling_id }}">
+            <div class="stock-dashboard__intro">
+              <div>
+                <h3 id="order-{{ order.bestelling_id }}">Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}</h3>
+                <p>{{ order.afleveradres }} · {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
+                {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
+              </div>
+              <p>Status: <strong>{{ order.status_naam or "Onbekend" }}</strong></p>
             </div>
-            <p>Status: <strong>{{ order.status_naam or "Onbekend" }}</strong></p>
-          </div>
 
-          <table class="stock-dashboard__table">
-            <caption>{{ order.bakken|length }} verzamelbakken bij deze bestelling</caption>
-            <thead>
-              <tr>
-                <th scope="col">Verzamelbak</th>
-                <th scope="col">Deelorder</th>
-                <th scope="col">Gang</th>
-                <th scope="col">Verzamelen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for bin in order.bakken %}
+            <table class="stock-dashboard__table">
+              <caption>{{ order.bakken|length }} verzamelbakken bij deze bestelling</caption>
+              <thead>
                 <tr>
-                  <th scope="row">{{ bin.unieke_code }}</th>
-                  <td>{{ bin.deelorder_id }}</td>
-                  <td>{{ bin.gang or "Onbekend" }}</td>
-                  <td>{% if bin.afgerond %}Afgerond{% else %}Bezig{% endif %}</td>
+                  <th scope="col">Verzamelbak</th>
+                  <th scope="col">Deelorder</th>
+                  <th scope="col">Gang</th>
+                  <th scope="col">Verzamelen</th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for bin in order.bakken %}
+                  <tr>
+                    <th scope="row">{{ bin.unieke_code }}</th>
+                    <td>{{ bin.deelorder_id }}</td>
+                    <td>{{ bin.gang or "Onbekend" }}</td>
+                    <td>{% if bin.afgerond %}Afgerond{% else %}Bezig{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
 
-          <h3>Orderregels</h3>
-          <table class="stock-dashboard__table">
-            <thead>
-              <tr>
-                <th scope="col">Artikelnummer</th>
-                <th scope="col">Product</th>
-                <th scope="col">Aantal</th>
-                <th scope="col">Tekort afnemen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for line in order.bestelregels %}
+            <h4>Orderregels</h4>
+            <table class="stock-dashboard__table">
+              <thead>
                 <tr>
-                  <th scope="row">{{ line.artikelnummer }}</th>
-                  <td>{{ line.productnaam }}</td>
-                  <td>{{ line.aantal }}</td>
-                  <td>{% if line.afnemen_bij_tekort %}Ja{% else %}Nee{% endif %}</td>
+                  <th scope="col">Artikelnummer</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Aantal</th>
+                  <th scope="col">Tekort afnemen</th>
                 </tr>
-              {% else %}
-                <tr><td colspan="4">Geen orderregels gevonden.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for line in order.bestelregels %}
+                  <tr>
+                    <th scope="row">{{ line.artikelnummer }}</th>
+                    <td>{{ line.productnaam }}</td>
+                    <td>{{ line.aantal }}</td>
+                    <td>{% if line.afnemen_bij_tekort %}Ja{% else %}Nee{% endif %}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4">Geen orderregels gevonden.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
 
-          {% if order.kan_verpakken %}
-            <form method="post" action="{{ url_for('distribution.pack_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
-              <label for="box-count-{{ order.bestelling_id }}">Aantal verhuisdozen</label>
-              <input id="box-count-{{ order.bestelling_id }}" name="box_count" type="number" min="1" step="1" required>
-              <button type="submit">Verpakking registreren</button>
-            </form>
-          {% elif order.status_naam == "ingepakt" and order.kan_vrijgeven %}
-            <p>{{ order.aantal_verhuisdozen }} verhuisdozen geregistreerd.</p>
-            <form method="post" action="{{ url_for('distribution.release_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
-              <button type="submit">Vrijgeven voor distributie</button>
-            </form>
-          {% elif not order.alle_deelorders_afgerond %}
-            <p class="stock-dashboard__subtitle">Verpakken is mogelijk zodra alle deelorders afgerond zijn.</p>
-          {% elif order.status_naam == "backorder" %}
-            <p class="stock-dashboard__subtitle">Deze bestelling heeft een backorder en kan nog niet worden verpakt.</p>
-          {% endif %}
-        </section>
-      {% endfor %}
-    {% else %}
-      <p class="stock-dashboard__empty" role="status">Er zijn geen bestellingen met geregistreerde verzamelbakken.</p>
-    {% endif %}
+            {% if order.kan_verpakken %}
+              <form method="post" action="{{ url_for('distribution.pack_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
+                <label for="box-count-{{ order.bestelling_id }}">Aantal verhuisdozen</label>
+                <input id="box-count-{{ order.bestelling_id }}" name="box_count" type="number" min="1" step="1" required>
+                <button type="submit">Verpakking registreren</button>
+              </form>
+            {% elif order.status_naam == "ingepakt" and order.kan_vrijgeven %}
+              <p>{{ order.aantal_verhuisdozen }} verhuisdozen geregistreerd.</p>
+              <form method="post" action="{{ url_for('distribution.release_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
+                <button type="submit">Vrijgeven voor distributie</button>
+              </form>
+            {% elif not order.alle_deelorders_afgerond %}
+              <p class="stock-dashboard__subtitle">Verpakken is mogelijk zodra alle deelorders afgerond zijn.</p>
+            {% elif order.status_naam == "backorder" %}
+              <p class="stock-dashboard__subtitle">Deze bestelling heeft een backorder en kan nog niet worden verpakt.</p>
+            {% endif %}
+          </section>
+        {% endfor %}
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen bestellingen met geregistreerde verzamelbakken.</p>
+      {% endif %}
+    </section>
   </section>
 {% endblock %}

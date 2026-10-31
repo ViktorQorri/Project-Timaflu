@@ -4,6 +4,7 @@ from db import get_connection
 from repositories.acquisition_repository import AcquisitionRepository
 from services.acquisition_service import AcquisitionService
 
+
 acquisition = Blueprint("acquisition", __name__)
 
 

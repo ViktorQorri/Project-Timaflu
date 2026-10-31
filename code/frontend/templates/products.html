@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Productcatalogus{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard" aria-labelledby="products-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Inkoop</p>
+        <h1 id="products-title">Productcatalogus</h1>
+        <p class="stock-dashboard__subtitle">Alle medicijnen in het assortiment.</p>
+      </div>
+      <a class="button button--primary" href="{{ url_for('purchasing.add_product') }}">Product toevoegen</a>
+    </header>
+
+    {% if products %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table catalog__table">
+          <caption>{{ products|length }} producten in het assortiment, gesorteerd op naam</caption>
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">Artikelnummer</th>
+              <th scope="col">Bestelcode</th>
+              <th scope="col">Werkzame stoffen</th>
+              <th scope="col">Verpakking</th>
+              <th scope="col" class="stock-dashboard__number">Prijs per grootverpakking</th>
+              <th scope="col" class="stock-dashboard__number">Minimale bestelhoeveelheid</th>
+              <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
+              <th scope="col"><span class="visually-hidden">Acties</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+              <tr>
+                <th scope="row">
+                  {{ product.product_name }}
+                  {% if product.short_description %}
+                    <span class="catalog__description">{{ product.short_description }}</span>
+                  {% endif %}
+                </th>
+                <td>{{ product.article_number }}</td>
+                <td>{{ product.order_code }}</td>
+                <td>
+                  {% for ingredient in product.active_ingredients %}
+                    {{ ingredient.ingredient_name }} {{ ingredient.quantity }}{% if not loop.last %},{% endif %}
+                  {% endfor %}
+                </td>
+                <td>{{ product.number_of_retail_packages }} × {{ product.package_type or 'verpakking' }}</td>
+                <td class="stock-dashboard__number">€ {{ "%.2f"|format(product.price_per_bulk_package)|replace('.', ',') }}</td>
+                <td class="stock-dashboard__number">{{ product.minimum_order_quantity }}</td>
+                <td class="stock-dashboard__number">{{ product.minimum_stock }}</td>
+                <td>
+                  <div class="catalog__actions">
+                    <a class="button button--small" href="{{ url_for('purchasing.edit_product', product_id=product.product_id) }}">Wijzigen<span class="visually-hidden"> {{ product.product_name }}</span></a>
+                    <a class="button button--small button--danger" href="{{ url_for('purchasing.remove_product', product_id=product.product_id) }}">Verwijderen<span class="visually-hidden"> {{ product.product_name }}</span></a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="stock-dashboard__empty" role="status">
+        <h2>Geen producten in het assortiment</h2>
+        <p>Voeg het eerste medicijn toe met de knop hierboven.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

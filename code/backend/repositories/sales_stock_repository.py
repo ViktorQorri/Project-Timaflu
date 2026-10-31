@@ -5,7 +5,10 @@ class SalesStockRepository:
         self.connection = connection
 
     def find_products(self, search):
-        """Find matching medicines with quantities from every warehouse location."""
+        """Find matching medicines with quantities from every warehouse location.
+
+        Products removed from the assortment cannot be sold, so they are left out.
+        """
         query = """
             SELECT p.product_id, p.artikelnummer, p.productnaam,
                    COALESCE(m.voorraad, 0) AS voorraad,
@@ -21,7 +24,8 @@ class SalesStockRepository:
                 SELECT product_id, SUM(aantal) AS gereserveerd
                 FROM Voorraadreservering GROUP BY product_id
             ) AS r ON r.product_id = p.product_id
-            WHERE p.productnaam LIKE %s OR p.artikelnummer LIKE %s
+            WHERE (p.productnaam LIKE %s OR p.artikelnummer LIKE %s)
+              AND p.in_assortiment = TRUE
             ORDER BY p.productnaam ASC
         """
         with self.connection.cursor(dictionary=True) as cursor:
