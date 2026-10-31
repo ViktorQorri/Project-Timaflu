@@ -16,11 +16,15 @@
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
       <caption>Actueel aanbod</caption>
-      <thead><tr><th>Product</th><th>Inkoopprijs</th></tr></thead>
+      <thead><tr><th>Product</th><th>Inkoopprijs</th><th>Acties</th></tr></thead>
       <tbody>
       {% for offer in offers %}
-      <tr><th scope="row">{{ offer.productnaam }}</th><td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td></tr>
-      {% else %}<tr><td colspan="2">Geen producten gekoppeld.</td></tr>{% endfor %}
+      <tr><th scope="row">{{ offer.productnaam }}</th><td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td>
+        <td><form method="post" action="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=manufacturer.leverancier_id, product_id=offer.product_id) }}">
+          <label><input type="checkbox" name="confirmed" value="yes" required> Fabrikant levert dit product niet meer</label>
+          <button type="submit">Leverancierskoppeling verwijderen</button>
+        </form></td></tr>
+      {% else %}<tr><td colspan="3">Geen producten gekoppeld.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

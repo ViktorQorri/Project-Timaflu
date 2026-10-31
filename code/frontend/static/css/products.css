@@ -1,0 +1,185 @@
+/* Start: Issue #13 - product catalog, following DESIGN_SYSTEM.MD with the shared Timaflu tokens. */
+.button {
+  display: inline-block;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 11px 18px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.button--primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  box-shadow: var(--shadow-primary);
+}
+.button--primary:hover {
+  border-color: var(--color-primary-dark);
+  background: var(--color-primary-dark);
+  color: var(--color-surface);
+}
+.button--danger {
+  border-color: var(--color-danger-bg);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.button--danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+.button--small {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Tables: small, muted column headers; the product name is the bold identification. */
+.catalog__table thead th {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.catalog__description {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: 0.8125rem;
+}
+.catalog__muted {
+  color: var(--color-text-muted);
+}
+.catalog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Panels: white, line border, 11px radius, no shadow unless hovered. */
+.product-form {
+  display: grid;
+  gap: 24px;
+}
+.product-form__group {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 20px 24px 24px;
+}
+.product-form__group legend {
+  padding: 0 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+.product-form__hint {
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+.product-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+/* Fields: label above the field, about 48px high, blue focus border with a soft ring. */
+.product-form__field {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.product-form__field--wide {
+  grid-column: 1 / -1;
+}
+.product-form__field input,
+.product-form__field select,
+.product-form__field textarea {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+}
+.product-form__field input::placeholder,
+.product-form__field textarea::placeholder {
+  color: var(--color-text-subtle);
+}
+.product-form__field input:focus,
+.product-form__field select:focus,
+.product-form__field textarea:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid var(--color-primary-light);
+}
+.product-form__ingredient {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.product-form__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Error message in a light red area below the fields. */
+.form-error {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.product-remove {
+  display: grid;
+  gap: 16px;
+}
+
+/* Confirmation after saving, shown by base.html. */
+.flash {
+  max-width: 1120px;
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  font-weight: 600;
+}
+.flash-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.flash-error {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+@media (max-width: 760px) {
+  .product-form__ingredient {
+    grid-template-columns: 1fr;
+  }
+  .product-form__buttons .button {
+    flex: 1;
+    text-align: center;
+  }
+}
+/* End: Issue #13 product catalog. */

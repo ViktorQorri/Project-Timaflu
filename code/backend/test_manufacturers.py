@@ -39,6 +39,9 @@ class FakeManufacturers:
 
     def set_price(self, supplier_id, product_id, price):
         self.priced = (supplier_id, product_id, price)
+    def remove_offer(self, supplier_id, product_id):
+        self.removed = (supplier_id, product_id)
+
 
 
 class ManufacturerTests(TestCase):
@@ -87,3 +90,15 @@ class ManufacturerTests(TestCase):
                                        data={"product_id": "2", "price": "11,20"})
                 self.assertEqual(response.status_code, 302)
                 self.assertEqual(self.repo.priced[2], Decimal("11.20"))
+
+    def test_remove_supplier_link_requires_explicit_confirmation(self):
+        app = create_app()
+        app.config.update(TESTING=True, SECRET_KEY="test-key")
+        with patch("routes.purchasing._manufacturer_service", return_value=self.service):
+            with app.test_client() as client:
+                rejected = client.post("/manufacturers/3/prices/2/remove")
+                self.assertEqual(rejected.status_code, 400)
+                self.assertIsNone(getattr(self.repo, "removed", None))
+                response = client.post("/manufacturers/3/prices/2/remove", data={"confirmed": "yes"})
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(self.repo.removed, (3, 2))
