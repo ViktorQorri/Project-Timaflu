@@ -88,7 +88,7 @@ def write_measured_evidence(evidence):
         "Deze tabellen zijn door MySQL 8.4 teruggegeven voor fictieve gegevens "
         "in een nieuw gemaakte en na afloop verwijderde lokale testdatabase.\n"
         "Het uitvoerbare bewijs staat in run_caseproof_mysql.py; hiermee zijn ook "
-        "de vijf bijbehorende Flask-pagina's met echte MySQL-verbindingen getest.\n\n"
+        "zeven procespagina's met echte MySQL-verbindingen getest.\n\n"
         +evidence+
         "\n## Interpretatie en beperkingen\n\n"
         "- De testdatabase bevat alleen fictieve, niet-productiegegevens.\n"
@@ -134,9 +134,9 @@ def run(conn,dbname,password):
         raise AssertionError("accepted payment plan before three weeks")
     except DomainError:
         verify("administration: no premature payment plan",True)
-    repo.record_payment_action(unpaid_id,"reminder1",date(2026,10,17))
-    repo.record_payment_action(unpaid_id,"reminder2",date(2026,10,24))
-    repo.record_payment_action(unpaid_id,"payment_plan_accepted",date(2026,10,31))
+    repo.record_payment_action(unpaid_id,"reminder1",date(2026,11,7))
+    repo.record_payment_action(unpaid_id,"reminder2",date(2026,11,14))
+    repo.record_payment_action(unpaid_id,"payment_plan_accepted",date(2026,11,21))
     verify("administration: reminders and payment plan persisted",True)
     order1,delivery1=inserted_order(conn)
     repo.record_first_attempt_delivery(delivery1,date(2026,10,31),"yes")
@@ -175,6 +175,9 @@ def run(conn,dbname,password):
     prospects=repo.prospect_followups(date(2026,9,30))
     verify("acquisition: pharmacy without order due for followup",
            any(row["potentiele_klant_id"]==1 for row in prospects))
+    verify("acquisition: existing account without order remains followable",
+           any(row["potentiele_klant_id"]==2
+               for row in repo.prospect_followups(date(2026,9,30))))
     new_customer=repo.register_prospect_customer(
         1,"Proef factuuradres","Proef afleveradres")
     with conn.cursor(dictionary=True) as cur:
@@ -186,7 +189,8 @@ def run(conn,dbname,password):
            bool(registered["eenmalige_korting_toegezegd"])
            and bool(registered["opvolging_afgesloten"]))
     verify("acquisition: accepted account excluded from callbacks",
-           all(item["potentiele_klant_id"]!=1 for item in repo.prospect_followups(date(2026,9,30))))
+           not any(row["potentiele_klant_id"]==1
+                   for row in repo.prospect_followups(date(2026,9,30))))
     with conn.cursor() as cur:
         cur.execute("""INSERT INTO PotentieleKlant(bedrijfsnaam,contactpersoon,contactgegevens,adres_id)
                        VALUES ('Afwijzende apotheek','Contact','0633333333',3)""")
@@ -196,17 +200,18 @@ def run(conn,dbname,password):
     conn.commit()
     repo.close_prospect_followup(declining,date(2026,9,30))
     verify("acquisition: refusal removes from followup",
-           all(item["potentiele_klant_id"]!=1 for item in repo.prospect_followups(date(2026,9,30))))
+           not any(row["potentiele_klant_id"]==declining
+                   for row in repo.prospect_followups(date(2026,9,30))))
     app=create_app()
     app.config.update(TESTING=True,SECRET_KEY="caseproof",
                       DB_HOST=HOST,DB_PORT=PORT,DB_NAME=dbname,
                       DB_USER="root",DB_PASSWORD=password)
     with app.test_client() as client:
-        endpoints=["/orders","/suppliers?product=Testmedicijn",
+        endpoints=["/orders","/order-picking","/stock","/suppliers?product=Testmedicijn",
                    "/invoices?customer_id=1","/acquisition",
                    "/deliveries?day=2026-10-31"]
         responses={url:client.get(url).status_code for url in endpoints}
-    verify("frontend: five scenario screens render with real MySQL",
+    verify("frontend: seven process screens render with real MySQL",
            all(code==200 for code in responses.values()))
     print("HTTP:",responses)
     print("ALL INTEGRATION CHECKS PASSED")
