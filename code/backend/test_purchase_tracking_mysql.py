@@ -1,4 +1,4 @@
-﻿"""Real MySQL test for issue #57; only isolated, disposable database.
+"""Real MySQL test for issue #57; only isolated, disposable database.
 
 Explicit opt-in: TIMAFLU_TEST_MYSQL=isolated, database timaflu_test.
 """
@@ -16,7 +16,7 @@ from repositories.purchase_order_repository import PurchaseOrderRepository
 class PurchaseTrackingMySQLTest(TestCase):
     def test_manual_order_records_current_date_and_status_without_backdating_history(self):
         import mysql.connector
-        
+
         db=mysql.connector.connect(
             host=os.environ["TIMAFLU_TEST_HOST"],
             port=int(os.environ["TIMAFLU_TEST_PORT"]),
@@ -62,4 +62,3 @@ class PurchaseTrackingMySQLTest(TestCase):
                 self.assertEqual(c.fetchone(),(None,None))
         finally:
             db.close()
-
