@@ -18,7 +18,7 @@
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <caption>Leveranciers voor {{ product_name }}, goedkoopste bovenaan</caption>
-          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th><th scope="col">Leveranciersbeheer</th></tr></thead>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Bestelwebsite</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th><th scope="col">Leveranciersbeheer</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
@@ -26,6 +26,7 @@
                 <td>{{ offer.leverancier }}</td>
                 <td>{{ offer.contactpersoon or 'Niet bekend' }}</td>
                 <td>{{ offer.telefoonnummer or 'Niet bekend' }}</td>
+                <td>{{ offer.website or 'Niet bekend' }}</td>
                 <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
                 <td>
                   <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">
