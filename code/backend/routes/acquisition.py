@@ -27,7 +27,7 @@ def record_visit():
         visit_date=date.fromisoformat(request.form["visit_date"])
     except (KeyError, ValueError) as exc:
         from domain.errors import DomainError
-        raise DomainError("Bezoekdatum is ongeldig.") from exc
+        raise DomainError("Een geldige bezoekdatum is verplicht.") from exc
     AcquisitionVisit().recordVisit(company,contact,details,address,visit_date)
     AssessedRepository(get_connection()).record_visit(company,contact,details,address,visit_date)
     flash("Bezoek geregistreerd.","success")

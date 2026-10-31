@@ -106,7 +106,8 @@ SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepte
        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=1 ORDER BY f.factuurdatum DESC;
+                WHERE f.klant_id=1 AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
                     FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id
@@ -139,7 +140,8 @@ UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
 
 -- AssessedRepository.schedule_second_attempt
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+SELECT lp.rit_id, lp.pogingnummer, lp.resultaat,
+                              TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds
                        FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
                        WHERE lp.levering_id=1 AND r.ritdatum='2026-10-30'
                        ORDER BY lp.pogingnummer DESC FOR UPDATE;

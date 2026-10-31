@@ -217,8 +217,11 @@ class Route:
 
 class AcquisitionVisit:
     def recordVisit(self, companyName, contactPerson, contactDetails, address, visitDate):
-        if not all((companyName, contactPerson, contactDetails, address)) or not isinstance(visitDate, date):
-            raise ValueError("Bedrijf, adres en datum zijn verplicht")
+        if (not all((companyName.strip(), contactPerson.strip(),
+                     contactDetails.strip(), address.strip()))
+                or not isinstance(visitDate, date)):
+            from domain.errors import DomainError
+            raise DomainError("Bedrijf, contactpersoon, contactgegevens, adres en datum zijn verplicht")
         return {"company": companyName, "contact": contactPerson,
                 "contact_details": contactDetails, "address": address, "date": visitDate}
 
