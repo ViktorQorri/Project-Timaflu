@@ -80,3 +80,115 @@
   .screen-fields { grid-template-columns: 1fr; }
 }
 /* Timaflu screen design panels. END */
+
+/* Timaflu casusgetrouwe schermontwerpen. START: scenario's, robotmonitor en procesuitkomsten. */
+.screen-main {display:flex;flex-direction:column;gap:20px}
+.screen-meta {display:flex;flex-wrap:wrap;gap:12px;color:var(--navy);font-size:12px;margin-top:15px}
+.screen-meta span{border-radius:8px;background:var(--sky);padding:6px 10px}
+.screen-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.screen-actions button[disabled]{min-height:44px;padding:10px 14px}
+.screen-fields input[type=checkbox]{min-height:20px;width:20px}
+.screen-field select,.screen-field textarea{width:100%;min-height:44px;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#f8fbfd;padding:9px 11px;color:var(--navy);font:inherit}
+.screen-field .field-label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+.screen-display{padding:10px 12px;border:1px dashed var(--line);background:var(--bg);border-radius:8px;color:var(--muted);overflow-wrap:anywhere}
+.scenario-panel{padding:clamp(18px,2.8vw,30px);border:1px solid var(--line);border-radius:11px;background:#fff}
+.scenario-panel h2{font-size:20px;margin:8px 0 20px}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.scenario{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:7px;padding:14px;background:#f8fbfd;min-width:0}
+.scenario h3{font-size:14px;line-height:1.4;margin:0 0 7px}
+.scenario p{font-size:13px;margin:0;line-height:1.6;color:var(--navy)}
+.case-notes{border-left:3px solid #ae6a18;padding:12px 12px 12px 25px;background:#fffaf1;margin:18px 0 0;font-size:13px}
+.case-notes li+li{margin-top:7px}
+.invoice-preview{margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:8px;background:#f8fbfd}
+.invoice-preview h3{margin:0 0 14px;font-size:16px}
+.invoice-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 16px;font-size:13px}
+.invoice-grid output{font-weight:700;text-align:right}
+@media(max-width:760px){.screen-meta{display:grid;grid-template-columns:1fr}.screen-actions{flex-direction:column}.screen-actions button{width:100%}}
+/* Timaflu casusgetrouwe schermontwerpen. END */
+
+
+/* Timaflu casusontwerpen. START: verplichte factuurvelden, leverancierbeheer en
+   zichtbare alternatieve schermstatussen op mobiel en desktop. */
+.case-detail,.state-gallery,.invoice-document,.order-breakdown,.signature-section{
+  min-width:0;
+  padding:clamp(18px,2.5vw,28px);
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:11px;
+}
+.case-detail h2,.state-gallery h2,.invoice-document h2,.signature-section h2{
+  font-size:clamp(18px,2vw,24px);
+  margin:8px 0 16px;
+}
+.case-detail>p,.state-gallery>p{max-width:850px;color:var(--muted);font-size:13px}
+.state-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.state-card{
+  min-width:0;display:flex;flex-direction:column;gap:13px;
+  padding:18px;border:1px solid var(--line);border-left:5px solid #0f70b7;
+  border-radius:10px;background:#f8fbfd;
+}
+.state-card--warning{border-left-color:#ae6a18;background:#fffaf3}
+.state-card--danger{border-left-color:#bd4646;background:#fff9f9}
+.state-card--success{border-left-color:#267e55;background:#f6fcf8}
+.state-card--neutral{border-left-color:#728393;background:#f6f8fa}
+.state-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:start;gap:8px}
+.state-header h3{font-size:16px;margin:0;line-height:1.35}
+.state-pill{
+  font-size:11px;font-weight:700;border-radius:25px;
+  background:#e6f2fb;color:#0b5c94;padding:5px 9px;white-space:normal;
+}
+.state-card--warning .state-pill{background:#ffedce;color:#874e0d}
+.state-card--danger .state-pill{background:#ffe3e3;color:#a13737}
+.state-card--success .state-pill{background:#e2f4e7;color:#236b43}
+.state-card--neutral .state-pill{background:#ebeff3;color:#495d6c}
+.state-message{font-size:13px;color:var(--navy);margin:0}
+.state-values,.calculation-grid,.invoice-totals{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  gap:7px 16px;align-items:baseline;font-size:13px;margin:0;
+}
+.state-values dt,.invoice-totals dt,.calculation-grid dt{min-width:0;overflow-wrap:anywhere}
+.state-values dd,.invoice-totals dd,.calculation-grid dd{
+  margin:0;font-weight:700;text-align:right;overflow-wrap:anywhere;
+}
+.state-values{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
+.state-values dd{font-weight:600}
+.state-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.state-actions button[disabled]{min-height:44px;box-shadow:none;opacity:.72}
+.state-actor{font-size:11px;color:var(--muted);margin:0}
+.order-breakdown h3,.invoice-summary h3{font-size:16px;margin:0 0 14px}
+.order-breakdown{background:#f9fbfd}
+.invoice-document{border-color:#c7dce9}
+.invoice-topline,.invoice-parties,.signature-meta{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;
+  padding:20px 0;border-bottom:1px solid var(--line);
+}
+.invoice-topline div,.invoice-parties div,.signature-meta div{
+  display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere;font-size:13px;
+}
+.invoice-topline span,.invoice-parties span,.signature-meta span{color:var(--muted)}
+.invoice-lines-wrap{max-width:100%;overflow-x:auto;margin:18px 0}
+.invoice-lines{width:100%;min-width:550px;border-collapse:collapse}
+.invoice-lines th,.invoice-lines td{border-bottom:1px solid var(--line);padding:12px;text-align:left}
+.invoice-lines th{font-size:12px;background:#f8fbfd}
+.invoice-summary{padding:18px;background:#f6fafc;border-radius:9px}
+.invoice-totals{max-width:660px;margin-left:auto;line-height:1.5}
+.invoice-totals dt:last-of-type,.invoice-totals dd:last-of-type{
+  border-top:2px solid var(--navy);padding-top:10px;font-weight:800;
+}
+.invoice-document .screen-note{margin-top:16px}
+.signature-placeholder{
+  min-height:175px;border:2px dashed #a3bfce;border-radius:9px;background:#f7fbfe;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px;color:var(--muted);font-size:13px;text-align:center;padding:20px;
+}
+.signature-line{width:min(80%,360px);border-bottom:1px solid #b5c8d3}
+.case-detail .screen-table-wrap{margin-top:14px}
+@media(max-width:900px){.state-grid{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .case-detail,.state-gallery,.invoice-document,.order-breakdown,.signature-section{padding:18px}
+ .invoice-topline,.invoice-parties,.signature-meta{grid-template-columns:1fr;gap:13px}
+ .state-actions{flex-direction:column}
+ .state-actions button{width:100%}
+ .invoice-totals{margin:0;gap:10px 8px}
+}
+/* Timaflu casusontwerpen. END */

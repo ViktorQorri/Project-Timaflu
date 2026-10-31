@@ -1,33 +1,57 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deelorder afronden | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deelorder afronden | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Orderpicking · AD11</span>
+<span class="overline">Orderpicking &middot; AD11</span>
 <h1>Deelorder afronden</h1>
-<p>Schermontwerp voor de activiteit AD11_Complete_sub-order. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Afgeronde deelorders en werkelijk verzamelde aantallen verwerken.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Magazijnrobot / systeem</span>
+<span><strong>Type:</strong> Systeem- of robotmonitor</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
-<span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-11-0">Robotnummer</label>
-<input id="field-11-0" type="text" placeholder="Vul robotnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-11-1">Deelordernummer</label>
-<input id="field-11-1" type="text" placeholder="Vul deelordernummer in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Deelorder gereed melden</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<span class="overline">Read-only procesmonitor</span>
+<h2 id="input-heading">Systeeminformatie</h2>
+<p class="screen-note">Dit zijn getoonde systeemgegevens, geen handmatige invoervelden.</p><div class="screen-fields"><div class="screen-field"><label for="field-11-0">Robotnummer</label><input id="field-11-0" type="text" placeholder="Robotnummer" disabled></div>
+<div class="screen-field"><label for="field-11-1">Deelordernummer</label><input id="field-11-1" type="text" placeholder="Deelordernummer" disabled></div>
+<div class="screen-field"><label for="field-11-2">Verzameld aantal</label><input id="field-11-2" type="text" placeholder="Verzameld aantal" disabled></div></div><p class="screen-note">Geen handmatige actie in dit proces.</p>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Deelordernummer</th><th scope='col'>Medicijn</th><th scope='col'>Gevraagd aantal</th><th scope='col'>Afgerond</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD11_Complete_sub-order.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD11_Complete_sub-order.svg">Activity diagram (SVG)</a></div>
-</section></main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Deelorder</th><th scope="col">Medicijn</th><th scope="col">Gevraagd</th><th scope="col">Verzameld</th><th scope="col">Ontbrekend</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD11_Complete_sub-order.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD11_Complete_sub-order.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+
+
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Alle producten verzameld</h3><p>Boek werkelijk verzamelde aantallen uit de voorraad en werk de orderstatus bij wanneer alle deelorders klaar zijn.</p></article><article class="scenario"><h3>Niet volledig verzameld</h3><p>Corrigeer de voorraad en registreer ontbrekende orderregels als backorder.</p></article><article class="scenario"><h3>Volgende deelorder</h3><p>Stuur een nieuwe deelorder voor dezelfde gang of laat de robot wachten.</p></article></div>
+<ul class="case-notes"><li>Een robot meldt aantallen aan het systeem; een medewerker hoeft de voorraad niet in dit scherm over te typen.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

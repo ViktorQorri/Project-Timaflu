@@ -1,36 +1,82 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Producten bijbestellen | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producten bijbestellen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Inkoop · AD02</span>
+<span class="overline">Inkoop &middot; AD02</span>
 <h1>Producten bijbestellen</h1>
-<p>Schermontwerp voor de activiteit AD02_Reorder_products. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Producten onder minimumvoorraad bij de goedkoopste leverbare fabrikant bestellen.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Inkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-2-0">Medicijn</label>
-<input id="field-2-0" type="text" placeholder="Vul medicijn in" disabled></div>
-<div class="screen-field">
-<label for="field-2-1">Aantal</label>
-<input id="field-2-1" type="number" placeholder="Vul aantal in" disabled></div>
-<div class="screen-field">
-<label for="field-2-2">Fabrikant</label>
-<input id="field-2-2" type="text" placeholder="Vul fabrikant in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Bevestigde inkooporder registreren</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-2-0">Medicijn of artikelnummer</label><input id="field-2-0" type="text" placeholder="Medicijn of artikelnummer" disabled></div>
+<div class="screen-field"><label for="field-2-1">Gewenst aantal</label><input id="field-2-1" type="number" placeholder="Gewenst aantal" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Leverancier benaderen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Bevestigde inkooporder registreren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Uit interne bestellijst verwijderen</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Fabrikant</th><th scope='col'>Inkoopprijs</th><th scope='col'>Contactpersoon</th><th scope='col'>Telefoonnummer</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD02_Reorder_products.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD02_Reorder_products.svg">Activity diagram (SVG)</a></div>
-</section></main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Fabrikant</th><th scope="col">Inkoopprijs</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th></tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD02_Reorder_products.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD02_Reorder_products.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+<section class="case-detail" aria-labelledby="supplier-management-heading">
+<span class="overline">Productbeheer bij voorraadtekort</span>
+<h2 id="supplier-management-heading">Leverancierskoppeling en medicijn beheren</h2>
+<p>De onderstaande twee beheeracties worden afzonderlijk aangeboden.
+Ze staan los van het verwijderen uit de interne bestellijst.</p>
+<div class="screen-fields">
+<div class="screen-field">
+<label for="supplier-product">Geselecteerd medicijn</label>
+<input id="supplier-product" type="text" placeholder="Medicijn of artikelnummer" disabled>
+</div>
+<div class="screen-field">
+<label for="supplier-link">Fabrikant gekoppeld aan dit medicijn</label>
+<select id="supplier-link" disabled>
+<option value="">Selecteer een fabrikant uit de leverancierslijst</option>
+</select>
+</div>
+</div>
+<div class="screen-actions">
+<button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">
+Leverancier van dit medicijn verwijderen</button>
+<button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">
+Medicijn verwijderen</button>
+</div>
+<p class="screen-note">Een leverancierskoppeling verwijderen betekent niet de
+fabrikant overal verwijderen. De twee mogelijkheden zijn expliciet voorgeschreven
+bij het niet-voorraadscenario in Product-description.md.</p>
+</section>
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--info" data-state-variant="1"><div class="state-header"><h3>Leveranciers vergelijken</h3><span class="state-pill">Selectie</span></div><p class="state-message">De gekoppelde fabrikanten worden oplopend op inkoopprijs getoond.</p><dl class="state-values"><dt>Medicijn</dt><dd>Nog niet geselecteerd</dd><dt>Inkoopprijs</dt><dd>Wordt uit leveranciersoverzicht geladen</dd><dt>Contactpersoon en telefoonnummer</dt><dd>Worden uit het systeem geladen</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Goedkoopste leverancier benaderen</button></div><p class="state-actor">Uitvoerder: Inkoopmedewerker</p></article><article class="state-card state-card--warning" data-state-variant="2"><div class="state-header"><h3>Leverancier kan niet leveren</h3><span class="state-pill">Volgende leverancier</span></div><p class="state-message">Neem telefonisch contact op met de volgende goedkoopste fabrikant.</p><dl class="state-values"><dt>Rangorde</dt><dd>Oplopend op inkoopprijs</dd><dt>Beschikbaarheid</dt><dd>Niet leverbaar bij geselecteerde fabrikant</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Volgende leverancier selecteren</button></div><p class="state-actor">Uitvoerder: Inkoopmedewerker</p></article><article class="state-card state-card--danger" data-state-variant="3"><div class="state-header"><h3>Geen leverancier beschikbaar</h3><span class="state-pill">Geen leverancier</span></div><p class="state-message">Er is geen fabrikant meer die kan leveren. Verwijder het medicijn uit de interne bestellijst.</p><dl class="state-values"><dt>Bestelresultaat</dt><dd>Geen inkooporder geregistreerd</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Uit interne bestellijst verwijderen</button></div><p class="state-actor">Uitvoerder: Inkoopmedewerker</p></article></div></section>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Leveranciers op prijs</h3><p>Toon gekoppelde fabrikanten oplopend op inkoopprijs, inclusief contactpersoon en telefoonnummer.</p></article><article class="scenario"><h3>Niet leverbaar</h3><p>Bel de eerstvolgende fabrikant. Als geen fabrikant kan leveren, verwijder het product uit de interne bestellijst.</p></article><article class="scenario"><h3>Bestelling bevestigd</h3><p>Pas na telefonische bevestiging door de fabrikant registreert het systeem de inkooporder.</p></article><article class="scenario"><h3>Leverancier van medicijn verwijderen</h3><p>Ontkoppel één geselecteerde fabrikant van dit specifieke medicijn, niet van alle medicijnen.</p></article><article class="scenario"><h3>Medicijn verwijderen</h3><p>Toon de afzonderlijke mogelijkheid om het geselecteerde product te verwijderen.</p></article></div>
+<ul class="case-notes"><li>De telefonische inkoop blijft behouden; het systeem plaatst niet zelf een bestelling.</li><li>Een medicijn uit de interne bestellijst halen, een leverancierskoppeling verwijderen en een medicijn verwijderen zijn drie verschillende acties.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

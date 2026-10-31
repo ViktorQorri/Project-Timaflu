@@ -1,36 +1,83 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mislukte levering afhandelen | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mislukte levering afhandelen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Distributie · AD27</span>
+<span class="overline">Distributie &middot; AD27</span>
 <h1>Mislukte levering afhandelen</h1>
-<p>Schermontwerp voor de activiteit AD27_Handle_failed_delivery. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Twee bezorgpogingen en de opvolging van een mislukte levering ondersteunen.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Koerier / verkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-27-0">Bestelnummer</label>
-<input id="field-27-0" type="text" placeholder="Vul bestelnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-27-1">Telefoonnummer klant</label>
-<input id="field-27-1" type="text" placeholder="Vul telefoonnummer klant in" disabled></div>
-<div class="screen-field">
-<label for="field-27-2">Tijd tweede poging</label>
-<input id="field-27-2" type="time" placeholder="Vul tijd tweede poging in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Mislukte levering registreren</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-27-0">Bestelnummer</label><input id="field-27-0" type="text" placeholder="Bestelnummer" disabled></div>
+<div class="screen-field"><label for="field-27-1">Telefoonnummer klant</label><input id="field-27-1" type="tel" placeholder="Telefoonnummer klant" disabled></div>
+<div class="screen-field"><label for="field-27-2">Nieuwe leverdatum</label><input id="field-27-2" type="date" placeholder="Nieuwe leverdatum" disabled></div>
+<div class="screen-field"><label for="field-27-3">Nieuw dagdeel</label><select id="field-27-3" disabled><option value="">Maak een keuze</option><option>Ochtend</option><option>Middag</option></select></div>
+<div class="screen-field"><label for="field-27-4">Extra bezorgkosten</label><input id="field-27-4" type="number" placeholder="Extra bezorgkosten" disabled></div>
+<div class="screen-field"><label for="field-27-5">Toelichting</label><textarea id="field-27-5" rows="3" disabled></textarea></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Eerste mislukte poging melden</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Tweede poging bevestigen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Nieuwe leverafspraak opslaan</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Bestelnummer</th><th scope='col'>Eerste poging</th><th scope='col'>Tweede poging</th><th scope='col'>Status</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD27_Handle_failed_delivery.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD27_Handle_failed_delivery.svg">Activity diagram (SVG)</a></div>
-</section></main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Bestelnummer</th><th scope="col">Eerste poging</th><th scope="col">Tweede poging</th><th scope="col">Afleverstatus</th><th scope="col">Extra kosten</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD27_Handle_failed_delivery.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD27_Handle_failed_delivery.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+<section class="case-detail" aria-labelledby="delivery-schedule-heading">
+<span class="overline">Verplicht overzicht voor de bezorging</span>
+<h2 id="delivery-schedule-heading">Bezorgrooster en tweede poging</h2>
+<div class="screen-fields">
+<div class="screen-field">
+<label for="delivery-roster-date">Ritdatum</label>
+<input id="delivery-roster-date" type="date" disabled>
+</div>
+</div>
+<div class="screen-table-wrap">
+<table aria-label="Rooster van toegewezen ritten">
+<thead><tr>
+<th scope="col">Tijd / dagdeel</th><th scope="col">Klantnaam</th>
+<th scope="col">Afleveradres</th><th scope="col">Contactpersoon</th>
+<th scope="col">Telefoonnummer</th><th scope="col">Bezorgpoging</th>
+</tr></thead>
+<tbody><tr><td colspan="6" class="empty-row">
+Klant- en ritgegevens worden uit het systeem geladen.</td></tr></tbody>
+</table>
+</div>
+<p class="screen-note">Na een eerste mislukte levering komt dezelfde bestelling
+later die dag opnieuw op het rooster. Bij een tweede mislukking volgt
+terugbrengen en afstemming met verkoop over een nieuwe afspraak.</p>
+</section>
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--warning" data-state-variant="1"><div class="state-header"><h3>Eerste bezorgpoging mislukt</h3><span class="state-pill">Klant bellen</span></div><p class="state-message">Vraag telefonisch of de klant de bestelling alsnog kan ontvangen.</p><dl class="state-values"><dt>Eerste poging</dt><dd>Niet afgeleverd</dd><dt>Contactpersoon</dt><dd>Uit klantgegevens</dd><dt>Telefoonnummer</dt><dd>Uit klantgegevens</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant bellen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Poging als mislukt melden</button></div><p class="state-actor">Uitvoerder: Koerier</p></article><article class="state-card state-card--info" data-state-variant="2"><div class="state-header"><h3>Tweede poging dezelfde dag</h3><span class="state-pill">Route aangepast</span></div><p class="state-message">Het systeem voegt na de eerste mislukte poging een tweede bezoek toe aan de route van vandaag.</p><dl class="state-values"><dt>Bezorgen</dt><dd>Later dezelfde dag</dd><dt>Rit</dt><dd>Opnieuw ingepland</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Tweede poging openen</button></div><p class="state-actor">Uitvoerder: Koerier</p></article><article class="state-card state-card--success" data-state-variant="3"><div class="state-header"><h3>Tweede poging geslaagd</h3><span class="state-pill">Afgeleverd</span></div><p class="state-message">Leg de handtekening en het tijdstip vast en registreer de order als afgeleverd.</p><dl class="state-values"><dt>Ontvangsthandtekening</dt><dd>Digitaal geregistreerd</dd><dt>Aflevermoment</dt><dd>Werkelijk tijdstip</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Aflevering bevestigen</button></div><p class="state-actor">Uitvoerder: Koerier</p></article><article class="state-card state-card--danger" data-state-variant="4"><div class="state-header"><h3>Ook tweede poging mislukt</h3><span class="state-pill">Terug naar distributie</span></div><p class="state-message">Retourneer de medicijnen aan de distributiehoek; verkoop belt de klant en legt een nieuwe afspraak en eventuele extra kosten vast.</p><dl class="state-values"><dt>Leverstatus</dt><dd>Tweemaal niet afgeleverd</dd><dt>Nieuwe leverdatum en dagdeel</dt><dd>Door verkoop af te spreken</dd><dt>Extra bezorgkosten</dt><dd>Door verkoop te registreren</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Nieuwe leverafspraak opslaan</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article></div></section>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Eerste poging mislukt</h3><p>Bel de klant. Als alsnog direct afleveren mogelijk is, registreer de levering via AD12.</p></article><article class="scenario"><h3>Later dezelfde dag</h3><p>Het systeem plaatst een tweede bezorgpoging op de dagroute van de koerier.</p></article><article class="scenario"><h3>Tweede poging geslaagd</h3><p>Leg handtekening en tijdstip vast en markeer de order als afgeleverd.</p></article><article class="scenario"><h3>Tweede poging mislukt</h3><p>Koerier brengt goederen terug; verkoop neemt contact op en registreert nieuwe leverdatum, dagdeel en extra kosten.</p></article></div>
+<ul class="case-notes"><li>Na twee mislukte pogingen is een nieuwe afspraak een handeling van verkoop, niet van de koerier.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

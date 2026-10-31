@@ -1,33 +1,56 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bestelling verpakken | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestelling verpakken | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Orderpicking · AD09</span>
+<span class="overline">Orderpicking &middot; AD09</span>
 <h1>Bestelling verpakken</h1>
-<p>Schermontwerp voor de activiteit AD09_Pack_order. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Complete orders uit verzamelbakken verpakken en voor bezorging gereedzetten.</p>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Distributiemedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-9-0">Bestelnummer</label>
-<input id="field-9-0" type="text" placeholder="Vul bestelnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-9-1">Aantal dozen</label>
-<input id="field-9-1" type="number" placeholder="Vul aantal dozen in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Verpakking bevestigen</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-9-0">Complete bestelling</label><input id="field-9-0" type="text" placeholder="Complete bestelling" disabled></div>
+<div class="screen-field"><label for="field-9-1">Aantal dozen</label><input id="field-9-1" type="number" placeholder="Aantal dozen" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Verpakking bevestigen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Adreslabel afdrukken</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Verzamelbak</th><th scope='col'>Medicijn</th><th scope='col'>Aantal</th></tr></thead><tbody><tr><td colspan='3' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD09_Pack_order.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD09_Pack_order.svg">Activity diagram (SVG)</a></div>
-</section></main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Verzamelbak</th><th scope="col">Medicijn</th><th scope="col">Aantal</th><th scope="col">Bijbehorende bestelling</th></tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD09_Pack_order.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD09_Pack_order.svg">Activity diagram (SVG)</a>
+</div>
+</section></div>
+
+
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Alleen complete order</h3><p>Toon bij de geselecteerde complete order de bijbehorende verzamelbakken en bestelregels.</p></article><article class="scenario"><h3>Adresetiket</h3><p>Adreslabel bevat klantnaam, afleveradres en telefoonnummer.</p></article><article class="scenario"><h3>Spoedbestelling</h3><p>Bij een spoedorder verschijnt daarnaast het extra spoedlabel.</p></article><article class="scenario"><h3>Gereed</h3><p>Na bevestiging wordt de orderstatus bijgewerkt en een bezorgrit toegewezen.</p></article></div>
+<ul class="case-notes"><li>Het daadwerkelijke inpakken en bevestigen gebeurt door een distributiemedewerker.</li></ul>
+</section>
+</main>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>
