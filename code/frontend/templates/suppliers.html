@@ -26,7 +26,7 @@
                 <td>{{ offer.leverancier }}</td>
                 <td>{{ offer.contactpersoon or 'Niet bekend' }}</td>
                 <td>{{ offer.telefoonnummer or 'Niet bekend' }}</td>
-                <td>{{ offer.website or 'Niet bekend' }}</td>
+                <td>{{ offer.internetadres or 'Niet bekend' }}</td>
                 <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
                 <td>
                   <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">
@@ -39,7 +39,7 @@
                   </form>
                 </td>
                 <td>
-                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
+                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>`n                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>`n                  <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
                     <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
                     <input type="hidden" name="product_name" value="{{ offer.productnaam }}">
