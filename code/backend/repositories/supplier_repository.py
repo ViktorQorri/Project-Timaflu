@@ -7,22 +7,43 @@ class SupplierRepository:
     def __init__(self, connection):
         self.connection = connection
 
-    def find_offers(self, product_name):
-        """Find matching products and their offers, cheapest supplier first.
+    def find_offers(self, product_name=None, product_id=None):
+        """Compare offers for one medicine by its stable id, or exact name.
 
-        Products removed from the assortment are left out.
+        Never use LIKE here: partial names can mix different medicines.
+        The UI uses product_id when navigating from a stock shortage.
         """
+        if product_id is not None:
+            condition, params = "p.product_id = %s", (product_id,)
+        else:
+            condition, params = "p.productnaam = %s", (product_name,)
         query = """
             SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
                    l.contactpersoon, l.telefoonnummer, a.inkoopprijs
             FROM Product AS p
             JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
             JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-            WHERE p.productnaam LIKE %s AND p.in_assortiment = TRUE
+            WHERE """ + condition + """ AND p.in_assortiment = TRUE
             ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC
         """
         with self.connection.cursor(dictionary=True) as cursor:
-            cursor.execute(query, (f"%{product_name}%",))
+            cursor.execute(query, params)
+            return cursor.fetchall()
+
+    def search_products_by_name(self, product_name):
+        """Find catalog medicines first; do not mix supplier offers for equal names.
+
+        Article number and product ID distinguish medicines with identical names.
+        LOCATE treats user input literally (including % and _), without LIKE wildcards.
+        """
+        query = """
+            SELECT p.product_id, p.productnaam, p.artikelnummer
+            FROM Product AS p
+            WHERE p.in_assortiment = TRUE AND LOCATE(%s, p.productnaam) > 0
+            ORDER BY p.productnaam ASC, p.artikelnummer ASC, p.product_id ASC
+        """
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (product_name,))
             return cursor.fetchall()
 
     def list_all(self):

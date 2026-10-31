@@ -25,9 +25,20 @@ def stock():
 def suppliers():
     """Show the suppliers page."""
     product_name = request.args.get("product", "", type=str).strip()
-    service = SupplierService(SupplierRepository(get_connection())) if product_name else None
-    offers = service.offers_for_product(product_name) if service else []
-    return render_template("suppliers.html", product_name=product_name, offers=offers)
+    raw_id = request.args.get("product_id")
+    product_id = request.args.get("product_id", type=int) if raw_id is not None else None
+    if raw_id is not None and (product_id is None or product_id < 1 or str(product_id) != raw_id):
+        raise DomainError("Ongeldig productnummer.")
+    service = SupplierService(SupplierRepository(get_connection())) if (product_id is not None or product_name) else None
+    products = service.products_matching_name(product_name) if service and product_id is None else []
+    # The required purchasing scenario takes a product name and returns suppliers.
+    # Skip a redundant selection step if only one medicine matches.
+    # For ambiguous names, keep the article-number selection to avoid wrong orders.
+    if product_id is None and len(products) == 1:
+        product_id = products[0]["product_id"]
+    offers = service.offers_for_product(product_id=product_id) if service and product_id is not None else []
+    return render_template("suppliers.html", product_name=product_name,
+                           product_id=product_id, products=products, offers=offers)
 
 
 @purchasing.post("/purchase-orders")
@@ -42,6 +53,20 @@ def record_purchase_order():
     flash(f"Inkooporder {order_id} is vastgelegd na bevestiging door de leverancier.", "success")
     return redirect(url_for("purchasing.suppliers"))
 
+@purchasing.get("/stock/minimums")
+def stock_minimums():
+    """Manage minimum stock alerts for every catalog item."""
+    service = StockService(StockRepository(get_connection()))
+    return render_template("stock_minimums.html", products=service.minimums())
+
+
+@purchasing.post("/stock/minimums/<int:product_id>")
+def set_stock_minimum(product_id):
+    """Store a manually chosen threshold and return to the overview."""
+    service = StockService(StockRepository(get_connection()))
+    service.set_minimum(product_id, request.form.get("minimumvoorraad"))
+    flash("Minimumvoorraad bijgewerkt.", "success")
+    return redirect(url_for("purchasing.stock_minimums"))
 
 PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",

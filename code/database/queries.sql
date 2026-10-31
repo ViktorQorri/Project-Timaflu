@@ -13,14 +13,36 @@ HAVING voorraad < p.minimumvoorraad
 ORDER BY (p.minimumvoorraad - voorraad) DESC,
          p.productnaam ASC;
 
--- Supplier offers for GET /suppliers?product=...
--- Example parameter 'Medication': backend uses LIKE %s with value '%Medication%'.
+-- Supplier offers for GET /suppliers?product_id=1 (from the shortage dashboard).
+-- Backend parameter: p.product_id = %s, example 1.
 SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
        l.contactpersoon, l.telefoonnummer, a.inkoopprijs
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%' AND p.in_assortiment = TRUE
+WHERE p.product_id = 1 AND p.in_assortiment = TRUE
+ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
+
+-- Manual GET /suppliers?product=Medication: show distinct catalog medicines
+-- BEFORE presenting offers. Match user-entered text literally via LOCATE, not
+-- SQL LIKE. The user chooses an article number / product ID for the price list.
+-- Same SQL as SupplierRepository.search_products_by_name(), with example value.
+SELECT p.product_id, p.productnaam, p.artikelnummer
+FROM Product AS p
+WHERE p.in_assortiment = TRUE AND LOCATE('Medication', p.productnaam) > 0
+ORDER BY p.productnaam ASC, p.artikelnummer ASC, p.product_id ASC;
+
+-- Internal legacy offer lookup by exact name; never display all matching
+-- offers on the manual search screen without selecting a product ID first.
+-- Example below corresponds to SupplierRepository.find_offers(product_name=...).
+-- Manual GET /suppliers?product=Medication: exact name, never partial LIKE.
+-- Backend parameter: p.productnaam = %s, example 'Medication'.
+SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
+       l.contactpersoon, l.telefoonnummer, a.inkoopprijs
+FROM Product AS p
+JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
+JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
+WHERE p.productnaam = 'Medication' AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
@@ -54,6 +76,21 @@ LEFT JOIN (
 WHERE (p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%')
   AND p.in_assortiment = TRUE
 ORDER BY p.productnaam ASC;
+
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+WHERE p.in_assortiment = TRUE
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 AND in_assortiment = TRUE FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
 
 -- Product catalog, GET /products (issue #13)
 -- Same SELECTs as ProductRepository.list_in_assortment(). No parameters.

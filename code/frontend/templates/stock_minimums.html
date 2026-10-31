@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Minimumvoorraad instellen{% endblock %}
+{% block content %}
+<section class="stock-dashboard">
+  <h1>Minimumvoorraad instellen</h1>
+  <p class="stock-dashboard__subtitle">Stel per medicijn de minimale fysieke voorraad in. De werkelijke voorraad wordt niet aangepast. Bij minimumvoorraad 0 verschijnt geen tekortmelding; gebruik 0 alleen als er bewust geen minimumvoorraad geldt.</p>
+  <p><a href="{{ url_for('purchasing.stock') }}">Terug naar voorraadtekorten</a></p>
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Minimale voorraadniveaus van alle producten</caption>
+      <thead><tr><th>Product</th><th>Artikelnummer</th><th>Huidige voorraad</th><th>Ingesteld minimum</th><th>Nieuwe minimumvoorraad</th></tr></thead>
+      <tbody>
+      {% for item in products %}
+      <tr>
+        <th scope="row">{{ item.productnaam }}</th>
+        <td>{{ item.artikelnummer }}</td>
+        <td>{{ item.voorraad }}</td>
+        <td>
+          {% if item.voorraad < item.minimumvoorraad %}
+            <span class="stock-dashboard__shortage">Onder minimum: {{ item.minimumvoorraad }}</span>
+          {% else %}
+            {{ item.minimumvoorraad }}
+          {% endif %}
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('purchasing.set_stock_minimum', product_id=item.product_id) }}">
+            <label for="minimum-{{ item.product_id }}">Minimumvoorraad</label>
+            <input id="minimum-{{ item.product_id }}" name="minimumvoorraad" type="number" min="0" step="1" value="{{ item.minimumvoorraad }}" required aria-describedby="minimum-help-{{ item.product_id }}"><small id="minimum-help-{{ item.product_id }}">0 betekent geen tekortsignalering.</small>
+            <button type="submit">Bijwerken</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Er zijn nog geen producten.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
