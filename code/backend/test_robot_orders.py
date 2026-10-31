@@ -28,9 +28,10 @@ class FakeRobotRepository:
 
 
 class FakeCursor:
-    def __init__(self, exists=True, bins=1):
+    def __init__(self, exists=True, bins=1, lines=1):
         self.exists = exists
         self.bins = bins
+        self.lines = lines
         self.query_count = 0
         self.queries = []
 
@@ -47,12 +48,14 @@ class FakeCursor:
         self.query_count += 1
         if self.query_count == 1:
             return {"deelorder_id": 20, "afgerond": False} if self.exists else None
-        return {"bin_count": self.bins}
+        if self.query_count == 2:
+            return {"bin_count": self.bins}
+        return {"line_count": self.lines}
 
 
 class FakeConnection:
-    def __init__(self, exists=True, bins=1):
-        self.cursor_instance = FakeCursor(exists, bins)
+    def __init__(self, exists=True, bins=1, lines=1):
+        self.cursor_instance = FakeCursor(exists, bins, lines)
         self.committed = 0
         self.rolled_back = 0
 
@@ -94,7 +97,15 @@ class RobotOrderTests(TestCase):
         good = FakeConnection(bins=1)
         self.assertEqual(RobotOrderRepository(good).complete(1, 20)["afgerond"], True)
         self.assertEqual(good.committed, 1)
-        self.assertEqual(len(good.cursor_instance.queries), 3)
+        self.assertEqual(len(good.cursor_instance.queries), 4)
+
+    def test_completion_rejects_empty_partial_order(self):
+        from domain.errors import ConflictError
+        connection = FakeConnection(lines=0)
+        with self.assertRaises(ConflictError):
+            RobotOrderRepository(connection).complete(1, 20)
+        self.assertEqual(connection.committed, 0)
+        self.assertEqual(connection.rolled_back, 1)
 
     def test_api_routes_and_validation(self):
         app = create_app()
