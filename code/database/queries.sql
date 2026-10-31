@@ -107,7 +107,8 @@ SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepte
        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=1 AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC;
+                WHERE f.klant_id=1 AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
                     FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id

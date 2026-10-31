@@ -57,7 +57,8 @@ class AssessedRepository:
                        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=%s AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC
+                WHERE f.klant_id=%s AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC
             """, (customer_id,))
             invoices=c.fetchall()
             for invoice in invoices:
@@ -131,7 +132,7 @@ class AssessedRepository:
                     raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
                 planned_seconds = planned_time.hour * 3600 + planned_time.minute * 60 + planned_time.second
                 if planned_seconds <= row["first_attempt_seconds"]:
-                    raise DomainError("Het tweede bezoek moet later dan de eerste poging plaatsvinden.")
+                    raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
                 c.execute(
                     """UPDATE Leverpoging SET resultaat='niet aanwezig',
                               ontvangst_getekend=FALSE
@@ -364,7 +365,7 @@ class AssessedRepository:
                         "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
                 elif action=="mark_paid":
                     if invoice["betaald_op"]:
-                        raise DomainError("Deze factuur is al betaald; de betaaldatum blijft behouden.")
+                        raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
                     cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
                                    (today,invoice_id))
                 else:
