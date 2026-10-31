@@ -1,58 +1,78 @@
 @startuml
-title SD02 - Reorder product below minimum stock (UC02 / AD02)
+title SD02 - Find suppliers and reorder unavailable products (AD02)
 autonumber
+
 actor "Purchasing employee" as Purchasing
 participant "product:Product" as Product
 participant "location:WarehouseLocation" as Location
 participant "offer:SupplierOffer" as Offer
 participant "supplier:Supplier" as Supplier
-actor "Manufacturer" as Manufacturer
+actor "Supplier contact" as SupplierContact
 participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
+
 Purchasing -> Product: checkMinimumStock()
 activate Product
-Product -> Location: Read quantity
+note right of Product
+  Input: product name.
+  The desired purchasing process monitors minimum stock.
+end note
+Product -> Location: Read quantity across product locations
 Location --> Product: currentPhysicalStock
 Product --> Purchasing: currentPhysicalStock, minimumStock
 deactivate Product
-alt Below minimum stock
-  note right of Purchasing: Select product and desired quantity.
+
+alt Product below minimum stock or unavailable
+  note right of Purchasing: Select product by name and enter desired quantity.
   Purchasing -> Product: findSuppliersByPrice()
   activate Product
-  Product -> Offer: Read purchasePrice and linked Supplier
-  Offer --> Product: ranked supplier offers
-  Product -> Supplier: Read contactPerson and phoneNumber
-  Supplier --> Product: supplier contact details
-  Product --> Purchasing: suppliers cheapest first, contact person and phone
+  Product -> Offer: Read purchasePrice and linked supplier
+  Offer --> Product: offers and prices for this product
+  Product -> Supplier: Read name, contactPerson and phoneNumber
+  Supplier --> Product: supplier names and contact details
+  Product --> Purchasing: suppliers ordered cheapest first, contact persons and phone numbers
   deactivate Product
-  loop For each remaining manufacturer, cheapest first
-    Purchasing -> Manufacturer: Request availability for selected quantity
-    Manufacturer --> Purchasing: available / unavailable / discontinued
-    alt Manufacturer is able to deliver
-      Purchasing -> Manufacturer: Confirm purchase
-      Manufacturer --> Purchasing: purchase confirmed
+
+  loop Contact remaining suppliers from cheapest to most expensive
+    Purchasing -> SupplierContact: Ask whether selected product and quantity can be supplied
+    SupplierContact --> Purchasing: available / unavailable / discontinued
+    alt Supplier can deliver
+      Purchasing -> SupplierContact: Confirm purchase by phone
+      SupplierContact --> Purchasing: purchase confirmed
       Purchasing -> PurchaseOrder: placeWithSupplier()
-      PurchaseOrder --> Purchasing: confirmed order recorded
-      break Order confirmed; stop contacting manufacturers
+      activate PurchaseOrder
+      PurchaseOrder --> Purchasing: confirmed purchase recorded
+      deactivate PurchaseOrder
+      break Stop when a purchase is confirmed
       end
-    else Manufacturer cannot deliver
-      opt Manufacturer permanently discontinued this product
+    else Supplier cannot deliver
+      opt Manufacturer has discontinued this medicine
         Purchasing -> Product: removeSupplier(supplier)
-        Product --> Purchasing: manufacturer link removed
+        Product --> Purchasing: product-supplier link removed
       end
-      note right of Purchasing: Continue with the next cheapest offer.
+      note right of Purchasing: Continue with the next cheapest supplier.
     end
   end
-  alt No manufacturer could confirm supply
-    Purchasing -> Product: removeFromAssortment()
-    Product --> Purchasing: medicine removed from internal reorder list
-    note right of Purchasing
-      No purchase order is recorded.
-      The medicine remains in the sales assortment.
+
+  alt No supplier can confirm delivery
+    note over Purchasing, Product
+      Remove the medicine from the INTERNAL reorder list.
+      Do not create a purchase order.
+      Do not automatically remove it from the sales assortment.
+      (Current-processes: Voorraad; AD02.)
     end note
-  else Purchase confirmed by a manufacturer
-    note right of Purchasing: Keep the confirmed purchase order on record.
+  else Supplier confirmed delivery
+    note right of Purchasing: Keep the confirmed purchase order in the system.
   end
-else Stock is sufficient
-  note right of Purchasing: No purchase order required.
+else Stock sufficient
+  note right of Purchasing: No replenishment purchase needed.
+end
+
+opt Employee explicitly chooses to remove this product from the assortment
+  Purchasing -> Product: removeFromAssortment()
+  Product --> Purchasing: product removed from sales assortment
+  note right of Purchasing
+    This is the separate product-removal option in
+    Product-description, NOT the no-supplier fallback.
+  end note
 end
 @enduml

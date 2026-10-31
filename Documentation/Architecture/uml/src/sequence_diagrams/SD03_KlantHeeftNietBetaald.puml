@@ -1,53 +1,96 @@
 @startuml
-title SD03 - Invoice output and unpaid invoice handling (UC16 / UC18 / AD16 / AD18)
+title SD03 - Weekly invoice and unpaid-customer follow-up (AD16 / AD18)
 autonumber
 
 actor "Administration employee" as Admin
 participant "invoice:Invoice" as Invoice
+participant "deliveryLine:DeliveryLine" as DeliveryLine
+participant "orderLine:OrderLine" as OrderLine
+participant "order:Order" as Order
 participant "reminder:PaymentReminder" as Reminder
-actor "Customer contact" as Contact
 participant "customer:Customer" as Customer
+actor "Customer contact" as Contact
 
-== Weekly invoice using delivered items ==
-Admin -> Invoice: createWeeklyInvoice(deliveredOrderLines)
-activate Invoice
-note right of Invoice
-  Use actually delivered items, not unfulfilled order lines.
-  Invoice shows date, invoice number, customer billing address,
-  quantities, unit prices and line totals, total excl. VAT,
-  9% VAT, total incl. VAT, order discount,
-  total after order discount, one-time discount,
-  total after one-time discount, customer discount,
-  final amount after customer discount.
-end note
-Invoice --> Admin: invoice details and full breakdown
-deactivate Invoice
-Admin -> Invoice: sendToCustomer()
-Invoice --> Admin: invoice issued
+== Create and approve weekly invoices (AD16) ==
+loop Each customer with uninvoiced delivered products
+  Admin -> Invoice: createWeeklyInvoice(customerNumber, deliveredLines)
+  activate Invoice
+  note right of Invoice
+    Input: customer number; aggregate delivered items per
+    customer and week, not all items originally ordered.
+  end note
+  Invoice -> DeliveryLine: Read quantityDelivered for actually delivered products
+  DeliveryLine --> Invoice: delivered item quantities
+  Invoice -> OrderLine: Read unitPrice for corresponding items
+  OrderLine --> Invoice: unit prices and line totals
+  Invoice -> Order: Read documented additional delivery costs, if any
+  Order --> Invoice: extra costs and explanation
+  note right of Invoice
+    Required output (Product-description):
+    date and invoice number
+    Timaflu name/address; customer name/billing address
+    quantity, unit price, line total per delivered item
+    total excluding VAT
+    9% VAT
+    total including VAT
+    order discount
+    total after order discount
+    one-time discount
+    total after one-time discount
+    customer discount
+    final amount after customer discount
+    Use the SD01 discount order; do not double-discount.
+    Never invent a Timaflu street address.
+  end note
+  Invoice --> Admin: draft invoice with itemized calculation and all totals
+  deactivate Invoice
+  note right of Admin: Review and approve the draft before sending (AD16).
+  Admin -> Invoice: sendToCustomer()
+  Invoice --> Admin: approved invoice sent and recorded
+  Admin -> Order: changeOrderStatus(invoiced)
+  Order --> Admin: delivered orders marked invoiced
+end
 
-== Weekly overdue-payment review ==
+== Review outstanding invoices for a customer number (AD18) ==
 Admin -> Invoice: checkPaymentArrears()
 activate Invoice
-Invoice --> Admin: paidOn, weeks overdue, reminder history
+note right of Invoice: Input: customer number; check only this customer's unpaid invoices.
+Invoice --> Admin: invoice number, paidOn, weeks unpaid, reminders sent
 deactivate Invoice
-alt Paid or not yet overdue
-  note right of Admin: No follow-up action.
-else One or two unpaid weeks
+
+alt Fully paid or unpaid for less than one week
+  note right of Admin: No overdue reminder is sent.
+else First unpaid week (at least 7 and under 14 days)
   Admin -> Reminder: send()
-  Reminder --> Admin: first or second reminder recorded
-else Still unpaid after three weeks
+  Reminder --> Admin: first reminder recorded (sequenceNumber = 1)
+else Second unpaid week (at least 14 and under 21 days)
+  Admin -> Reminder: send()
+  Reminder --> Admin: second reminder recorded (sequenceNumber = 2)
+else Unpaid for three weeks or more
   Admin -> Invoice: proposePaymentPlan()
-  Invoice --> Admin: standard payment plan proposal
-  Admin -> Contact: Call customer about payment plan
-  Contact --> Admin: accepted / declined
-  alt Customer accepts payment plan
-    Admin -> Invoice: record accepted plan
+  Invoice --> Admin: standard payment plan proposed
+  Admin -> Contact: Call customer and offer payment plan
+  Contact --> Admin: accepted or declined
+  alt Payment plan accepted
+    Admin -> Invoice: Record paymentPlanAccepted = true
     Invoice --> Admin: payment plan registered
-  else Customer declines
+  else Payment plan declined
+    Admin -> Invoice: Record paymentPlanAccepted = false
+    Invoice --> Admin: refusal recorded
     Admin -> Invoice: enableDebtCollection()
-    Invoice --> Admin: debt collection recorded
+    Invoice --> Admin: debt collection registered
     Admin -> Customer: checkOrderBlock()
-    Customer --> Admin: further orders blocked until full payment
+    Customer --> Admin: new orders blocked until the full outstanding amount is paid
   end
+end
+
+opt Full outstanding balance is paid
+  Admin -> Invoice: recordFullPayment(date)
+  Invoice --> Admin: full payment recorded
+  note right of Admin
+    Do not record partial invoice payments.
+    Clear the collection block only when ALL outstanding
+    debt is paid (Current-processes: Administratie).
+  end note
 end
 @enduml
