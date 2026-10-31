@@ -132,7 +132,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                     raise DomainError("Tweede bezorgpoging is al gepland of de bestelling is afgeleverd.")
                 planned_seconds = planned_time.hour * 3600 + planned_time.minute * 60 + planned_time.second
                 if planned_seconds <= row["first_attempt_seconds"]:
-raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
+                    raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
                 c.execute(
                     """UPDATE Leverpoging SET resultaat='niet aanwezig',
                               ontvangst_getekend=FALSE
@@ -365,7 +365,7 @@ raise DomainError("Plan de tweede bezorgpoging later dan de eerste poging.")
                         "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
                 elif action=="mark_paid":
                     if invoice["betaald_op"]:
-raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
+                        raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
                     cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
                                    (today,invoice_id))
                 else:

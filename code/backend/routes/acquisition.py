@@ -28,7 +28,7 @@ def record_visit():
         visit_date=date.fromisoformat(request.form["visit_date"])
     except (KeyError, ValueError) as exc:
         from domain.errors import DomainError
-raise DomainError("Bezoekdatum is ongeldig.") from exc
+        raise DomainError("Bezoekdatum is ongeldig.") from exc
     if visit_date > date.today():
         raise DomainError("Een acquisitiebezoek kan niet in de toekomst liggen.")
     try:
