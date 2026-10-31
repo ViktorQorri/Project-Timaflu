@@ -202,11 +202,11 @@ def run(conn,dbname,password):
                       DB_HOST=HOST,DB_PORT=PORT,DB_NAME=dbname,
                       DB_USER="root",DB_PASSWORD=password)
     with app.test_client() as client:
-        endpoints=["/orders","/suppliers?product=Testmedicijn",
+        endpoints=["/orders","/order-picking","/stock","/suppliers?product=Testmedicijn",
                    "/invoices?customer_id=1","/acquisition",
                    "/deliveries?day=2026-10-31"]
         responses={url:client.get(url).status_code for url in endpoints}
-    verify("frontend: five scenario screens render with real MySQL",
+    verify("frontend: seven process screens render with real MySQL",
            all(code==200 for code in responses.values()))
     print("HTTP:",responses)
     print("ALL INTEGRATION CHECKS PASSED")
