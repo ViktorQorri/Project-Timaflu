@@ -5,29 +5,49 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Administratie · AD16</span>
 <h1>Factuur maken</h1>
-<p>Schermontwerp voor de activiteit AD16_Create_invoice. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Wekelijks geleverde orders per klant bundelen en factureren.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Administratiemedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-16-0">Klantnummer</label>
-<input id="field-16-0" type="text" placeholder="Vul klantnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-16-1">Factuurdatum</label>
-<input id="field-16-1" type="date" placeholder="Vul factuurdatum in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Factuur controleren</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-16-0">Klantnummer</label><input id="field-16-0" type="text" placeholder="Klantnummer" disabled></div>
+<div class="screen-field"><label for="field-16-1">Factuurdatum</label><input id="field-16-1" type="date" placeholder="Factuurdatum" disabled></div></div>
+<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Conceptfactuur bekijken</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Factuur controleren</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Factuur goedkeuren</button></div>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Geleverd medicijn</th><th scope='col'>Aantal</th><th scope='col'>Prijs</th><th scope='col'>Regeltotaal</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Bestelnummer</th><th scope="col">Geleverd medicijn</th><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr></thead><tbody>
+<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+<section class="invoice-preview" aria-label="Factuurberekening en klantkorting">
+<h3>Prijs- en factuuroverzicht</h3>
+<div class="invoice-grid">
+<span>Subtotaal bestelregels</span><output>€ …</output>
+<span>9% btw (bij facturatie)</span><output>€ …</output>
+<span>Totaal inclusief btw</span><output>€ …</output>
+<span>Bestellingskorting (5% bij € 500 of meer)</span><output>€ …</output>
+<span>Eenmalige korting (indien toegekend)</span><output>€ …</output>
+<span>Klantenkorting voorgaand jaar</span><output>€ …</output>
+<strong>Te betalen totaal</strong><output>€ …</output>
+</div>
+<p class="screen-note">De bedragen zijn bewust leeg. De werkende backend berekent en vult ze.</p>
+</section>
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Alleen geleverde, niet-gefactureerde orders</h3><p>Bundel de geleverde orders van één klant en tel eventuele extra bezorgkosten mee.</p></article><article class="scenario"><h3>Factuurvoorbeeld</h3><p>Toon klant- en Timaflu-adres, datum, factuurnummer, orderregels, 9% btw en de toepasselijke kortingen.</p></article><article class="scenario"><h3>Na goedkeuring</h3><p>Systeem slaat de factuur op, verzendt deze aan de klant en markeert de betrokken orders als gefactureerd.</p></article><article class="scenario"><h3>Geen te factureren orders</h3><p>Toon dat er geen nieuwe facturen te maken zijn.</p></article></div>
+<ul class="case-notes"><li>Een voorbeeldfactuur toont veldnamen en lege bedragen, geen gefingeerde transacties.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

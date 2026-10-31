@@ -5,32 +5,38 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Orderpicking · AD10</span>
 <h1>Verzamelbak registreren</h1>
-<p>Schermontwerp voor de activiteit AD10_Register_collection_bin. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Een gescande verzamelbak aan de juiste deelorder koppelen.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Magazijnrobot / systeem</span><span><strong>Type:</strong> Systeem- / robotmonitor</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
-<span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-10-0">Robotnummer</label>
-<input id="field-10-0" type="text" placeholder="Vul robotnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-10-1">Deelordernummer</label>
-<input id="field-10-1" type="text" placeholder="Vul deelordernummer in" disabled></div>
-<div class="screen-field">
-<label for="field-10-2">Unieke verzamelbakcode</label>
-<input id="field-10-2" type="text" placeholder="Vul unieke verzamelbakcode in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Verzamelbakcode registreren</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<span class="overline">Read-only procesmonitor</span>
+<h2 id="input-heading">Systeeminformatie</h2>
+<p class="screen-note">Alle velden hieronder zijn getoonde systeemgegevens, geen handmatige invoer.</p><div class="screen-fields"><div class="screen-field"><label for="field-10-0">Robotnummer</label><input id="field-10-0" type="text" placeholder="Robotnummer" disabled></div>
+<div class="screen-field"><label for="field-10-1">Deelordernummer</label><input id="field-10-1" type="text" placeholder="Deelordernummer" disabled></div>
+<div class="screen-field"><label for="field-10-2">Unieke verzamelbakcode</label><input id="field-10-2" type="text" placeholder="Unieke verzamelbakcode" disabled></div></div>
+<p class="screen-note">Geen handmatige schermacties: deze activiteit wordt door de robot of het systeem uitgevoerd.</p>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Verzamelbakcode</th><th scope='col'>Deelordernummer</th><th scope='col'>Magazijngang</th></tr></thead><tbody><tr><td colspan='3' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Robot</th><th scope="col">Deelorder</th><th scope="col">Verzamelbakcode</th><th scope="col">Registratieresultaat</th></tr></thead><tbody>
+<tr><td colspan="4" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD10_Register_collection_bin.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD10_Register_collection_bin.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Unieke code geldig</h3><p>Systeem koppelt de verzamelbak aan de deelorder en bevestigt dit aan de robot.</p></article><article class="scenario"><h3>Code onbekend of in gebruik</h3><p>Systeem wijst de scan af; robot pakt een andere bak en scant opnieuw.</p></article></div>
+<ul class="case-notes"><li>Dit is een read-only weergave van robotverkeer. De robot verstuurt de code via de backend, niet via een handmatig formulier.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

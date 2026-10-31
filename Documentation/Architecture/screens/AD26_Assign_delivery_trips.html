@@ -5,35 +5,38 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Distributie · AD26</span>
 <h1>Bezorgritten toewijzen</h1>
-<p>Schermontwerp voor de activiteit AD26_Assign_delivery_trips. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Ingepakte orders als gewone of spoedritten aan koeriers toewijzen.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Distributiemedewerker / systeem</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-26-0">Bestelnummer</label>
-<input id="field-26-0" type="text" placeholder="Vul bestelnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-26-1">Koerier</label>
-<input id="field-26-1" type="text" placeholder="Vul koerier in" disabled></div>
-<div class="screen-field">
-<label for="field-26-2">Afleverdatum</label>
-<input id="field-26-2" type="date" placeholder="Vul afleverdatum in" disabled></div>
-<div class="screen-field">
-<label for="field-26-3">Dagdeel</label>
-<input id="field-26-3" type="text" placeholder="Vul dagdeel in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Rit toewijzen</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-26-0">Ingepakte bestelling</label><input id="field-26-0" type="text" placeholder="Ingepakte bestelling" disabled></div>
+<div class="screen-field"><label for="field-26-1">Afleverdatum</label><input id="field-26-1" type="date" placeholder="Afleverdatum" disabled></div>
+<div class="screen-field"><label for="field-26-2">Dagdeel</label><select id="field-26-2" disabled><option>Maak een keuze</option><option>Ochtend</option><option>Middag</option></select></div></div>
+<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Order selecteren</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Rittoewijzing bekijken</button></div>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Koerier</th><th scope='col'>Bestelnummer</th><th scope='col'>Afleveradres</th><th scope='col'>Levermoment</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Bestelnummer</th><th scope="col">Afleveradres</th><th scope="col">Dagdeel</th><th scope="col">Spoed</th><th scope="col">Toegewezen koerier</th></tr></thead><tbody>
+<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD26_Assign_delivery_trips.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD26_Assign_delivery_trips.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Spoedbestelling</h3><p>Zoek de eerste beschikbare eigen koerier, ongeacht regio of tijd; wijs een afzonderlijke spoedrit toe.</p></article><article class="scenario"><h3>Geen eigen spoedkoerier beschikbaar</h3><p>Verkoop neemt contact op met een externe spoedkoerier; het systeem registreert die toewijzing.</p></article><article class="scenario"><h3>Reguliere bestelling</h3><p>Koppel aan een koerier in de juiste regio en het afgesproken dagdeel, bij ophalen vóór 17.00 uur.</p></article><article class="scenario"><h3>Geen passende reguliere rit</h3><p>Zet de order in de wachtrij voor de eerstvolgende passende ophaal- en bezorgmogelijkheid.</p></article></div>
+<ul class="case-notes"><li>De casus noemt een uiterlijke ophaaltijd van 17.00 uur en een regionale verdeling.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

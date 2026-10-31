@@ -6,6 +6,7 @@ because this deliverable is a SCREEN DESIGN, not a second application.
 """
 from pathlib import Path
 from html import escape
+from case_render import render
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=ROOT/"uml/src/activity_diagrams"
@@ -172,7 +173,7 @@ def generate():
   source=file.read_text(encoding="utf-8-sig")
   assert "@startuml" in source and "@enduml" in source
   output=file.stem+".html"
-  (DEST/output).write_text(design(number,file.name,file.stem),encoding="utf-8")
+  (DEST/output).write_text(render(number,file.stem,TITLES[number],group_for(number),wrap),encoding="utf-8")
   items.append((number,group_for(number),output))
  indexcards="\n".join(
   f'<a class="index-link" href="{escape(filename)}"><small>{escape(group)} · AD{number:02d}</small>{escape(TITLES[number])}</a>'
@@ -194,6 +195,7 @@ def generate():
              "- Responsive HTML/CSS, zonder JavaScript of React.",
              "- Niet van toepassing op de automatische backendscenario's.",
              "- In de werkende applicatie worden gegevens altijd via de database geladen."]
+ readme += ["", "## Casusgetrouwe schermlogica", "De scenario-uitkomsten volgen de casus en de activity diagrams.", "Robotprocessen en automatische processen zijn read-only monitoren.", "De specificaties staan in screen_specs.py en de renderer in case_render.py.", "Controle via python test_case_screens.py en python test_browser_screens.py.", "Deze ontwerpen vervangen niet de runtimefrontend in PR 114."]
  (DEST/"README.md").write_text("\n".join(readme)+"\n",encoding="utf-8")
  print("Generated",len(items),"screen layouts, aligned to the existing 28 activity diagrams")
 

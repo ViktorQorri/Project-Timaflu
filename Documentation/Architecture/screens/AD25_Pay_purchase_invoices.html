@@ -5,32 +5,39 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Administratie · AD25</span>
 <h1>Inkoopfacturen betalen</h1>
-<p>Schermontwerp voor de activiteit AD25_Pay_purchase_invoices. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Na de wekelijkse klantfacturatie openstaande leveranciersfacturen betalen.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Administratiemedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-25-0">Leveranciersfactuur</label>
-<input id="field-25-0" type="text" placeholder="Vul leveranciersfactuur in" disabled></div>
-<div class="screen-field">
-<label for="field-25-1">Factuurbedrag</label>
-<input id="field-25-1" type="number" placeholder="Vul factuurbedrag in" disabled></div>
-<div class="screen-field">
-<label for="field-25-2">Vervaldatum</label>
-<input id="field-25-2" type="date" placeholder="Vul vervaldatum in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Inkoopfactuur betalen</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-25-0">Leveranciersfactuur</label><input id="field-25-0" type="text" placeholder="Leveranciersfactuur" disabled></div>
+<div class="screen-field"><label for="field-25-1">Factuurbedrag</label><input id="field-25-1" type="number" placeholder="Factuurbedrag" disabled></div>
+<div class="screen-field"><label for="field-25-2">Vervaldatum</label><input id="field-25-2" type="date" placeholder="Vervaldatum" disabled></div>
+<div class="screen-field"><label for="field-25-3">Betaaldatum</label><input id="field-25-3" type="date" placeholder="Betaaldatum" disabled></div></div>
+<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Factuur openen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Betaling goedkeuren</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Betaling registreren</button></div>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Fabrikant</th><th scope='col'>Factuurnummer</th><th scope='col'>Bedrag</th><th scope='col'>Vervaldatum</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Fabrikant</th><th scope="col">Factuurnummer</th><th scope="col">Bedrag</th><th scope="col">Vervaldatum</th><th scope="col">Betaalstatus</th></tr></thead><tbody>
+<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD25_Pay_purchase_invoices.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD25_Pay_purchase_invoices.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Goedgekeurd voor betaling</h3><p>Controleer leverancier, bedrag en vervaldatum; betaal en registreer de betaaldatum.</p></article><article class="scenario"><h3>Niet goedgekeurd</h3><p>Laat de factuur openstaan voor verdere beoordeling.</p></article><article class="scenario"><h3>Geen openstaande inkoopfacturen</h3><p>Toon een melding dat niets betaald hoeft te worden.</p></article></div>
+<ul class="case-notes"><li>Een leveranciersbetaling gebeurt pas na controle en goedkeuring.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

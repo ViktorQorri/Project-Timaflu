@@ -5,26 +5,38 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Verkoop · AD28</span>
 <h1>Jaarlijkse klantenkorting bijwerken</h1>
-<p>Schermontwerp voor de activiteit AD28_Update_annual_customer_discount. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Op 31 december de jaaromzet en korting voor het nieuwe jaar berekenen.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Systeem (automatisch)</span><span><strong>Type:</strong> Systeem- / robotmonitor</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
-<span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-28-0">Kalenderjaar</label>
-<input id="field-28-0" type="number" placeholder="Vul kalenderjaar in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Jaarlijkse klantenkorting berekenen</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<span class="overline">Read-only procesmonitor</span>
+<h2 id="input-heading">Systeeminformatie</h2>
+<p class="screen-note">Alle velden hieronder zijn getoonde systeemgegevens, geen handmatige invoer.</p><div class="screen-fields"><div class="screen-field"><label for="field-28-0">Afgesloten kalenderjaar</label><input id="field-28-0" type="text" placeholder="Afgesloten kalenderjaar" disabled></div>
+<div class="screen-field"><label for="field-28-1">Volledig betaalde jaaromzet</label><input id="field-28-1" type="text" placeholder="Volledig betaalde jaaromzet" disabled></div>
+<div class="screen-field"><label for="field-28-2">Kortingspercentage volgend jaar</label><input id="field-28-2" type="text" placeholder="Kortingspercentage volgend jaar" disabled></div></div>
+<p class="screen-note">Geen handmatige schermacties: deze activiteit wordt door de robot of het systeem uitgevoerd.</p>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Klant</th><th scope='col'>Betaalde jaaromzet</th><th scope='col'>Kortingspercentage volgend jaar</th></tr></thead><tbody><tr><td colspan='3' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Klant</th><th scope="col">Betaalde jaaromzet</th><th scope="col">Kortingspercentage volgend jaar</th></tr></thead><tbody>
+<tr><td colspan="3" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD28_Update_annual_customer_discount.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD28_Update_annual_customer_discount.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Omzet lager dan € 10.000</h3><p>Klantenkorting voor het volgende jaar: 5%.</p></article><article class="scenario"><h3>Omzet vanaf € 10.000 tot € 20.000</h3><p>Klantenkorting voor het volgende jaar: 10%.</p></article><article class="scenario"><h3>Omzet vanaf € 20.000</h3><p>Klantenkorting voor het volgende jaar: 15%.</p></article><article class="scenario"><h3>Jaarafsluiting</h3><p>De berekening loopt automatisch op 31 december over alle klanten, op basis van volledig betaalde facturen.</p></article></div>
+<ul class="case-notes"><li>Geen handmatige jaarlijkse korting invoeren of wijzigen: het activity diagram is volledig geautomatiseerd.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

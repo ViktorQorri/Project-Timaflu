@@ -5,29 +5,37 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Verkoop · AD04</span>
 <h1>Voorraad controleren</h1>
-<p>Schermontwerp voor de activiteit AD04_Check_stock. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Betrouwbaar controleren of de gevraagde hoeveelheid werkelijk beschikbaar is.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Verkoopmedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-4-0">Medicijn of artikelnummer</label>
-<input id="field-4-0" type="text" placeholder="Vul medicijn of artikelnummer in" disabled></div>
-<div class="screen-field">
-<label for="field-4-1">Gevraagd aantal</label>
-<input id="field-4-1" type="number" placeholder="Vul gevraagd aantal in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Beschikbaarheid controleren</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-4-0">Medicijn of artikelnummer</label><input id="field-4-0" type="text" placeholder="Medicijn of artikelnummer" disabled></div>
+<div class="screen-field"><label for="field-4-1">Gevraagd aantal</label><input id="field-4-1" type="number" placeholder="Gevraagd aantal" disabled></div></div>
+<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Beschikbaarheid controleren</button></div>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Medicijn</th><th scope='col'>Fysieke voorraad</th><th scope='col'>Gereserveerd</th><th scope='col'>Beschikbaar</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Medicijn</th><th scope="col">Fysieke voorraad</th><th scope="col">Gereserveerd</th><th scope="col">Beschikbaar</th></tr></thead><tbody>
+<tr><td colspan="4" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD04_Check_stock.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD04_Check_stock.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Voldoende voorraad</h3><p>De gevraagde hoeveelheid past binnen de beschikbare voorraad.</p></article><article class="scenario"><h3>Onvoldoende voorraad</h3><p>Meld een tekort aan de verkoopmedewerker; er wordt geen voorraad gereserveerd.</p></article><article class="scenario"><h3>Medicijn niet gevonden</h3><p>Toon een expliciete melding als de zoekopdracht geen product oplevert.</p></article></div>
+<ul class="case-notes"><li>Beschikbaar = fysieke voorraad minus actieve reserveringen.</li></ul>
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

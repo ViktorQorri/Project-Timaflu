@@ -5,32 +5,39 @@
 <body><div class="page">
 <header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
 <nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
+
 <section class="hero">
 <span class="overline">Inkoop · AD24</span>
 <h1>Nieuw medicijn beoordelen</h1>
-<p>Schermontwerp voor de activiteit AD24_Evaluate_new_medicine. De velden, resultaten en handelingen zijn herleidbaar tot de casus en het activity diagram. Het is geen werkende applicatie.</p></section>
-<main class="board" id="main">
+<p>Aanbiedingen voor nieuwe medicijnen laten beoordelen voordat ze in het assortiment komen.</p>
+<div class="screen-meta"><span><strong>Uitvoerder:</strong> Inkoopmedewerker / directie</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+</section>
+<main class="screen-main" id="main">
+<div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
-<h2 id="input-heading">Gegevens en handelingen</h2>
-<div class="screen-fields"><div class="screen-field">
-<label for="field-24-0">Medicijn</label>
-<input id="field-24-0" type="text" placeholder="Vul medicijn in" disabled></div>
-<div class="screen-field">
-<label for="field-24-1">Fabrikant</label>
-<input id="field-24-1" type="text" placeholder="Vul fabrikant in" disabled></div>
-<div class="screen-field">
-<label for="field-24-2">Inkoopprijs</label>
-<input id="field-24-2" type="number" placeholder="Vul inkoopprijs in" disabled></div></div>
-<button type="button" disabled title="Alleen schermontwerp, geen werkende actie">Nieuw medicijn ter beoordeling voorleggen</button>
-<p class="screen-note">Bediening is in deze ontwerpschets uitgeschakeld. De werkende schermen horen bij de Flask/Jinja-applicatie.</p>
+<h2 id="input-heading">Invoer en handelingen</h2>
+<div class="screen-fields"><div class="screen-field"><label for="field-24-0">Medicijn</label><input id="field-24-0" type="text" placeholder="Medicijn" disabled></div>
+<div class="screen-field"><label for="field-24-1">Fabrikant</label><input id="field-24-1" type="text" placeholder="Fabrikant" disabled></div>
+<div class="screen-field"><label for="field-24-2">Inkoopprijs</label><input id="field-24-2" type="number" placeholder="Inkoopprijs" disabled></div>
+<div class="screen-field"><label for="field-24-3">Inkoopvoorwaarden</label><input id="field-24-3" type="text" placeholder="Inkoopvoorwaarden" disabled></div></div>
+<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Advies aan directie voorleggen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Goedgekeurd product registreren</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Afgewezen aanbod registreren</button></div>
+<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Overzicht</span>
-<h2 id="output-heading">Bijbehorende gegevens</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope='col'>Medicijn</th><th scope='col'>Fabrikant</th><th scope='col'>Inkoopprijs</th><th scope='col'>Beoordeling</th></tr></thead><tbody><tr><td colspan='4' class='empty-row'>Geen voorbeeldgegevens. Dit ontwerp gebruikt geen fictieve klant- of bedrijfsdata.</td></tr></tbody></table></div>
+<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table><thead><tr><th scope="col">Medicijn</th><th scope="col">Fabrikant</th><th scope="col">Inkoopprijs</th><th scope="col">Beoordeling</th></tr></thead><tbody>
+<tr><td colspan="4" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
+</tbody></table></div>
+
 <div class="source-links"><a href="../uml/src/activity_diagrams/AD24_Evaluate_new_medicine.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD24_Evaluate_new_medicine.svg">Activity diagram (SVG)</a></div>
-</section></main>
+</section></div>
+<section class="scenario-panel" aria-labelledby="scenario-heading">
+<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Niet geschikt</h3><p>Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen.</p></article><article class="scenario"><h3>Geschikt voor directiebeoordeling</h3><p>Inkoopmedewerker legt een advies voor; de directie keurt goed of wijst af.</p></article><article class="scenario"><h3>Goedgekeurd</h3><p>Valideer gegevens en werk productcatalogus, verkooplijst en interne bestellijst bij.</p></article><article class="scenario"><h3>Afgewezen of ongeldig</h3><p>Registreer afwijzing of toon validatiefout, zonder toevoeging aan assortiment.</p></article></div>
+
+</section>
+</main>
 <footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
 </div></body></html>

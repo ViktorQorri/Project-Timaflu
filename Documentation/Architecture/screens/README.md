@@ -42,3 +42,10 @@ Er zijn geen accounts, autorisatierollen, bedrijfsstatussen, verzonnen data of J
 - Responsive HTML/CSS, zonder JavaScript of React.
 - Niet van toepassing op de automatische backendscenario's.
 - In de werkende applicatie worden gegevens altijd via de database geladen.
+
+## Casusgetrouwe schermlogica
+De scenario-uitkomsten volgen de casus en de activity diagrams.
+Robotprocessen en automatische processen zijn read-only monitoren.
+De specificaties staan in screen_specs.py en de renderer in case_render.py.
+Controle via python test_case_screens.py en python test_browser_screens.py.
+Deze ontwerpen vervangen niet de runtimefrontend in PR 114.

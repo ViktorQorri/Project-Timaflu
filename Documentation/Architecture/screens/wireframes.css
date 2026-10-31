@@ -80,3 +80,28 @@
   .screen-fields { grid-template-columns: 1fr; }
 }
 /* Timaflu screen design panels. END */
+
+/* Timaflu casusgetrouwe schermontwerpen. START: scenario's, robotmonitor en procesuitkomsten. */
+.screen-main {display:flex;flex-direction:column;gap:20px}
+.screen-meta {display:flex;flex-wrap:wrap;gap:12px;color:var(--navy);font-size:12px;margin-top:15px}
+.screen-meta span{border-radius:8px;background:var(--sky);padding:6px 10px}
+.screen-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.screen-actions button[disabled]{min-height:44px;padding:10px 14px}
+.screen-fields input[type=checkbox]{min-height:20px;width:20px}
+.screen-field select,.screen-field textarea{width:100%;min-height:44px;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#f8fbfd;padding:9px 11px;color:var(--navy);font:inherit}
+.screen-field .field-label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+.screen-display{padding:10px 12px;border:1px dashed var(--line);background:var(--bg);border-radius:8px;color:var(--muted);overflow-wrap:anywhere}
+.scenario-panel{padding:clamp(18px,2.8vw,30px);border:1px solid var(--line);border-radius:11px;background:#fff}
+.scenario-panel h2{font-size:20px;margin:8px 0 20px}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.scenario{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:7px;padding:14px;background:#f8fbfd;min-width:0}
+.scenario h3{font-size:14px;line-height:1.4;margin:0 0 7px}
+.scenario p{font-size:13px;margin:0;line-height:1.6;color:var(--navy)}
+.case-notes{border-left:3px solid #ae6a18;padding:12px 12px 12px 25px;background:#fffaf1;margin:18px 0 0;font-size:13px}
+.case-notes li+li{margin-top:7px}
+.invoice-preview{margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:8px;background:#f8fbfd}
+.invoice-preview h3{margin:0 0 14px;font-size:16px}
+.invoice-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 16px;font-size:13px}
+.invoice-grid output{font-weight:700;text-align:right}
+@media(max-width:760px){.screen-meta{display:grid;grid-template-columns:1fr}.screen-actions{flex-direction:column}.screen-actions button{width:100%}}
+/* Timaflu casusgetrouwe schermontwerpen. END */
