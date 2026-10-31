@@ -15,7 +15,7 @@
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <caption>Leveranciers voor {{ product_name }}, goedkoopste bovenaan</caption>
-          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th></tr></thead>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Leverancier</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Bestelwebsite</th><th scope="col" class="stock-dashboard__number">Inkoopprijs</th><th scope="col">Inkooporder vastleggen</th><th scope="col">Beheer</th></tr></thead>
           <tbody>
             {% for offer in offers %}
               <tr>
@@ -23,7 +23,8 @@
                 <td>{{ offer.leverancier }}</td>
                 <td>{{ offer.contactpersoon or 'Niet bekend' }}</td>
                 <td>{{ offer.telefoonnummer or 'Niet bekend' }}</td>
-                <td class="stock-dashboard__number">{{ "%.2f"|format(offer.inkoopprijs) }}</td>
+                <td>{{ offer.internetadres or 'Niet bekend' }}</td>
+                <td class="stock-dashboard__number">&euro; {{ "%.2f"|format(offer.inkoopprijs)|replace('.', ',') }}</td>
                 <td>
                   <form method="post" action="{{ url_for('purchasing.record_purchase_order') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
@@ -32,13 +33,20 @@
                     <button type="submit">Bevestigde order vastleggen</button>
                   </form>
                 </td>
+                <td>
+                  <form method="post" action="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">
+                    <label><input type="checkbox" name="confirmed" value="yes" required> Deze fabrikant levert het medicijn niet meer</label>
+                    <button type="submit">Fabrikant van medicijn verwijderen</button>
+                  </form>
+                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <p role="status">Geen leveranciers gevonden voor dit medicijn.</p>
+      <p role="status">Geen leveranciers gevonden voor dit medicijn. Controleer of het nog leverbaar is; zonder leverancier kan het niet worden bijbesteld.</p>
     {% endif %}
   {% endif %}
 </section>

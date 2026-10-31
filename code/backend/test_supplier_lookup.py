@@ -35,7 +35,7 @@ class Connection:
 class SupplierLookupTests(TestCase):
     def setUp(self):
         self.rows = [
-            {"product_id": 1, "productnaam": "Medication A", "leverancier": "Supplier A", "contactpersoon": "Anna", "telefoonnummer": "123", "inkoopprijs": Decimal("2.50")}
+            {"product_id": 1, "productnaam": "Medication A", "leverancier_id": 3, "leverancier": "Supplier A", "contactpersoon": "Anna", "telefoonnummer": "123", "internetadres": "https://bestellen.example", "inkoopprijs": Decimal("2.50")}
         ]
 
     def test_repository_orders_offers_by_price_and_uses_parameter(self):
@@ -44,6 +44,8 @@ class SupplierLookupTests(TestCase):
         self.assertEqual(connection.cur.params, ("%Medication%",))
         self.assertIn("a.inkoopprijs ASC", connection.cur.sql)
         self.assertIn("JOIN LeveranciersAanbod", connection.cur.sql)
+        self.assertIn("l.internetadres", connection.cur.sql)
+        self.assertIn("p.in_assortiment = TRUE", connection.cur.sql)
 
     def test_empty_search_does_not_query_database(self):
         class NoQuery:
@@ -60,7 +62,14 @@ class SupplierLookupTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Supplier A", response.data)
                 self.assertIn(b"Anna", response.data)
+                self.assertIn(b"https://bestellen.example", response.data)
+                self.assertIn(b"2,50", response.data)
+                self.assertIn(b"/manufacturers/3/prices/1/remove", response.data)
+                self.assertIn(b'name="confirmed"', response.data)
+                self.assertIn(b"/products/1/remove", response.data)
             with patch("routes.purchasing.get_connection", return_value=Connection([])):
                 response = client.get("/suppliers?product=Unknown")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b"Geen leveranciers gevonden", response.data)
+                self.assertIn(b"zonder leverancier kan het niet worden bijbesteld", response.data)
+                self.assertNotIn(b"Bevestigde order vastleggen", response.data)
