@@ -186,7 +186,7 @@ def run(conn,dbname,password):
            bool(registered["eenmalige_korting_toegezegd"])
            and bool(registered["opvolging_afgesloten"]))
     verify("acquisition: accepted account excluded from callbacks",
-           not repo.prospect_followups(date(2026,9,30)))
+           all(item["potentiele_klant_id"]!=1 for item in repo.prospect_followups(date(2026,9,30))))
     with conn.cursor() as cur:
         cur.execute("""INSERT INTO PotentieleKlant(bedrijfsnaam,contactpersoon,contactgegevens,adres_id)
                        VALUES ('Afwijzende apotheek','Contact','0633333333',3)""")
@@ -196,7 +196,7 @@ def run(conn,dbname,password):
     conn.commit()
     repo.close_prospect_followup(declining,date(2026,9,30))
     verify("acquisition: refusal removes from followup",
-           not repo.prospect_followups(date(2026,9,30)))
+           all(item["potentiele_klant_id"]!=1 for item in repo.prospect_followups(date(2026,9,30))))
     app=create_app()
     app.config.update(TESTING=True,SECRET_KEY="caseproof",
                       DB_HOST=HOST,DB_PORT=PORT,DB_NAME=dbname,

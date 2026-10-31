@@ -53,25 +53,6 @@ INSERT INTO PotentieleKlant(bedrijfsnaam,contactpersoon,contactgegevens,adres_id
 VALUES('Prospectapotheek Tilburg','Prospectcontact','0633333333',3);
 INSERT INTO Acquisitiebezoek(potentiele_klant_id,bezoekdatum) VALUES(1,'2026-09-15');
 
--- Additional unpaid example: a delivered order from October 2026.
--- The original paid 2025 invoice stays available for annual-revenue calculations.
-INSERT INTO Bestelling(klant_id,afleveradres_id,betaaladres_id,besteld_op,gewenste_leverdatum,dagdeel,spoed,status_naam)
-VALUES (1,1,1,'2026-10-25 10:00:00','2026-10-26','ochtend',FALSE,'afgeleverd');
-INSERT INTO Bestelregel(bestelling_id,product_id,aantal,prijs_per_eenheid)
-VALUES (2,1,1,20.00);
-INSERT INTO Levering(bestelling_id) VALUES (2);
-INSERT INTO Factuur(klant_id,factuurdatum,betaald_op)
-VALUES (1,'2026-10-31',NULL);
--- 20.00 + 9% VAT, 0 order discount, no first-order incentive,
--- 5% customer discount as the 2025 paid turnover was below EUR 10,000.
-UPDATE Factuur SET bedrag_excl_btw=20.00, btw_bedrag=1.80,
-    bedrag_incl_btw=21.80, bestellingskorting=0.00,
-    bedrag_na_bestellingskorting=21.80, eenmalige_korting=0.00,
-    bedrag_na_eenmalige_korting=21.80, klantenkorting=1.09,
-    totaal_bedrag=20.71 WHERE factuur_id=2;
-INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd,factuur_id)
-VALUES (2,1,1,2);
-
 -- A different, not-yet-delivered shipment is the courier's planned same-day route.
 INSERT INTO Bestelling(klant_id,afleveradres_id,betaaladres_id,besteld_op,gewenste_leverdatum,dagdeel,spoed,status_naam)
 VALUES (1,1,1,'2026-10-30 12:00:00','2026-10-31','ochtend',FALSE,'verstuurd');
