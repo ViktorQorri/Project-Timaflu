@@ -44,13 +44,32 @@ De volgende tests volgen uitsluitend Current-processes.md, Desired-process.md en
 
 | ID / bron | Invoer en stappen | Verwacht resultaat | Resultaat |
 |---|---|---|---|
-| T13, Distributie en Productbeschrijving scenario 4 | Klant is aanwezig bij het eerste bezoek; ondertekening bevestigen; aflevering registreren en dezelfde actie herhalen | Eerste levering wordt afgeleverd, orderstatus bijgewerkt, geen tweede bezoek gepland; dubbel registreren geweigerd | Niet uitgevoerd |
-| T14, Inkoop en Productbeschrijving scenario 2 | Probeer bestelling te registreren zonder voorafgaand contact; herhaal na handmatig leverancierscontact | Zonder bevestiging geen bestelling; na bevestiging uitsluitend interne registratie, geen automatische leverancierverzending | Niet uitgevoerd |
-| T15, Acquisitie en Productbeschrijving scenario 5 | Bezoek zonder contactgegevens opslaan; daarna volledig bezoek opslaan; na maand opvolging opvragen | Verplichte contactgegevens aanwezig; prospect zonder order blijft opvolgbaar, ook als er al een account is | Niet uitgevoerd |
-| T16, Administratie en Productbeschrijving scenario 3 | Factuur opzoeken, herinneringen na eerste en tweede week, betalingsregeling na drie weken, incasso na weigering | Juiste volgorde; geen gedeeltelijke betaling of incasso voor de gestelde termijn; historische bedragen niet herberekend met aannames | Niet uitgevoerd |
-| T17, Acquisitie en AD21 | Na een maand nabellen; afwijzing vastleggen; opvolglijst opnieuw openen | Geen automatische verdere opvolging na afwijzing; bestaand account niet dupliceren | Niet uitgevoerd |
+| T13, Distributie en Productbeschrijving scenario 4 | Klant is aanwezig bij het eerste bezoek; ondertekening bevestigen; aflevering registreren en dezelfde actie herhalen | Eerste levering wordt afgeleverd, orderstatus bijgewerkt, geen tweede bezoek gepland; dubbel registreren geweigerd | Geautomatiseerd: Python en geïsoleerd MySQL geslaagd; handmatige acceptatie nog open |
+| T14, Inkoop en Productbeschrijving scenario 2 | Probeer bestelling te registreren zonder voorafgaand contact; herhaal na handmatig leverancierscontact | Zonder bevestiging geen bestelling; na bevestiging uitsluitend interne registratie, geen automatische leverancierverzending | Geautomatiseerd: formuliercontrole en MySQL-invoer geslaagd; geen echt leveranciersgesprek gevoerd |
+| T15, Acquisitie en Productbeschrijving scenario 5 | Bezoek zonder contactgegevens opslaan; daarna volledig bezoek opslaan; na maand opvolging opvragen | Verplichte contactgegevens aanwezig; prospect zonder order blijft opvolgbaar, ook als er al een account is | Geautomatiseerd: verplichte gegevens en acquisitiequery gecontroleerd; handmatige acceptatie nog open |
+| T16, Administratie en Productbeschrijving scenario 3 | Factuur opzoeken, herinneringen na eerste en tweede week, betalingsregeling na drie weken, incasso na weigering | Juiste volgorde; geen gedeeltelijke betaling of incasso voor de gestelde termijn; historische bedragen niet herberekend met aannames | Geautomatiseerd: openstaande facturen, herinneringen en wachttermijn getest; volledige incassoacceptatie nog open |
+| T17, Acquisitie en AD21 | Na een maand nabellen; afwijzing vastleggen; opvolglijst opnieuw openen | Geen automatische verdere opvolging na afwijzing; bestaand account niet dupliceren | Geautomatiseerd: MySQL-conversie en definitieve afwijzing getest; handmatige acceptatie nog open |
+| T18, Distributie en Productbeschrijving scenario 4 | Tweede afleverpoging mislukt; verkoop belt klant, legt nieuwe leverdatum, dagdeel en toegelichte extra kosten vast | Order blijft niet afgeleverd totdat werkelijk is bezorgd; nieuwe afspraak en kosten worden opgeslagen | Geautomatiseerd: Python en geïsoleerd MySQL geslaagd; klantcontact niet gesimuleerd als werkelijk uitgevoerd |
+| T19, EER/schema-migratie | Pas de nieuwe acquisitie- en bezorgstatusmigraties toe op het schema van commit d936cd3; lees bestaande records | De booleans voor afsluiten van acquisitie en de toegezegde korting en de orderstatus zijn aanwezig; bestaande klantgegevens blijven leesbaar | MySQL 8.4-migratietest geslaagd op geïsoleerde testdatabase |
 
-De originele casus verplicht geen automatische leveranciersverzending, individuele medicijnscans, of ontvangst van inkomende voorraad. Deze functionaliteit wordt niet als acceptatievoorwaarde toegevoegd.
+De originele casus verplicht geen automatische leveranciersverzending, individuele medicijnscans of ontvangst van inkomende voorraad. Deze functionaliteit wordt niet als acceptatievoorwaarde toegevoegd.
+
+## Huidig geverifieerd testbewijs, 31 oktober 2026
+
+De onderstaande resultaten zijn daadwerkelijk uitgevoerd op de lokale Laptop-verbinding van Floris test, met Python in een geïsoleerde virtuele omgeving en een afzonderlijke MySQL 8.4-Dockercontainer. Fictieve gegevens zijn gebruikt. Er zijn geen productiegegevens verwerkt.
+
+| Onderdeel | Gecontroleerde versie en omgeving | Uitkomst |
+| --- | --- | --- |
+| PR #94 Python-regressies | Backendcommit 985d86c en de opvolgende bewijscommit; code/backend, unittest-discovery | **86 van 86 tests geslaagd** |
+| MySQL 8.4-integration | run_caseproof_mysql.py op PR #94; schema.sql + fixtures_assessed.sql | **17 benoemde controles geslaagd** voor de vijf verplichte scenario's; zeven procespagina's HTTP 200 |
+| Query-resultaten | query-results-assessed.md, gemeten op codecommit 985d86c | Uitvoer uit echte MySQL SELECTs, inclusief openstaande factuur en leveranciersvolgorde |
+| Migraties | run_caseproof_migrations.py: schema uit commit d936cd3, daarna twee casusmigraties | Geslaagd; beide kolommen en de bezorgstatus aanwezig, historische fictieve data behouden |
+| Samengestelde branch | Tijdelijke worktree: integration/floris29-case-reviewed plus actuele PR #94-code, één base.html-conflict handmatig opgelost | **123 van 123 Python-tests geslaagd** en de MySQL-integratiecontrole geslaagd; niets naar integratiebranch gepusht |
+| PR #104-documentatiebranch | Unit-tests voor bestaande main-code, zonder de nieuwe PR #94-code samen te voegen | Laatste gemeten baseline: 19 van 19; dit is geen bewijs voor de samengestelde applicatie |
+
+**Nog niet volledig aangetoond:** echte gebruikersacceptatie op 390 en 1440 pixels met toetsenbordbediening, werkelijke robot-/koerierinteractie, de volledig geïntegreerde online database en de SQL-uitvoer van alle overige schermen. De mobiele distributieweergave is nu wel technisch responsive opgebouwd zonder frontend JavaScript, maar een statische codecontrole vervangt geen handmatige visuele acceptatietest.
+
+**Merge-afhankelijkheid:** bij een proefintegratie van de actuele backend met integration/floris29-case-reviewed ontstond uitsluitend een conflict in code/frontend/templates/base.html door de stijlverwijzingen. In de tijdelijke testworktree is dit opgelost door zowel het extra_styles-block als de picking-bins-stylesheet te behouden. Dit is nog geen merge naar main of naar de gedeelde integratiebranch.
 
 ## Evidence and result register
 
@@ -62,6 +81,6 @@ De originele casus verplicht geen automatische leveranciersverzending, individue
 | Direct MySQL 8.4 SQL | Passed selected operations | Disposable sandbox: 27 schema tables, shortage and supplier query, transaction rollbacks |
 | Real Python repositories with MySQL | Passed selected operations | Manufacturer, prices, threshold, purchase recording, robot allocation and bin completion |
 | Flask pages against MySQL | 14 of 14 HTTP 200 | Smoke test on isolated MySQL; not a full user workflow |
-| T03, T06, T07, T08, T09, T12 | Not fully verified together | Require the relevant integrated transactions, robot bin registration and completion messages, or more functional/visual coverage. No medicine-by-medicine scanning requirement exists in the case |
+| T03, T05, T06, T12 and full manual acceptance | Not fully verified together | Robot, concurrency and mobile visual/user acceptance still require integrated checks; selected T07-T09 database paths are now tested as above |
 
 Do not treat an HTTP 200, a mock, or a render test as proof of business correctness. Each PR must state whether a case was actually run, with concrete output, or remains a planned test.
