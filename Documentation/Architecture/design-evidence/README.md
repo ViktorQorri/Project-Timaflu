@@ -1,32 +1,31 @@
-# Visuele controle van het Timaflu-portaal
+# Timaflu, visuele controle van de geïntegreerde casus
 
-De frontend in deze branch gebruikt het aangeleverde `code/frontend/DESIGN_SYSTEM.MD`. De toepassing blijft HTML, CSS en Jinja, zoals vereist door de schoolopdracht. Login, demo-rollen en eventuele React-functionaliteit zijn geen onderdeel van deze wijziging.
+De schermen volgen `code/frontend/DESIGN_SYSTEM.MD` op basis van Flask/Jinja, HTML en CSS, zonder JavaScript. De businesslogica en routes voor de vijf verplichte scenario's blijven behouden.
 
-## Browsercontrole
+## Verificatie op Floris test
 
-De geïntegreerde Flask-app is met fictieve gegevens in een aparte MySQL 8.4-testdatabase geopend in Chrome. De controlleroutes en businesslogica zijn niet aangepast.
+- 21 bestaande GET-routes met echte, **fictieve** testgegevens in een geïsoleerde MySQL 8.4-database.
+- 3 schermafmetingen: 390 px (mobiel), 768 px (tablet) en 1440 px (desktop).
+- **63 van 63 browsercontroles geslaagd**: HTTP 200, gedeelde stylesheet actief, geen horizontale pagina-overloop, mobiele navigatie opent en geen scripts aanwezig.
+- **110 van 110 Python-tests geslaagd** op de gecombineerde functionele ontwerpbranch.
+- Gedeelde vormen voor de productcatalogus, voorraad, orderpicking, bezorging, facturen en acquisitie.
+- De functionele formulieren voor tweede bezorgpoging, betalingsopvolging en acquisitie zijn behouden uit de backendscenario's.
+- 28 afzonderlijke, niet-interactieve schermontwerpen horen bij PR #103. Dat zijn opleverschetsen, niet een tweede applicatie.
+- De sequence diagrams uit PR #93 zijn **Engelstalig**; dit wijzigt alleen de taal van de portaalinterface niet.
 
-- 21 beschikbare pagina's of GET-routes;
-- 3 schermbreedtes: 390 px, 768 px en 1440 px;
-- 63 weergaven met HTTP 200;
-- kleuren en de gedeelde stylesheet geladen;
-- geen horizontale document-overloop;
-- mobiele navigatie via native HTML `details/summary` zonder JavaScript;
-- brede tabellen blijven binnen hun eigen horizontaal scrollbare container;
-- alle bestaande 67 Python-tests plus 3 regressietests van het designsysteem zijn geslaagd.
-
-Dit is een visuele en technische basiscontrole, **geen bewijs dat elke bedrijfsproceshandeling van de overige open PR's al werkt**. Bij de integratie van nieuwe procesfunctionaliteit moeten de betreffende schermen opnieuw worden gecontroleerd.
+De browsercontroles tonen de weergave. Ze vervangen geen volledige integratietests van alle zakelijke handelingen.
 
 ## Screenshots
 
-De screenshots zijn gemaakt met verzonnen testproducten en testleveranciers.
+De screenshots zijn nieuw vastgelegd nadat de functionele schermen met het design zijn geïntegreerd. Alle gegevens zijn fictief.
 
-| Scherm | Bestand |
-|---|---|
-| Home, desktop | [home_1440.png](home_1440.png) |
-| Home, mobiel | [home_390.png](home_390.png) |
-| Voorraad, mobiel | [stock_390.png](stock_390.png) |
-| Productcatalogus, mobiel (tabel horizontaal gescrold) | [products_390.png](products_390.png) |
-| Orderpicking, mobiel | [order-picking_390.png](order-picking_390.png) |
-| Leveringen, mobiel | [deliveries_390.png](deliveries_390.png) |
-| Bijbestellen, mobiel | [reorder-selected_390.png](reorder-selected_390.png) |
+| Scherm | Desktop (1440 px) | Mobiel (390 px) |
+|---|---|---|
+| Home | [home desktop](home_case_1440.png) | [home mobiel](home_case_390.png) |
+| Productcatalogus | [products desktop](products_case_1440.png) | [products mobiel](products_case_390.png) |
+| Voorraad | [stock desktop](stock_case_1440.png) | [stock mobiel](stock_case_390.png) |
+| Medicijnen bijbestellen | [reorder-selected desktop](reorder-selected_case_1440.png) | [reorder-selected mobiel](reorder-selected_case_390.png) |
+| Orderpicking en verzamelbakken | [picking desktop](picking_case_1440.png) | [picking mobiel](picking_case_390.png) |
+| Bezorgrooster en tweede poging | [deliveries desktop](deliveries_case_1440.png) | [deliveries mobiel](deliveries_case_390.png) |
+| Factuur en betalingsopvolging | [invoices desktop](invoices_case_1440.png) | [invoices mobiel](invoices_case_390.png) |
+| Acquisitiebezoek en opvolging | [acquisition desktop](acquisition_case_1440.png) | [acquisition mobiel](acquisition_case_390.png) |
