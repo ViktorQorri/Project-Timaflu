@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Fabrikant {{ 'bewerken' if edit else 'toevoegen' }}{% endblock %}
+{% block content %}
+<section class="stock-dashboard">
+  <h1>Fabrikant {{ 'bewerken' if edit else 'toevoegen' }}</h1>
+  {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% for key, label in [('naam','Naam fabrikant'),('adres','Adres'),('contactpersoon','Contactpersoon'),('telefoonnummer','Telefoonnummer'),('internetadres','Website')] %}
+      <div class="form-field"><label for="{{ key }}">{{ label }}</label>
+      <input id="{{ key }}" name="{{ key }}" value="{{ values.get(key, '') }}" maxlength="{{ {'naam':100,'adres':255,'contactpersoon':100,'telefoonnummer':25,'internetadres':255}[key] }}"{% if key in ['naam','adres'] %} required{% endif %}></div>
+    {% endfor %}
+    <button type="submit">Opslaan</button>
+    <a href="{{ url_for('purchasing.manufacturers') }}">Annuleren</a>
+  </form>
+</section>
+{% endblock %}
