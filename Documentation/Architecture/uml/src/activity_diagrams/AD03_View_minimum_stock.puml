@@ -7,32 +7,15 @@ skinparam swimlaneWidth 220
 start
 :Open minimum stock overview;
 |System|
-:Retrieve physical warehouse stock per product;
-:Compare with each product minimum stock;
-if (Any products below minimum?) then ([yes])
-  :Show shortages and required quantities;
+:Retrieve physical warehouse stock by medicine;
+:Compare physical quantities with minimum stock thresholds;
+if (Any medicines below minimum?) then ([yes])
+  :Display shortage list with current and minimum quantities;
   |Purchasing Employee|
-  :Select shortage to follow up;
-  |System|
-  :Show linked manufacturers sorted by purchase price;
-  if (Manufacturer offers available?) then ([yes])
-    |Purchasing Employee|
-    :Contact cheapest available manufacturer by phone or website;
-    if (Manufacturer can supply?) then ([yes])
-      :Agree desired purchase quantity;
-      |System|
-      :Register manually agreed purchase order (AD02);
-    else ([no])
-      |Purchasing Employee|
-      :Contact next cheapest available manufacturer (AD02);
-    endif
-  else ([no])
-    :Show no available linked manufacturer;
-    |Purchasing Employee|
-    :Assess shortage with purchasing team;
-  endif
+  :Select a medicine requiring replenishment;
+  :Start AD02 Reorder products;
 else ([no])
-  :Show that all stock levels meet minimums;
+  :Display that all products meet minimum stock;
 endif
 stop
 @enduml
