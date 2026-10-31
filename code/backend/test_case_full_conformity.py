@@ -194,7 +194,8 @@ class CaseConformityTests(TestCase):
             self.assertIn('data-label="'+label+'"',html)
         self.assertIn("@media (max-width: 720px)",css)
         self.assertIn("grid-template-columns",css)
-        self.assertIn("css/deliveries.css",base)
+        self.assertIn("{% block extra_styles %}",base)
+        self.assertIn("css/deliveries.css",html)
         self.assertNotIn("<script",html.lower())
         self.assertNotIn("onclick=",html.lower())
 
