@@ -32,12 +32,14 @@ Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 <section class="screen-panel" aria-labelledby="output-heading">
 <span class="overline">Resultaten</span>
 <h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
 <thead><tr><th scope="col">Bestelnummer</th><th scope="col">Klant</th><th scope="col">Orderstatus</th><th scope="col">Backorder</th><th scope="col">Leverdatum</th><th scope="col">Dagdeel</th></tr></thead>
 <tbody><tr><td colspan="6" class="empty-row">
 Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
 </td></tr></tbody></table></div>
 <div class="source-links">
+<a href="../../brightspace/Current-processes.md#bestellingen">Casus: bestellingen</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a>
 <a href="../uml/src/activity_diagrams/AD06_View_order_status.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD06_View_order_status.svg">Activity diagram (SVG)</a>
 </div>
@@ -47,7 +49,7 @@ Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de data
 <section class="scenario-panel" aria-labelledby="scenario-heading">
 <span class="overline">Herleidbaarheid naar casus en proces</span>
 <h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
-<div class="scenario-grid"><article class="scenario"><h3>Order gevonden</h3><p>Toon orderregels, eventuele backorders en afgesproken leverdatum en dagdeel.</p></article><article class="scenario"><h3>Geen order gevonden</h3><p>Toon een duidelijke lege resultaatmelding.</p></article></div>
+<div class="scenario-grid"><article class="scenario"><h3>Order gevonden</h3><p>Toon orderregels, eventuele backorders en afgesproken leverdatum en dagdeel.</p></article><article class="scenario"><h3>Voorbeelden van orderstatus</h3><p>De gewenste situatie noemt wordt verzameld, verstuurd, backorder en afgeleverd. De concrete status van een order komt uit het systeem.</p></article><article class="scenario"><h3>Geen order gevonden</h3><p>Toon een duidelijke lege resultaatmelding.</p></article></div>
 <ul class="case-notes"><li>Een getoonde status komt uit de orderregistratie, niet uit fictieve voorbeelddata.</li></ul>
 </section>
 </main>

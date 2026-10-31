@@ -8,7 +8,7 @@ from html import escape
 from pathlib import Path
 
 from case_render import render
-from screen_specs import PROCESS_GROUPS, SCREENS, TITLES
+from screen_specs import PROCESS_GROUPS, SCREENS, TITLES, CASE_SOURCES, SCREEN_CASE_KEYS
 from screen_states import SCREEN_STATES
 
 ARCHITECTURE = Path(__file__).resolve().parents[1]
@@ -53,13 +53,18 @@ def make_readme(items):
         "",
         "## Herleidbaarheid",
         "",
-        "| Proces | Activity diagram | Schermontwerp |",
-        "|---|---|---|",
+        "| Proces | Bronnen uit de casus | Activity diagram | Schermontwerp |",
+        "|---|---|---|---|",
     ]
     for number, group, filename in items:
         stem = filename.removesuffix(".html")
+        sources = ", ".join(
+            f"[{CASE_SOURCES[key][0]}]({CASE_SOURCES[key][1]})"
+            for key in SCREEN_CASE_KEYS[number]
+        )
         lines.append(
-            f"| {group} | [AD{number:02d}](../uml/src/activity_diagrams/{stem}.puml)"
+            f"| {group} | {sources} "
+            f"| [AD{number:02d}](../uml/src/activity_diagrams/{stem}.puml)"
             f" | [Ontwerp]({filename}) |"
         )
     lines += [
@@ -90,7 +95,7 @@ def make_readme(items):
         "- python test_case_screens.py: controleert bronlinks, verplichte inhoud "
         "en semantiek van de 28 ontwerpen.",
         "- python test_browser_screens.py: controleert 28 schermen op 390, 768 en 1440 px.",
-        "- In previews/ staan screenshots van belangrijke casusschermen op 390 en 1440 px: AD02, AD05, AD12, AD16, AD23 en AD27.",
+        "- In previews/ staan screenshots van belangrijke casusschermen op 390 en 1440 px: AD02, AD05, AD09, AD12, AD16, AD23 en AD27.",
         "- Geen JavaScript, React, nieuwe bedrijfsstatussen of fictieve gegevens.",
         "",
         "## Brondocumenten",

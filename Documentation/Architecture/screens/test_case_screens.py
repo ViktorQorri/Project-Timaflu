@@ -2,7 +2,7 @@
 from html.parser import HTMLParser
 from pathlib import Path
 
-from screen_specs import SCREENS, TITLES, PROCESS_GROUPS
+from screen_specs import SCREENS, TITLES, PROCESS_GROUPS, CASE_SOURCES, SCREEN_CASE_KEYS
 from screen_states import SCREEN_STATES
 
 ROOT = Path(__file__).resolve().parent
@@ -68,9 +68,12 @@ def check():
         assert len(p.buttons) >= len(SCREENS[number]["actions"])
         if SCREENS[number]["mode"] != "human":
             assert len(p.buttons) == 0, number
+        for key in SCREEN_CASE_KEYS[number]:
+            assert CASE_SOURCES[key][1] in p.links, (path.name, key)
         for link in p.links:
             if not link.startswith(("http:", "https:", "#")):
-                assert (ROOT / link).resolve().exists(), (path.name, link)
+                path_without_fragment = link.split("#", 1)[0]
+                assert (ROOT / path_without_fragment).resolve().exists(), (path.name, link)
         assert "executed on device:" not in source
         if p.states:
             assert 'class="state-grid"' in source
@@ -89,9 +92,24 @@ def check():
         "Klant met betalingsblokkade", "Voorraad gewijzigd bij opslaan",
         "Totaalbedrag voor klantakkoord", "Voorlopige order annuleren",
         "Afleveradres uit klantgegevens", "Factuuradres uit klantgegevens",
-        "Eenmalige korting",
+        "Eenmalige korting", "Besteldatum", "Spoedbestelling",
+        "Minimale bestelhoeveelheid van artikel",
+        "Ontbrekend medicijn blijkt bij verzamelen",
     ):
         assert required in a5, required
+
+    a6 = next(ROOT.glob("AD06_*.html")).read_text(encoding="utf-8")
+    assert all(status in a6 for status in (
+        "wordt verzameld", "verstuurd", "backorder", "afgeleverd"
+    ))
+
+    a9 = next(ROOT.glob("AD09_*.html")).read_text(encoding="utf-8")
+    assert "Adreslabel bevat klantnaam en afleveradres" in a9
+    assert "Adreslabel bevat klantnaam, afleveradres en telefoonnummer" not in a9
+    assert "Spoedindicatie van order" in a9
+
+    a23 = next(ROOT.glob("AD23_*.html")).read_text(encoding="utf-8")
+    assert "Medicijn op meerdere locaties" in a23
 
     a16 = next(ROOT.glob("AD16_*.html")).read_text(encoding="utf-8")
     for required in (
@@ -116,7 +134,9 @@ def check():
         "Bezorgrooster en tweede poging", "Ritdatum",
         "Contactpersoon", "Telefoonnummer", "Afleveradres",
         "Tweede poging dezelfde dag", "Ook tweede poging mislukt",
-        "Extra bezorgkosten",
+        "Extra bezorgkosten", "Koerier: eerste en tweede bezorgpoging",
+        "Verkoop: afspraak na twee mislukte pogingen",
+        "Wordt uit de klantgegevens geladen",
     ):
         assert required in a27, required
 
@@ -126,15 +146,21 @@ def check():
     a24 = next(ROOT.glob("AD24_*.html")).read_text(encoding="utf-8")
     for required in ("Werkzame stoffen", "Bestelcode", "Prijs per grootverpakking",
                      "Verpakkingssoort", "Detailverpakkingen per grootverpakking",
-                     "Korte omschrijving", "Lange omschrijving", "Minimale bestelhoeveelheid"):
+                     "Korte omschrijving", "Lange omschrijving", "Minimale bestelhoeveelheid",
+                     "Minimumvoorraad voor voorraadbewaking"):
         assert required in a24 or required.lower() in a24.lower(), required
 
     a26 = next(ROOT.glob("AD26_*.html")).read_text(encoding="utf-8")
     assert "17.00 uur" in a26 and "maximaal drie uur" in a26
+    assert "oude standaardtermijn is niet verplicht" in a26
 
     a28 = next(ROOT.glob("AD28_*.html")).read_text(encoding="utf-8")
     assert "Systeem- of robotmonitor" in a28
     assert "10.000" in a28 and "20.000" in a28
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert readme.count("../../brightspace/") >= 28
+    assert len(list((ROOT / "previews").glob("AD??_*.png"))) >= 12
 
     app = ROOT.parents[2] / "code/frontend/templates/base.html"
     assert "executed on device" not in app.read_text(encoding="utf-8")

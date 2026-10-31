@@ -192,3 +192,37 @@
  .invoice-totals{margin:0;gap:10px 8px}
 }
 /* Timaflu casusontwerpen. END */
+
+
+/* Timaflu casusontwerpen. START: gescheiden koerier-/verkoophandelingen en leesbare tabellen op mobiel. */
+.role-block {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f8fbfd;
+  min-width: 0;
+}
+.role-block + .role-block { margin-top: 18px; }
+.role-block h3 { margin: 0 0 8px; font-size: 16px; line-height: 1.45; }
+.role-block > p { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.role-block .screen-actions { margin-top: 10px; }
+.table-scroll-hint { display: none; color: var(--muted); font-size: 12px; margin: 8px 0; }
+/* Keep long status values from compressing their labels to one character. */
+.state-values { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
+.state-values dt { overflow-wrap: normal; word-break: normal; }
+.state-values dd { overflow-wrap: anywhere; word-break: normal; }
+.screen-table-wrap:focus-visible,
+.invoice-lines-wrap:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .role-block { padding: 13px; }
+  .table-scroll-hint { display: block; }
+  /* Stack labels and values: long case text must remain legible on phones. */
+  .state-values { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .state-values dt { font-weight: 600; }
+  .state-values dd { text-align: left; padding-bottom: 8px; margin-bottom: 3px; border-bottom: 1px solid var(--line); }
+  .state-values dd:last-child { border-bottom: 0; padding-bottom: 0; }
+}
+/* Timaflu casusontwerpen. END */

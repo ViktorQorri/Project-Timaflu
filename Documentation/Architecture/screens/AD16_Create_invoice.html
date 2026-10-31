@@ -33,12 +33,14 @@ Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 <section class="screen-panel" aria-labelledby="output-heading">
 <span class="overline">Resultaten</span>
 <h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table>
+<p class="table-scroll-hint">Veeg horizontaal om alle tabelkolommen te bekijken.</p>
+<div class="screen-table-wrap" tabindex="0" role="region" aria-label="Resultatentabel, horizontaal scrollbaar"><table>
 <thead><tr><th scope="col">Bestelnummer</th><th scope="col">Geleverd medicijn</th><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr></thead>
 <tbody><tr><td colspan="5" class="empty-row">
 Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
 </td></tr></tbody></table></div>
 <div class="source-links">
+<a href="../../brightspace/Current-processes.md#administratie">Casus: administratie</a><a href="../../brightspace/Desired-process.md#de-nieuwe-situatie">Casus: gewenste situatie</a><a href="../../brightspace/Product-description.md#backend">Oplevereisen: backend</a>
 <a href="../uml/src/activity_diagrams/AD16_Create_invoice.puml">Activity diagram (PlantUML)</a>
 <a href="../uml/export/activity_diagrams/AD16_Create_invoice.svg">Activity diagram (SVG)</a>
 </div>
@@ -54,7 +56,8 @@ Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de data
 <div><strong>Timaflu</strong><span>Adres Timaflu uit bedrijfsgegevens</span></div>
 <div><strong>Naam bedrijf (klant)</strong><span>Adres klant uit klantgegevens</span></div>
 </div>
-<div class="invoice-lines-wrap">
+<p class="table-scroll-hint">Veeg horizontaal om de volledige factuurregels te bekijken.</p>
+<div class="invoice-lines-wrap" tabindex="0" role="region" aria-label="Factuurregels, horizontaal scrollbaar">
 <table class="invoice-lines" aria-label="Gefactureerde, geleverde bestelregels">
 <thead><tr>
 <th scope="col">Omschrijving medicijn</th>
