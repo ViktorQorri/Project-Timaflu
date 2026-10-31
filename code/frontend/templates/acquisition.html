@@ -1,7 +1,28 @@
 {% extends "base.html" %}
-
 {% block title %}Acquisitie{% endblock %}
-
 {% block content %}
-  <h1>Acquisitie</h1>
+<h1>Acquisitiebezoek registreren</h1>
+<form method="post" action="{{url_for('acquisition.record_visit')}}">
+<label>Bedrijf <input name="company" required></label>
+<label>Contactpersoon <input name="contact"></label>
+<label>Contactgegevens <input name="details"></label>
+<label>Adres <input name="address" required></label>
+<label>Bezoekdatum <input name="visit_date" type="date" required></label>
+<button>Bezoek opslaan</button></form>
+<h2>Apotheken zonder bestelling na minimaal één maand</h2>
+{% for prospect in prospects %}
+<section><strong>{{prospect.bedrijfsnaam}}</strong>
+<p>{{prospect.contactpersoon}} — {{prospect.contactgegevens}} — {{prospect.adres}}</p>
+<p>Bezoek: {{prospect.bezoekdatum}}</p>
+{% if prospect.klant_id %}
+<p role="status">Er bestaat al een klantaccount, maar er is nog geen bestelling geplaatst. Neem telefonisch contact op. Maak geen dubbel account aan.</p>
+{% else %}
+<form method="post" action="{{url_for('acquisition.create_customer')}}">
+<input type="hidden" name="prospect_id" value="{{prospect.potentiele_klant_id}}">
+<label>Factuuradres <input name="billing_address" required></label>
+<label>Afleveradres <input name="delivery_address" required></label>
+<label><input type="checkbox" name="consent" value="yes" required> Akkoord met klantaccount en eenmalige korting</label>
+<button>Klantaccount aanmaken</button></form>
+{% endif %}</section>
+{% else %}<p>Geen opvolging nodig.</p>{% endfor %}
 {% endblock %}

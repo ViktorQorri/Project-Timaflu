@@ -20,8 +20,19 @@ SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
-WHERE p.productnaam LIKE '%Medication%' AND p.in_assortiment = TRUE
+WHERE p.productnaam LIKE '%Medication%' AND p.intern_bestelbaar = TRUE AND p.in_assortiment = TRUE
 ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC;
+
+
+
+-- Purchasing: unlink a manufacturer that no longer supplies the medicine.
+-- Mirrors SupplierRepository.remove_offer() with example identifiers.
+DELETE FROM LeveranciersAanbod WHERE product_id=1 AND leverancier_id=2;
+
+-- When all manufacturers have stopped supplying the medicine, remove the
+-- internal reorder entry while preserving the sales catalog and history.
+-- Mirrors SupplierRepository.remove_from_internal_reorder_list().
+UPDATE Product SET intern_bestelbaar=FALSE WHERE product_id=1;
 
 -- Recording a purchasing order after the employee has contacted the manufacturer.
 -- The supplier-product relationship is validated by PurchaseOrderRepository.
@@ -54,6 +65,143 @@ LEFT JOIN (
 WHERE (p.productnaam LIKE '%Medication%' OR p.artikelnummer LIKE '%Medication%')
   AND p.in_assortiment = TRUE
 ORDER BY p.productnaam ASC;
+
+-- AssessedRepository SQL for the five required backend scenarios.
+-- Example literals replace the exact %s placeholders in repository SQL.
+-- Output must be recorded from a real MySQL instance; never invented.
+
+-- AssessedRepository.customer_revenue
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT k.klant_id, k.bedrijfsnaam, a.adres AS klantadres FROM Klant k
+                         JOIN Adres a ON a.adres_id=k.betaaladres_id
+                         WHERE k.klant_id=1;
+-- Query 2 (illustrative input, not a claimed database result)
+SELECT 1 FROM Factuur WHERE klant_id=1
+                         AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
+                         LIMIT 1;
+-- Query 3 (net paid invoice amounts; missing totals are detected in repository)
+SELECT COUNT(*) AS paid_count,
+                       COUNT(f.totaal_bedrag) AS known_amount_count,
+                       COALESCE(SUM(f.totaal_bedrag),0) AS annual
+                FROM Factuur AS f
+                WHERE f.klant_id=1 AND f.betaald_op>= '2025-01-01' AND f.betaald_op< '2026-01-01';
+
+-- AssessedRepository.customer_order_count
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT COUNT(*) FROM Bestelling WHERE klant_id=1;
+
+-- AssessedRepository.invoice_for_customer
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+                       f.incasso_ingeschakeld,
+       f.bedrag_excl_btw,
+       f.btw_bedrag,
+       f.bedrag_incl_btw,
+       f.bestellingskorting,
+       f.bedrag_na_bestellingskorting,
+       f.eenmalige_korting,
+       f.bedrag_na_eenmalige_korting,
+       f.klantenkorting,
+       f.totaal_bedrag,
+       k.bedrijfsnaam, a.adres
+                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                JOIN Adres a ON a.adres_id=k.betaaladres_id
+                WHERE f.klant_id=1 ORDER BY f.factuurdatum DESC;
+-- Query 2 (illustrative input, not a claimed database result)
+SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
+                    FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id
+                    JOIN Bestelregel b ON b.bestelling_id=v.bestelling_id AND b.product_id=l.product_id
+                    WHERE l.factuur_id=1;
+
+-- AssessedRepository.delivery_schedule
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
+                       b.bestelling_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                       a.adres, r.ritdatum
+                FROM Leverpoging lp
+                JOIN Rit r ON r.rit_id=lp.rit_id
+                JOIN Levering l ON l.levering_id=lp.levering_id
+                JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
+                JOIN Klant k ON k.klant_id=b.klant_id
+                JOIN Adres a ON a.adres_id=b.afleveradres_id
+                WHERE r.ritdatum='2026-10-30' ORDER BY lp.geplande_tijd;
+
+-- AssessedRepository.schedule_second_attempt
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
+                       FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND r.ritdatum='2026-10-30'
+                       ORDER BY lp.pogingnummer DESC FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+UPDATE Leverpoging SET resultaat='niet aanwezig',
+                              ontvangst_getekend=FALSE
+                       WHERE levering_id=1 AND pogingnummer=1;
+-- Query 3 (illustrative input, not a claimed database result)
+INSERT INTO Leverpoging
+                       (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
+                       VALUES (1,2,1,'14:00:00',NULL,NULL);
+
+-- AssessedRepository.record_second_attempt_outcome
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND lp.pogingnummer=2 AND r.ritdatum='2026-10-30'
+                       FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=1
+                       WHERE levering_id=1 AND pogingnummer=2;
+-- Query 3 (illustrative input, not a claimed database result)
+UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+
+-- AssessedRepository.prospect_followups
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
+                       p.contactgegevens, a.adres, p.klant_id,
+                       MAX(v.bezoekdatum) AS bezoekdatum
+                FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
+                JOIN Adres a ON a.adres_id=p.adres_id
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
+                )
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
+                HAVING MAX(v.bezoekdatum)<='2026-09-30'
+                ORDER BY bezoekdatum;
+
+-- AssessedRepository.record_visit
+-- Query 1 (illustrative input, not a claimed database result)
+INSERT INTO Adres (adres) VALUES ('Voorbeeldstraat 1');
+-- Query 2 (illustrative input, not a claimed database result)
+INSERT INTO PotentieleKlant (bedrijfsnaam,contactpersoon,contactgegevens,adres_id) VALUES ('Testapotheek','Contact','0612345678',1);
+-- Query 3 (illustrative input, not a claimed database result)
+INSERT INTO Acquisitiebezoek (potentiele_klant_id,bezoekdatum) VALUES (1,'2026-09-30');
+
+-- AssessedRepository.register_prospect_customer
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT * FROM PotentieleKlant WHERE potentiele_klant_id=1 FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+INSERT INTO Adres (adres) VALUES ('Factuuradres 1');
+-- Query 3 (illustrative input, not a claimed database result)
+INSERT INTO Adres (adres) VALUES ('Afleveradres 1');
+-- Query 4 (illustrative input, not a claimed database result)
+INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
+                             VALUES('Testapotheek','0612345678','Contact',1,2);
+-- Query 5 (illustrative input, not a claimed database result)
+UPDATE PotentieleKlant SET klant_id=1 WHERE potentiele_klant_id=1;
+
+-- AssessedRepository.record_payment_action
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE f.factuur_id=1 FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) VALUES(1,1,'2026-10-30');
+-- Query 3 (illustrative input, not a claimed database result)
+SELECT 1 FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+-- Query 4 (illustrative input, not a claimed database result)
+UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
+-- Query 5 (illustrative input, not a claimed database result)
+UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, incasso_ingeschakeld=TRUE WHERE factuur_id=1;
+-- Query 6 (illustrative input, not a claimed database result)
+UPDATE Factuur SET betaald_op='2026-10-30' WHERE factuur_id=1;
 
 -- Product catalog, GET /products (issue #13)
 -- Same SELECTs as ProductRepository.list_in_assortment(). No parameters.
@@ -251,3 +399,15 @@ SELECT 1 FROM LeveranciersAanbod
 WHERE leverancier_id = 1 AND product_id = 1 FOR UPDATE;
 DELETE FROM LeveranciersAanbod WHERE leverancier_id = 1 AND product_id = 1;
 -- The SELECT and DELETE run in one transaction in ManufacturerRepository.remove_offer().
+
+-- Persist a completed and explicitly calculated weekly invoice once.
+-- This UPDATE may only run after the original order discounts are known.
+-- The application checks that the snapshot has not previously been recorded.
+SELECT factuur_id, totaal_bedrag FROM Factuur WHERE factuur_id=1 FOR UPDATE;
+UPDATE Factuur SET
+    bedrag_excl_btw=40.00, btw_bedrag=3.60, bedrag_incl_btw=43.60,
+    bestellingskorting=0.00, bedrag_na_bestellingskorting=43.60,
+    eenmalige_korting=4.36, bedrag_na_eenmalige_korting=39.24,
+    klantenkorting=1.96, totaal_bedrag=37.28
+WHERE factuur_id=1;
+-- The amounts here illustrate the SQL shape, not any live customer's discount.
