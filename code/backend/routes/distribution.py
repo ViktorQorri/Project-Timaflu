@@ -6,6 +6,22 @@ from domain.errors import DomainError
 
 distribution=Blueprint("distribution",__name__)
 
+@distribution.post("/deliveries/first-attempt/delivered")
+def first_attempt_delivered():
+    """A first visit can succeed; only absence requires scheduling a second."""
+    try:
+        day = date.fromisoformat(request.form["day"])
+        delivery_id = int(request.form["delivery_id"])
+    except (KeyError, ValueError) as exc:
+        raise DomainError("Ongeldige leveringsdatum of leveringnummer.") from exc
+    if delivery_id < 1:
+        raise DomainError("Leveringnummer moet positief zijn.")
+    AssessedRepository(get_connection()).record_first_attempt_delivery(
+        delivery_id, day, request.form.get("signature_confirmed"))
+    flash("Aflevering bij het eerste bezoek geregistreerd.", "success")
+    return redirect(url_for("distribution.deliveries", day=day.isoformat()))
+
+
 @distribution.get("/deliveries")
 def deliveries():
     day=date.fromisoformat(request.args.get("day",date.today().isoformat()))

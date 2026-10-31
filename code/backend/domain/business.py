@@ -217,7 +217,7 @@ class Route:
 
 class AcquisitionVisit:
     def recordVisit(self, companyName, contactPerson, contactDetails, address, visitDate):
-        if not companyName or not address or not isinstance(visitDate, date):
+        if not all((companyName, contactPerson, contactDetails, address)) or not isinstance(visitDate, date):
             raise ValueError("Bedrijf, adres en datum zijn verplicht")
         return {"company": companyName, "contact": contactPerson,
                 "contact_details": contactDetails, "address": address, "date": visitDate}

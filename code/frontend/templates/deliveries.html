@@ -29,6 +29,13 @@
           <td>{{item.resultaat or 'Nog niet afgehandeld'}}</td>
           <td>
             {% if item.pogingnummer == 1 and not item.resultaat %}
+            <form method="post" action="{{url_for('distribution.first_attempt_delivered')}}">
+              <input type="hidden" name="day" value="{{day}}">
+              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
+              <label><input type="checkbox" name="signature_confirmed" value="yes" required>
+                Ontvangstondertekening is bevestigd</label>
+              <button type="submit">Afgeleverd bij eerste bezoek</button>
+            </form>
             <form method="post" action="{{url_for('distribution.second_attempt')}}">
               <input type="hidden" name="day" value="{{day}}">
               <input type="hidden" name="delivery_id" value="{{item.levering_id}}">

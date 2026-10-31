@@ -39,7 +39,7 @@ UPDATE Product SET intern_bestelbaar=FALSE WHERE product_id=1;
 SELECT 1 FROM LeveranciersAanbod AS a
 JOIN Product AS p ON p.product_id = a.product_id
 WHERE a.leverancier_id = 1 AND a.product_id = 1
-  AND p.in_assortiment = TRUE;
+  AND p.in_assortiment = TRUE AND p.intern_bestelbaar = TRUE;
 INSERT INTO Inkoopbestelling (leverancier_id) VALUES (1);
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
 VALUES (LAST_INSERT_ID(), 1, 10);
@@ -125,6 +125,17 @@ SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
                 JOIN Klant k ON k.klant_id=b.klant_id
                 JOIN Adres a ON a.adres_id=b.afleveradres_id
                 WHERE r.ritdatum='2026-10-30' ORDER BY lp.geplande_tijd;
+
+-- AssessedRepository.record_first_attempt_delivery
+-- First visit: complete only after signed receipt, without a second attempt.
+SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND lp.pogingnummer=1 AND r.ritdatum='2026-10-30'
+                       FOR UPDATE;
+UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
+                       WHERE levering_id=1 AND pogingnummer=1;
+UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
 
 -- AssessedRepository.schedule_second_attempt
 -- Query 1 (illustrative input, not a claimed database result)
