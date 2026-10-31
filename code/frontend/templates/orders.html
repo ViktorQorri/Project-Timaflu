@@ -2,13 +2,18 @@
 {% block title %}Voorraad controleren{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="sales-stock-title">
+  <span class="eyebrow">Verkoop</span>
   <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
   <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
-  <form method="get" action="{{ url_for('sales.orders') }}" class="supplier-lookup">
-    <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
-    <input id="medicine-query" name="q" value="{{ query }}" maxlength="100" required>
-    <label for="quantity">Gevraagd aantal</label>
-    <input id="quantity" name="quantity" type="number" min="1" step="1" value="{{ quantity }}" required>
+  <form method="get" action="{{ url_for('sales.orders') }}" class="lookup-form">
+    <div class="form-field">
+      <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
+      <input id="medicine-query" name="q" value="{{ query }}" maxlength="100" required>
+    </div>
+    <div class="form-field">
+      <label for="quantity">Gevraagd aantal</label>
+      <input id="quantity" name="quantity" type="number" min="1" step="1" value="{{ quantity }}" required>
+    </div>
     <button type="submit">Voorraad controleren</button>
   </form>
   {% if query %}

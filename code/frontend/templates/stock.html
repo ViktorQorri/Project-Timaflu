@@ -5,13 +5,15 @@
 {% block content %}
   <section class="stock-dashboard" aria-labelledby="stock-title">
     <header class="stock-dashboard__intro">
-      <a class="button" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
       <div>
         <p class="stock-dashboard__eyebrow">Inkoop</p>
         <h1 id="stock-title">Voorraadtekorten</h1>
         <p class="stock-dashboard__subtitle">Producten waarvan de voorraad in het magazijn onder de minimumvoorraad zit.</p>
       </div>
-      <a class="button" href="{{ url_for('purchasing.reorder') }}">Medicijnen bijbestellen</a>
+      <div class="page-actions">
+        <a class="button button--secondary" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
+        <a class="button" href="{{ url_for('purchasing.reorder') }}">Medicijnen bijbestellen</a>
+      </div>
       <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
         {{ shortages|length }} producten onder minimum
       </p>
@@ -28,6 +30,7 @@
               <th scope="col" class="stock-dashboard__number">Voorraad</th>
               <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
               <th scope="col" class="stock-dashboard__number">Tekort</th>
+              <th scope="col">Leveranciers</th>
             </tr>
           </thead>
           <tbody>

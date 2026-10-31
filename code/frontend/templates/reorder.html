@@ -2,6 +2,7 @@
 {% block title %}Medicijnen bijbestellen{% endblock %}
 {% block content %}
 <section class="stock-dashboard">
+  <span class="eyebrow">Inkoop</span>
   <h1>Medicijnen bijbestellen</h1>
   <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
   <div class="stock-dashboard__table-wrap">
@@ -28,7 +29,7 @@
       <tbody>
       {% for offer in offers %}
       <tr>
-        <th scope="row">{{ offer.leverancier }}{% if loop.first %} (laagste prijs){% endif %}</th>
+        <th scope="row">{{ offer.leverancier }}{% if loop.first %} <span class="status status--success">Laagste prijs</span>{% endif %}</th>
         <td>{{ offer.contactpersoon or 'Niet ingevuld' }}</td>
         <td>{{ offer.telefoonnummer or 'Niet ingevuld' }}</td>
         <td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td>

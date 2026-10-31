@@ -2,9 +2,10 @@
 {% block title %}Minimumvoorraad instellen{% endblock %}
 {% block content %}
 <section class="stock-dashboard">
+  <span class="eyebrow">Inkoop</span>
   <h1>Minimumvoorraad instellen</h1>
   <p class="stock-dashboard__subtitle">Stel per medicijn in wanneer het systeem een voorraadtekort moet signaleren. De werkelijke voorraad wordt niet aangepast.</p>
-  <p><a href="{{ url_for('purchasing.stock') }}">Terug naar voorraadtekorten</a></p>
+  <p><a class="button button--secondary" href="{{ url_for('purchasing.stock') }}">Terug naar voorraadtekorten</a></p>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
       <caption>Minimale voorraadniveaus van alle producten</caption>

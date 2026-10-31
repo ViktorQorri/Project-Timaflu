@@ -2,12 +2,15 @@
 {% block title %}Leveranciers{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="supplier-title">
-  <p><a href="{{ url_for('purchasing.manufacturers') }}">Fabrikanten en inkoopprijzen beheren</a></p>
+  <p><a class="button button--secondary" href="{{ url_for('purchasing.manufacturers') }}">Fabrikanten en inkoopprijzen beheren</a></p>
+  <span class="eyebrow">Inkoop</span>
   <h1 id="supplier-title">Leveranciers voor een medicijn zoeken</h1>
   <p class="stock-dashboard__subtitle">Vergelijk leveranciers op inkoopprijs. Neem eerst zelf contact op met de fabrikant voordat je een inkooporder vastlegt.</p>
-  <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="supplier-lookup">
-    <label for="product-name">Naam van het medicijn</label>
-    <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
+  <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="lookup-form">
+    <div class="form-field">
+      <label for="product-name">Naam van het medicijn</label>
+      <input id="product-name" name="product" type="search" value="{{ product_name }}" maxlength="100" required>
+    </div>
     <button type="submit">Leveranciers zoeken</button>
   </form>
   {% if product_name %}

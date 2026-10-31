@@ -1,7 +1,26 @@
 {% extends "base.html" %}
-
-{% block title %}Order picking{% endblock %}
-
+{% block title %}Orderpicking{% endblock %}
 {% block content %}
-  <h1>Order picking</h1>
+<section class="page-intro">
+  <span class="eyebrow">Magazijn</span>
+  <h1>Orderpicking</h1>
+  <p>Elke magazijngang heeft een robot. Het systeem verdeelt een bestelling in deelorders, waarna de robots de medicijnen in gecodeerde verzamelbakken verzamelen.</p>
+</section>
+<section class="workflow-grid" aria-label="Werkwijze orderpicking">
+  <article class="workflow-panel">
+    <span class="eyebrow">Stap 1</span>
+    <h3>Deelorder ontvangen</h3>
+    <p>De robot ontvangt alleen de medicijnen die in zijn eigen magazijngang staan.</p>
+  </article>
+  <article class="workflow-panel">
+    <span class="eyebrow">Stap 2</span>
+    <h3>Verzamelbak scannen</h3>
+    <p>De robot stuurt de unieke bakcode naar het informatiesysteem en verzamelt de benodigde medicijnen.</p>
+  </article>
+  <article class="workflow-panel">
+    <span class="eyebrow">Stap 3</span>
+    <h3>Doorgeven aan distributie</h3>
+    <p>Volle verzamelbakken gaan over de rollerbaan naar de distributiehoek. Na een voltooide deelorder krijgt de robot een volgende opdracht.</p>
+  </article>
+</section>
 {% endblock %}
