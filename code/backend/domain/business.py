@@ -86,35 +86,6 @@ class Order:
         pass
 
 
-class Product:
-    def __init__(self, productName, offers=()):
-        self.productName = productName
-        self.offers = list(offers)
-        self.onInternalReorderList = True
-
-    def findSuppliersByPrice(self):
-        return sorted(
-            (o for o in self.offers if o["product"].casefold() == self.productName.casefold()),
-            key=lambda o: (euro(o["price"]), o["supplier"]))
-
-    def removeSupplier(self, supplier):
-        original = len(self.offers)
-        self.offers = [o for o in self.offers if o["supplier"] != supplier]
-        return original - len(self.offers)
-
-    def removeFromAssortment(self):
-        # Only remove from internal reorder list; not the historical product catalogue.
-        self.onInternalReorderList = False
-
-    def checkStock(self):
-        # Other case processes: school explicitly permits an empty method.
-        pass
-
-    def checkMinimumStock(self):
-        # Other case processes: school explicitly permits an empty method.
-        pass
-
-
 class Invoice:
     def __init__(self, customerNumber, invoiceNumber, invoiceDate, paidOn=None):
         self.customerNumber = customerNumber

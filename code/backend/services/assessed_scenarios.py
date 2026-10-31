@@ -5,7 +5,7 @@ School permits example data for methods. Database persistence is separate.
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from calendar import monthrange
-from domain.business import Order, Product, Invoice, Route, ProspectiveCustomer
+from domain.business import Order, Invoice, Route, ProspectiveCustomer
 
 
 def eur(value):
@@ -22,8 +22,16 @@ def calculate_discount(subtotal, previous_annual_revenue, first_order=False):
 
 
 def cheapest_suppliers(product_name, offers):
-    """Offer listing delegates to Product.findSuppliersByPrice()."""
-    return Product(product_name, offers).findSuppliersByPrice()
+    """Use existing offers with no invented manufacturer records.
+
+    The canonical Product model and database-backed supplier lookup are
+    provided by issue #13 and the supplier repository respectively.
+    """
+    return sorted(
+        (offer for offer in offers
+         if offer["product"].casefold() == product_name.casefold()),
+        key=lambda offer: (eur(offer["price"]), offer["supplier"]),
+    )
 
 
 def outstanding_invoices(customer_id, invoices, today):
