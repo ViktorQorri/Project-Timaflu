@@ -14,6 +14,7 @@ from routes.distribution import distribution
 from routes.home import home
 from routes.order_picking import order_picking
 from routes.purchasing import purchasing
+from routes.reports import reports
 from routes.sales import sales
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
@@ -43,6 +44,7 @@ def create_app(config=Config):
     app.register_blueprint(distribution)
     app.register_blueprint(administration)
     app.register_blueprint(acquisition)
+    app.register_blueprint(reports)
     app.register_blueprint(api, url_prefix="/api")
 
     register_error_handlers(app)
