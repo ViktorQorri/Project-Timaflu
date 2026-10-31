@@ -1,40 +1,55 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Openstaande facturen bekijken | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Openstaande facturen bekijken | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Administratie · AD18</span>
+<span class="overline">Administratie &middot; AD18</span>
 <h1>Openstaande facturen bekijken</h1>
 <p>Openstaande facturen volgens de bestaande opvolgtermijnen behandelen.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Administratiemedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Administratiemedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Gebruikersinterface</span>
 <h2 id="input-heading">Invoer en handelingen</h2>
-<p class="screen-note">Deze activiteit start vanuit een overzicht, zonder handmatige invoer.</p>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Factuur openen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Betalingsherinnering versturen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Betalingsregeling registreren</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Incassobureau registreren</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<p class="screen-note">Dit scherm start vanuit een overzicht zonder handmatige invoer.</p><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Factuur openen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Betalingsherinnering versturen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Betalingsregeling registreren</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Incassobureau registreren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Factuurnummer</th><th scope="col">Klant</th><th scope="col">Openstaand bedrag</th><th scope="col">Weken open</th><th scope="col">Vervaldatum</th></tr></thead><tbody>
-<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD18_View_outstanding_invoices.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD18_View_outstanding_invoices.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Factuurnummer</th><th scope="col">Klant</th><th scope="col">Openstaand bedrag</th><th scope="col">Weken open</th><th scope="col">Vervaldatum</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD18_View_outstanding_invoices.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD18_View_outstanding_invoices.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--warning" data-state-variant="1"><div class="state-header"><h3>Factuur minstens één week open</h3><span class="state-pill">Herinnering</span></div><p class="state-message">Stuur een betalingsherinnering wanneer de factuur minstens één week openstaat.</p><dl class="state-values"><dt>Factuurnummer</dt><dd>Nog niet geselecteerd</dd><dt>Aantal weken open</dt><dd>Vanaf 1</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Betalingsherinnering versturen</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--warning" data-state-variant="2"><div class="state-header"><h3>Factuur minstens twee weken open</h3><span class="state-pill">Tweede herinnering</span></div><p class="state-message">Stuur de tweede betalingsherinnering wanneer de factuur na twee weken nog openstaat.</p><dl class="state-values"><dt>Aantal weken open</dt><dd>Vanaf 2</dd><dt>Herinnering</dt><dd>Tweede betalingsherinnering</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Tweede herinnering versturen</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--warning" data-state-variant="3"><div class="state-header"><h3>Factuur minstens drie weken open</h3><span class="state-pill">Telefonisch opvolgen</span></div><p class="state-message">Neem telefonisch contact op en stel de standaardbetalingsregeling voor.</p><dl class="state-values"><dt>Aantal weken open</dt><dd>Vanaf 3</dd><dt>Betalingsregeling</dt><dd>Nog niet geaccepteerd</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Betalingsregeling registreren</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--danger" data-state-variant="4"><div class="state-header"><h3>Betalingsregeling geweigerd</h3><span class="state-pill">Incasso</span></div><p class="state-message">Registreer het incassobureau; het systeem blokkeert nieuwe bestellingen van deze klant.</p><dl class="state-values"><dt>Betalingsregeling</dt><dd>Geweigerd</dd><dt>Nieuwe bestellingen</dt><dd>Geblokkeerd</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Incassobureau registreren</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article></div></section>
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
-<div class="scenario-grid"><article class="scenario"><h3>Minder dan één week open</h3><p>Geen actie nodig.</p></article><article class="scenario"><h3>Vanaf één week open</h3><p>Stuur een betalingsherinnering.</p></article><article class="scenario"><h3>Vanaf drie weken open</h3><p>Bel de klant en stel de standaard betalingsregeling voor.</p></article><article class="scenario"><h3>Regeling geweigerd</h3><p>Registreer het incassobureau; het systeem blokkeert de klant voor nieuwe bestellingen.</p></article></div>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
+<div class="scenario-grid"><article class="scenario"><h3>Minder dan één week open</h3><p>Geen actie nodig.</p></article><article class="scenario"><h3>Vanaf één week open</h3><p>Stuur een betalingsherinnering.</p></article><article class="scenario"><h3>Vanaf twee weken open</h3><p>Stuur de tweede betalingsherinnering als de factuur nog niet betaald is.</p></article><article class="scenario"><h3>Vanaf drie weken open</h3><p>Bel de klant en stel de standaard betalingsregeling voor.</p></article><article class="scenario"><h3>Regeling geweigerd</h3><p>Registreer het incassobureau; het systeem blokkeert de klant voor nieuwe bestellingen.</p></article></div>
 <ul class="case-notes"><li>De ouderdom van de factuur bepaalt de actie; er worden geen nieuwe betalingstermijnen bedacht.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

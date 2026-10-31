@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Klantgegevens beheren | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klantgegevens beheren | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Verkoop · AD07</span>
+<span class="overline">Verkoop &middot; AD07</span>
 <h1>Klantgegevens beheren</h1>
 <p>Apotheekgegevens centraal beheren, inclusief gecontroleerde acquisitiekorting.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Verkoopmedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Verkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
@@ -22,24 +30,31 @@
 <div class="screen-field"><label for="field-7-2">Telefoonnummer</label><input id="field-7-2" type="tel" placeholder="Telefoonnummer" disabled></div>
 <div class="screen-field"><label for="field-7-3">Afleveradres</label><input id="field-7-3" type="text" placeholder="Afleveradres" disabled></div>
 <div class="screen-field"><label for="field-7-4">Factuuradres</label><input id="field-7-4" type="text" placeholder="Factuuradres" disabled></div>
-<div class="screen-field"><label for="field-7-5">Eenmalige acquisitiekorting van 10%</label><input id="field-7-5" type="checkbox" disabled></div></div>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Klant toevoegen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Wijzigingen opslaan</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Klant deactiveren</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><label for="field-7-5">Eenmalige acquisitiekorting van 10%</label><input id="field-7-5" type="checkbox" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant toevoegen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Wijzigingen opslaan</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant deactiveren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Apotheek</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Afleveradres</th><th scope="col">Factuuradres</th></tr></thead><tbody>
-<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD07_Manage_customer_data.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD07_Manage_customer_data.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Apotheek</th><th scope="col">Contactpersoon</th><th scope="col">Telefoonnummer</th><th scope="col">Afleveradres</th><th scope="col">Factuuradres</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD07_Manage_customer_data.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD07_Manage_customer_data.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Nieuwe klant</h3><p>Registreer de gegevens, en vink de eenmalige 10%-korting alleen aan wanneer die uit acquisitie is toegezegd.</p></article><article class="scenario"><h3>Bestaande klant</h3><p>Wijzig de bestaande gegevens of kies voor deactiveren.</p></article><article class="scenario"><h3>Validatie</h3><p>Toon een bevestiging bij geldige gegevens en een foutmelding bij ongeldige gegevens.</p></article></div>
 <ul class="case-notes"><li>De casus beschrijft een klantaccount, niet een nieuw portaal met gebruikersnamen of wachtwoorden.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

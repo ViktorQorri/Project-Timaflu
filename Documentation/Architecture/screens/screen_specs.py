@@ -34,8 +34,11 @@ SCREENS = {
         ["Leverancier benaderen", "Bevestigde inkooporder registreren", "Uit interne bestellijst verwijderen"],
         [("Leveranciers op prijs", "Toon gekoppelde fabrikanten oplopend op inkoopprijs, inclusief contactpersoon en telefoonnummer."),
          ("Niet leverbaar", "Bel de eerstvolgende fabrikant. Als geen fabrikant kan leveren, verwijder het product uit de interne bestellijst."),
-         ("Bestelling bevestigd", "Pas na telefonische bevestiging door de fabrikant registreert het systeem de inkooporder.")],
-        ["De telefonische inkoop blijft behouden; het systeem plaatst niet zelf een bestelling."]),
+         ("Bestelling bevestigd", "Pas na telefonische bevestiging door de fabrikant registreert het systeem de inkooporder."),
+         ("Leverancier van medicijn verwijderen", "Ontkoppel één geselecteerde fabrikant van dit specifieke medicijn, niet van alle medicijnen."),
+         ("Medicijn verwijderen", "Toon de afzonderlijke mogelijkheid om het geselecteerde product te verwijderen.")],
+        ["De telefonische inkoop blijft behouden; het systeem plaatst niet zelf een bestelling.",
+         "Een medicijn uit de interne bestellijst halen, een leverancierskoppeling verwijderen en een medicijn verwijderen zijn drie verschillende acties."]),
     3: screen(
         "Inkoopmedewerker", "Alle medicijnen onder de ingestelde minimumvoorraad in één overzicht zien.",
         [], ["Medicijn", "Huidige voorraad", "Minimumvoorraad", "Tekort"],
@@ -53,7 +56,9 @@ SCREENS = {
         ["Beschikbaar = fysieke voorraad minus actieve reserveringen."]),
     5: screen(
         "Verkoopmedewerker", "Een telefonische order met voorraadcontrole, korting en klantakkoord vastleggen.",
-        [f("Klant opzoeken"), f("Medicijn of artikelnummer"), f("Aantal", "number"),
+        [f("Klant opzoeken"), f("Afleveradres uit klantgegevens", "display"),
+         f("Factuuradres uit klantgegevens", "display"),
+         f("Medicijn of artikelnummer"), f("Aantal", "number"),
          f("Leverdatum", "date"), f("Dagdeel", "select", ("Ochtend", "Middag"))],
         ["Artikelnummer", "Medicijn", "Aantal", "Prijs per eenheid", "Regeltotaal"],
         ["Klant opzoeken", "Bestelregel toevoegen", "Totaal voorleggen", "Order bevestigen", "Voorlopige order annuleren"],
@@ -170,6 +175,7 @@ SCREENS = {
         ["Factuur openen", "Betalingsherinnering versturen", "Betalingsregeling registreren", "Incassobureau registreren"],
         [("Minder dan één week open", "Geen actie nodig."),
          ("Vanaf één week open", "Stuur een betalingsherinnering."),
+         ("Vanaf twee weken open", "Stuur de tweede betalingsherinnering als de factuur nog niet betaald is."),
          ("Vanaf drie weken open", "Bel de klant en stel de standaard betalingsregeling voor."),
          ("Regeling geweigerd", "Registreer het incassobureau; het systeem blokkeert de klant voor nieuwe bestellingen.")],
         ["De ouderdom van de factuur bepaalt de actie; er worden geen nieuwe betalingstermijnen bedacht."]),
@@ -223,7 +229,11 @@ SCREENS = {
         mode="robot"),
     24: screen(
         "Inkoopmedewerker / directie", "Aanbiedingen voor nieuwe medicijnen laten beoordelen voordat ze in het assortiment komen.",
-        [f("Medicijn"), f("Fabrikant"), f("Inkoopprijs", "number"), f("Inkoopvoorwaarden")],
+        [f("Medicijn"), f("Fabrikant"), f("Inkoopprijs", "number"), f("Inkoopvoorwaarden"),
+         f("Hoeveelheden werkzame stoffen"), f("Bestelcode"), f("Prijs per grootverpakking", "number"),
+         f("Verpakkingssoort"), f("Detailverpakkingen per grootverpakking", "number"),
+         f("Korte omschrijving", "textarea"), f("Lange omschrijving", "textarea"),
+         f("Minimale bestelhoeveelheid", "number")],
         ["Medicijn", "Fabrikant", "Inkoopprijs", "Beoordeling"],
         ["Advies aan directie voorleggen", "Goedgekeurd product registreren", "Afgewezen aanbod registreren"],
         [("Niet geschikt", "Leg het ongeschikte aanbod vast, zonder het medicijn toe te voegen."),
@@ -250,7 +260,8 @@ SCREENS = {
          ("Geen eigen spoedkoerier beschikbaar", "Verkoop neemt contact op met een externe spoedkoerier; het systeem registreert die toewijzing."),
          ("Reguliere bestelling", "Koppel aan een koerier in de juiste regio en het afgesproken dagdeel, bij ophalen vóór 17.00 uur."),
          ("Geen passende reguliere rit", "Zet de order in de wachtrij voor de eerstvolgende passende ophaal- en bezorgmogelijkheid.")],
-        ["De casus noemt een uiterlijke ophaaltijd van 17.00 uur en een regionale verdeling."]),
+        ["Reguliere koeriers halen op tot uiterlijk 17.00 uur; beschikbare koeriers kunnen ook na 17.00 uur een spoedrit ophalen.",
+         "De oorspronkelijke casus noemt voor reguliere bestellingen vóór 16.00 uur levering de volgende dag vóór 12.00 uur, en spoedlevering binnen maximaal drie uur. De gewenste situatie laat ook datum en dagdeel afspreken."]),
     27: screen(
         "Koerier / verkoopmedewerker", "Twee bezorgpogingen en de opvolging van een mislukte levering ondersteunen.",
         [f("Bestelnummer"), f("Telefoonnummer klant", "tel"),
@@ -277,3 +288,48 @@ SCREENS = {
 }
 
 assert set(SCREENS) == set(range(1, 29))
+
+
+# Één bron voor schermnamen en procesgroepen, ook gebruikt door de generator.
+TITLES = {
+    1: "Fabrikantgegevens beheren",
+    2: "Producten bijbestellen",
+    3: "Minimumvoorraad controleren",
+    4: "Voorraad controleren",
+    5: "Bestelling invoeren",
+    6: "Orderstatus bekijken",
+    7: "Klantgegevens beheren",
+    8: "Verzamelbakken bekijken",
+    9: "Bestelling verpakken",
+    10: "Verzamelbak registreren",
+    11: "Deelorder afronden",
+    12: "Levering registreren",
+    13: "Toegewezen ritten bekijken",
+    14: "Levertijd opzoeken",
+    15: "Telefoonnummer klant opzoeken",
+    16: "Factuur maken",
+    17: "Afgeleverde bestellingen bekijken",
+    18: "Openstaande facturen bekijken",
+    19: "Betaling registreren",
+    20: "Acquisitiebezoek registreren",
+    21: "Potentiële klant opvolgen",
+    22: "Deelorder aanvragen",
+    23: "Deelorder verzamelen",
+    24: "Nieuw medicijn beoordelen",
+    25: "Inkoopfacturen betalen",
+    26: "Bezorgritten toewijzen",
+    27: "Mislukte levering afhandelen",
+    28: "Jaarlijkse klantenkorting bijwerken",
+}
+
+PROCESS_GROUPS = {
+    "Inkoop": {1, 2, 3, 24},
+    "Verkoop": {4, 5, 6, 7, 28},
+    "Orderpicking": {8, 9, 10, 11, 22, 23},
+    "Distributie": {12, 13, 14, 15, 26, 27},
+    "Administratie": {16, 17, 18, 19, 25},
+    "Acquisitie": {20, 21},
+}
+
+assert set(SCREENS) == set(TITLES) == set(range(1, 29))
+assert sorted(n for group in PROCESS_GROUPS.values() for n in group) == list(range(1, 29))

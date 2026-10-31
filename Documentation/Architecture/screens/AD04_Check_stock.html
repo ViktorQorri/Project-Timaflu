@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Voorraad controleren | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voorraad controleren | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Verkoop · AD04</span>
+<span class="overline">Verkoop &middot; AD04</span>
 <h1>Voorraad controleren</h1>
 <p>Betrouwbaar controleren of de gevraagde hoeveelheid werkelijk beschikbaar is.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Verkoopmedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Verkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
@@ -18,24 +26,31 @@
 <span class="overline">Gebruikersinterface</span>
 <h2 id="input-heading">Invoer en handelingen</h2>
 <div class="screen-fields"><div class="screen-field"><label for="field-4-0">Medicijn of artikelnummer</label><input id="field-4-0" type="text" placeholder="Medicijn of artikelnummer" disabled></div>
-<div class="screen-field"><label for="field-4-1">Gevraagd aantal</label><input id="field-4-1" type="number" placeholder="Gevraagd aantal" disabled></div></div>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Beschikbaarheid controleren</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><label for="field-4-1">Gevraagd aantal</label><input id="field-4-1" type="number" placeholder="Gevraagd aantal" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Beschikbaarheid controleren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Medicijn</th><th scope="col">Fysieke voorraad</th><th scope="col">Gereserveerd</th><th scope="col">Beschikbaar</th></tr></thead><tbody>
-<tr><td colspan="4" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD04_Check_stock.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD04_Check_stock.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Medicijn</th><th scope="col">Fysieke voorraad</th><th scope="col">Gereserveerd</th><th scope="col">Beschikbaar</th></tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD04_Check_stock.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD04_Check_stock.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Voldoende voorraad</h3><p>De gevraagde hoeveelheid past binnen de beschikbare voorraad.</p></article><article class="scenario"><h3>Onvoldoende voorraad</h3><p>Meld een tekort aan de verkoopmedewerker; er wordt geen voorraad gereserveerd.</p></article><article class="scenario"><h3>Medicijn niet gevonden</h3><p>Toon een expliciete melding als de zoekopdracht geen product oplevert.</p></article></div>
 <ul class="case-notes"><li>Beschikbaar = fysieke voorraad minus actieve reserveringen.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bestelling invoeren | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestelling invoeren | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Verkoop · AD05</span>
+<span class="overline">Verkoop &middot; AD05</span>
 <h1>Bestelling invoeren</h1>
 <p>Een telefonische order met voorraadcontrole, korting en klantakkoord vastleggen.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Verkoopmedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Verkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
@@ -18,39 +26,36 @@
 <span class="overline">Gebruikersinterface</span>
 <h2 id="input-heading">Invoer en handelingen</h2>
 <div class="screen-fields"><div class="screen-field"><label for="field-5-0">Klant opzoeken</label><input id="field-5-0" type="text" placeholder="Klant opzoeken" disabled></div>
-<div class="screen-field"><label for="field-5-1">Medicijn of artikelnummer</label><input id="field-5-1" type="text" placeholder="Medicijn of artikelnummer" disabled></div>
-<div class="screen-field"><label for="field-5-2">Aantal</label><input id="field-5-2" type="number" placeholder="Aantal" disabled></div>
-<div class="screen-field"><label for="field-5-3">Leverdatum</label><input id="field-5-3" type="date" placeholder="Leverdatum" disabled></div>
-<div class="screen-field"><label for="field-5-4">Dagdeel</label><select id="field-5-4" disabled><option>Maak een keuze</option><option>Ochtend</option><option>Middag</option></select></div></div>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Klant opzoeken</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Bestelregel toevoegen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Totaal voorleggen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Order bevestigen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Voorlopige order annuleren</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><span class="field-label">Afleveradres uit klantgegevens</span><div class="screen-display">Wordt uit klantgegevens geladen</div></div>
+<div class="screen-field"><span class="field-label">Factuuradres uit klantgegevens</span><div class="screen-display">Wordt uit klantgegevens geladen</div></div>
+<div class="screen-field"><label for="field-5-3">Medicijn of artikelnummer</label><input id="field-5-3" type="text" placeholder="Medicijn of artikelnummer" disabled></div>
+<div class="screen-field"><label for="field-5-4">Aantal</label><input id="field-5-4" type="number" placeholder="Aantal" disabled></div>
+<div class="screen-field"><label for="field-5-5">Leverdatum</label><input id="field-5-5" type="date" placeholder="Leverdatum" disabled></div>
+<div class="screen-field"><label for="field-5-6">Dagdeel</label><select id="field-5-6" disabled><option value="">Maak een keuze</option><option>Ochtend</option><option>Middag</option></select></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant opzoeken</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Bestelregel toevoegen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Totaal voorleggen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Order bevestigen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Voorlopige order annuleren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Artikelnummer</th><th scope="col">Medicijn</th><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr></thead><tbody>
-<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-<section class="invoice-preview" aria-label="Factuurberekening en klantkorting">
-<h3>Prijs- en factuuroverzicht</h3>
-<div class="invoice-grid">
-<span>Subtotaal bestelregels</span><output>€ …</output>
-<span>9% btw (bij facturatie)</span><output>€ …</output>
-<span>Totaal inclusief btw</span><output>€ …</output>
-<span>Bestellingskorting (5% bij € 500 of meer)</span><output>€ …</output>
-<span>Eenmalige korting (indien toegekend)</span><output>€ …</output>
-<span>Klantenkorting voorgaand jaar</span><output>€ …</output>
-<strong>Te betalen totaal</strong><output>€ …</output>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Artikelnummer</th><th scope="col">Medicijn</th><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD05_Enter_order.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD05_Enter_order.svg">Activity diagram (SVG)</a>
 </div>
-<p class="screen-note">De bedragen zijn bewust leeg. De werkende backend berekent en vult ze.</p>
-</section>
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD05_Enter_order.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD05_Enter_order.svg">Activity diagram (SVG)</a></div>
 </section></div>
+<section class="order-breakdown" aria-labelledby="order-breakdown-heading"><h3 id="order-breakdown-heading">Berekening voor klantakkoord</h3><dl class="calculation-grid"><dt>Subtotaal van de bestelregels</dt><dd>&euro; &hellip;</dd><dt>Bestellingskorting (5% bij minimaal € 500)</dt><dd>&euro; &hellip;</dd><dt>Eenmalige korting (10% op eerste bestelling indien van toepassing)</dt><dd>&euro; &hellip;</dd><dt>Klantenkorting op basis van vorig jaar</dt><dd>&euro; &hellip;</dd><dt>Totaalbedrag voor klantakkoord</dt><dd>&euro; &hellip;</dd></dl><p class="screen-note">De backend bepaalt de daadwerkelijk toepasselijke kortingen en berekent het totaal. Geen fictieve bedragen.</p></section>
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--danger" data-state-variant="1"><div class="state-header"><h3>Klant met betalingsblokkade</h3><span class="state-pill">Geblokkeerd</span></div><p class="state-message">De klant mag geen nieuwe order plaatsen zolang de betalingsblokkade actief is.</p><dl class="state-values"><dt>Klant</dt><dd>Nog niet geselecteerd</dd><dt>Bestellen</dt><dd>Niet toegestaan</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Terug naar klantoverzicht</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article><article class="state-card state-card--warning" data-state-variant="2"><div class="state-header"><h3>Onvoldoende voorraad</h3><span class="state-pill">Backorder mogelijk</span></div><p class="state-message">De gevraagde hoeveelheid is niet volledig beschikbaar. Bespreek het tekort en een eventuele backorder.</p><dl class="state-values"><dt>Medicijn</dt><dd>Nog niet geselecteerd</dd><dt>Gevraagd aantal</dt><dd>Wordt gecontroleerd</dd><dt>Beschikbare voorraad</dt><dd>Fysiek min actieve reserveringen</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Bestelregel aanpassen</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article><article class="state-card state-card--info" data-state-variant="3"><div class="state-header"><h3>Order ter akkoord</h3><span class="state-pill">Klantakkoord vereist</span></div><p class="state-message">Bespreek de berekende kortingen, het totaal en de gewenste leverdatum met de klant.</p><dl class="state-values"><dt>Totaalbedrag</dt><dd>Wordt berekend</dd><dt>Eenmalige korting</dt><dd>10% bij toepasselijke eerste bestelling</dd><dt>Levermoment</dt><dd>Datum en ochtend of middag</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Order bevestigen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Order aanpassen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Annuleren</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article><article class="state-card state-card--warning" data-state-variant="4"><div class="state-header"><h3>Voorraad gewijzigd bij opslaan</h3><span class="state-pill">Herziening nodig</span></div><p class="state-message">Tijdens de definitieve voorraadcontrole is de beschikbaarheid veranderd. Geen reservering vastgelegd.</p><dl class="state-values"><dt>Beschikbaarheid</dt><dd>Opnieuw te controleren</dd><dt>Reserveringen</dt><dd>Niet aangemaakt</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Order herzien</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article><article class="state-card state-card--success" data-state-variant="5"><div class="state-header"><h3>Order bevestigd</h3><span class="state-pill">Order vastgelegd</span></div><p class="state-message">Na klantakkoord en voldoende voorraad is de order opgeslagen en zijn beschikbare regels gereserveerd.</p><dl class="state-values"><dt>Bestelnummer</dt><dd>Wordt na opslaan getoond</dd><dt>Levermoment</dt><dd>Afgesproken datum en dagdeel</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Orderstatus bekijken</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article><article class="state-card state-card--neutral" data-state-variant="6"><div class="state-header"><h3>Klant ziet af van bestelling</h3><span class="state-pill">Geannuleerd</span></div><p class="state-message">De voorlopige bestelling vervalt zonder voorraadreserveringen.</p><dl class="state-values"><dt>Bestelling</dt><dd>Niet opgeslagen</dd><dt>Voorraadreservering</dt><dd>Niet gemaakt</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Nieuwe order starten</button></div><p class="state-actor">Uitvoerder: Verkoopmedewerker</p></article></div></section>
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Klant met betalingsblokkade</h3><p>Bij openstaande onbetaalde facturen met een blokkade is een nieuwe bestelling niet toegestaan.</p></article><article class="scenario"><h3>Voorraadtekort</h3><p>Laat het tekort en de mogelijkheid van een backorder zien voordat een bestelregel wordt bevestigd.</p></article><article class="scenario"><h3>Klantakkoord</h3><p>Toon berekende bestel- en klantenkorting, totaalbedrag en afgesproken leverdatum en dagdeel.</p></article><article class="scenario"><h3>Laatste voorraadcontrole</h3><p>Controleer beschikbaarheid opnieuw bij vastleggen; reserveer beschikbare artikelen uitsluitend als de order wordt opgeslagen.</p></article><article class="scenario"><h3>Geen akkoord of gewijzigde voorraad</h3><p>Annuleer zonder reserveringen of laat de verkoopmedewerker de bestelling aanpassen.</p></article></div>
 <ul class="case-notes"><li>Telefonische verkoop blijft bestaan.</li><li>Bestellingskorting bij € 500 of meer: 5%. Eenmalige korting en jaarlijkse klantenkorting zijn afzonderlijk zichtbaar.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

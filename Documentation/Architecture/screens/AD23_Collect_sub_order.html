@@ -1,42 +1,57 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deelorder verzamelen | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deelorder verzamelen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Orderpicking · AD23</span>
+<span class="overline">Orderpicking &middot; AD23</span>
 <h1>Deelorder verzamelen</h1>
 <p>Medicijnen per magazijngang verzamelen in unieke verzamelbakken.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Magazijnrobot / systeem</span><span><strong>Type:</strong> Systeem- / robotmonitor</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Magazijnrobot / systeem</span>
+<span><strong>Type:</strong> Systeem- of robotmonitor</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
 <section class="screen-panel" aria-labelledby="input-heading">
 <span class="overline">Read-only procesmonitor</span>
 <h2 id="input-heading">Systeeminformatie</h2>
-<p class="screen-note">Alle velden hieronder zijn getoonde systeemgegevens, geen handmatige invoer.</p><div class="screen-fields"><div class="screen-field"><label for="field-23-0">Deelordernummer</label><input id="field-23-0" type="text" placeholder="Deelordernummer" disabled></div>
+<p class="screen-note">Dit zijn getoonde systeemgegevens, geen handmatige invoervelden.</p><div class="screen-fields"><div class="screen-field"><label for="field-23-0">Deelordernummer</label><input id="field-23-0" type="text" placeholder="Deelordernummer" disabled></div>
 <div class="screen-field"><label for="field-23-1">Magazijngang</label><input id="field-23-1" type="text" placeholder="Magazijngang" disabled></div>
-<div class="screen-field"><label for="field-23-2">Verzamelbakcode</label><input id="field-23-2" type="text" placeholder="Verzamelbakcode" disabled></div></div>
-<p class="screen-note">Geen handmatige schermacties: deze activiteit wordt door de robot of het systeem uitgevoerd.</p>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><label for="field-23-2">Verzamelbakcode</label><input id="field-23-2" type="text" placeholder="Verzamelbakcode" disabled></div></div><p class="screen-note">Geen handmatige actie in dit proces.</p>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Medicijn</th><th scope="col">Opslaglocatie</th><th scope="col">Gevraagd aantal</th><th scope="col">Verzameld aantal</th><th scope="col">Verzamelbak</th></tr></thead><tbody>
-<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD23_Collect_sub_order.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD23_Collect_sub_order.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Medicijn</th><th scope="col">Opslaglocatie</th><th scope="col">Gevraagd aantal</th><th scope="col">Verzameld aantal</th><th scope="col">Verzamelbak</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD23_Collect_sub_order.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD23_Collect_sub_order.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Bak registreren</h3><p>Robot scant de bakcode via AD10 voordat er medicijnen verzameld worden.</p></article><article class="scenario"><h3>Bak vol of deelorder nog niet compleet</h3><p>Plaats de bak op de rollerbaan en gebruik indien nodig een nieuwe bak.</p></article><article class="scenario"><h3>Deelorder afgerond</h3><p>Robot meldt werkelijk verzamelde aantallen via AD11; distributie kan de bak- en deelorderstatus bekijken.</p></article></div>
 <ul class="case-notes"><li>De fysieke robot verzamelt producten automatisch; dit is alleen een read-only voortgangsscherm.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

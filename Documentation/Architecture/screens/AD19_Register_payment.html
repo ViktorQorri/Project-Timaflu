@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Betaling registreren | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Betaling registreren | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Administratie · AD19</span>
+<span class="overline">Administratie &middot; AD19</span>
 <h1>Betaling registreren</h1>
 <p>Een volledig ontvangen factuurbetaling vastleggen.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Administratiemedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Administratiemedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
@@ -18,24 +26,31 @@
 <span class="overline">Gebruikersinterface</span>
 <h2 id="input-heading">Invoer en handelingen</h2>
 <div class="screen-fields"><div class="screen-field"><label for="field-19-0">Factuurnummer</label><input id="field-19-0" type="text" placeholder="Factuurnummer" disabled></div>
-<div class="screen-field"><label for="field-19-1">Ontvangen bedrag</label><input id="field-19-1" type="number" placeholder="Ontvangen bedrag" disabled></div></div>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Factuur zoeken</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Volledige betaling registreren</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><label for="field-19-1">Ontvangen bedrag</label><input id="field-19-1" type="number" placeholder="Ontvangen bedrag" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Factuur zoeken</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Volledige betaling registreren</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Factuurnummer</th><th scope="col">Factuurbedrag</th><th scope="col">Ontvangen bedrag</th><th scope="col">Betaalstatus</th></tr></thead><tbody>
-<tr><td colspan="4" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD19_Register_payment.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD19_Register_payment.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Factuurnummer</th><th scope="col">Factuurbedrag</th><th scope="col">Ontvangen bedrag</th><th scope="col">Betaalstatus</th></tr></thead>
+<tbody><tr><td colspan="4" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD19_Register_payment.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD19_Register_payment.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--success" data-state-variant="1"><div class="state-header"><h3>Volledig bedrag ontvangen</h3><span class="state-pill">Betaald</span></div><p class="state-message">Boek de factuur betaald, verwerk het bedrag in de jaaromzet en controleer of een eventuele klantenblokkade weg kan.</p><dl class="state-values"><dt>Ontvangen bedrag</dt><dd>Gelijk aan factuurbedrag</dd><dt>Klantblokkade</dt><dd>Alleen opheffen als alle openstaande facturen voldaan zijn</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Volledige betaling registreren</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article><article class="state-card state-card--danger" data-state-variant="2"><div class="state-header"><h3>Bedragen komen niet overeen</h3><span class="state-pill">Niet te boeken</span></div><p class="state-message">De bestaande procesafspraak staat geen deelbetalingen toe. Laat de factuur openstaan.</p><dl class="state-values"><dt>Ontvangen bedrag</dt><dd>Wijkt af van factuurbedrag</dd><dt>Betaalstatus</dt><dd>Ongewijzigd</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Bedrag controleren</button></div><p class="state-actor">Uitvoerder: Administratiemedewerker</p></article></div></section>
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Bedrag gelijk aan factuurbedrag</h3><p>Markeer factuur betaald, tel het bedrag mee voor de jaaromzet en hef een eventuele blokkade op zodra alle openstaande facturen betaald zijn.</p></article><article class="scenario"><h3>Bedrag niet gelijk</h3><p>Toon de melding dat deelbetalingen volgens het activity diagram niet mogelijk zijn.</p></article></div>
 <ul class="case-notes"><li>Geen automatische gedeeltelijke betaling toevoegen.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>

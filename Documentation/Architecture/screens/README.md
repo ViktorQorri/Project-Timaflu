@@ -1,9 +1,9 @@
 # Timaflu schermontwerpen
 
-Voor elk van de 28 activity diagrams is een HTML/CSS-schermontwerp beschikbaar.
-Elk ontwerp toont de bij de casus en het diagram passende informatievelden, relevante tabelkolommen en een duidelijk als niet-werkend gemarkeerde handeling.
-Deze schermontwerpen zijn geen tweede applicatie. Alle actieve procesfunctionaliteit blijft in Flask/Jinja.
-Er zijn geen accounts, autorisatierollen, bedrijfsstatussen, verzonnen data of JavaScript toegevoegd.
+Voor elk van de 28 bestaande activity diagrams is minimaal één statisch HTML/CSS-schermontwerp beschikbaar. De ontwerpen tonen casusgebonden gegevens, acties, resultaatkolommen en afwijkende situaties.
+De belangrijkste beslismomenten hebben daarnaast afzonderlijke zichtbare schermtoestanden; dit zijn géén werkende backendfuncties.
+
+## Herleidbaarheid
 
 | Proces | Activity diagram | Schermontwerp |
 |---|---|---|
@@ -36,16 +36,32 @@ Er zijn geen accounts, autorisatierollen, bedrijfsstatussen, verzonnen data of J
 | Distributie | [AD27](../uml/src/activity_diagrams/AD27_Handle_failed_delivery.puml) | [Ontwerp](AD27_Handle_failed_delivery.html) |
 | Verkoop | [AD28](../uml/src/activity_diagrams/AD28_Update_annual_customer_discount.puml) | [Ontwerp](AD28_Update_annual_customer_discount.html) |
 
-## Controle
-- 28 afzonderlijke HTML-ontwerpen met veld- en tabelstructuur.
-- Uitgeschakelde controls om niet-functionaliteit expliciet te maken.
-- Responsive HTML/CSS, zonder JavaScript of React.
-- Niet van toepassing op de automatische backendscenario's.
-- In de werkende applicatie worden gegevens altijd via de database geladen.
+## Uitgangspunten uit de schoolcasus
 
-## Casusgetrouwe schermlogica
-De scenario-uitkomsten volgen de casus en de activity diagrams.
-Robotprocessen en automatische processen zijn read-only monitoren.
-De specificaties staan in screen_specs.py en de renderer in case_render.py.
-Controle via python test_case_screens.py en python test_browser_screens.py.
-Deze ontwerpen vervangen niet de runtimefrontend in PR 114.
+- Telefonische verkoop en telefonische inkoop blijven bestaan.
+- Geen fictieve klantgegevens, bedragen, leverancierprijzen of extra gebruikersrollen.
+- De bestel- en klantenkorting en de factuurspecificatie worden getoond zoals beschreven in Product-description.md.
+- Bij AD02 zijn het verwijderen van een leverancierskoppeling, het verwijderen van een product en het verwijderen uit de interne bestellijst aparte handelingen.
+- Orderpicking door robots en de jaarafsluiting zijn read-only procesoverzichten, geen handmatige invoerschermen.
+- Bij levering staan digitale ondertekening en bij een mislukte levering beide bezorgpogingen als schermtoestanden uitgewerkt.
+- Alle knoppen en invoervelden in deze ontwerpbijlagen zijn uitgeschakeld.
+- PR #114 behandelt de toepassing van de huisstijl op de werkende Flask/Jinja-frontend; deze ontwerpen vervangen die functionaliteit niet.
+
+## Reproduceren en controleren
+
+- screen_specs.py: één bron voor 28 titels, groepen, velden, acties en tabellen.
+- screen_states.py: casusgebonden uitzonderingssituaties als schermvarianten.
+- case_render.py: herbruikbare HTML-uitvoer, factuurvoorbeeld en ontwerpvarianten.
+- python generate_wireframes.py: vernieuwt de 28 HTML-bestanden, index en deze README.
+- python test_case_screens.py: controleert bronlinks, verplichte inhoud en semantiek van de 28 ontwerpen.
+- python test_browser_screens.py: controleert 28 schermen op 390, 768 en 1440 px.
+- In previews/ staan screenshots van belangrijke casusschermen op 390 en 1440 px: AD02, AD05, AD12, AD16, AD23 en AD27.
+- Geen JavaScript, React, nieuwe bedrijfsstatussen of fictieve gegevens.
+
+## Brondocumenten
+
+- [Casuscontrole en voorrangsregels](CASE_TRACEABILITY.md)
+- Documentation/brightspace/Product-description.md
+- Documentation/brightspace/Current-processes.md
+- Documentation/brightspace/Desired-process.md
+- De 28 PlantUML activity diagrams in ../uml/src/activity_diagrams/.

@@ -24,7 +24,7 @@ with sync_playwright() as p:
                 })""")
                 assert not result["overflow"], (filename.name, width, result)
                 assert result["disabled"] and result["scenarios"] > 0 and result["style"], (filename.name, width, result)
-                if filename.stem.startswith(("AD12_", "AD23_")) and width in (390, 1440):
+                if filename.stem.startswith(("AD02_", "AD05_", "AD12_", "AD16_", "AD23_", "AD27_")) and width in (390, 1440):
                     page.screenshot(path=str(root / "previews" / f"{filename.stem}_{width}.png"), full_page=True)
                 count += 1
                 page.close()

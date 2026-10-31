@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="nl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Potentiële klant opvolgen | Timaflu</title><link rel="stylesheet" href="wireframes.css"></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Potentiële klant opvolgen | Timaflu</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
 <body><div class="page">
-<header class="top"><a href="index.html" class="brand">tima<span>flu</span></a>
-<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav></header>
-
+<header class="top">
+<a href="index.html" class="brand">tima<span>flu</span></a>
+<nav class="breadcrumbs" aria-label="Schermontwerpen"><a href="index.html">Alle schermen</a></nav>
+</header>
 <section class="hero">
-<span class="overline">Acquisitie · AD21</span>
+<span class="overline">Acquisitie &middot; AD21</span>
 <h1>Potentiële klant opvolgen</h1>
 <p>Apotheken opvolgen na minimaal één maand zonder bestelling.</p>
-<div class="screen-meta"><span><strong>Uitvoerder:</strong> Acquisitiemedewerker / verkoopmedewerker</span><span><strong>Type:</strong> Gebruikersscherm</span></div>
+<div class="screen-meta">
+<span><strong>Uitvoerder:</strong> Acquisitiemedewerker / verkoopmedewerker</span>
+<span><strong>Type:</strong> Gebruikersscherm</span>
+</div>
 </section>
 <main class="screen-main" id="main">
 <div class="board">
@@ -21,24 +29,31 @@
 <div class="screen-field"><label for="field-21-1">Toestemming voor klantaccount</label><input id="field-21-1" type="checkbox" disabled></div>
 <div class="screen-field"><label for="field-21-2">Bedrijfsnaam</label><input id="field-21-2" type="text" placeholder="Bedrijfsnaam" disabled></div>
 <div class="screen-field"><label for="field-21-3">Factuuradres</label><input id="field-21-3" type="text" placeholder="Factuuradres" disabled></div>
-<div class="screen-field"><label for="field-21-4">Afleveradres</label><input id="field-21-4" type="text" placeholder="Afleveradres" disabled></div></div>
-<div class="screen-actions"><button type="button" disabled title="Ontwerpschets, geen werkende actie">Opvolgklant openen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Toestemming vastleggen</button><button type="button" disabled title="Ontwerpschets, geen werkende actie">Klantoverdracht aan verkoop</button></div>
-<p class="screen-note">Dit is uitsluitend een statisch schermontwerp. De actieve bedrijfslogica hoort bij Flask/Jinja, de backend en de database.</p>
+<div class="screen-field"><label for="field-21-4">Afleveradres</label><input id="field-21-4" type="text" placeholder="Afleveradres" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Opvolgklant openen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Toestemming vastleggen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klantoverdracht aan verkoop</button></div>
+<p class="screen-note">Deze statische schets is niet de werkende applicatie.
+Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
 <section class="screen-panel" aria-labelledby="output-heading">
-<span class="overline">Resultaten</span><h2 id="output-heading">Bijbehorend overzicht</h2>
-<div class="screen-table-wrap"><table><thead><tr><th scope="col">Apotheek</th><th scope="col">Contactpersoon</th><th scope="col">Contactgegevens</th><th scope="col">Laatste bezoek</th><th scope="col">Bestelling geplaatst</th></tr></thead><tbody>
-<tr><td colspan="5" class="empty-row">Nog geen gegevens weergegeven. Geen verzonnen klant-, medicijn- of transactiegegevens.</td></tr>
-</tbody></table></div>
-
-<div class="source-links"><a href="../uml/src/activity_diagrams/AD21_Follow_up_prospective_customer.puml">Activity diagram (PlantUML)</a>
-<a href="../uml/export/activity_diagrams/AD21_Follow_up_prospective_customer.svg">Activity diagram (SVG)</a></div>
+<span class="overline">Resultaten</span>
+<h2 id="output-heading">Bijbehorend overzicht</h2>
+<div class="screen-table-wrap"><table>
+<thead><tr><th scope="col">Apotheek</th><th scope="col">Contactpersoon</th><th scope="col">Contactgegevens</th><th scope="col">Laatste bezoek</th><th scope="col">Bestelling geplaatst</th></tr></thead>
+<tbody><tr><td colspan="5" class="empty-row">
+Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de database.
+</td></tr></tbody></table></div>
+<div class="source-links">
+<a href="../uml/src/activity_diagrams/AD21_Follow_up_prospective_customer.puml">Activity diagram (PlantUML)</a>
+<a href="../uml/export/activity_diagrams/AD21_Follow_up_prospective_customer.svg">Activity diagram (SVG)</a>
+</div>
 </section></div>
+
+<section class="state-gallery" aria-labelledby="states-heading"><span class="overline">Concreet uitgewerkte schermvarianten</span><h2 id="states-heading">Schermtoestanden bij beslismomenten</h2><p>Deze statische varianten tonen de informatie en meldingen die bij de verschillende casusuitkomsten zichtbaar moeten zijn.</p><div class="state-grid"><article class="state-card state-card--info" data-state-variant="1"><div class="state-header"><h3>Opvolging na één maand</h3><span class="state-pill">Contact opnemen</span></div><p class="state-message">Toon alleen bezochte apotheken zonder bestelling waarbij het bezoek minstens één maand geleden was.</p><dl class="state-values"><dt>Laatste bezoek</dt><dd>Minstens één maand geleden</dd><dt>Eerste bestelling</dt><dd>Nog niet geplaatst</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Apotheek bellen</button></div><p class="state-actor">Uitvoerder: Acquisitiemedewerker</p></article><article class="state-card state-card--success" data-state-variant="2"><div class="state-header"><h3>Interesse en toestemming</h3><span class="state-pill">Overdragen aan verkoop</span></div><p class="state-message">Bij toestemming worden de bedrijfs- en adresgegevens aan verkoop doorgegeven en wordt de eenmalige extra korting vastgelegd.</p><dl class="state-values"><dt>Klantaccount</dt><dd>Toestemming verleend</dd><dt>Extra korting</dt><dd>10% op eerste bestelling</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Overdragen aan verkoop</button></div><p class="state-actor">Uitvoerder: Acquisitiemedewerker</p></article><article class="state-card state-card--neutral" data-state-variant="3"><div class="state-header"><h3>Geen toestemming of interesse</h3><span class="state-pill">Geen klantaccount</span></div><p class="state-message">Registreer dat er geen toestemming is of sluit de acquisitieopvolging bij geen interesse.</p><dl class="state-values"><dt>Toestemming</dt><dd>Niet verleend</dd><dt>Klantaccount</dt><dd>Niet aangemaakt</dd></dl><div class="state-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Opvolging sluiten</button></div><p class="state-actor">Uitvoerder: Acquisitiemedewerker</p></article></div></section>
 <section class="scenario-panel" aria-labelledby="scenario-heading">
-<span class="overline">Bijbehorende procesuitkomsten</span><h2 id="scenario-heading">Situaties die het scherm moet ondersteunen</h2>
+<span class="overline">Herleidbaarheid naar casus en proces</span>
+<h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
 <div class="scenario-grid"><article class="scenario"><h3>Opvolglijst</h3><p>Toon uitsluitend apotheken die minstens één maand geleden bezocht zijn en nog niets hebben besteld.</p></article><article class="scenario"><h3>Wel interesse en toestemming</h3><p>Bied een eenmalige extra 10% korting; verkoop registreert klantgegevens via AD07.</p></article><article class="scenario"><h3>Geen toestemming</h3><p>Registreer dat geen klantaccount mag worden aangemaakt.</p></article><article class="scenario"><h3>Geen interesse</h3><p>Sluit deze acquisitieopvolging af zonder klantaccount.</p></article><article class="scenario"><h3>Geen opvolging nodig</h3><p>Toon dat geen potentiële klanten aan de criteria voldoen.</p></article></div>
 <ul class="case-notes"><li>Een klantaccount betekent klantadministratie, geen extra inlogsysteem.</li></ul>
 </section>
 </main>
-<footer>Schermontwerp • Timaflu • Bron: bestaande casus en activity diagrams</footer>
+<footer>Schermontwerp &bull; Timaflu &bull; Gebaseerd op de bestaande casus en activity diagrams</footer>
 </div></body></html>
