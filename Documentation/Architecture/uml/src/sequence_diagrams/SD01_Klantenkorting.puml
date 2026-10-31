@@ -13,9 +13,9 @@ loop Each customer on 31 December
   YearEnd -> Customer: calculateAnnualRevenue()
   activate Customer
   note right of Customer
-    Annual turnover comes from fully paid invoices
-    in the calendar year ending on 31 December.
-    Unpaid invoices do not contribute to turnover.
+    Annual turnover is the amounts ACTUALLY PAID
+    on fully paid invoices in the year ending on 31 December.
+    Do not use gross order values or unpaid invoices.
   end note
   Customer --> YearEnd: annualRevenue
   deactivate Customer
@@ -57,8 +57,9 @@ else Customer may order
     Order -> Order: calculateOneTimeDiscount()
     note right of Order
       Subtract 10% of the amount AFTER the order discount.
-      A prospect with oneTimeDiscountGranted = true is eligible;
-      this flag does NOT mean the order discount was consumed.
+      The acquisition offer and ordinary first-order allowance
+      are the SAME single 10% one-time discount (invoice field).
+      oneTimeDiscountGranted = true means eligible, not consumed;
       On successful order approval/save, set the order's
       oneTimeDiscountApplied flag and do not apply it again.
     end note

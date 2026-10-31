@@ -28,6 +28,8 @@ CourierEmployee -> Contact: Call customer after first unanswered visit
 Contact --> CourierEmployee: can or cannot receive now
 
 alt Customer can still receive during first visit
+  CourierEmployee -> Contact: Request signature for the received medicines
+  Contact --> CourierEmployee: signed proof of receipt
   CourierEmployee -> First: recordReceiptSignature()
   First --> CourierEmployee: signed receipt registered
   CourierEmployee -> First: markDelivered(timestamp)
@@ -37,10 +39,13 @@ alt Customer can still receive during first visit
 else Customer cannot receive during first visit
   CourierEmployee -> First: markRecipientAbsent()
   First --> CourierEmployee: first attempt marked absent
+  note right of CourierEmployee: Leave a notice at the delivery address that a visit was attempted.
   CourierEmployee -> Route: adjustSchedule()
   Route --> CourierEmployee: second attempt scheduled for the SAME day
   note right of CourierEmployee: The second result is not yet known when scheduled.
   alt Recipient present at second attempt
+    CourierEmployee -> Contact: Request signature for the received medicines
+    Contact --> CourierEmployee: signed proof of receipt
     CourierEmployee -> Second: recordReceiptSignature()
     Second --> CourierEmployee: signature recorded
     CourierEmployee -> Second: markDelivered(timestamp)
