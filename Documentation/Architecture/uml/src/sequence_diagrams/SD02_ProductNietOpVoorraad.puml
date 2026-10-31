@@ -1,0 +1,54 @@
+@startuml
+title SD02 - Reorder product below minimum stock (UC02 / AD02)
+autonumber
+actor "Purchasing employee" as Purchasing
+participant "product:Product" as Product
+participant "location:WarehouseLocation" as Location
+participant "offer:SupplierOffer" as Offer
+actor "Manufacturer" as Manufacturer
+participant "purchaseOrder:PurchaseOrder" as PurchaseOrder
+Purchasing -> Product: checkMinimumStock()
+activate Product
+Product -> Location: Read quantity
+Location --> Product: currentPhysicalStock
+Product --> Purchasing: currentPhysicalStock, minimumStock
+deactivate Product
+alt Below minimum stock
+  note right of Purchasing: Select product and desired quantity.
+  Purchasing -> Product: findSuppliersByPrice()
+  activate Product
+  Product -> Offer: Read purchasePrice and linked Supplier
+  Offer --> Product: ranked supplier offers
+  Product --> Purchasing: offers ordered by price
+  deactivate Product
+  loop For each remaining manufacturer, cheapest first
+    Purchasing -> Manufacturer: Request availability for selected quantity
+    Manufacturer --> Purchasing: available / unavailable / discontinued
+    alt Manufacturer is able to deliver
+      Purchasing -> Manufacturer: Confirm purchase
+      Manufacturer --> Purchasing: purchase confirmed
+      Purchasing -> PurchaseOrder: placeWithSupplier()
+      PurchaseOrder --> Purchasing: confirmed order recorded
+      break Order confirmed; stop contacting manufacturers
+      end
+    else Manufacturer cannot deliver
+      opt Manufacturer permanently discontinued this product
+        Purchasing -> Product: removeSupplier(supplier)
+        Product --> Purchasing: manufacturer link removed
+      end
+      note right of Purchasing: Continue with the next cheapest offer.
+    end
+  end
+  alt No manufacturer could confirm supply
+    Purchasing -> Purchasing: Remove medicine from internal reorder list
+    note right of Purchasing
+      No purchase order is recorded.
+      The medicine remains in the sales assortment.
+    end note
+  else Purchase confirmed by a manufacturer
+    note right of Purchasing: Keep the confirmed purchase order on record.
+  end
+else Stock is sufficient
+  note right of Purchasing: No purchase order required.
+end
+@enduml
