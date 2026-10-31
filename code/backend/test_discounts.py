@@ -98,20 +98,23 @@ def calculate(repository, lines, order_date=date(2026, 10, 30)):
 
 
 class OrderDiscountTests(TestCase):
-    def test_no_order_discount_below_500(self):
-        result = calculate(FakeRepository(), [("1", "4"), ("2", "9999")])
-        self.assertEqual(result["subtotal"], Decimal("499.99"))
+    def test_no_order_discount_when_total_including_vat_is_below_500(self):
+        result = calculate(FakeRepository(), [("1", "4"), ("2", "100")])
+        self.assertEqual(result["subtotal"], Decimal("401.00"))
+        self.assertEqual(result["total_incl_vat"], Decimal("437.09"))
         self.assertEqual([d["kind"] for d in result["discounts"]], ["customer"])
 
     def test_order_discount_at_500(self):
         result = calculate(FakeRepository(), [("1", "5")])
         order_discount = result["discounts"][0]
         self.assertEqual(order_discount["kind"], "order")
-        self.assertEqual(order_discount["amount"], Decimal("25.00"))
-        self.assertEqual(order_discount["total_after"], Decimal("475.00"))
+        self.assertEqual(order_discount["base"], Decimal("545.00"))
+        self.assertEqual(order_discount["amount"], Decimal("27.25"))
+        self.assertEqual(order_discount["total_after"], Decimal("517.75"))
+        self.assertEqual(result["total_amount"], Decimal("491.86"))
 
     def test_order_discount_above_500(self):
-        self.assertEqual(calculate(FakeRepository(), [("1", "10")])["discounts"][0]["amount"], Decimal("50.00"))
+        self.assertEqual(calculate(FakeRepository(), [("1", "10")])["discounts"][0]["amount"], Decimal("54.50"))
 
     def test_customer_discount_tiers_by_annual_revenue(self):
         tiers = {"0": 5, "9999.99": 5, "10000": 10, "10000.00": 10, "19999.99": 10, "20000": 15, "250000": 15}
@@ -119,14 +122,15 @@ class OrderDiscountTests(TestCase):
             with self.subTest(revenue=revenue):
                 self.assertEqual(DiscountService.determine_discount_percentage(Decimal(revenue)), percentage)
 
-    def test_first_order_gets_one_time_discount_only(self):
+    def test_first_order_gets_one_time_and_customer_discounts(self):
         repository = FakeRepository(previous_orders=0, revenue=Decimal("50000"))
         result = calculate(repository, [("1", "10")])
         self.assertTrue(result["first_order"])
-        self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "one_time"])
-        self.assertEqual(result["discounts"][1]["amount"], Decimal("95.00"))
-        self.assertEqual(result["total_amount"], Decimal("855.00"))
-        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "one_time", "customer"])
+        self.assertEqual(result["discounts"][1]["amount"], Decimal("103.55"))
+        self.assertEqual(result["discounts"][2]["amount"], Decimal("139.79"))
+        self.assertEqual(result["total_amount"], Decimal("792.16"))
+        self.assertEqual(repository.purchase_years, [(7, 2025)])
 
     def test_existing_customer_discount_over_amount_after_order_discount(self):
         repository = FakeRepository(previous_orders=2, revenue=Decimal("15000.00"))
@@ -135,16 +139,16 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(repository.purchase_years, [(7, 2025)])
         self.assertEqual(result["annual_revenue"], Decimal("15000.00"))
         customer_discount = result["discounts"][1]
-        self.assertEqual((customer_discount["percentage"], customer_discount["base"]), (Decimal("10"), Decimal("950.00")))
-        self.assertEqual(customer_discount["amount"], Decimal("95.00"))
-        self.assertEqual(result["total_amount"], Decimal("855.00"))
+        self.assertEqual((customer_discount["percentage"], customer_discount["base"]), (Decimal("10"), Decimal("1035.50")))
+        self.assertEqual(customer_discount["amount"], Decimal("103.55"))
+        self.assertEqual(result["total_amount"], Decimal("931.95"))
 
     def test_rounds_to_cents_half_up_per_step(self):
         result = calculate(FakeRepository(revenue=Decimal("25000")), [("1", "5"), ("2", "10")])
         self.assertEqual(result["subtotal"], Decimal("500.10"))
-        self.assertEqual(result["discounts"][0]["amount"], Decimal("25.01"))  # 25.005
-        self.assertEqual(result["discounts"][1]["amount"], Decimal("71.26"))  # 15% of 475.09 = 71.2635
-        self.assertEqual(result["total_amount"], Decimal("403.83"))
+        self.assertEqual(result["discounts"][0]["amount"], Decimal("27.26"))
+        self.assertEqual(result["discounts"][1]["amount"], Decimal("77.68"))
+        self.assertEqual(result["total_amount"], Decimal("440.17"))
 
     def test_empty_rows_are_ignored(self):
         result = calculate(FakeRepository(), [("", ""), ("1", "1"), (None, None)])

@@ -93,21 +93,24 @@
           <h2 id="discount-summary-title">Totaalbedrag voor {{ calculation.customer.bedrijfsnaam }}</h2>
           <p class="discount-summary__basis">
             {% if calculation.first_order %}
-              <span class="discount-tag">Eerste bestelling</span> Eenmalige korting van 10%, geen klantenkorting.
+              <span class="discount-tag">Eerste bestelling</span> Eenmalige korting van 10% en daarna klantenkorting.
             {% else %}
-              <span class="discount-tag">Bestaande klant</span> Jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
+              <span class="discount-tag">Bestaande klant</span>
             {% endif %}
+            Jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
           </p>
           <dl class="discount-summary__rows">
             <div class="discount-summary__row"><dt>Subtotaal</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>
+            <div class="discount-summary__row"><dt>9% btw</dt><dd>{{ euro(calculation.vat_9_percent) }}</dd></div>
+            <div class="discount-summary__row"><dt>Totaal incl. btw</dt><dd>{{ euro(calculation.total_incl_vat) }}</dd></div>
             {% if calculation.discounts[0].kind != "order" %}
-              <div class="discount-summary__row discount-summary__row--muted"><dt>Bestellingskorting</dt><dd>Niet van toepassing, subtotaal onder € 500,00</dd></div>
+              <div class="discount-summary__row discount-summary__row--muted"><dt>Bestellingskorting</dt><dd>Niet van toepassing, totaal incl. btw onder € 500,00</dd></div>
             {% endif %}
             {% for discount in calculation.discounts %}
               <div class="discount-summary__row discount-summary__row--discount"><dt>{{ labels[discount.kind] }} ({{ discount.percentage|int }}% over {{ euro(discount.base) }})</dt><dd>− {{ euro(discount.amount) }}</dd></div>
               <div class="discount-summary__row"><dt>Totaal na {{ labels[discount.kind]|lower }}</dt><dd>{{ euro(discount.total_after) }}</dd></div>
             {% endfor %}
-            <div class="discount-summary__row discount-summary__row--total"><dt>Totaalbedrag</dt><dd>{{ euro(calculation.total_amount) }}</dd></div>
+            <div class="discount-summary__row discount-summary__row--total"><dt>Totaal incl. kortingen en btw</dt><dd>{{ euro(calculation.total_amount) }}</dd></div>
           </dl>
         </section>
 

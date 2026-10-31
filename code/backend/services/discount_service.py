@@ -1,10 +1,10 @@
 """Order discount calculation for telephone sales, following SD01 Calculate customer discount.
 
 Business rules from the case (Current-processes, Tabel 1):
-- 5% order discount over the order total when the total is EUR 500 or more;
-- the next discount is calculated over the amount left after the order discount;
-- first order of a customer: one-time 10% discount;
-- existing customer: customer discount based on the previous year's annual revenue.
+- 9% VAT is added to the order subtotal before discounts are calculated;
+- 5% order discount applies when the amount including VAT is EUR 500 or more;
+- the one-time 10% discount and annual customer discount are applied sequentially;
+- the annual customer discount is based on the previous year's paid invoice totals.
 Every amount is rounded to cents (ROUND_HALF_UP) after each step.
 """
 
@@ -53,35 +53,38 @@ class DiscountService:
                 annual revenue used for the customer discount.
 
         Returns:
-            A dict with the customer, the priced lines, the subtotal, the applied discounts
-            in order, the total amount, and how the second discount was chosen.
+            A dict with the customer, priced lines, subtotal, VAT, discounts in order,
+            and the total amount including VAT and discounts.
         """
         customer = self._find_customer(customer_id)
         lines = self._price_order_lines(order_lines)
         subtotal = to_cents(sum(line["line_total"] for line in lines))
+        vat = to_cents(subtotal * Decimal("0.09"))
+        total_incl_vat = subtotal + vat
         discounts = []
 
-        order_discount = self.calculate_order_discount(subtotal)
+        order_discount = self.calculate_order_discount(total_incl_vat)
         if order_discount:
             discounts.append(order_discount)
-        amount = discounts[-1]["total_after"] if discounts else subtotal
+        amount = discounts[-1]["total_after"] if discounts else total_incl_vat
 
         previous_year = (order_date or date.today()).year - 1
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
-        annual_revenue = None
         if first_order:
             discounts.append(self.calculate_one_time_discount(amount))
-        else:
-            annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
-            percentage = self.determine_discount_percentage(annual_revenue)
-            discounts.append(self.calculate_customer_discount(amount, percentage))
+            amount = discounts[-1]["total_after"]
+        annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
+        percentage = self.determine_discount_percentage(annual_revenue)
+        discounts.append(self.calculate_customer_discount(amount, percentage))
 
         return {
             "customer": customer,
             "lines": lines,
             "subtotal": subtotal,
+            "vat_9_percent": vat,
+            "total_incl_vat": total_incl_vat,
             "discounts": discounts,
-            "total_amount": self.calculate_total_after_discount(subtotal, discounts),
+            "total_amount": self.calculate_total_after_discount(total_incl_vat, discounts),
             "first_order": first_order,
             "previous_year": previous_year,
             "annual_revenue": annual_revenue,

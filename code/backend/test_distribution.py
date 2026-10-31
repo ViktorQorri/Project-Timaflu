@@ -16,6 +16,7 @@ class FakeCursor:
         self.one_rows = list(one_rows)
         self.all_rows = list(all_rows)
         self.statements = []
+        self.rowcount = 1
 
     def __enter__(self):
         return self
@@ -180,14 +181,72 @@ class DeliveryAttemptRepositoryTests(TestCase):
         self.assertIn("r.ritdatum=%s", query)
         self.assertEqual(parameters, (5, date(2026, 10, 31)))
         self.assertEqual(connection.cursor_instance.statements[2][1], (5, 7, time(14, 30), "afgeleverd", True))
+        self.assertIn("INSERT INTO Leveringregel", connection.cursor_instance.statements[3][0])
+
+    def test_first_successful_attempt_records_delivered_order_lines(self):
+        connection = FakeConnection(one_rows=[(None,)])
+
+        AssessedRepository(connection).register_first_delivery_attempt(
+            5, date(2026, 10, 31), True
+        )
+
+        self.assertEqual(connection.commits, 1)
+        self.assertIn("lp.pogingnummer = 1", connection.cursor_instance.statements[0][0])
+        self.assertEqual(
+            connection.cursor_instance.statements[1][1],
+            ("afgeleverd", True, 5),
+        )
+        self.assertIn(
+            "INSERT INTO Leveringregel",
+            connection.cursor_instance.statements[2][0],
+        )
+
+    def test_first_attempt_cannot_be_recorded_twice(self):
+        connection = FakeConnection(one_rows=[("afgeleverd",)])
+
+        with self.assertRaises(DomainError):
+            AssessedRepository(connection).register_first_delivery_attempt(
+                5, date(2026, 10, 31), True
+            )
+
+        self.assertEqual(connection.commits, 0)
+        self.assertEqual(connection.rollbacks, 1)
+        self.assertEqual(len(connection.cursor_instance.statements), 1)
 
 
 class DistributionRouteTests(TestCase):
     def test_distribution_page_shows_order_and_collection_bin(self):
         app = create_app()
         app.testing = True
+        schedule_row = {
+            "levering_id": 8,
+            "pogingnummer": 1,
+            "geplande_tijd": time(9, 0),
+            "resultaat": None,
+            "bestelling_id": 3,
+            "bedrijfsnaam": "Apotheek 3",
+            "contactpersoon": "Contact",
+            "telefoonnummer": "0612345678",
+            "adres": "Voorbeeldstraat 1",
+            "ritdatum": date(2026, 11, 1),
+        }
+        unscheduled_order = {
+            "bestelling_id": 9,
+            "gewenste_leverdatum": date(2026, 11, 1),
+            "dagdeel": "ochtend",
+            "spoed": False,
+            "bedrijfsnaam": "Apotheek 9",
+            "telefoonnummer": "0612345678",
+            "afleveradres": "Voorbeeldstraat 9",
+        }
         connection = FakeConnection(
-            all_rows=[[distribution_row(3, 5, "VB-1", "A", True)]]
+            all_rows=[
+                [distribution_row(3, 5, "VB-1", "A", True)],
+                [{"productnaam": "Medicine A"}],
+                [unscheduled_order],
+                [{"koerier_id": 1, "naam": "Koerier A", "beschikbaar": True}],
+                [schedule_row],
+            ]
         )
 
         with app.test_client() as client:
@@ -198,6 +257,10 @@ class DistributionRouteTests(TestCase):
         self.assertIn(b"Bestelling 3", response.data)
         self.assertIn(b"VB-1", response.data)
         self.assertIn(b"Verpakking registreren", response.data)
+        self.assertIn(b"Registreer eerste poging", response.data)
+        self.assertIn(b"Orders inplannen", response.data)
+        self.assertIn(b"Koerier A", response.data)
+        self.assertIn(b"Rit inplannen", response.data)
 
     def test_second_attempt_uses_selected_date_and_outcome(self):
         app = create_app()
@@ -220,6 +283,28 @@ class DistributionRouteTests(TestCase):
         self.assertEqual(response.status_code, 302)
         repository.return_value.register_delivery_attempt.assert_called_once_with(
             5, date(2026, 10, 31), True, time(14, 30)
+        )
+
+    def test_first_attempt_route_records_delivery_outcome(self):
+        app = create_app()
+        app.testing = True
+        connection = FakeConnection()
+
+        with app.test_client() as client:
+            with patch("routes.distribution.get_connection", return_value=connection):
+                with patch("routes.distribution.AssessedRepository") as repository:
+                    response = client.post(
+                        "/deliveries/first-attempt",
+                        data={
+                            "day": "2026-10-31",
+                            "delivery_id": "5",
+                            "outcome": "afgeleverd",
+                        },
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        repository.return_value.register_first_delivery_attempt.assert_called_once_with(
+            5, date(2026, 10, 31), True
         )
 
     def test_pack_route_redirects_after_recording_boxes(self):

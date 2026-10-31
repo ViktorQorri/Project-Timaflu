@@ -63,6 +63,134 @@ class DistributionRepository:
             cursor.execute(query, (order_id,))
             return cursor.fetchall()
 
+    def list_orders_to_schedule(self):
+        """Return released orders that do not yet have a delivery schedule."""
+        query = """
+            SELECT b.bestelling_id, b.gewenste_leverdatum, b.dagdeel, b.spoed,
+                   k.bedrijfsnaam, k.telefoonnummer, a.adres AS afleveradres
+            FROM Bestelling AS b
+            JOIN Klant AS k ON k.klant_id = b.klant_id
+            JOIN Adres AS a ON a.adres_id = b.afleveradres_id
+            WHERE b.status_naam = 'verstuurd'
+              AND NOT EXISTS (
+                  SELECT 1 FROM Levering AS l
+                  WHERE l.bestelling_id = b.bestelling_id
+              )
+            ORDER BY b.spoed DESC, b.gewenste_leverdatum, b.bestelling_id
+        """
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query)
+            return cursor.fetchall()
+
+    def list_couriers(self):
+        """Return couriers and their manually managed availability."""
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT koerier_id, naam, beschikbaar
+                   FROM Koerier
+                   ORDER BY naam, koerier_id"""
+            )
+            return cursor.fetchall()
+
+    def create_courier(self, name):
+        """Add a courier as unavailable until staff confirms availability."""
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO Koerier (naam, beschikbaar) VALUES (%s, FALSE)",
+                    (name,),
+                )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def set_courier_availability(self, courier_id, available):
+        """Update a courier's availability after locking its row."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT koerier_id FROM Koerier WHERE koerier_id = %s FOR UPDATE",
+                    (courier_id,),
+                )
+                if cursor.fetchone() is None:
+                    raise NotFoundError("Koerier niet gevonden.")
+                cursor.execute(
+                    "UPDATE Koerier SET beschikbaar = %s WHERE koerier_id = %s",
+                    (available, courier_id),
+                )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def schedule_delivery(self, order_id, courier_id, planned_time):
+        """Create a delivery and first attempt for a released order."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT status_naam, gewenste_leverdatum
+                       FROM Bestelling
+                       WHERE bestelling_id = %s
+                       FOR UPDATE""",
+                    (order_id,),
+                )
+                order = cursor.fetchone()
+                if order is None:
+                    raise NotFoundError("Bestelling niet gevonden.")
+                if order["status_naam"] != "verstuurd":
+                    raise ConflictError("Geef de bestelling eerst vrij voor distributie.")
+                cursor.execute(
+                    "SELECT levering_id FROM Levering WHERE bestelling_id = %s FOR UPDATE",
+                    (order_id,),
+                )
+                if cursor.fetchone() is not None:
+                    raise ConflictError("Voor deze bestelling is al een levering ingepland.")
+                cursor.execute(
+                    """SELECT koerier_id, beschikbaar
+                       FROM Koerier
+                       WHERE koerier_id = %s
+                       FOR UPDATE""",
+                    (courier_id,),
+                )
+                courier = cursor.fetchone()
+                if courier is None:
+                    raise NotFoundError("Koerier niet gevonden.")
+                if not courier["beschikbaar"]:
+                    raise ConflictError("Kies een koerier die als beschikbaar staat geregistreerd.")
+                cursor.execute(
+                    """SELECT rit_id
+                       FROM Rit
+                       WHERE koerier_id = %s AND ritdatum = %s
+                       FOR UPDATE""",
+                    (courier_id, order["gewenste_leverdatum"]),
+                )
+                ride = cursor.fetchone()
+                if ride is None:
+                    cursor.execute(
+                        "INSERT INTO Rit (koerier_id, ritdatum) VALUES (%s, %s)",
+                        (courier_id, order["gewenste_leverdatum"]),
+                    )
+                    ride_id = cursor.lastrowid
+                else:
+                    ride_id = ride["rit_id"]
+                cursor.execute(
+                    "INSERT INTO Levering (bestelling_id) VALUES (%s)",
+                    (order_id,),
+                )
+                delivery_id = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Leverpoging
+                           (levering_id, pogingnummer, rit_id, geplande_tijd)
+                       VALUES (%s, 1, %s, %s)""",
+                    (delivery_id, ride_id, planned_time),
+                )
+            self.connection.commit()
+            return order["gewenste_leverdatum"]
+        except Exception:
+            self.connection.rollback()
+            raise
+
     def pack_order(self, order_id, box_count):
         """Record the box count and mark a completely picked order as packed.
 

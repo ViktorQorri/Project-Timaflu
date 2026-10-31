@@ -3,7 +3,7 @@ from datetime import date
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from db import get_connection
-from domain.business import Order
+from domain.business import Invoice
 from domain.errors import ConflictError, DomainError, ValidationError
 from repositories.assessed_repository import AssessedRepository
 from repositories.customer_repository import CustomerRepository
@@ -158,7 +158,16 @@ def calculate_order_discount():
     repository = AssessedRepository(get_connection())
     customer, revenue = repository.customer_revenue(customer_id, date.today().year - 1)
     first_order = repository.customer_order_count(customer_id) == 0
-    result = Order(subtotal, revenue, first_order).calculateTotalAmount()
+    try:
+        result = Invoice(customer_id, "preview", date.today()).createWeeklyInvoice(
+            customer["bedrijfsnaam"],
+            "",
+            [{"quantity": 1, "unit_price": subtotal}],
+            revenue,
+            first_order,
+        )
+    except ValueError as error:
+        raise DomainError("Vul een geldig, niet-negatief bestelbedrag in.") from error
     return render_template(
         "discount.html",
         customer=customer,

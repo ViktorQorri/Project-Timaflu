@@ -1,5 +1,5 @@
 """MySQL queries for the five assessed scenarios, using the existing case tables."""
-from datetime import date
+from datetime import date, timedelta
 from domain.errors import DomainError
 
 
@@ -104,11 +104,64 @@ class AssessedRepository:
                              VALUES (%s,2,%s,%s,%s,%s)""",
                           (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",bool(delivered)))
                 if delivered:
+                    self._record_delivered_lines(c, delivery_id)
                     c.execute("UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=%s",(delivery_id,))
                 self.db.commit()
             except Exception:
                 self.db.rollback()
                 raise
+
+    def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered):
+        with self.db.cursor() as c:
+            try:
+                c.execute(
+                    """SELECT lp.resultaat
+                       FROM Leverpoging AS lp
+                       JOIN Rit AS r ON r.rit_id = lp.rit_id
+                       WHERE lp.levering_id = %s AND lp.pogingnummer = 1
+                         AND r.ritdatum = %s
+                       FOR UPDATE""",
+                    (delivery_id, delivery_date),
+                )
+                attempt = c.fetchone()
+                if attempt is None:
+                    raise DomainError("Eerste bezorgpoging niet gevonden.")
+                if attempt[0] is not None:
+                    raise DomainError("Eerste bezorgpoging is al geregistreerd.")
+                c.execute(
+                    """UPDATE Leverpoging
+                       SET resultaat = %s, ontvangst_getekend = %s
+                       WHERE levering_id = %s AND pogingnummer = 1""",
+                    ("afgeleverd" if delivered else "niet aanwezig", bool(delivered),
+                     delivery_id),
+                )
+                if delivered:
+                    self._record_delivered_lines(c, delivery_id)
+                    c.execute(
+                        """UPDATE Bestelling AS b
+                           JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+                           SET b.status_naam = 'afgeleverd'
+                           WHERE l.levering_id = %s""",
+                        (delivery_id,),
+                    )
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise
+
+    @staticmethod
+    def _record_delivered_lines(cursor, delivery_id):
+        cursor.execute(
+            """INSERT INTO Leveringregel
+                   (levering_id, product_id, aantal_geleverd, factuur_id)
+               SELECT l.levering_id, br.product_id, br.aantal, NULL
+               FROM Levering AS l
+               JOIN Bestelregel AS br ON br.bestelling_id = l.bestelling_id
+               WHERE l.levering_id = %s""",
+            (delivery_id,),
+        )
+        if cursor.rowcount == 0:
+            raise DomainError("Er zijn geen bestelregels om als geleverd vast te leggen.")
 
     def prospect_followups(self, cutoff):
         with self.db.cursor(dictionary=True) as c:
@@ -225,6 +278,110 @@ class AssessedRepository:
                     values + (invoice_id,),
                 )
             self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def create_weekly_invoice(self, customer_id, week_start, invoice_date):
+        """Issue one invoice for the customer's delivered, unbilled lines in a week."""
+        from domain.business import Invoice
+        from repositories.discount_repository import DiscountRepository
+
+        week_end = week_start + timedelta(days=7)
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT k.klant_id, k.bedrijfsnaam, a.adres
+                       FROM Klant AS k
+                       JOIN Adres AS a ON a.adres_id = k.betaaladres_id
+                       WHERE k.klant_id = %s
+                       FOR UPDATE""",
+                    (customer_id,),
+                )
+                customer = cursor.fetchone()
+                if customer is None:
+                    raise DomainError("Klant niet gevonden.")
+                cursor.execute(
+                    """SELECT lr.levering_id, lr.product_id,
+                              lr.aantal_geleverd AS quantity,
+                              br.prijs_per_eenheid AS unit_price,
+                              b.eenmalige_korting_toegepast
+                       FROM Leveringregel AS lr
+                       JOIN Levering AS l ON l.levering_id = lr.levering_id
+                       JOIN Bestelling AS b ON b.bestelling_id = l.bestelling_id
+                       JOIN Bestelregel AS br
+                         ON br.bestelling_id = b.bestelling_id
+                        AND br.product_id = lr.product_id
+                       WHERE b.klant_id = %s
+                         AND lr.factuur_id IS NULL
+                         AND EXISTS (
+                             SELECT 1
+                             FROM Leverpoging AS lp
+                             JOIN Rit AS r ON r.rit_id = lp.rit_id
+                             WHERE lp.levering_id = lr.levering_id
+                               AND lp.resultaat = 'afgeleverd'
+                               AND r.ritdatum >= %s AND r.ritdatum < %s
+                         )
+                       ORDER BY lr.levering_id, lr.product_id
+                       FOR UPDATE""",
+                    (customer_id, week_start, week_end),
+                )
+                lines = cursor.fetchall()
+                if not lines:
+                    raise DomainError(
+                        "Geen afgeleverde, ongefactureerde producten voor deze klant en week."
+                    )
+                first_order = any(
+                    bool(line["eenmalige_korting_toegepast"]) for line in lines
+                )
+                if first_order:
+                    cursor.execute(
+                        """SELECT COUNT(*) AS aantal_facturen,
+                                  COUNT(eenmalige_korting) AS bekende_kortingen,
+                                  COALESCE(SUM(eenmalige_korting > 0), 0) AS korting_al_toegepast
+                           FROM Factuur
+                           WHERE klant_id = %s""",
+                        (customer_id,),
+                    )
+                    history = cursor.fetchone()
+                    if history["aantal_facturen"] != history["bekende_kortingen"]:
+                        raise DomainError(
+                            "Een eerdere factuur heeft geen vastgelegde eenmalige korting. "
+                            "Controleer de factuurhistorie voordat je deze factuur aanmaakt."
+                        )
+                    first_order = not bool(history["korting_al_toegepast"])
+
+                annual_revenue = DiscountRepository(self.db).sum_purchases(
+                    customer_id, invoice_date.year - 1
+                )
+                cursor.execute(
+                    "INSERT INTO Factuur (klant_id, factuurdatum) VALUES (%s, %s)",
+                    (customer_id, invoice_date),
+                )
+                invoice_id = cursor.lastrowid
+                invoice_data = Invoice(
+                    customer_id, str(invoice_id), invoice_date
+                ).createWeeklyInvoice(
+                    customer["bedrijfsnaam"],
+                    customer["adres"],
+                    lines,
+                    annual_revenue,
+                    first_order,
+                )
+                for line in lines:
+                    cursor.execute(
+                        """UPDATE Leveringregel
+                           SET factuur_id = %s
+                           WHERE levering_id = %s AND product_id = %s
+                             AND factuur_id IS NULL""",
+                        (invoice_id, line["levering_id"], line["product_id"]),
+                    )
+                    if cursor.rowcount != 1:
+                        raise DomainError(
+                            "Een leveringsregel is ondertussen al gefactureerd."
+                        )
+            self.save_invoice_snapshot(invoice_id, invoice_data)
+            return invoice_id
         except Exception:
             self.db.rollback()
             raise

@@ -239,6 +239,118 @@ INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat
                              VALUES (1,2,1,'14:00:00','niet aanwezig',0);
 -- Query 4 (illustrative input, not a claimed database result)
 UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+-- Query 5 (record the delivered quantities for the invoice workflow)
+INSERT INTO Leveringregel (levering_id, product_id, aantal_geleverd, factuur_id)
+SELECT l.levering_id, br.product_id, br.aantal, NULL
+FROM Levering AS l
+JOIN Bestelregel AS br ON br.bestelling_id=l.bestelling_id
+WHERE l.levering_id=1;
+
+-- AssessedRepository.register_first_delivery_attempt
+-- Query 1 (illustrative input, not a claimed database result)
+SELECT lp.resultaat
+FROM Leverpoging AS lp
+JOIN Rit AS r ON r.rit_id=lp.rit_id
+WHERE lp.levering_id=1 AND lp.pogingnummer=1 AND r.ritdatum='2026-10-30'
+FOR UPDATE;
+-- Query 2 (illustrative input, not a claimed database result)
+UPDATE Leverpoging
+SET resultaat='afgeleverd', ontvangst_getekend=TRUE
+WHERE levering_id=1 AND pogingnummer=1;
+-- Query 3 records the actually delivered quantities (same insert as above).
+INSERT INTO Leveringregel (levering_id, product_id, aantal_geleverd, factuur_id)
+SELECT l.levering_id, br.product_id, br.aantal, NULL
+FROM Levering AS l
+JOIN Bestelregel AS br ON br.bestelling_id=l.bestelling_id
+WHERE l.levering_id=1;
+-- Query 4 (illustrative input, not a claimed database result)
+UPDATE Bestelling AS b
+JOIN Levering AS l ON l.bestelling_id=b.bestelling_id
+SET b.status_naam='afgeleverd'
+WHERE l.levering_id=1;
+
+-- DistributionRepository.list_orders_to_schedule
+SELECT b.bestelling_id, b.gewenste_leverdatum, b.dagdeel, b.spoed,
+       k.bedrijfsnaam, k.telefoonnummer, a.adres AS afleveradres
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id=b.klant_id
+JOIN Adres AS a ON a.adres_id=b.afleveradres_id
+WHERE b.status_naam='verstuurd'
+  AND NOT EXISTS (
+      SELECT 1 FROM Levering AS l
+      WHERE l.bestelling_id=b.bestelling_id
+  )
+ORDER BY b.spoed DESC, b.gewenste_leverdatum, b.bestelling_id;
+
+-- DistributionRepository.list_couriers
+SELECT koerier_id, naam, beschikbaar
+FROM Koerier
+ORDER BY naam, koerier_id;
+
+-- DistributionRepository.create_courier
+INSERT INTO Koerier (naam, beschikbaar) VALUES ('Voorbeeldkoerier', FALSE);
+
+-- DistributionRepository.set_courier_availability
+SELECT koerier_id FROM Koerier WHERE koerier_id=1 FOR UPDATE;
+UPDATE Koerier SET beschikbaar=TRUE WHERE koerier_id=1;
+
+-- DistributionRepository.schedule_delivery
+-- Query 1 checks and locks the released order.
+SELECT status_naam, gewenste_leverdatum
+FROM Bestelling WHERE bestelling_id=1 FOR UPDATE;
+-- Query 2 prevents duplicate scheduling.
+SELECT levering_id FROM Levering WHERE bestelling_id=1 FOR UPDATE;
+-- Query 3 checks the manually selected courier.
+SELECT koerier_id, beschikbaar
+FROM Koerier WHERE koerier_id=1 FOR UPDATE;
+-- Query 4 reuses a route for the courier and agreed delivery date, if present.
+SELECT rit_id FROM Rit WHERE koerier_id=1 AND ritdatum='2026-10-30' FOR UPDATE;
+-- Query 5 creates a route when needed.
+INSERT INTO Rit (koerier_id, ritdatum) VALUES (1, '2026-10-30');
+-- Query 6 creates the delivery.
+INSERT INTO Levering (bestelling_id) VALUES (1);
+-- Query 7 schedules the first attempt.
+INSERT INTO Leverpoging (levering_id, pogingnummer, rit_id, geplande_tijd)
+VALUES (1, 1, 1, '09:00:00');
+
+-- AssessedRepository.create_weekly_invoice
+-- Query 1 locks the customer while its weekly invoice is issued.
+SELECT k.klant_id, k.bedrijfsnaam, a.adres
+FROM Klant AS k
+JOIN Adres AS a ON a.adres_id=k.betaaladres_id
+WHERE k.klant_id=1
+FOR UPDATE;
+-- Query 2 selects only delivered, not-yet-invoiced items from the chosen week.
+SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
+       br.prijs_per_eenheid AS unit_price, b.eenmalige_korting_toegepast
+FROM Leveringregel AS lr
+JOIN Levering AS l ON l.levering_id=lr.levering_id
+JOIN Bestelling AS b ON b.bestelling_id=l.bestelling_id
+JOIN Bestelregel AS br ON br.bestelling_id=b.bestelling_id
+                       AND br.product_id=lr.product_id
+WHERE b.klant_id=1 AND lr.factuur_id IS NULL
+  AND EXISTS (
+      SELECT 1
+      FROM Leverpoging AS lp
+      JOIN Rit AS r ON r.rit_id=lp.rit_id
+      WHERE lp.levering_id=lr.levering_id
+        AND lp.resultaat='afgeleverd'
+        AND r.ritdatum >= '2026-10-26' AND r.ritdatum < '2026-11-02'
+  )
+ORDER BY lr.levering_id, lr.product_id
+FOR UPDATE;
+-- Query 3 checks whether an earlier invoice's one-time discount is known.
+SELECT COUNT(*) AS aantal_facturen,
+       COUNT(eenmalige_korting) AS bekende_kortingen,
+       COALESCE(SUM(eenmalige_korting > 0), 0) AS korting_al_toegepast
+FROM Factuur
+WHERE klant_id=1;
+-- Query 4 inserts the issued invoice header.
+INSERT INTO Factuur (klant_id, factuurdatum) VALUES (1, '2026-10-30');
+-- Query 5 attaches each delivered, unbilled line to the new invoice.
+UPDATE Leveringregel
+SET factuur_id=50
+WHERE levering_id=4 AND product_id=2 AND factuur_id IS NULL;
 
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)

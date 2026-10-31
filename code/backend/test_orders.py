@@ -68,7 +68,8 @@ class OrderServiceTests(TestCase):
         calculation = order_service(FakeOrderRepository({1: 10, 2: 3})).prepare("7", [("1", "10"), ("2", "5")])
         self.assertEqual([(line["available"], line["short"]) for line in calculation["lines"]], [(10, False), (3, True)])
         self.assertFalse(calculation["can_save"])
-        self.assertEqual(calculation["total_amount"], Decimal("940.50"))
+        self.assertEqual(calculation["total_incl_vat"], Decimal("1199.00"))
+        self.assertEqual(calculation["total_amount"], Decimal("1025.14"))
 
     def test_accepted_backorder_allows_saving(self):
         calculation = order_service(FakeOrderRepository({1: 10, 2: 3})).prepare("7", [("1", "10"), ("2", "5")], ["2"])
@@ -84,7 +85,7 @@ class OrderServiceTests(TestCase):
         repository = FakeOrderRepository({1: 10, 2: 3})
         saved = order_service(repository).place("7", [("1", "10"), ("2", "5")], ["2"], "2026-11-02", "ochtend", False, TODAY)
         self.assertEqual(saved["order_id"], 15)
-        self.assertEqual(saved["total_amount"], Decimal("940.50"))
+        self.assertEqual(saved["total_amount"], Decimal("1025.14"))
         customer_id, lines, delivery_date, part_of_day, urgent = repository.saved[0]
         self.assertEqual(customer_id, 7)
         self.assertEqual([(line["product_id"], line["quantity"], line["backorder"]) for line in lines],
@@ -250,7 +251,7 @@ class OrderPageTests(TestCase):
         self.assertIn("Nieuwe order", page)
         self.assertIn("Tekort", page)
         self.assertIn('name="backorder" value="2"', page)
-        self.assertIn("Klantenkorting (10% over € 1.045,00)", page)
+        self.assertIn("Klantenkorting (10% over € 1.139,05)", page)
         self.assertIn("Order opslaan", page)
 
     def test_form_starts_with_three_lines_and_adds_one_per_click(self):

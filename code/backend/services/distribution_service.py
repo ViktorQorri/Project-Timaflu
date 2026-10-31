@@ -1,5 +1,7 @@
 """Business rules for grouping collection bins and releasing packed orders."""
 
+from datetime import time
+
 from domain.errors import DomainError
 
 
@@ -95,6 +97,37 @@ class DistributionService:
         """
         self.repository.release_order(
             self._positive_integer(order_id, "Bestelling")
+        )
+
+    def orders_to_schedule(self):
+        return self.repository.list_orders_to_schedule()
+
+    def couriers(self):
+        return self.repository.list_couriers()
+
+    def create_courier(self, name):
+        name = str(name or "").strip()
+        if not name:
+            raise DomainError("Vul de naam van de koerier in.")
+        if len(name) > 100:
+            raise DomainError("De naam van de koerier mag maximaal 100 tekens bevatten.")
+        self.repository.create_courier(name)
+
+    def set_courier_availability(self, courier_id, available):
+        if not isinstance(available, bool):
+            raise DomainError("Kies of de koerier beschikbaar is.")
+        self.repository.set_courier_availability(
+            self._positive_integer(courier_id, "Koerier"),
+            available,
+        )
+
+    def schedule_delivery(self, order_id, courier_id, planned_time):
+        if not isinstance(planned_time, time):
+            raise DomainError("Kies een geldige bezorgtijd.")
+        return self.repository.schedule_delivery(
+            self._positive_integer(order_id, "Bestelling"),
+            self._positive_integer(courier_id, "Koerier"),
+            planned_time,
         )
 
     @staticmethod

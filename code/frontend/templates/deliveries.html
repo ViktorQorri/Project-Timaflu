@@ -9,6 +9,85 @@
       </div>
     </div>
 
+    <section aria-labelledby="couriers-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="couriers-title">Koeriers</h2>
+          <p class="stock-dashboard__subtitle">Beheer koeriers en hun actuele beschikbaarheid.</p>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="supplier-lookup">
+        <label for="courier-name">Naam koerier</label>
+        <input id="courier-name" name="name" maxlength="100" required>
+        <button type="submit">Koerier toevoegen</button>
+      </form>
+      {% if couriers %}
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table">
+            <thead>
+              <tr><th scope="col">Koerier</th><th scope="col">Beschikbaarheid</th><th scope="col">Actie</th></tr>
+            </thead>
+            <tbody>
+              {% for courier in couriers %}
+                <tr>
+                  <th scope="row">{{ courier.naam }}</th>
+                  <td>{% if courier.beschikbaar %}Beschikbaar{% else %}Niet beschikbaar{% endif %}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('distribution.update_courier_availability', courier_id=courier.koerier_id) }}">
+                      <input type="hidden" name="available" value="{{ 0 if courier.beschikbaar else 1 }}">
+                      <button type="submit">
+                        {{ "Onbeschikbaar maken" if courier.beschikbaar else "Beschikbaar melden" }}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn nog geen koeriers toegevoegd.</p>
+      {% endif %}
+    </section>
+
+    <section aria-labelledby="unscheduled-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="unscheduled-title">Orders inplannen</h2>
+          <p class="stock-dashboard__subtitle">De afgesproken leverdatum blijft behouden; wijs handmatig een beschikbare koerier en tijd toe.</p>
+        </div>
+      </div>
+      {% for order in unscheduled_orders %}
+        <section class="stock-dashboard__table-wrap" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
+          <h3 id="schedule-order-{{ order.bestelling_id }}">
+            Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}
+          </h3>
+          <p>{{ order.afleveradres }} · {{ order.telefoonnummer }}</p>
+          <p>Afgesproken: {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
+          {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
+          {% if couriers|selectattr("beschikbaar")|list %}
+            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="supplier-lookup">
+              <input type="hidden" name="order_id" value="{{ order.bestelling_id }}">
+              <label for="courier-{{ order.bestelling_id }}">Koerier</label>
+              <select id="courier-{{ order.bestelling_id }}" name="courier_id" required>
+                <option value="">Kies een beschikbare koerier</option>
+                {% for courier in couriers if courier.beschikbaar %}
+                  <option value="{{ courier.koerier_id }}">{{ courier.naam }}</option>
+                {% endfor %}
+              </select>
+              <label for="delivery-time-{{ order.bestelling_id }}">Bezorgtijd</label>
+              <input id="delivery-time-{{ order.bestelling_id }}" type="time" name="time" required>
+              <button type="submit">Rit inplannen</button>
+            </form>
+          {% else %}
+            <p class="stock-dashboard__empty" role="status">Maak eerst een koerier beschikbaar.</p>
+          {% endif %}
+        </section>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen vrijgegeven orders zonder rit.</p>
+      {% endfor %}
+    </section>
+
     <section aria-labelledby="schedule-title">
       <h2 id="schedule-title">Bezorgrooster</h2>
       <form method="get" class="supplier-lookup">
@@ -28,7 +107,7 @@
               <th scope="col">Adres</th>
               <th scope="col">Contact</th>
               <th scope="col">Resultaat</th>
-              <th scope="col">Tweede poging</th>
+              <th scope="col">Actie</th>
             </tr>
           </thead>
           <tbody>
@@ -41,13 +120,24 @@
                 <td>{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
                 <td>{{ item.resultaat or "nog niet afgeleverd" }}</td>
                 <td>
-                  {% if item.can_register_second_attempt %}
+                  {% if item.can_register_first_attempt %}
+                    <form method="post" action="{{ url_for('distribution.first_attempt') }}">
+                      <input type="hidden" name="day" value="{{ day.isoformat() }}">
+                      <input type="hidden" name="delivery_id" value="{{ item.levering_id }}">
+                      <label for="first-outcome-{{ item.levering_id }}">Resultaat eerste poging</label>
+                      <select id="first-outcome-{{ item.levering_id }}" name="outcome">
+                        <option value="afgeleverd">Afgeleverd</option>
+                        <option value="niet aanwezig">Niet aanwezig</option>
+                      </select>
+                      <button type="submit">Registreer eerste poging</button>
+                    </form>
+                  {% elif item.can_register_second_attempt %}
                     <form method="post" action="{{ url_for('distribution.second_attempt') }}">
                       <input type="hidden" name="day" value="{{ day.isoformat() }}">
                       <input type="hidden" name="delivery_id" value="{{ item.levering_id }}">
-                      <label for="second-time-{{ item.levering_id }}">Tijd</label>
+                      <label for="second-time-{{ item.levering_id }}">Tijd tweede poging</label>
                       <input id="second-time-{{ item.levering_id }}" type="time" name="time" required>
-                      <label for="second-outcome-{{ item.levering_id }}">Resultaat</label>
+                      <label for="second-outcome-{{ item.levering_id }}">Resultaat tweede poging</label>
                       <select id="second-outcome-{{ item.levering_id }}" name="outcome">
                         <option value="afgeleverd">Afgeleverd</option>
                         <option value="niet aanwezig">Niet afgeleverd</option>

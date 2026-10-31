@@ -3,6 +3,18 @@
 {% block content %}
 <h1>Openstaande facturen</h1>
 <form method="get"><label>Klantnummer <input type="number" min="1" name="customer_id" required value="{{customer_id or ''}}"></label><button>Opzoeken</button></form>
+{% if customer_id %}
+<section aria-labelledby="create-invoice-title">
+  <h2 id="create-invoice-title">Weekfactuur aanmaken</h2>
+  <p>Factureer de werkelijk afgeleverde, nog niet gefactureerde producten uit de week van de gekozen datum.</p>
+  <form method="post" action="{{ url_for('administration.create_invoice') }}">
+    <input type="hidden" name="customer_id" value="{{ customer_id }}">
+    <label for="invoice-week">Datum in factuurweek</label>
+    <input id="invoice-week" type="date" name="week_of" required value="{{ today }}">
+    <button type="submit">Weekfactuur aanmaken</button>
+  </form>
+</section>
+{% endif %}
 {% for f in invoices %}
 <section>
   <h2>Factuur {{f.invoice_number}}</h2>
