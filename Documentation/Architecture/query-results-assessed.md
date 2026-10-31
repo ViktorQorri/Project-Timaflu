@@ -1,6 +1,6 @@
 # Gemeten MySQL-queryresultaten voor de vijf verplichte scenario's
 
-Testdatum: 31 oktober 2026. Gecontroleerde codecommit: 0cb154b30876663fe6da08c92212640e49edfff0
+Testdatum: 31 oktober 2026. Gecontroleerde codecommit: b40c6d3f938e263d3e78d44074d1818a18064696
 
 Bronnen: code/database/schema.sql, Documentation/Architecture/test-data/fixtures_assessed.sql en selects_assessed.sql.
 
