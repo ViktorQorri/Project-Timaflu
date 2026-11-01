@@ -40,6 +40,10 @@ class RepositoryStub:
         self.recorded=[]
     def invoice_for_customer(self, customer_id):
         return [self.row]
+    def outstanding_purchase_invoices(self):
+        return []
+    def uninvoiced_deliveries(self):
+        return []
     def record_payment_action(self, invoice_id,action,today):
         self.recorded.append((invoice_id,action,today))
 

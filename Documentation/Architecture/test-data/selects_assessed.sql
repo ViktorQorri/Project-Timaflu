@@ -1,6 +1,9 @@
 -- Output samples for actual MySQL 8.4, fictional data only.
 SELECT '01. Verkoop: klantgegevens' AS proces;
-SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=1;
+SELECT k.klant_id, k.bedrijfsnaam,
+       k.eenmalige_korting_toegezegd, a.adres AS klantadres
+FROM Klant k JOIN Adres a ON a.adres_id=k.betaaladres_id
+WHERE k.klant_id=1;
 SELECT '01. Verkoop: netto betaalde jaaromzet 2025' AS proces;
 SELECT COUNT(*) AS paid_count, COUNT(f.totaal_bedrag) AS known_amount_count,
        COALESCE(SUM(f.totaal_bedrag),0) AS annual
@@ -15,6 +18,7 @@ WHERE p.productnaam LIKE '%Testmedicijn%' AND p.intern_bestelbaar=TRUE AND p.in_
 ORDER BY p.productnaam,a.inkoopprijs ASC,l.naam ASC;
 SELECT '03. Administratie: factuurkop en status' AS proces;
 SELECT f.factuur_id,f.factuurdatum,f.betaald_op,
+       f.betalingsregeling_geaccepteerd,f.incasso_ingeschakeld,
        f.bedrag_excl_btw,f.btw_bedrag,f.bedrag_incl_btw,
        f.bestellingskorting,f.bedrag_na_bestellingskorting,
        f.eenmalige_korting,f.bedrag_na_eenmalige_korting,
@@ -43,7 +47,9 @@ SELECT p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,
 p.contactgegevens,a.adres,p.klant_id,MAX(v.bezoekdatum) AS bezoekdatum
 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
 JOIN Adres a ON a.adres_id=p.adres_id
-WHERE NOT EXISTS (SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id)
+WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (
+  SELECT 1 FROM Bestelling b WHERE b.klant_id=p.klant_id
+)
 GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
 HAVING MAX(v.bezoekdatum)<='2026-09-30'
 ORDER BY bezoekdatum;
