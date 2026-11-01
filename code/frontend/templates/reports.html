@@ -6,13 +6,25 @@
 {% block content %}
 <section class="order-report" aria-labelledby="order-report-title">
   <header class="order-report__intro">
-    <p class="order-report__eyebrow">Rapportages</p>
+    <p class="order-report__eyebrow">Verkoop en rapportages</p>
     <h1 id="order-report-title">Orderstatusoverzicht</h1>
-    <p class="order-report__subtitle">Actuele orderstatus en afgesproken leverdatum van geregistreerde bestellingen.</p>
+    <p class="order-report__subtitle">Zoek een bestelling op en bekijk de geregistreerde orderstatus en het afgesproken levermoment.</p>
   </header>
+
+  <form class="order-report__search" method="get" action="{{ url_for('reports.index') }}" role="search">
+    <div class="order-report__field">
+      <label for="order-status-search">Ordernummer of klantnaam</label>
+      <input id="order-status-search" name="order" type="search" value="{{ search }}" placeholder="Zoek op ordernummer of klantnaam" maxlength="100" required>
+    </div>
+    <button type="submit" class="order-report__button">Bestellingen opzoeken</button>
+    {% if search %}
+      <a class="order-report__reset" href="{{ url_for('reports.index') }}">Alle bestellingen</a>
+    {% endif %}
+  </form>
+
   <div class="order-report__table-wrap" tabindex="0" role="region" aria-label="Orderstatussen, horizontaal scrollbare tabel">
     <table class="order-report__table">
-      <caption>Bestellingen, nieuwste eerst</caption>
+      <caption>{% if search %}Gevonden bestellingen{% else %}Bestellingen, nieuwste eerst{% endif %}</caption>
       <thead>
         <tr>
           <th scope="col">Ordernummer</th>
@@ -20,6 +32,7 @@
           <th scope="col">Besteld op</th>
           <th scope="col">Gewenste levering</th>
           <th scope="col">Status</th>
+          <th scope="col">Details</th>
         </tr>
       </thead>
       <tbody>
@@ -37,10 +50,13 @@
               {{ order.status_naam|capitalize if order.status_naam else 'Nog geen status' }}
             </span>
           </td>
+          <td><a class="order-report__link" href="{{ url_for('reports.detail', order_id=order.bestelling_id) }}">Bekijk order</a></td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" class="order-report__empty">Geen bestellingen gevonden.</td>
+          <td colspan="6" class="order-report__empty" role="status">
+            {% if search %}Geen order gevonden.{% else %}Geen bestellingen gevonden.{% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

@@ -211,6 +211,9 @@ package "repositories" {
   class "repositories.order_status_report_repository.OrderStatusReportRepository" as C40 {
     +__init__()
     +list_orders()
+    +search_orders()
+    +find_order()
+    +list_order_lines()
   }
   class "repositories.picking_bin_repository.PickingBinRepository" as C41 {
     +__init__()
