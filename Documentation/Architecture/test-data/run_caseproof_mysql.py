@@ -39,8 +39,17 @@ def inserted_order(conn,customer=1,requested=date(2026,10,31)):
              VALUES (%s,1,1,'2026-10-31 08:00:00',%s,'ochtend',FALSE,'verstuurd')""",
           (customer,requested))
         order_id=cur.lastrowid
+        # A genuine delivery scenario must have packed goods. The old fixture
+        # created a shipment without any product lines, which the validated
+        # re-delivery process must reject.
+        cur.execute(
+          """INSERT INTO Bestelregel(bestelling_id,product_id,aantal,prijs_per_eenheid)
+             VALUES (%s,1,1,20.00)""", (order_id,))
         cur.execute("INSERT INTO Levering(bestelling_id) VALUES(%s)",(order_id,))
         delivery=cur.lastrowid
+        cur.execute(
+          """INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd)
+             VALUES (%s,1,1)""", (delivery,))
         cur.execute(
           """INSERT INTO Leverpoging(levering_id,pogingnummer,rit_id,
              geplande_tijd,resultaat,ontvangst_getekend)
