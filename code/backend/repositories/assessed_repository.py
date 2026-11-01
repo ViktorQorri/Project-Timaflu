@@ -521,35 +521,6 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 self.db.rollback()
                 raise
 
-    def close_prospect_followup(self, prospect_id, cutoff):
-        """A definitive no after the callback ends acquisition; do not contact again."""
-        try:
-            with self.db.cursor(dictionary=True) as cursor:
-                cursor.execute(
-                    "SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant "
-                    "WHERE potentiele_klant_id=%s FOR UPDATE", (prospect_id,))
-                prospect = cursor.fetchone()
-                if prospect is None or prospect["opvolging_afgesloten"]:
-                    raise DomainError("Deze opvolging bestaat niet of is al afgesloten.")
-                cursor.execute(
-                    "SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek "
-                    "WHERE potentiele_klant_id=%s", (prospect_id,))
-                visited = cursor.fetchone()
-                if not visited or not visited["laatste_bezoek"] or visited["laatste_bezoek"] > cutoff:
-                    raise DomainError("Opvolging mag pas een maand na het bezoek worden afgesloten.")
-                if prospect["klant_id"] is not None:
-                    cursor.execute("SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=%s",
-                                   (prospect["klant_id"],))
-                    if cursor.fetchone()["aantal"]:
-                        raise DomainError("Deze apotheek heeft al besteld; opvolging is niet nodig.")
-                cursor.execute(
-                    "UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE "
-                    "WHERE potentiele_klant_id=%s", (prospect_id,))
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
-            raise
-
     def unpaid_invoice_overview(self, today):
         """AD18: all unpaid customer invoices, reminders and weeks outstanding."""
         with self.db.cursor(dictionary=True) as cursor:
