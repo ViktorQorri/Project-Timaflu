@@ -114,7 +114,7 @@
 
         <div class="product-form__buttons">
           <button class="button button--primary" type="submit">{{ 'Wijzigingen opslaan' if editing else 'Toevoegen aan assortiment' }}</button>
-          <a class="button" href="{{ url_for('purchasing.products') }}">Annuleren</a>
+          <a class="button button--secondary" href="{{ url_for('purchasing.products') }}">Annuleren</a>
         </div>
       </form>
     {% endif %}

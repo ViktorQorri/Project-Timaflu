@@ -10,6 +10,11 @@ from repositories.supplier_repository import SupplierRepository
 from services.supplier_service import SupplierService
 from repositories.purchase_order_repository import PurchaseOrderRepository
 from services.purchase_order_service import PurchaseOrderService
+from repositories.manufacturer_repository import ManufacturerRepository
+from services.manufacturer_service import ManufacturerService
+
+from services.reorder_service import ReorderService
+from domain.errors import DomainError
 
 purchasing = Blueprint("purchasing", __name__)
 
@@ -25,25 +30,16 @@ def stock():
 def suppliers():
     """Show the suppliers page."""
     product_name = request.args.get("product", "", type=str).strip()
-    raw_id = request.args.get("product_id")
-    product_id = request.args.get("product_id", type=int) if raw_id is not None else None
-    if raw_id is not None and (product_id is None or product_id < 1 or str(product_id) != raw_id):
-        raise DomainError("Ongeldig productnummer.")
-    service = SupplierService(SupplierRepository(get_connection())) if (product_id is not None or product_name) else None
-    products = service.products_matching_name(product_name) if service and product_id is None else []
-    # The required purchasing scenario takes a product name and returns suppliers.
-    # Skip a redundant selection step if only one medicine matches.
-    # For ambiguous names, keep the article-number selection to avoid wrong orders.
-    if product_id is None and len(products) == 1:
-        product_id = products[0]["product_id"]
-    offers = service.offers_for_product(product_id=product_id) if service and product_id is not None else []
-    return render_template("suppliers.html", product_name=product_name,
-                           product_id=product_id, products=products, offers=offers)
+    service = SupplierService(SupplierRepository(get_connection())) if product_name else None
+    offers = service.offers_for_product(product_name) if service else []
+    return render_template("suppliers.html", product_name=product_name, offers=offers)
 
 
 @purchasing.post("/purchase-orders")
 def record_purchase_order():
     """Record a purchase after the employee confirms contacting a supplier."""
+    if request.form.get("supplier_contact_confirmed") != "yes":
+        raise DomainError("Bevestig eerst het handmatige contact met de leverancier.")
     service = PurchaseOrderService(PurchaseOrderRepository(get_connection()))
     order_id = service.record_order(
         request.form.get("supplier_id"),
@@ -52,6 +48,64 @@ def record_purchase_order():
     )
     flash(f"Inkooporder {order_id} is vastgelegd na bevestiging door de leverancier.", "success")
     return redirect(url_for("purchasing.suppliers"))
+
+
+@purchasing.post("/suppliers/remove-offer")
+def remove_offer():
+    product_id = request.form.get("product_id", type=int)
+    supplier_id = request.form.get("supplier_id", type=int)
+    if not product_id or not supplier_id or min(product_id, supplier_id) < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product and supplier required.")
+    from domain.errors import DomainError
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig dat deze leverancier het medicijn niet meer levert.")
+    removed = SupplierRepository(get_connection()).remove_offer(product_id, supplier_id)
+    if not removed:
+        raise DomainError("Deze leverancierskoppeling is niet gevonden.")
+    flash("Leverancierskoppeling verwijderd; medicijn blijft in de catalogus.", "success")
+    return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
+
+
+@purchasing.post("/suppliers/remove-product")
+def remove_product_from_reorder_list():
+    product_id = request.form.get("product_id", type=int)
+    if not product_id or product_id < 1:
+        from domain.errors import DomainError
+        raise DomainError("Product required.")
+    from domain.errors import DomainError
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig dat geen van de fabrikanten het medicijn kan leveren.")
+    changed = SupplierRepository(get_connection()).remove_from_internal_reorder_list(product_id)
+    if not changed:
+        raise DomainError("Medicijn niet gevonden in de interne bestellijst.")
+    flash("Medicijn uit interne bestellijst verwijderd, niet uit het verkoopassortiment.", "success")
+    return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
+
+def _reorder_service():
+    connection = get_connection()
+    return ReorderService(
+        StockService(StockRepository(connection)),
+        SupplierService(SupplierRepository(connection)),
+        PurchaseOrderService(PurchaseOrderRepository(connection)),
+    )
+
+
+@purchasing.route("/reorder", methods=["GET", "POST"])
+def reorder():
+    """Prepare shortages and only persist purchases explicitly confirmed manually."""
+    service = _reorder_service()
+    if request.method == "POST":
+        order_id = service.record_confirmed(
+            request.form.get("product_id"),
+            request.form.get("supplier_id"),
+            request.form.get("quantity"),
+            request.form.get("confirmed"),
+        )
+        flash(f"Inkooporder {order_id} is geregistreerd.", "success")
+        return redirect(url_for("purchasing.reorder"))
+    result = service.overview(request.args.get("product_id"))
+    return render_template("reorder.html", **result)
 
 @purchasing.get("/stock/minimums")
 def stock_minimums():
@@ -181,3 +235,82 @@ def remove_product(product_id):
         flash(f"{product.product_name} is verwijderd uit het assortiment.", "success")
         return redirect(url_for("purchasing.products"))
     return render_template("product_remove.html", product=service.get_product(product_id))
+
+def _manufacturer_service():
+    return ManufacturerService(ManufacturerRepository(get_connection()))
+
+
+@purchasing.get("/manufacturers")
+def manufacturers():
+    return render_template(
+        "manufacturers.html",
+        manufacturers=_manufacturer_service().list_manufacturers(),
+    )
+
+
+@purchasing.route("/manufacturers/new", methods=["GET", "POST"])
+def manufacturer_new():
+    if request.method == "POST":
+        try:
+            _manufacturer_service().create(request.form)
+        except DomainError as error:
+            return render_template(
+                "manufacturer_form.html", edit=False, values=request.form,
+                error=str(error),
+            ), error.status_code
+        flash("Fabrikant opgeslagen.", "success")
+        return redirect(url_for("purchasing.manufacturers"))
+    return render_template("manufacturer_form.html", edit=False, values={}, error=None)
+
+
+@purchasing.route("/manufacturers/<int:supplier_id>/edit", methods=["GET", "POST"])
+def manufacturer_edit(supplier_id):
+    service = _manufacturer_service()
+    if request.method == "POST":
+        try:
+            service.update(supplier_id, request.form)
+        except DomainError as error:
+            return render_template(
+                "manufacturer_form.html", edit=True, values=request.form,
+                error=str(error),
+            ), error.status_code
+        flash("Fabrikant bijgewerkt.", "success")
+        return redirect(url_for("purchasing.manufacturers"))
+    return render_template(
+        "manufacturer_form.html", edit=True,
+        values=service.manufacturer(supplier_id), error=None,
+    )
+
+
+@purchasing.route("/manufacturers/<int:supplier_id>/prices", methods=["GET", "POST"])
+def manufacturer_prices(supplier_id):
+    service = _manufacturer_service()
+    manufacturer = service.manufacturer(supplier_id)
+    error = None
+    if request.method == "POST":
+        try:
+            service.set_price(supplier_id, request.form.get("product_id"),
+                              request.form.get("price"))
+        except DomainError as failure:
+            error = str(failure)
+        else:
+            flash("Inkoopprijs opgeslagen.", "success")
+            return redirect(url_for("purchasing.manufacturer_prices",
+                                    supplier_id=supplier_id))
+    return render_template(
+        "manufacturer_prices.html",
+        manufacturer=manufacturer,
+        products=service.list_products(),
+        offers=service.prices(supplier_id),
+        error=error,
+    ), (400 if error else 200)
+
+@purchasing.post("/manufacturers/<int:supplier_id>/prices/<int:product_id>/remove")
+def manufacturer_offer_remove(supplier_id, product_id):
+    """Unlink one discontinued supplier offer after explicit confirmation."""
+    if request.form.get("confirmed") != "yes":
+        raise DomainError("Bevestig eerst dat deze fabrikant het product niet meer levert.")
+    _manufacturer_service().remove_offer(supplier_id, product_id)
+    flash("Leverancierskoppeling verwijderd; product blijft in het assortiment.", "success")
+    return redirect(url_for("purchasing.manufacturer_prices", supplier_id=supplier_id))
+
