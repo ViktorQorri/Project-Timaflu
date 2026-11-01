@@ -655,8 +655,7 @@
     "methods": [
       "__init__",
       "search",
-      "status_overview",
-      "_message"
+      "status_overview"
     ]
   },
   {

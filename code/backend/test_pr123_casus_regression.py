@@ -89,12 +89,15 @@ class CasusPr123Tests(TestCase):
 
     def test_partial_delivery_stays_backorder_in_database(self):
         class Cursor:
+            rowcount = 1
             def execute(self, sql, params):
                 self.sql, self.params = sql, params
         cursor = Cursor()
         AssessedRepository._mark_order_after_delivery(cursor, 12)
-        self.assertIn("COALESCE(lr.aantal_geleverd, 0) < br.aantal", cursor.sql)
-        self.assertIn("THEN 'backorder' ELSE 'afgeleverd'", cursor.sql)
+        from repositories.assessed_repository import MARK_ORDER_DELIVERED_IF_COMPLETE
+        self.assertIn("SUM(lr.aantal_geleverd)", MARK_ORDER_DELIVERED_IF_COMPLETE)
+        self.assertIn("lp.ontvangst_getekend = TRUE", MARK_ORDER_DELIVERED_IF_COMPLETE)
+        self.assertIn("AND NOT EXISTS", MARK_ORDER_DELIVERED_IF_COMPLETE)
         self.assertEqual(cursor.params, (12,))
 
     def test_picked_stock_is_decremented_and_reservations_released(self):

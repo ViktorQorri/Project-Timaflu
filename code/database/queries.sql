@@ -245,8 +245,65 @@ SELECT lp.resultaat FROM Leverpoging lp
                        FOR UPDATE;
 UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
                        WHERE levering_id=1 AND pogingnummer=1;
-UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
-                       SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+UPDATE Bestelling AS b
+    JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+    SET b.status_naam = 'afgeleverd'
+    WHERE l.levering_id = 1
+      AND EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+            AND br.aantal <> COALESCE((
+                SELECT SUM(lr.aantal_geleverd)
+                FROM Levering AS previous
+                JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id
+                WHERE previous.bestelling_id = br.bestelling_id
+                  AND lr.product_id = br.product_id
+                  AND EXISTS (
+                      SELECT 1 FROM Leverpoging AS lp
+                      WHERE lp.levering_id = previous.levering_id
+                        AND lp.resultaat = 'afgeleverd'
+                        AND lp.ontvangst_getekend = TRUE
+                  )
+            ), 0)
+      );
 
 -- First attempt start, to verify that a second visit is later the same day.
 SELECT lp.levering_id, TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds
@@ -268,7 +325,65 @@ UPDATE Leverpoging SET resultaat='niet aanwezig',
 INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
                              VALUES (1,2,1,'14:00:00','niet aanwezig',0);
 -- Query 4 (illustrative input, not a claimed database result)
-UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+UPDATE Bestelling AS b
+    JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+    SET b.status_naam = 'afgeleverd'
+    WHERE l.levering_id = 1
+      AND EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+            AND br.aantal <> COALESCE((
+                SELECT SUM(lr.aantal_geleverd)
+                FROM Levering AS previous
+                JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id
+                WHERE previous.bestelling_id = br.bestelling_id
+                  AND lr.product_id = br.product_id
+                  AND EXISTS (
+                      SELECT 1 FROM Leverpoging AS lp
+                      WHERE lp.levering_id = previous.levering_id
+                        AND lp.resultaat = 'afgeleverd'
+                        AND lp.ontvangst_getekend = TRUE
+                  )
+            ), 0)
+      );
 -- Query 5 (record the delivered quantities for the invoice workflow)
 INSERT INTO Leveringregel (levering_id, product_id, aantal_geleverd, factuur_id)
 SELECT l.levering_id, br.product_id, br.aantal, NULL
@@ -294,10 +409,7 @@ FROM Levering AS l
 JOIN Bestelregel AS br ON br.bestelling_id=l.bestelling_id
 WHERE l.levering_id=1;
 -- Query 4 (illustrative input, not a claimed database result)
-UPDATE Bestelling AS b
-JOIN Levering AS l ON l.bestelling_id=b.bestelling_id
-SET b.status_naam='afgeleverd'
-WHERE l.levering_id=1;
+-- Deze bezorgpoging gebruikt dezelfde MARK_ORDER_DELIVERED_IF_COMPLETE-query als hierboven.
 
 -- DistributionRepository.list_orders_to_schedule
 SELECT b.bestelling_id, b.gewenste_leverdatum, b.dagdeel, b.spoed,
@@ -1114,3 +1226,84 @@ SELECT bestelling_id, extra_bezorgkosten,
                    FROM Bestelling WHERE extra_bezorgkosten_factuur_id=2
                    ORDER BY bestelling_id;
 -- END GENERATED WEEKLY INVOICE QUERIES
+
+-- PR #97: zoeken op ordernummer of klantnaam, GET /orders?order=...
+-- Dezelfde SELECT als OrderStatusNotificationRepository.search_orders().
+-- Voorbeeld: 12 als ordernummer en '%12%' als naamfragment.
+-- Een klantnaam zoekt met NULL als eerste parameter en een LIKE-patroon
+-- waarin uit de invoer afkomstige !, % en _ met ! worden ge-escaped.
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.status_naam
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+WHERE b.bestelling_id = 12 OR k.bedrijfsnaam LIKE '%12%' ESCAPE '!'
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
+
+-- PR #97: geselecteerde order, GET /orders/12/status.
+-- Dezelfde SELECT als OrderStatusNotificationRepository.find_order().
+-- Gevraagde leverdatum en dagdeel zijn geen bevestiging van aflevering.
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum,
+       b.dagdeel, b.status_naam, k.bedrijfsnaam
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+WHERE b.bestelling_id = 12;
+
+-- PR #97: orderregels, tekortkeuzes en feitelijk vastgelegde processtappen.
+-- Dezelfde SELECT als OrderStatusNotificationRepository.find_order_lines().
+-- Voorraadreservering is een voorraadtoewijzing, geen bewijs van tekort.
+-- Deelorderregels zijn robotopdrachten, Leveringregels registreren levering.
+-- Alleen een geslaagde Leverpoging met getekende ontvangst telt als afgeleverd.
+-- Open levering en afgeronde deelorder mogen niet worden opgeteld tot
+-- een zelfbedachte actuele backorderhoeveelheid.
+SELECT p.artikelnummer, p.productnaam, br.aantal,
+       br.prijs_per_eenheid, br.afnemen_bij_tekort,
+       COALESCE(vr.aantal, 0) AS gereserveerd,
+       COALESCE((
+           SELECT SUM(dr.aantal)
+           FROM Deelorderregel AS dr
+           JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
+           WHERE d.bestelling_id = br.bestelling_id
+             AND dr.product_id = br.product_id
+             AND d.afgerond = FALSE
+       ), 0) AS in_open_deelorder,
+       COALESCE((
+           SELECT SUM(dr.aantal)
+           FROM Deelorderregel AS dr
+           JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
+           WHERE d.bestelling_id = br.bestelling_id
+             AND dr.product_id = br.product_id
+             AND d.afgerond = TRUE
+       ), 0) AS in_afgeronde_deelorder,
+       COALESCE((
+           SELECT SUM(lr.aantal_geleverd)
+           FROM Levering AS lv
+           JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id
+           WHERE lv.bestelling_id = br.bestelling_id
+             AND lr.product_id = br.product_id
+             AND NOT EXISTS (
+                 SELECT 1 FROM Leverpoging AS lp
+                 WHERE lp.levering_id = lv.levering_id
+                   AND lp.resultaat = 'afgeleverd'
+                   AND lp.ontvangst_getekend = TRUE
+             )
+       ), 0) AS in_open_levering,
+       COALESCE((
+           SELECT SUM(lr.aantal_geleverd)
+           FROM Levering AS lv
+           JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id
+           WHERE lv.bestelling_id = br.bestelling_id
+             AND lr.product_id = br.product_id
+             AND EXISTS (
+                 SELECT 1 FROM Leverpoging AS lp
+                 WHERE lp.levering_id = lv.levering_id
+                   AND lp.resultaat = 'afgeleverd'
+                   AND lp.ontvangst_getekend = TRUE
+             )
+       ), 0) AS aantal_afgeleverd
+FROM Bestelregel AS br
+JOIN Product AS p ON p.product_id = br.product_id
+LEFT JOIN Voorraadreservering AS vr
+       ON vr.bestelling_id = br.bestelling_id
+      AND vr.product_id = br.product_id
+WHERE br.bestelling_id = 12
+ORDER BY p.productnaam ASC, p.product_id ASC;

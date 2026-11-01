@@ -49,7 +49,7 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "afleveradres": "TEST: Afleverstraat 8, Breda",
     "factuuradres": "TEST: Factuurstraat 12, Breda",
     "jaaromzet": "0",
-    "kortingspercentage": null
+    "kortingspercentage": "5.00"
   }
 ]
 ```
@@ -187,6 +187,83 @@ Resultaat: 4 rij(en) (maximaal 15 getoond)
     "klant_id": 1,
     "bedrijfsnaam": "TEST Apotheek B.V.",
     "afleveradres": "TEST: Afleverstraat 8, Breda"
+  }
+]
+```
+
+## Orderstatus zoeken op nummer (AD06)
+
+Scherm: /orders?order=1
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.status_naam FROM Bestelling AS b JOIN Klant AS k ON k.klant_id = b.klant_id WHERE b.bestelling_id = %s OR k.bedrijfsnaam LIKE %s ESCAPE '!' ORDER BY b.besteld_op DESC, b.bestelling_id DESC
+```
+Parameters: ```json
+[1, "%1%"]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "bestelling_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "besteld_op": "2026-10-19 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "status_naam": "afgeleverd"
+  }
+]
+```
+
+## Orderregels en geregistreerde tekortafspraken (AD06)
+
+Scherm: /orders/1/status
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.status_naam, k.bedrijfsnaam FROM Bestelling AS b JOIN Klant AS k ON k.klant_id = b.klant_id WHERE b.bestelling_id = %s
+```
+Parameters: ```json
+[1]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "bestelling_id": 1,
+    "besteld_op": "2026-10-19 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "status_naam": "afgeleverd",
+    "bedrijfsnaam": "TEST Apotheek B.V."
+  }
+]
+```
+
+### Query 2
+```sql
+SELECT p.artikelnummer, p.productnaam, br.aantal, br.prijs_per_eenheid, br.afnemen_bij_tekort, COALESCE(vr.aantal, 0) AS gereserveerd, COALESCE(( SELECT SUM(dr.aantal) FROM Deelorderregel AS dr JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id AND d.afgerond = FALSE ), 0) AS in_open_deelorder, COALESCE(( SELECT SUM(dr.aantal) FROM Deelorderregel AS dr JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id AND d.afgerond = TRUE ), 0) AS in_afgeronde_deelorder, COALESCE(( SELECT SUM(lr.aantal_geleverd) FROM Levering AS lv JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id WHERE lv.bestelling_id = br.bestelling_id AND lr.product_id = br.product_id AND NOT EXISTS ( SELECT 1 FROM Leverpoging AS lp WHERE lp.levering_id = lv.levering_id AND lp.resultaat = 'afgeleverd' AND lp.ontvangst_getekend = TRUE ) ), 0) AS in_open_levering, COALESCE(( SELECT SUM(lr.aantal_geleverd) FROM Levering AS lv JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id WHERE lv.bestelling_id = br.bestelling_id AND lr.product_id = br.product_id AND EXISTS ( SELECT 1 FROM Leverpoging AS lp WHERE lp.levering_id = lv.levering_id AND lp.resultaat = 'afgeleverd' AND lp.ontvangst_getekend = TRUE ) ), 0) AS aantal_afgeleverd FROM Bestelregel AS br JOIN Product AS p ON p.product_id = br.product_id LEFT JOIN Voorraadreservering AS vr ON vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id WHERE br.bestelling_id = %s ORDER BY p.productnaam ASC, p.product_id ASC
+```
+Parameters: ```json
+[1]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "artikelnummer": "TEST-001",
+    "productnaam": "Testmedicijn",
+    "aantal": 6,
+    "prijs_per_eenheid": "100.00",
+    "afnemen_bij_tekort": null,
+    "gereserveerd": 0,
+    "in_open_deelorder": "0",
+    "in_afgeronde_deelorder": "0",
+    "in_open_levering": "0",
+    "aantal_afgeleverd": "6"
   }
 ]
 ```

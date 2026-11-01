@@ -28,6 +28,8 @@ SCREENS = [
     ("/orders?q=Testmedicijn&quantity=1", "Telefonische verkoop en beschikbaarheid"),
     ("/orders/new", "Telefonische orderinvoer met actuele klant- en productgegevens"),
     ("/orders/status", "Bestellingen en echte orderstatus"),
+    ("/orders?order=1", "Orderstatus zoeken op nummer (AD06)"),
+    ("/orders/1/status", "Orderregels en geregistreerde tekortafspraken (AD06)"),
     ("/products", "Productcatalogus"),
     ("/products/new", "Product toevoegen: leverancierskeuze"),
     ("/products/1/edit", "Product bewerken"),

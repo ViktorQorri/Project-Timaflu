@@ -416,7 +416,6 @@ package "services" {
     +__init__()
     +search()
     +status_overview()
-    +_message()
   }
   class "services.order_status_report_service.OrderStatusReportService" as C64 {
     +__init__()

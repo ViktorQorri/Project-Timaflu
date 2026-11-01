@@ -16,7 +16,7 @@ class RealOrderChainTests(unittest.TestCase):
     def setUp(self):
         self.name="timaflu_orderchain_"+uuid4().hex[:10]
         self.options=dict(host="127.0.0.1",port=int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
-                          user="root",password=os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"])
+                          user="root",password=os.getenv("TIMAFLU_TEST_MYSQL_PASSWORD", ""))
         self.admin=mysql.connector.connect(**self.options)
         with self.admin.cursor() as c: c.execute("CREATE DATABASE "+self.name)
         self.admin.commit()
@@ -78,6 +78,7 @@ class RealOrderChainTests(unittest.TestCase):
             token=self.token(preview)
             self.assertEqual(client.post("/orders/confirm",
                 data={"quote_token":token,"customer_approved":"yes"}).status_code,302)
+            self.assertIsNone(self.scalar("SELECT afnemen_bij_tekort FROM Bestelregel"))
             self.assertEqual(self.scalar("SELECT aantal FROM Voorraadreservering"),3)
             self.assertEqual(self.scalar("SELECT aantal FROM Magazijnlocatie"),5)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Deelorder"),1)
@@ -102,6 +103,7 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leverpoging"),1)
             self.assertEqual(client.post("/deliveries/first-attempt/delivered",
                 data={"day":day.isoformat(),"delivery_id":"1","signature_confirmed":"yes"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"afgeleverd")
             with self.app.app_context():
                 week=day-timedelta(days=day.weekday())
                 ids=WeeklyInvoiceRepository(get_connection()).issue_week(
@@ -122,6 +124,7 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Voorraadreservering"),0)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Deelorder"),0)
             self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"backorder")
+            self.assertEqual(self.scalar("SELECT afnemen_bij_tekort FROM Bestelregel"),1)
 
     def test_two_failed_visits_can_be_rescheduled_and_charge_billed_once(self):
         first = date.today()+timedelta(days=1)

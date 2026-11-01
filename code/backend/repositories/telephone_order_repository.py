@@ -191,11 +191,15 @@ class TelephoneOrderRepository:
                 )
                 order_id = c.lastrowid
                 for line in quote["selected"]:
+                    # NULL: no shortage decision was needed (in stock).
+                    # TRUE: customer explicitly accepted delayed shortage product.
+                    # FALSE is reserved for explicit shortage refusal, never for
+                    # an in-stock order line that still needs delivery.
                     c.execute("""INSERT INTO Bestelregel
                                  (bestelling_id,product_id,aantal,prijs_per_eenheid,afnemen_bij_tekort)
                                  VALUES(%s,%s,%s,%s,%s)""",
                               (order_id, line["product_id"], line["quantity"],
-                               line["unit_price"], line["backorder"]))
+                               line["unit_price"], True if line["backorder"] else None))
                     if line["enough"]:
                         c.execute("""INSERT INTO Voorraadreservering(bestelling_id,product_id,aantal)
                                      VALUES(%s,%s,%s)""",

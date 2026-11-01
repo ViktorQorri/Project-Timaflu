@@ -467,13 +467,12 @@
 <text x="910" y="2404" font-family="monospace" font-size="11">_positive_id()</text>
 <text x="910" y="2422" font-family="monospace" font-size="11">_validate()</text>
 <text x="910" y="2440" font-family="monospace" font-size="11">remove_offer()</text>
-<rect x="1340" y="2412" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="2412" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="1340" y="2412" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="1348" y="2431" font-family="Arial" font-size="12" font-weight="bold">services.order_status_notification_service.OrderStatusNotificationService</text>
 <text x="1350" y="2458" font-family="monospace" font-size="11">__init__()</text>
 <text x="1350" y="2476" font-family="monospace" font-size="11">search()</text>
 <text x="1350" y="2494" font-family="monospace" font-size="11">status_overview()</text>
-<text x="1350" y="2512" font-family="monospace" font-size="11">_message()</text>
 <rect x="20" y="2472" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2472" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2491" font-family="Arial" font-size="12" font-weight="bold">services.order_status_report_service.OrderStatusReportService</text>
@@ -498,12 +497,12 @@
 <text x="910" y="2626" font-family="monospace" font-size="11">update_product()</text>
 <text x="910" y="2644" font-family="monospace" font-size="11">remove_from_assortment()</text>
 <text x="910" y="2662" font-family="monospace" font-size="11">_check_codes_are_free()</text>
-<rect x="1340" y="2562" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="1340" y="2562" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="1348" y="2581" font-family="Arial" font-size="12" font-weight="bold">services.purchase_order_service.PurchaseOrderService</text>
-<text x="1350" y="2608" font-family="monospace" font-size="11">__init__()</text>
-<text x="1350" y="2626" font-family="monospace" font-size="11">record_order()</text>
-<text x="1350" y="2644" font-family="monospace" font-size="11">recorded_orders()</text>
+<rect x="1340" y="2544" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="2544" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="1348" y="2563" font-family="Arial" font-size="12" font-weight="bold">services.purchase_order_service.PurchaseOrderService</text>
+<text x="1350" y="2590" font-family="monospace" font-size="11">__init__()</text>
+<text x="1350" y="2608" font-family="monospace" font-size="11">record_order()</text>
+<text x="1350" y="2626" font-family="monospace" font-size="11">recorded_orders()</text>
 <rect x="20" y="2622" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2622" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2641" font-family="Arial" font-size="12" font-weight="bold">services.reorder_service.ReorderService</text>
@@ -527,11 +526,11 @@
 <text x="910" y="2812" font-family="monospace" font-size="11">next_order()</text>
 <text x="910" y="2830" font-family="monospace" font-size="11">complete()</text>
 <text x="910" y="2848" font-family="monospace" font-size="11">generate_suborders()</text>
-<rect x="1340" y="2694" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="1340" y="2694" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="1348" y="2713" font-family="Arial" font-size="12" font-weight="bold">services.sales_stock_service.SalesStockService</text>
-<text x="1350" y="2740" font-family="monospace" font-size="11">__init__()</text>
-<text x="1350" y="2758" font-family="monospace" font-size="11">check()</text>
+<rect x="1340" y="2676" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="2676" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="1348" y="2695" font-family="Arial" font-size="12" font-weight="bold">services.sales_stock_service.SalesStockService</text>
+<text x="1350" y="2722" font-family="monospace" font-size="11">__init__()</text>
+<text x="1350" y="2740" font-family="monospace" font-size="11">check()</text>
 <rect x="20" y="2772" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2772" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2791" font-family="Arial" font-size="12" font-weight="bold">services.stock_service.StockService</text>

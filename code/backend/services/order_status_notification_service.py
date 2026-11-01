@@ -1,4 +1,4 @@
-"""Prepare order status information for sales employees to share with customers."""
+"""Case-based order status lookup for telephone sales."""
 
 from domain.errors import DomainError, NotFoundError
 
@@ -8,19 +8,17 @@ STATUSES = {
     "backorder": ("Backorder", "warning"),
     "afgeleverd": ("Afgeleverd", "success"),
     "gefactureerd": ("Gefactureerd", "success"),
-    "niet afgeleverd": ("Niet afgeleverd", "warning"),
+    "ingepakt": ("Ingepakt", "info"),
+    "nieuw": ("Nieuw", "info"),
 }
-NO_STATUS = ("Nog geen status", "neutral")
+NO_STATUS = ("Niet geregistreerd", "neutral")
 MAX_SEARCH_LENGTH = 100
-
-
-def _date(value):
-    return value.strftime("%d-%m-%Y") if value else ""
+MAX_DATABASE_ORDER_ID = 2_147_483_647  # Bestelling.bestelling_id is a signed MySQL INT.
 
 
 def _with_status(order):
     name = order.get("status_naam")
-    label, tone = STATUSES.get(name, (name.capitalize(), "info") if name else NO_STATUS)
+    label, tone = STATUSES.get(name, (name, "neutral") if name else NO_STATUS)
     return {**order, "status_label": label, "status_tone": tone}
 
 
@@ -29,82 +27,106 @@ class OrderStatusNotificationService:
         self.repository = repository
 
     def search(self, term):
-        """Return matching orders, or an empty list for an empty search."""
+        """Return only recorded orders, or an empty result for an empty search."""
         term = (term or "").strip()
         if not term:
             return []
         if len(term) > MAX_SEARCH_LENGTH:
             raise DomainError("De zoekterm mag maximaal 100 tekens bevatten.")
-        order_id = int(term) if term.isdigit() else None
-        return [
-            _with_status(row)
-            for row in self.repository.search_orders(order_id, term)
-        ]
+        order_id = None
+        if term.isascii() and term.isdecimal():
+            candidate = int(term)
+            if candidate <= MAX_DATABASE_ORDER_ID:
+                order_id = candidate
+        return [_with_status(row) for row in self.repository.search_orders(order_id, term)]
 
     def status_overview(self, order_id):
-        """Return order details, reserved quantities and a customer-ready message."""
+        """Return factual order status, delivery preference and shortage decisions."""
+        if isinstance(order_id, bool) or isinstance(order_id, float):
+            raise DomainError("Het ordernummer moet een positief geheel getal zijn.")
         try:
             order_id = int(order_id)
-        except (TypeError, ValueError) as error:
-            raise DomainError(
-                "Het ordernummer moet een positief geheel getal zijn."
-            ) from error
-        if order_id < 1:
-            raise DomainError("Het ordernummer moet een positief geheel getal zijn.")
+        except (TypeError, ValueError, OverflowError) as error:
+            raise DomainError("Het ordernummer moet een positief geheel getal zijn.") from error
+        if not (1 <= order_id <= MAX_DATABASE_ORDER_ID):
+            raise DomainError("Het ordernummer moet een geldig positief geheel getal zijn.")
         order = self.repository.find_order(order_id)
         if order is None:
             raise NotFoundError(f"Order {order_id} is niet gevonden.")
         order = _with_status(order)
-        lines = [
-            {
-                **line,
-                "backorder": max(line["aantal"] - line["gereserveerd"], 0),
-            }
-            for line in self.repository.find_order_lines(order_id)
+        lines = self.repository.find_order_lines(order_id)
+        has_backorder = order.get("status_naam") == "backorder"
+
+        # An accepted shortage is a recorded customer decision, not proof of
+        # current stock shortage. Delivery, reservation and robot assignments
+        # describe different steps and can overlap; never add their quantities
+        # together to invent a missing-stock amount.
+        progress_fields = (
+            "gereserveerd", "in_open_deelorder", "in_afgeronde_deelorder",
+            "in_open_levering", "aantal_afgeleverd",
+        )
+        detailed_lines = []
+        for original in lines:
+            line = dict(original)
+            for field in progress_fields:
+                line[field] = int(line.get(field) or 0)
+            if line["aantal_afgeleverd"] > line["aantal"]:
+                progress = "Afgeleverde hoeveelheid controleren"
+            elif line["aantal_afgeleverd"] == line["aantal"]:
+                progress = "Volledig afgeleverd"
+            elif line["in_open_levering"]:
+                progress = "Levering geregistreerd, ontvangst niet bevestigd"
+            elif line["in_afgeronde_deelorder"]:
+                progress = "Deelorder afgerond, aflevering niet bevestigd"
+            elif line["in_open_deelorder"]:
+                progress = "Deelorder aangemaakt, nog niet afgerond"
+            elif line["gereserveerd"]:
+                progress = "Voorraad voor deze bestelling gereserveerd"
+            elif line["aantal_afgeleverd"]:
+                progress = "Deels afgeleverd, geen vervolgstap geregistreerd"
+            else:
+                progress = "Geen reservering of verdere verwerking geregistreerd"
+            legacy_false_with_activity = (
+                line["afnemen_bij_tekort"] == 0
+                and any(line[field] > 0 for field in progress_fields)
+            )
+            detailed_lines.append({
+                **line, "proces_label": progress,
+                "legacy_false_with_activity": legacy_false_with_activity,
+            })
+
+        shortage_lines = [
+            line for line in detailed_lines if line["afnemen_bij_tekort"] == 1
         ]
-        backorder_lines = [line for line in lines if line["backorder"] > 0]
+        undelivered_shortages = [
+            line for line in shortage_lines
+            if line["aantal_afgeleverd"] < line["aantal"]
+        ]
+        # Historical telephone orders used FALSE for in-stock order lines.
+        # A FALSE line with recorded reservation/picking/shipping is still due.
+        legacy_false_lines = [
+            line for line in detailed_lines if line["legacy_false_with_activity"]
+        ]
+        due_lines = [
+            line for line in detailed_lines
+            if line["afnemen_bij_tekort"] != 0 or line["legacy_false_with_activity"]
+        ]
+        delivery_status_conflict = (
+            order.get("status_naam") == "afgeleverd"
+            and (
+                not due_lines
+                or any(
+                    line["aantal_afgeleverd"] != line["aantal"]
+                    for line in due_lines
+                )
+            )
+        )
         return {
             "order": order,
-            "lines": lines,
-            "backorder_lines": backorder_lines,
-            "message": self._message(order, backorder_lines),
+            "lines": detailed_lines,
+            "has_backorder": has_backorder,
+            "shortage_lines": shortage_lines,
+            "undelivered_shortages": undelivered_shortages,
+            "delivery_status_conflict": delivery_status_conflict,
+            "legacy_false_lines": legacy_false_lines,
         }
-
-    @staticmethod
-    def _message(order, backorder_lines):
-        """Compose a Dutch message for the employee to read or copy."""
-        parts = [f"Beste {order.get('contactpersoon') or order['bedrijfsnaam']},", ""]
-        if order.get("status_naam"):
-            parts.append(
-                f"Uw bestelling {order['bestelling_id']} van "
-                f"{_date(order['besteld_op'])} heeft de status "
-                f"'{order['status_label'].lower()}'."
-            )
-        else:
-            parts.append(
-                f"Uw bestelling {order['bestelling_id']} van "
-                f"{_date(order['besteld_op'])} is ontvangen en wordt verwerkt."
-            )
-        if order.get("afgeleverd_op"):
-            if backorder_lines:
-                parts.append(
-                    f"De beschikbare producten zijn afgeleverd op {_date(order['afgeleverd_op'])}."
-                )
-            else:
-                parts.append(f"De bestelling is afgeleverd op {_date(order['afgeleverd_op'])}.")
-        else:
-            parts.append(
-                f"De geplande levering is op "
-                f"{_date(order['gewenste_leverdatum'])} in de {order['dagdeel']}."
-            )
-        if backorder_lines:
-            products = ", ".join(
-                f"{line['backorder']}x {line['productnaam']}"
-                for line in backorder_lines
-            )
-            parts.append(
-                f"De volgende producten zijn in backorder: {products}. "
-                "Deze zijn nog niet op voorraad."
-            )
-        parts += ["", "Met vriendelijke groet,", "Timaflu"]
-        return "\n".join(parts)

@@ -3,6 +3,73 @@ from datetime import date, time, timedelta
 from domain.errors import ConflictError, DomainError, NotFoundError
 
 
+# AD12: A successful shipment does not mean every line of the customer order
+# was delivered. Only mark the full order as delivered once all order lines
+# still accepted by the customer have their signed delivery quantity recorded.
+# A declined shortage (afnemen_bij_tekort = FALSE) does not require delivery.
+MARK_ORDER_DELIVERED_IF_COMPLETE = """
+    UPDATE Bestelling AS b
+    JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+    SET b.status_naam = 'afgeleverd'
+    WHERE l.levering_id = %s
+      AND EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
+            AND br.aantal <> COALESCE((
+                SELECT SUM(lr.aantal_geleverd)
+                FROM Levering AS previous
+                JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id
+                WHERE previous.bestelling_id = br.bestelling_id
+                  AND lr.product_id = br.product_id
+                  AND EXISTS (
+                      SELECT 1 FROM Leverpoging AS lp
+                      WHERE lp.levering_id = previous.levering_id
+                        AND lp.resultaat = 'afgeleverd'
+                        AND lp.ontvangst_getekend = TRUE
+                  )
+            ), 0)
+      )
+"""
+
+
 class AssessedRepository:
     def __init__(self, connection):
         self.db = connection
@@ -231,22 +298,19 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
 
     @staticmethod
     def _mark_order_after_delivery(cursor, delivery_id):
-        """An order stays in backorder when not all requested medicines arrived."""
-        cursor.execute(
-            """UPDATE Bestelling AS b
-               JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
-               SET b.status_naam = CASE
-                   WHEN EXISTS (
-                       SELECT 1 FROM Bestelregel AS br
-                       LEFT JOIN Leveringregel AS lr
-                         ON lr.levering_id = l.levering_id
-                        AND lr.product_id = br.product_id
-                       WHERE br.bestelling_id = b.bestelling_id
-                         AND COALESCE(lr.aantal_geleverd, 0) < br.aantal
-                   ) THEN 'backorder' ELSE 'afgeleverd' END
-               WHERE l.levering_id = %s""",
-            (delivery_id,),
-        )
+        """Count all signed deliveries before marking an order fully delivered."""
+        cursor.execute(MARK_ORDER_DELIVERED_IF_COMPLETE, (delivery_id,))
+        if cursor.rowcount == 0:
+            # The original order still has undelivered, accepted medicine lines.
+            # An already completed or invoiced order is never reopened.
+            cursor.execute(
+                """UPDATE Bestelling AS b
+                   JOIN Levering AS l ON l.bestelling_id=b.bestelling_id
+                   SET b.status_naam='backorder'
+                   WHERE l.levering_id=%s
+                     AND b.status_naam NOT IN ('afgeleverd','gefactureerd')""",
+                (delivery_id,),
+            )
 
     def record_second_attempt_outcome(self, delivery_id, delivery_day, outcome, signature_confirmed):
         """Record second visit only after it takes place; never invent a signature."""
