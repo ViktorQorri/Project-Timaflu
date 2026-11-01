@@ -97,6 +97,9 @@ class PaymentReminderMySqlTests(unittest.TestCase):
             admin.close()
 
     def reminder_count(self, invoice_id):
+        # Browser requests commit through a different DB connection. Start a
+        # new MySQL snapshot rather than reuse the older REPEATABLE READ snapshot.
+        self.db.rollback()
         with self.db.cursor(dictionary=True) as cursor:
             cursor.execute(
                 "SELECT COUNT(*) AS aantal FROM Betalingsherinnering WHERE factuur_id = %s",
