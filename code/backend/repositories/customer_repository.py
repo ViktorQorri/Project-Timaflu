@@ -127,26 +127,6 @@ class CustomerRepository:
             connection.rollback()
             raise
 
-    def deactivate(self, customer_id):
-        """Deactivate without destroying orders, invoices, discounts or acquisition links."""
-        connection = self.connection
-        try:
-            with connection.cursor(dictionary=True) as cursor:
-                cursor.execute(
-                    "SELECT klant_id FROM Klant WHERE klant_id = %s AND actief = TRUE FOR UPDATE",
-                    (customer_id,),
-                )
-                if cursor.fetchone() is None:
-                    raise NotFoundError("Deze actieve klant bestaat niet.")
-                cursor.execute(
-                    "UPDATE Klant SET actief = FALSE WHERE klant_id = %s",
-                    (customer_id,),
-                )
-            connection.commit()
-        except Exception:
-            connection.rollback()
-            raise
-
     @staticmethod
     def _insert_address(cursor, address):
         cursor.execute("INSERT INTO Adres (adres) VALUES (%s)", (address,))

@@ -2,10 +2,8 @@ from flask import Blueprint, jsonify, request
 
 from db import get_connection
 from domain.errors import DomainError
-from repositories.health_repository import HealthRepository
 from repositories.picking_bin_repository import PickingBinRepository
 from repositories.robot_order_repository import RobotOrderRepository
-from services.health_service import HealthService
 from services.picking_bin_service import PickingBinService
 from services.robot_order_service import RobotOrderService
 
@@ -15,13 +13,6 @@ api = Blueprint("api", __name__)
 
 def _robot_service():
     return RobotOrderService(RobotOrderRepository(get_connection()))
-
-
-@api.get("/health")
-def health():
-    """Tell a robot whether the backend and the database are up."""
-    health_service = HealthService(HealthRepository(get_connection()))
-    return jsonify(status="ok", database=health_service.database_is_reachable())
 
 
 @api.post("/picking-bins")

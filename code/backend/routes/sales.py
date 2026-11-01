@@ -77,19 +77,6 @@ def update_customer(customer_id):
     return redirect(url_for("sales.customers"))
 
 
-@sales.get("/customers/<int:customer_id>/deactivate")
-def confirm_deactivate_customer(customer_id):
-    """Confirm the AD07 deactivation action."""
-    return render_template("customer_deactivate.html", customer=customer_service().get(customer_id))
-
-
-@sales.post("/customers/<int:customer_id>/deactivate")
-def deactivate_customer(customer_id):
-    """Deactivate a customer while retaining all linked business records."""
-    customer_service().deactivate(customer_id)
-    flash(f"Klant {customer_id} is gedeactiveerd.", "success")
-    return redirect(url_for("sales.customers"))
-
 @sales.get("/orders/status")
 def order_status():
     raw = request.args.get("customer_id", "").strip()

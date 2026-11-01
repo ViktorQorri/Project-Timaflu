@@ -10,7 +10,6 @@
   ('administration.invoices', 'Facturen'),
   ('weekly_invoices.weekly_overview', 'Weekfacturen'),
   ('acquisition.index', 'Acquisitie'),
-  ('reports.index', 'Rapportages')
 ] %}
 <!doctype html>
 <html lang="nl">
@@ -30,7 +29,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/picking-bins.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status-report.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/operations.css') }}">
   {% block extra_styles %}{% endblock %}
@@ -50,7 +48,6 @@
             ('purchasing.suppliers', 'Leveranciers'), ('purchasing.reorder', 'Bijbestellen'),
             ('order_picking.index', 'Orderpicking'), ('distribution.deliveries', 'Leveringen'),
             ('administration.invoices', 'Facturen'), ('acquisition.index', 'Acquisitie'),
-            ('reports.index', 'Rapportages')
           ] %}
           <li><a href="{{ url_for(endpoint) }}">{{ label }}</a></li>
           {% endfor %}
@@ -72,7 +69,6 @@
           ('distribution.deliveries', 'Leveringen'),
           ('administration.invoices', 'Facturen'),
           ('acquisition.index', 'Acquisitie'),
-          ('reports.index', 'Rapportages'),
         ] %}
           <li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
         {% endfor %}

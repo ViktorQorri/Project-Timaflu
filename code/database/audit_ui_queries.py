@@ -24,10 +24,9 @@ ROOT = Path(__file__).resolve().parents[2]
 DATABASE = "timaflu_casus_test_94"
 OUT = ROOT / "Documentation/Architecture/query-output-per-screen.md"
 SCREENS = [
-    ("/", "Home en databasecontrole"),
+    ("/", "Home"),
     ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
     ("/customers/1/edit", "Klantgegevens en adressen bewerken (AD07)"),
-    ("/customers/1/deactivate", "Klant deactiveren, historie bewaren (AD07)"),
     ("/orders?q=Testmedicijn&quantity=1", "Telefonische verkoop en beschikbaarheid"),
     ("/orders/new", "Telefonische orderinvoer met actuele klant- en productgegevens"),
     ("/orders/status", "Bestellingen en echte orderstatus"),
@@ -54,12 +53,10 @@ SCREENS = [
     ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
-    ("/reports", "Orderstatusoverzicht"),
-    ("/api/health", "Database API gezondheid"),
 ]
-MODULES = ["routes.home","routes.purchasing","routes.sales",
+MODULES = ["routes.purchasing","routes.sales",
            "routes.distribution","routes.administration",
-           "routes.weekly_invoices","routes.acquisition","routes.reports","routes.api"]
+           "routes.weekly_invoices","routes.acquisition","routes.api"]
 
 
 class RecorderCursor:

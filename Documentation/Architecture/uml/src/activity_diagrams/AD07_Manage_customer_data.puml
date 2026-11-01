@@ -16,11 +16,7 @@ if (Add customer?) then ([yes])
   else ([no])
   endif
 else ([no])
-  if (Edit customer?) then ([yes])
-    :Select customer and edit data;
-  else ([no])
-    :Select customer and choose deactivate;
-  endif
+  :Select customer and edit data;
 endif
 |System|
 :Validate data;
