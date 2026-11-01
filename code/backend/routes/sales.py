@@ -1,5 +1,4 @@
 from datetime import date
-from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import current_app, session
@@ -9,8 +8,6 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from db import get_connection
 from domain.errors import DomainError, ValidationError
-from domain.business import Order, euro
-from repositories.discount_repository import DiscountRepository
 from repositories.customer_repository import CustomerRepository
 from repositories.order_status_notification_repository import OrderStatusNotificationRepository
 from repositories.sales_stock_repository import SalesStockRepository
@@ -119,47 +116,6 @@ def order_status_detail(order_id):
         OrderStatusNotificationRepository(get_connection())
     )
     return render_template("order_status_notification.html", **service.status_overview(order_id))
-
-
-@sales.post("/orders/calculate-discount")
-def calculate_order_discount():
-    try:
-        customer_id=int(request.form["customer_id"])
-        subtotal=request.form["subtotal"]
-    except (TypeError,ValueError,KeyError) as exc:
-        raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from exc
-    if customer_id<=0:
-        raise DomainError("Klantnummer moet positief zijn.")
-    try:
-        subtotal = euro(subtotal)
-    except (ValueError, InvalidOperation) as exc:
-        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
-    repository = DiscountRepository(get_connection())
-    customer = repository.find_customer(customer_id)
-    if customer is None:
-        raise DomainError("Deze klant bestaat niet of is niet actief.")
-    first_order = repository.count_previous_orders(customer_id) == 0
-    year = date.today().year
-    rate = repository.get_customer_discount_percentage(customer_id, year)
-    if rate is None:
-        if not first_order:
-            raise DomainError(f"De klantenkorting voor {year} is niet vastgelegd.")
-        rate = Decimal("5")
-    try:
-        subtotal_ex = euro(subtotal)
-        vat = euro(subtotal_ex * Decimal("0.09"))
-        gross = subtotal_ex + vat
-        result = Order(
-            gross, 0, first_order, customerDiscountPercentage=rate
-        ).calculateTotalAmount()
-    except (ValueError, InvalidOperation) as exc:
-        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
-    return render_template(
-        "discount.html", customer=customer,
-        subtotal_ex= subtotal_ex, vat=vat, gross=gross,
-        discount_year=year, customer_discount_percentage=rate,
-        first_order=first_order, discount=result
-    )
 
 
 def _approval_serializer():
