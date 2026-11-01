@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="customer-panel">
+    <div class="panel">
       <dl class="customer-details">
         <dt>Klantnummer</dt><dd>{{ customer.klant_id }}</dd>
         <dt>Bedrijfsnaam</dt><dd>{{ customer.bedrijfsnaam }}</dd>
@@ -22,8 +22,8 @@
         <dt>Factuuradres</dt><dd>{{ customer.factuuradres }}</dd>
       </dl>
       <form method="post" action="{{ url_for('sales.deactivate_customer', customer_id=customer.klant_id) }}" class="customer-form__actions">
-        <button type="submit" class="customer-button customer-button--danger">Klant deactiveren</button>
-        <a class="customer-button customer-button--secondary" href="{{ url_for('sales.customers') }}">Annuleren</a>
+        <button type="submit" class="button button--danger">Klant deactiveren</button>
+        <a class="button button--secondary" href="{{ url_for('sales.customers') }}">Annuleren</a>
       </form>
     </div>
   </section>

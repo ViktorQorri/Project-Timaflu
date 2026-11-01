@@ -15,6 +15,8 @@ Het portaal moet:
 
 De visuele stijl combineert een donkerblauwe basis met helder blauw voor interactie, lichte achtergronden en subtiele borders.
 
+Het scherm Rapportages (`templates/reports.html`) is het referentiescherm. Nieuwe en bestaande schermen volgen dezelfde paginaopbouw (zie 5.4).
+
 ## 2. Kleuren
 
 ### Basiskleuren
@@ -59,7 +61,7 @@ De fonts worden via Google Fonts geladen in `templates/base.html`.
 | Kaarttitel | Manrope, 13–15 px, bold |
 | Lopende tekst | DM Sans, 13–15 px |
 | Tabeltekst | DM Sans, 9–11 px |
-| Eyebrow | 9–10 px, uppercase, bold, letterspatiëring van circa 2 px |
+| Eyebrow | DM Sans, 14 px, bold, blauw, gewone hoofdletters |
 | KPI-waarde | Manrope, 26 px, bold |
 
 Koppen gebruiken een kleine negatieve letterspatiëring voor een compacte, zakelijke uitstraling.
@@ -80,7 +82,8 @@ De interface gebruikt voornamelijk veelvouden van 4 px.
 
 | Element | Radius |
 |---|---:|
-| Buttons en velden | 7–8 px |
+| Buttons | 20 px (capsule) |
+| Invoervelden | 8 px |
 | Icoonvlakken | 8–9 px |
 | Kaarten en panelen | 10–12 px |
 | Statuslabels | 20 px |
@@ -90,16 +93,27 @@ De interface gebruikt voornamelijk veelvouden van 4 px.
 
 ### Navigatie
 
-- Navigatie staat op desktop naast het logo en mag op smallere schermen naar een tweede rij lopen.
+- De header heeft twee rijen: het woordmerk met het label `Medewerkersportaal`, daaronder de navigatie.
+- Desktop- en mobiele navigatie gebruiken dezelfde lijst uit `base.html`.
 - De actieve pagina krijgt blauwe tekst en een lichtblauwe achtergrond.
 - Alle werkprocessen zijn beschikbaar; de huidige applicatie kent nog geen gebruikersrollen.
-- Op mobiel blijft de navigatie zonder JavaScript horizontaal scrollbaar.
+- Onder 1280 px vervangt een `Menu`-knop (native `<details>`, zonder JavaScript) de navigatierij.
 
 ### Contentbreedte
 
-- Maximale contentbreedte: 1440 px.
+- Header, content en footer delen één container van maximaal 1320 px (`--container`).
 - Content staat horizontaal gecentreerd.
 - De horizontale paginamarge schaalt mee met de viewport.
+
+### Paginaopbouw
+
+Elk scherm volgt de opbouw van Rapportages:
+
+1. Een intro op de achtergrond: `stock-dashboard__intro` met eyebrow, `h1`, toelichting en eventueel acties of een teller rechts.
+2. Daaronder een stapel witte panelen met 18 px tussenruimte. Een `section` direct in `.stock-dashboard` is automatisch een paneel; elders gebruik je `.panel`.
+3. Zoek- en filterformulieren (`.lookup-form`) direct in de pagina worden een eigen paneel, zoals het rapportfilter.
+4. Een tabel in een paneel heeft geen eigen rand. Een losse `stock-dashboard__table-wrap` is zelf een paneel.
+5. Herhaalde blokken binnen een paneel, zoals orders of facturen, gebruiken `.sub-panel`.
 
 ### Grids
 
@@ -117,7 +131,7 @@ De huidige header gebruikt het woordmerk `tima` in navy en `flu` in blauw. Voeg 
 
 - Blauwe achtergrond.
 - Witte tekst.
-- Radius van 8 px.
+- Capsulevorm (radius 20 px).
 - Compacte schaduw.
 - Duidelijk werkwoord als label.
 - Pijl of plus-icoon mag de handeling ondersteunen.
@@ -133,8 +147,8 @@ Voorbeelden:
 
 - Witte achtergrond.
 - Border met `--line`.
-- Radius van 10–12 px.
-- Schaduw alleen bij hover of om een zwevend element te benadrukken.
+- Radius van 11 px.
+- Geen schaduw; alleen het mobiele menu zweeft en heeft er een.
 - Inhoud volgt steeds: titel, optionele toelichting en primaire informatie.
 
 ### Snelkoppeling
@@ -256,8 +270,9 @@ De huidige schoolapplicatie heeft geen inlog- of rollenbeheer. De navigatie is d
 
 De kern van het designsysteem staat in:
 
-- `templates/base.html` — documentstructuur, navigatie en gedeelde schermbasis;
-- `static/css/style.css` — gedeelde tokens, typografie, formulieren, navigatie en responsive basis;
-- `static/css/operations.css` en de overige `static/css/*.css` bestanden — componenten en schermspecifieke patronen.
+- `templates/base.html`: documentstructuur, navigatie en de content-container;
+- `static/css/ui-system.css`: tokens, typografie, header, paginaopbouw, panelen, formulieren, knoppen, tabellen, statuslabels en responsive basis;
+- `static/css/order-status-report.css`: het referentiescherm Rapportages;
+- `static/css/operations.css`, `customers.css`, `products.css`, `deliveries.css` en `order-status-notification.css`: alleen de interne layout van specifieke schermen, geen containers of kaartstijlen.
 
 Nieuwe schermen moeten bestaande tokens en componentpatronen hergebruiken voordat er nieuwe varianten worden toegevoegd.

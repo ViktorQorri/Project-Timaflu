@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Fabrikanten{% endblock %}
 {% block content %}
-<section class="stock-dashboard">
+<section class="stock-dashboard" aria-labelledby="manufacturers-title">
   <header class="stock-dashboard__intro">
-    <div><p class="stock-dashboard__eyebrow">Inkoop</p><h1>Fabrikanten beheren</h1>
+    <div><p class="stock-dashboard__eyebrow">Inkoop</p><h1 id="manufacturers-title">Fabrikanten beheren</h1>
       <p class="stock-dashboard__subtitle">Beheer leveranciersgegevens en hun aanbodprijzen.</p></div>
     <a class="button" href="{{ url_for('purchasing.manufacturer_new') }}">Fabrikant toevoegen</a>
   </header>

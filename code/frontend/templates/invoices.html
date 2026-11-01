@@ -1,19 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Openstaande facturen{% endblock %}
 {% block content %}
-<section class="invoice-page" aria-labelledby="invoice-page-title">
-  <header class="invoice-page__intro">
-    <p class="invoice-page__eyebrow">Administratie</p>
-    <h1 id="invoice-page-title">Facturen beheren</h1>
-    <p class="invoice-page__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
+<section class="stock-dashboard" aria-labelledby="invoice-page-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Administratie</p>
+      <h1 id="invoice-page-title">Facturen beheren</h1>
+      <p class="stock-dashboard__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
+    </div>
+    <a class="button button--secondary" href="{{ url_for('weekly_invoices.weekly_overview') }}">Weekfacturen voor een afgesloten week controleren en uitgeven</a>
   </header>
 
   {% if today is defined and today and today[5:] == '-12-31' %}
-    <section class="invoice-create" aria-labelledby="annual-discounts-title">
+    <section aria-labelledby="annual-discounts-title">
       <h2 id="annual-discounts-title">Jaarlijkse klantkortingen</h2>
       <p>Stel op 31 december de klantkorting voor volgend jaar vast op basis van de
          volledig betaalde facturen van dit kalenderjaar (5%, 10% of 15%).</p>
-      <form method="post" action="{{ url_for('administration.determine_annual_discounts') }}">
+      <form method="post" action="{{ url_for('administration.determine_annual_discounts') }}" class="stacked-form">
         <label><input type="checkbox" name="discounts_confirmed" value="yes" required>
           Ik heb de betaalde jaaromzet gecontroleerd.
         </label>
@@ -24,7 +27,7 @@
 
   <section aria-labelledby="uninvoiced-deliveries-title">
     <h2 id="uninvoiced-deliveries-title">Afgeleverd en nog niet gefactureerd</h2>
-    <p>Controleer de daadwerkelijk geleverde producten voordat je een weekfactuur aanmaakt.
+    <p class="stock-dashboard__subtitle">Controleer de daadwerkelijk geleverde producten voordat je een weekfactuur aanmaakt.
        De bestellings- en klantenkortingen worden bij het aanmaken per bestelling berekend.</p>
     {% if uninvoiced_deliveries %}
     <div class="stock-dashboard__table-wrap">
@@ -50,27 +53,24 @@
       </table>
     </div>
     {% else %}
-      <p>Er zijn geen afgeleverde orders die nog gefactureerd moeten worden.</p>
+      <p class="stock-dashboard__empty">Er zijn geen afgeleverde orders die nog gefactureerd moeten worden.</p>
     {% endif %}
   </section>
 
-  <form method="get" class="invoice-search" role="search">
-    <label for="invoice-customer">Klantnummer
-      <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{ customer_id or '' }}">
-    </label>
-    <button type="submit">Facturen opzoeken</button>
-  </form>
-
-  <p><a href="{{ url_for('weekly_invoices.weekly_overview') }}">
-    Weekfacturen voor een afgesloten week controleren en uitgeven
-  </a></p>
-
-  <section aria-label="Factuuroverzicht">
+  <section aria-labelledby="customer-invoices-title">
+    <h2 id="customer-invoices-title">Facturen per klant</h2>
+    <form method="get" class="lookup-form invoice-lookup" role="search">
+      <div class="form-field">
+        <label for="invoice-customer">Klantnummer</label>
+        <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{ customer_id or '' }}">
+      </div>
+      <button type="submit">Facturen opzoeken</button>
+    </form>
     {% for f in invoices %}
-      <article class="invoice-card" aria-labelledby="invoice-{{ f.invoice_number }}">
+      <article class="invoice-card sub-panel" aria-labelledby="invoice-{{ f.invoice_number }}">
         <header class="invoice-card__header">
           <div>
-            <h2 id="invoice-{{ f.invoice_number }}">Factuur {{ f.invoice_number }}</h2>
+            <h3 id="invoice-{{ f.invoice_number }}">Factuur {{ f.invoice_number }}</h3>
             <p class="invoice-card__meta">{{ f.date }} · {{ f.customer_name }} · {{ f.customer_address }}</p>
           </div>
           <p class="invoice-card__meta">Betalingsopvolging: <strong>{{ f.action }}</strong></p>
@@ -108,7 +108,7 @@
         </dl>
 
         {% if not f.snapshot_complete %}
-          <p class="flash-warning" role="status">
+          <p class="flash flash-warning" role="status">
             Historische korting of totaal ontbreekt. Het eerder verstuurde definitieve
             factuurbedrag kan niet worden herberekend uit alleen de geleverde regels.
           </p>
@@ -122,7 +122,7 @@
               <option value="reminder1">Eerste herinnering</option>
               <option value="reminder2">Tweede herinnering</option>
               <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
-              <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
+              <option value="payment_plan_rejected">Betalingsregeling geweigerd, incasso</option>
               {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
             </select>
           </label>
@@ -141,12 +141,10 @@
     {% endfor %}
   </section>
 
-  <section class="invoice-create" aria-labelledby="purchase-invoices-title">
-    <div>
-      <h2 id="purchase-invoices-title">Openstaande inkoopfacturen</h2>
-      <p>Na de wekelijkse klantfacturatie worden inkoopfacturen betaald.
-         Het systeem registreert de betaling; het voert geen bankbetaling uit.</p>
-    </div>
+  <section aria-labelledby="purchase-invoices-title">
+    <h2 id="purchase-invoices-title">Openstaande inkoopfacturen</h2>
+    <p class="stock-dashboard__subtitle">Na de wekelijkse klantfacturatie worden inkoopfacturen betaald.
+       Het systeem registreert de betaling; het voert geen bankbetaling uit.</p>
     {% if purchase_invoices %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
@@ -175,7 +173,7 @@
         </table>
       </div>
     {% else %}
-      <p>Er zijn geen openstaande inkoopfacturen.</p>
+      <p class="stock-dashboard__empty">Er zijn geen openstaande inkoopfacturen.</p>
     {% endif %}
   </section>
 </section>

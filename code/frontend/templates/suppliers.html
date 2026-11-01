@@ -2,10 +2,14 @@
 {% block title %}Leveranciers{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="supplier-title">
-  <p><a class="button button--secondary" href="{{ url_for('purchasing.manufacturers') }}">Fabrikanten en inkoopprijzen beheren</a></p>
-  <span class="eyebrow">Inkoop</span>
-  <h1 id="supplier-title">Leveranciers voor een medicijn zoeken</h1>
-  <p class="stock-dashboard__subtitle">Vergelijk leveranciers op inkoopprijs. Neem eerst zelf contact op met de fabrikant voordat je een inkooporder vastlegt.</p>
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Inkoop</p>
+      <h1 id="supplier-title">Leveranciers voor een medicijn zoeken</h1>
+      <p class="stock-dashboard__subtitle">Vergelijk leveranciers op inkoopprijs. Neem eerst zelf contact op met de fabrikant voordat je een inkooporder vastlegt.</p>
+    </div>
+    <a class="button button--secondary" href="{{ url_for('purchasing.manufacturers') }}">Fabrikanten en inkoopprijzen beheren</a>
+  </header>
   <form method="get" action="{{ url_for('purchasing.suppliers') }}" class="lookup-form">
     <div class="form-field">
       <label for="product-name">Naam van het medicijn</label>
@@ -62,7 +66,7 @@
         </table>
       </div>
     {% else %}
-      <p role="status">Geen leveranciers gevonden voor dit medicijn; zonder leverancier kan het niet worden bijbesteld.</p>
+      <p class="stock-dashboard__empty" role="status">Geen leveranciers gevonden voor dit medicijn; zonder leverancier kan het niet worden bijbesteld.</p>
     {% endif %}
   {% endif %}
 </section>

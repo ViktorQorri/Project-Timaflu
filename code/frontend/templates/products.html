@@ -58,7 +58,7 @@
                 <td class="stock-dashboard__number">{{ product.minimum_stock }}</td>
                 <td>
                   <div class="catalog__actions">
-                    <a class="button button--small" href="{{ url_for('purchasing.edit_product', product_id=product.product_id) }}">Wijzigen<span class="visually-hidden"> {{ product.product_name }}</span></a>
+                    <a class="button button--small button--secondary" href="{{ url_for('purchasing.edit_product', product_id=product.product_id) }}">Wijzigen<span class="visually-hidden"> {{ product.product_name }}</span></a>
                     <a class="button button--small button--danger" href="{{ url_for('purchasing.remove_product', product_id=product.product_id) }}">Verwijderen<span class="visually-hidden"> {{ product.product_name }}</span></a>
                   </div>
                 </td>

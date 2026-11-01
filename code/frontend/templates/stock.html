@@ -16,7 +16,7 @@
           <a class="button" href="{{ url_for('purchasing.reorder') }}">Vergelijk leveranciers en prijzen</a>
         {% endif %}
       </div>
-      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
+      <p class="stock-dashboard__count stock-dashboard__count--warning" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
         {{ shortages|length }} producten onder minimum
       </p>
     </header>

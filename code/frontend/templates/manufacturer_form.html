@@ -1,17 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Fabrikant {{ 'bewerken' if edit else 'toevoegen' }}{% endblock %}
 {% block content %}
-<section class="stock-dashboard manufacturer-page">
-  <h1>Fabrikant {{ 'bewerken' if edit else 'toevoegen' }}</h1>
+<section class="stock-dashboard" aria-labelledby="manufacturer-form-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Inkoop</p>
+      <h1 id="manufacturer-form-title">Fabrikant {{ 'bewerken' if edit else 'toevoegen' }}</h1>
+    </div>
+  </header>
   {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
-  <form method="post" class="manufacturer-form">
+  <form method="post" class="panel manufacturer-form">
     {% for key, label in [('naam','Naam fabrikant'),('adres','Adres'),('contactpersoon','Contactpersoon'),('telefoonnummer','Telefoonnummer'),('internetadres','Website')] %}
       <div class="form-field"><label for="{{ key }}">{{ label }}</label>
       <input id="{{ key }}" name="{{ key }}" value="{{ values.get(key, '') }}" maxlength="{{ {'naam':100,'adres':255,'contactpersoon':100,'telefoonnummer':25,'internetadres':255}[key] }}"{% if key in ['naam','adres'] %} required{% endif %}></div>
     {% endfor %}
     <div class="manufacturer-form__actions">
       <button type="submit">Opslaan</button>
-      <a class="button" href="{{ url_for('purchasing.manufacturers') }}">Annuleren</a>
+      <a class="button button--secondary" href="{{ url_for('purchasing.manufacturers') }}">Annuleren</a>
     </div>
   </form>
 </section>

@@ -10,14 +10,16 @@
         <h1 id="customers-title">Klanten</h1>
         <p class="stock-dashboard__subtitle">Klantgegevens op één plek, zodat alle afdelingen dezelfde informatie gebruiken.</p>
       </div>
-      <p class="customer-count">{{ customers|length }} {{ 'klant' if customers|length == 1 else 'klanten' }}</p>
+      <p class="stock-dashboard__count">{{ customers|length }} {{ 'klant' if customers|length == 1 else 'klanten' }}</p>
     </header>
 
-    <form method="get" action="{{ url_for('sales.customers') }}" class="supplier-lookup" role="search">
-      <label for="customer-search">Zoek klant</label>
-      <input id="customer-search" name="q" type="search" value="{{ search }}" maxlength="100" placeholder="Bedrijfsnaam, contactpersoon of telefoonnummer">
+    <form method="get" action="{{ url_for('sales.customers') }}" class="lookup-form" role="search">
+      <div class="form-field">
+        <label for="customer-search">Zoek klant</label>
+        <input id="customer-search" name="q" type="search" value="{{ search }}" maxlength="100" placeholder="Bedrijfsnaam, contactpersoon of telefoonnummer">
+      </div>
       <button type="submit">Zoeken</button>
-      {% if search %}<a class="customer-link" href="{{ url_for('sales.customers') }}">Alle klanten tonen</a>{% endif %}
+      {% if search %}<a class="button button--secondary" href="{{ url_for('sales.customers') }}">Alle klanten tonen</a>{% endif %}
     </form>
 
     {% if customers %}
@@ -79,7 +81,7 @@
       </div>
     {% endif %}
 
-    <section class="customer-panel" id="new-customer" aria-labelledby="new-customer-title">
+    <section id="new-customer" aria-labelledby="new-customer-title">
       <h2 id="new-customer-title">Nieuwe klant</h2>
       <p class="stock-dashboard__subtitle">De jaaromzet wordt automatisch bijgehouden uit betaalde facturen.</p>
       {% with action=url_for('sales.create_customer'), submit_label='Klant opslaan', cancel_url=None %}

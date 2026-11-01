@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Fout {{ status }}{% endblock %}
 {% block content %}
-  <section class="error-page" aria-labelledby="error-title">
-    <div class="error-page__panel">
+  <section class="stock-dashboard error-page" aria-labelledby="error-title">
+    <div class="panel">
       <p class="error-page__code">Fout {{ status }}</p>
       <h1 id="error-title">Deze actie is niet gelukt</h1>
       <p>{{ message }}</p>

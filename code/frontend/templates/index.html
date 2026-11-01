@@ -3,12 +3,12 @@
 {% block title %}Start{% endblock %}
 
 {% block content %}
-  <section class="home-page" aria-labelledby="home-title">
-    <header class="home-hero">
+  <section class="stock-dashboard home-page" aria-labelledby="home-title">
+    <header class="stock-dashboard__intro">
       <div>
-        <p class="home-eyebrow">Timaflu medewerkersportaal</p>
+        <p class="stock-dashboard__eyebrow">Medewerkersportaal</p>
         <h1 id="home-title">Overzicht van je werkprocessen</h1>
-        <p class="home-lead">Beheer verkoop, inkoop, orderpicking, distributie, facturatie en acquisitie vanuit één plek.</p>
+        <p class="stock-dashboard__subtitle">Beheer verkoop, inkoop, orderpicking, distributie, facturatie en acquisitie vanuit één plek.</p>
       </div>
       <p class="home-database{% if database_ok %} home-database--ok{% else %} home-database--error{% endif %}"
          role="status">
@@ -18,7 +18,7 @@
     </header>
 
     <nav class="home-workflows" aria-label="Werkprocessen">
-      <section class="home-workflow" aria-labelledby="workflow-sales">
+      <section class="home-workflow panel" aria-labelledby="workflow-sales">
         <h2 id="workflow-sales">Verkoop</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('sales.customers') }}">
@@ -39,7 +39,7 @@
         </div>
       </section>
 
-      <section class="home-workflow" aria-labelledby="workflow-purchasing">
+      <section class="home-workflow panel" aria-labelledby="workflow-purchasing">
         <h2 id="workflow-purchasing">Inkoop</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('purchasing.products') }}">
@@ -70,7 +70,7 @@
         </div>
       </section>
 
-      <section class="home-workflow" aria-labelledby="workflow-warehouse">
+      <section class="home-workflow panel" aria-labelledby="workflow-warehouse">
         <h2 id="workflow-warehouse">Orderpicking</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('order_picking.index') }}">
@@ -81,7 +81,7 @@
         </div>
       </section>
 
-      <section class="home-workflow" aria-labelledby="workflow-delivery">
+      <section class="home-workflow panel" aria-labelledby="workflow-delivery">
         <h2 id="workflow-delivery">Distributie</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('distribution.deliveries') }}">
@@ -92,7 +92,7 @@
         </div>
       </section>
 
-      <section class="home-workflow" aria-labelledby="workflow-administration">
+      <section class="home-workflow panel" aria-labelledby="workflow-administration">
         <h2 id="workflow-administration">Administratie</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('administration.invoices') }}">
@@ -108,7 +108,7 @@
         </div>
       </section>
 
-      <section class="home-workflow" aria-labelledby="workflow-acquisition">
+      <section class="home-workflow panel" aria-labelledby="workflow-acquisition">
         <h2 id="workflow-acquisition">Acquisitie</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('acquisition.index') }}">

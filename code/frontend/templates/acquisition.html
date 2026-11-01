@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Acquisitie{% endblock %}
 {% block content %}
-  <section class="stock-dashboard acquisition-page" aria-labelledby="acquisition-title">
-    <header class="stock-dashboard__intro acquisition-page__intro">
+  <section class="stock-dashboard" aria-labelledby="acquisition-title">
+    <header class="stock-dashboard__intro">
       <div>
-        <p class="acquisition-page__eyebrow">Acquisitie</p>
+        <p class="stock-dashboard__eyebrow">Acquisitie</p>
         <h1 id="acquisition-title">Potentiële klanten</h1>
-        <p class="acquisition-page__subtitle">Registreer bezoeken en volg apotheken na één maand op.</p>
+        <p class="stock-dashboard__subtitle">Registreer bezoeken en volg apotheken na één maand op.</p>
       </div>
       <span class="stock-dashboard__count">{{ follow_ups|length }} opvolgingen</span>
     </header>
 
-    <section class="acquisition-page__section acquisition-panel" aria-labelledby="new-prospect-title">
+    <section aria-labelledby="new-prospect-title">
       <h2 id="new-prospect-title">Bezoek registreren</h2>
       <form method="post" action="{{ url_for('acquisition.register_prospect') }}" class="acquisition-form">
         <label class="acquisition-form__field" for="company-name">Bedrijfsnaam
@@ -33,7 +33,7 @@
       </form>
     </section>
 
-    <section class="acquisition-page__section" aria-labelledby="follow-ups-title">
+    <section aria-labelledby="follow-ups-title">
       <h2 id="follow-ups-title">Opvolging na één maand</h2>
       {% if follow_ups %}
         <div class="stock-dashboard__table-wrap">

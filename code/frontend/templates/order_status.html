@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Orderstatus{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Verkoop en distributie</span>
-  <h1>Orderstatus controleren</h1>
-  <p>Bekijk de werkelijk vastgelegde status, leverdatum en het dagdeel van een bestelling. Een lege status wordt niet als een bevestigde levering gepresenteerd.</p>
-</section>
-<section class="stock-dashboard">
+<section class="stock-dashboard" aria-labelledby="order-status-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Verkoop en distributie</p>
+      <h1 id="order-status-title">Orderstatus controleren</h1>
+      <p class="stock-dashboard__subtitle">Bekijk de werkelijk vastgelegde status, leverdatum en het dagdeel van een bestelling. Een lege status wordt niet als een bevestigde levering gepresenteerd.</p>
+    </div>
+    <a class="button button--secondary" href="{{ url_for('sales.orders') }}">Terug naar voorraadcontrole</a>
+  </header>
   <form class="lookup-form" action="{{ url_for('sales.order_status') }}" method="get">
-    <label for="order-customer">Klantnummer (optioneel)</label>
-    <input id="order-customer" name="customer_id" type="number" min="1" step="1" value="{{ customer_id }}">
+    <div class="form-field">
+      <label for="order-customer">Klantnummer (optioneel)</label>
+      <input id="order-customer" name="customer_id" type="number" min="1" step="1" value="{{ customer_id }}">
+    </div>
     <button type="submit">Orderstatus opzoeken</button>
   </form>
   {% if orders %}
@@ -34,8 +39,7 @@
     </table>
   </div>
   {% else %}
-  <p role="status">Geen bestellingen gevonden.</p>
+  <p class="stock-dashboard__empty" role="status">Geen bestellingen gevonden.</p>
   {% endif %}
-  <p><a href="{{ url_for('sales.orders') }}">Terug naar voorraadcontrole</a></p>
 </section>
 {% endblock %}

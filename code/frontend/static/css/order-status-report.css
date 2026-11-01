@@ -1,72 +1,44 @@
-.order-report {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 38px var(--page-padding);
-}
-
-.order-report__intro {
-  margin-bottom: 24px;
-}
-
-.order-report__eyebrow {
-  color: var(--color-primary);
-  font-weight: 700;
-}
-
-.order-report__subtitle,
-.order-report__period {
-  color: var(--color-text-muted);
-}
-
-.order-report__filter {
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
-  gap: 14px;
-  padding: 20px;
+/* Orderstatusrapport: the reference screen. Container, intro and buttons come from ui-system.css. */
+.order-report__filter,
+.order-report__kpi,
+.order-report__group {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
 }
 
-.order-report__field {
-  display: grid;
-  gap: 6px;
+.order-report__filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 20px;
 }
 
-.order-report__button {
-  background: var(--color-primary);
-  color: white;
-  border: 0;
-  border-radius: var(--radius-pill);
-  padding: 10px 18px;
-  font-weight: 700;
-  cursor: pointer;
+.order-report__field label {
+  margin-bottom: 6px;
 }
 
 .order-report__reset {
   padding: 10px 4px;
 }
 
+.order-report__period {
+  color: var(--color-text-muted);
+}
+
 .order-report__kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: 14px;
   padding: 0;
   list-style: none;
 }
 
-.order-report__kpi,
-.order-report__group {
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-}
-
 .order-report__kpi {
   display: grid;
   gap: 6px;
+  padding: 18px 20px;
 }
 
 .order-report__kpi-label,
@@ -75,26 +47,24 @@
 }
 
 .order-report__kpi-value {
+  color: var(--color-navy);
+  font-family: var(--font-heading);
   font-size: 1.8rem;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .order-report__group {
-  margin-top: 18px;
   overflow-x: auto;
+  padding: 20px;
+}
+
+.order-report__group h2 {
+  margin-bottom: 8px;
 }
 
 .order-report__table {
-  width: 100%;
   min-width: 680px;
-  border-collapse: collapse;
-}
-
-.order-report__table th,
-.order-report__table td {
-  padding: 12px;
-  border-bottom: 1px solid var(--color-line-light);
-  text-align: left;
 }
 
 .order-report__number {
@@ -107,6 +77,7 @@
   display: inline-block;
   border-radius: var(--radius-pill);
   padding: 4px 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -132,5 +103,22 @@
 }
 
 .order-report__empty {
+  margin: 0;
   color: var(--color-text-muted);
+}
+
+@media (max-width: 760px) {
+  .order-report__filter,
+  .order-report__group {
+    padding: 16px;
+  }
+
+  .order-report__field,
+  .order-report__filter button {
+    width: 100%;
+  }
+
+  .order-report__field input {
+    width: 100%;
+  }
 }

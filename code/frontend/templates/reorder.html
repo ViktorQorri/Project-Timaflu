@@ -2,8 +2,13 @@
 {% block title %}Medicijnen bijbestellen{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="reorder-title">
-  <h1 id="reorder-title">Medicijnen bijbestellen</h1>
-  <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Inkoop</p>
+      <h1 id="reorder-title">Medicijnen bijbestellen</h1>
+      <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
+    </div>
+  </header>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
       <caption>Medicijnen onder de minimumvoorraad</caption>
@@ -33,9 +38,10 @@
   </div>
 
   {% if selected %}
-    <h2>Leveranciers voor {{ selected.productnaam }}</h2>
+  <section aria-labelledby="reorder-offers-title">
+    <h2 id="reorder-offers-title">Leveranciers voor {{ selected.productnaam }}</h2>
     {% if offers %}
-      <p>De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
+      <p class="stock-dashboard__subtitle">De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <thead>
@@ -76,14 +82,14 @@
         </table>
       </div>
     {% else %}
-      <p>Geen gekoppelde leverancier gevonden. De inkoper moet dit handmatig opvolgen.</p>
+      <p class="stock-dashboard__empty">Geen gekoppelde leverancier gevonden. De inkoper moet dit handmatig opvolgen.</p>
     {% endif %}
+  </section>
   {% endif %}
-</section>
 
-<section class="stock-dashboard" aria-labelledby="supplier-orders-title">
+  <section aria-labelledby="supplier-orders-title">
   <h2 id="supplier-orders-title">Vastgelegde inkoopbestellingen</h2>
-  <p>De status ‘besteld’ betekent dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
+  <p class="stock-dashboard__subtitle">De status ‘besteld’ betekent dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
       <thead>
@@ -112,5 +118,6 @@
       </tbody>
     </table>
   </div>
+  </section>
 </section>
 {% endblock %}

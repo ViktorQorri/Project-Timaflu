@@ -7,9 +7,9 @@
   <section class="stock-dashboard delivery-page" aria-labelledby="distribution-title">
     <header class="stock-dashboard__intro delivery-page__intro">
       <div>
-        <p class="delivery-page__eyebrow">Distributie</p>
+        <p class="stock-dashboard__eyebrow">Distributie</p>
         <h1 id="distribution-title">Leveringen en verzamelbakken</h1>
-        <p class="delivery-page__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
+        <p class="stock-dashboard__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
       </div>
     </header>
 
@@ -89,9 +89,9 @@
         </div>
       </div>
       {% for order in unscheduled_orders %}
-        <article class="delivery-page__order-card" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
+        <article class="delivery-page__order-card sub-panel" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
           <h3 id="schedule-order-{{ order.bestelling_id }}">
-            Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}
+            Bestelling {{ order.bestelling_id }} · {{ order.bedrijfsnaam }}
           </h3>
           <p>{{ order.afleveradres }} · {{ order.telefoonnummer }}</p>
           <p>Afgesproken: {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
@@ -142,8 +142,8 @@
         <button type="submit">Bekijken</button>
       </form>
 
-      <div class="stock-dashboard__table-wrap">
-        <table class="stock-dashboard__table">
+      <div class="stock-dashboard__table-wrap delivery-schedule-wrap">
+        <table class="stock-dashboard__table delivery-schedule">
           <caption>Geplande bezorgpogingen op {{ day }}</caption>
           <thead>
             <tr>
@@ -162,12 +162,12 @@
             {% for item in schedule %}
               <tr>
                 <td data-label="Tijd">{{ item.geplande_tijd }}</td>
-                <td>{{ item.koerier or "Niet bekend" }}</td>
+                <td data-label="Koerier">{{ item.koerier or "Niet bekend" }}</td>
                 <td data-label="Bestelling">{{ item.bestelling_id }}</td>
-                <td>{{ "Spoed" if item.spoed else "Regulier" }}</td>
+                <td data-label="Spoed">{{ "Spoed" if item.spoed else "Regulier" }}</td>
                 <td data-label="Klant">{{ item.bedrijfsnaam }}</td>
                 <td data-label="Adres">{{ item.adres }}</td>
-                <td data-label="Contact">{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
+                <td data-label="Contact">{{ item.contactpersoon }}, {{ item.telefoonnummer }}</td>
                 <td data-label="Status">{{ item.resultaat or "nog niet afgeleverd" }}</td>
                 <td data-label="Afhandeling">
                   {% if item.can_register_first_attempt %}
@@ -258,16 +258,17 @@
 
       {% if orders %}
         {% for order in orders %}
-          <section class="stock-dashboard__table-wrap" aria-labelledby="order-{{ order.bestelling_id }}">
+          <section class="sub-panel" aria-labelledby="order-{{ order.bestelling_id }}">
             <div class="stock-dashboard__intro">
               <div>
-                <h3 id="order-{{ order.bestelling_id }}">Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}</h3>
+                <h3 id="order-{{ order.bestelling_id }}">Bestelling {{ order.bestelling_id }} · {{ order.bedrijfsnaam }}</h3>
                 <p>{{ order.afleveradres }} · {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
                 {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
               </div>
               <p>Status: <strong>{{ order.status_naam or "Onbekend" }}</strong></p>
             </div>
 
+            <div class="stock-dashboard__table-wrap">
             <table class="stock-dashboard__table">
               <caption>{{ order.bakken|length }} verzamelbakken bij deze bestelling</caption>
               <thead>
@@ -289,8 +290,10 @@
                 {% endfor %}
               </tbody>
             </table>
+            </div>
 
             <h4>Orderregels</h4>
+            <div class="stock-dashboard__table-wrap">
             <table class="stock-dashboard__table">
               <thead>
                 <tr>
@@ -313,6 +316,7 @@
                 {% endfor %}
               </tbody>
             </table>
+            </div>
 
             {% if order.kan_verpakken %}
               <form method="post" action="{{ url_for('distribution.pack_order', order_id=order.bestelling_id) }}" class="supplier-lookup">

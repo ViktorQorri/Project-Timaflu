@@ -1,51 +1,4 @@
-.home-page,
-.invoice-page,
-.acquisition-page,
-.delivery-page,
-.discount-result-page,
-.manufacturer-page,
-.error-page {
-  width: min(100%, 1280px);
-  margin: 0 auto;
-  padding: 28px var(--page-padding) 40px;
-}
-
-.home-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 28px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: clamp(24px, 4vw, 40px);
-  background:
-    radial-gradient(ellipse at 95% 0%, #0f70b718, transparent 40%),
-    var(--color-surface);
-  box-shadow: var(--shadow-card);
-}
-
-.home-eyebrow {
-  margin-bottom: 10px;
-  color: var(--color-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.home-hero h1 {
-  max-width: 22ch;
-  margin-bottom: 10px;
-}
-
-.home-lead {
-  max-width: 68ch;
-  margin-bottom: 0;
-  color: var(--color-text-muted);
-  font-size: 1.05rem;
-}
-
+/* Screen-specific layouts. Page container, intro and panels come from ui-system.css. */
 .home-database {
   display: inline-flex;
   flex: 0 0 auto;
@@ -54,8 +7,8 @@
   margin: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
-  padding: 9px 14px;
-  font-size: 0.85rem;
+  padding: 7px 14px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -87,11 +40,6 @@
 
 .home-workflow {
   min-width: 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
 }
 
 .home-workflow h2 {
@@ -115,11 +63,10 @@
   padding: 12px;
   color: var(--color-text);
   text-decoration: none;
-  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .home-link:hover {
-  transform: translateY(-2px);
   border-color: #b9d9eb;
   background: #f8fbfd;
   color: var(--color-text);
@@ -148,7 +95,6 @@
 
 .home-link small {
   margin-top: 2px;
-  color: var(--color-text-muted);
   font-size: 0.8rem;
   line-height: 1.4;
 }
@@ -160,71 +106,43 @@
   text-align: center;
 }
 
-.invoice-page__intro,
-.acquisition-page__intro,
-.delivery-page__intro {
-  margin-bottom: 24px;
-}
-
-.invoice-page__eyebrow,
-.acquisition-page__eyebrow,
-.delivery-page__eyebrow {
-  margin-bottom: 8px;
-  color: var(--color-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.invoice-page__subtitle,
-.acquisition-page__subtitle,
-.delivery-page__subtitle {
-  max-width: 74ch;
-  color: var(--color-text-muted);
-}
-
-.invoice-search,
-.invoice-create,
-.invoice-card,
-.acquisition-panel,
-.delivery-page__panel,
-.discount-result-page__summary,
-.error-page__panel {
-  margin: 16px 0 24px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-}
-
-.invoice-search,
-.invoice-create__form {
+.invoice-create__form,
+.acquisition-form,
+.delivery-page__courier-form,
+.delivery-page__schedule-form,
+.delivery-page__date-form,
+.manufacturer-prices__form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
-  gap: 12px 16px;
+  gap: 14px 18px;
 }
 
-.invoice-search label,
 .invoice-create__form label,
 .acquisition-form label,
-.invoice-action label {
+.invoice-action label,
+.delivery-page__courier-form label,
+.delivery-page__schedule-form label,
+.delivery-page__date-form label,
+.delivery-page__attempt-form label {
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 
-.invoice-search button,
-.invoice-create__form button {
+.invoice-create__form button,
+.acquisition-form__submit,
+.delivery-page__courier-form button,
+.delivery-page__schedule-form button,
+.delivery-page__date-form button {
   justify-self: start;
 }
 
-.invoice-create h2,
-.invoice-card h2,
-.acquisition-page h2,
-.delivery-page h2 {
-  margin-top: 0;
+.acquisition-form__submit {
+  grid-column: 1 / -1;
+}
+
+.invoice-lookup {
+  margin-bottom: 18px;
 }
 
 .invoice-card {
@@ -241,7 +159,7 @@
   padding-bottom: 14px;
 }
 
-.invoice-card__header h2 {
+.invoice-card__header h3 {
   margin: 0 0 5px;
 }
 
@@ -255,16 +173,7 @@
 }
 
 .invoice-card__lines table {
-  width: 100%;
   min-width: 420px;
-  border-collapse: collapse;
-}
-
-.invoice-card__lines th,
-.invoice-card__lines td {
-  border-bottom: 1px solid var(--color-line-light);
-  padding: 10px 12px;
-  text-align: left;
 }
 
 .invoice-card__totals {
@@ -306,31 +215,6 @@
   padding-top: 16px;
 }
 
-.acquisition-page__section {
-  margin-top: 24px;
-}
-
-.acquisition-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 18px;
-  margin-top: 16px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  background: var(--color-surface);
-}
-
-.acquisition-form__field {
-  display: grid;
-  gap: 7px;
-}
-
-.acquisition-form__submit {
-  grid-column: 1 / -1;
-  justify-self: start;
-}
-
 .acquisition-page__table {
   min-width: 1050px;
 }
@@ -342,55 +226,18 @@
 }
 
 .acquisition-follow-up form {
-  display: grid;
-  gap: 8px;
   border: 1px solid var(--color-line-light);
   border-radius: var(--radius);
   padding: 10px;
 }
 
-.acquisition-follow-up form + form {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.delivery-page > section + section {
-  margin-top: 30px;
-}
-
 .delivery-page__courier-form,
-.delivery-page__schedule-form,
 .delivery-page__date-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: end;
-  gap: 12px 16px;
-  margin: 16px 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  background: var(--color-surface);
+  margin-bottom: 18px;
 }
 
-.delivery-page__courier-form button,
-.delivery-page__schedule-form button,
-.delivery-page__date-form button {
-  justify-self: start;
-}
-
-.delivery-page__courier-form label,
-.delivery-page__schedule-form label,
-.delivery-page__date-form label,
-.delivery-page__attempt-form label {
-  display: grid;
-  gap: 6px;
-}
-
-.delivery-page__order-card {
-  margin: 14px 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  background: var(--color-surface);
+.delivery-page__schedule-form {
+  margin-top: 12px;
 }
 
 .delivery-page__order-card h3 {
@@ -403,53 +250,13 @@
   gap: 8px;
 }
 
-.delivery-page__courier-table td form {
-  margin: 0;
-}
-
 .delivery-page__courier-table button {
   white-space: nowrap;
 }
 
-.discount-result-page__summary {
-  display: grid;
-  gap: 12px;
-}
-
-.discount-result-page__summary h1 {
-  margin-bottom: 0;
-}
-
-.discount-result-page__summary dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 20px;
-  margin: 8px 0;
-}
-
-.discount-result-page__summary dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--color-line-light);
-  padding: 10px 0;
-}
-
-.discount-result-page__summary dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.discount-result-page__total {
-  color: var(--color-primary);
-  font-weight: 800;
-}
-
-.error-page__panel {
+.error-page {
   max-width: 760px;
-  margin: 20px auto;
-  padding: clamp(24px, 5vw, 48px);
+  margin-inline: auto;
 }
 
 .error-page__code {
@@ -463,39 +270,32 @@
   font-weight: 700;
 }
 
-.manufacturer-form,
-.manufacturer-prices__form {
+.manufacturer-form {
   display: grid;
   gap: 14px;
-  margin: 18px 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
 }
 
-.form-field input,
-.form-field select,
-.form-field textarea,
-.manufacturer-prices__form select,
-.manufacturer-prices__form input:not([type="checkbox"]) {
-  width: 100%;
-}
-
-.manufacturer-prices__form {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: end;
+.manufacturer-form .form-field {
+  margin: 0;
 }
 
 .manufacturer-prices__form > label {
   display: grid;
-  gap: 7px;
+  gap: 6px;
+  margin: 0;
+}
+
+.manufacturer-prices__form :is(select, input) {
+  width: 100%;
 }
 
 .manufacturer-prices__form button,
 .manufacturer-form__actions {
   grid-column: 1 / -1;
+}
+
+.manufacturer-prices__form button {
+  justify-self: start;
 }
 
 .manufacturer-form__actions {
@@ -505,51 +305,14 @@
   align-items: center;
 }
 
-@media (max-width: 760px) {
-  .home-page,
-  .invoice-page,
-  .acquisition-page,
-  .delivery-page,
-  .discount-result-page,
-  .manufacturer-page,
-  .error-page {
-    padding-top: 18px;
-    padding-bottom: 28px;
-  }
-
-  .home-hero {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 24px;
-  }
-
+@media (max-width: 1100px) {
   .home-workflows {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+    gap: 14px;
   }
+}
 
-  .home-workflow,
-  .invoice-search,
-  .invoice-create,
-  .invoice-card,
-  .acquisition-panel,
-  .delivery-page__panel {
-    padding: 16px;
-  }
-
-  .supplier-lookup {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .supplier-lookup input:not([type="checkbox"]),
-  .supplier-lookup select,
-  .supplier-lookup button {
-    width: 100%;
-  }
-
-  .invoice-search,
+@media (max-width: 760px) {
+  .home-workflows,
   .invoice-create__form,
   .invoice-card__totals,
   .invoice-action,
@@ -557,12 +320,10 @@
   .delivery-page__courier-form,
   .delivery-page__schedule-form,
   .delivery-page__date-form,
-  .manufacturer-prices__form,
-  .discount-result-page__summary dl {
+  .manufacturer-prices__form {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .invoice-search button,
   .invoice-create__form button,
   .acquisition-form__submit,
   .delivery-page__courier-form button,
@@ -572,20 +333,11 @@
     justify-self: stretch;
   }
 
-  .manufacturer-form,
-  .manufacturer-prices__form {
-    padding: 16px;
-  }
-
   .invoice-card__header {
     flex-direction: column;
   }
 
   .acquisition-follow-up {
     min-width: 230px;
-  }
-
-  .discount-result-page__summary dl > div {
-    align-items: flex-start;
   }
 }

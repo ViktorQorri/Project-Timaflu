@@ -11,7 +11,7 @@
       <h1 id="order-status-title">Order {{ order.bestelling_id }}</h1>
       <p class="stock-dashboard__subtitle">{{ order.bedrijfsnaam }}, besteld op {{ order.besteld_op.strftime('%d-%m-%Y') }}</p>
     </div>
-    <a class="order-status__link" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a>
+    <a class="button button--secondary" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a>
   </header>
 
   <dl class="order-status__summary">
@@ -38,7 +38,7 @@
   </dl>
 
   {% if delivery_status_conflict %}
-    <p role="alert">
+    <p class="flash flash-warning" role="alert">
       Controleer deze orderstatus: de bestelling is geregistreerd als afgeleverd,
       maar de ondertekende leveringen bevestigen niet dat alle nog af te nemen
       orderregels volledig zijn geleverd. Geef de status niet als definitief door.
@@ -46,7 +46,7 @@
   {% endif %}
 
   {% if legacy_false_lines %}
-    <p role="alert">Controle historische tekortkeuze: voor {{ legacy_false_lines|length }}
+    <p class="flash flash-warning" role="alert">Controle historische tekortkeuze: voor {{ legacy_false_lines|length }}
     orderregel{{ 's' if legacy_false_lines|length != 1 else '' }} staat niet afnemen
     bij tekort geregistreerd terwijl er wel verwerking heeft plaatsgevonden.
     Deze regels tellen mee voor de leveringscontrole; controleer de klantafspraak.</p>
@@ -66,11 +66,11 @@
       </ul>
     </section>
   {% elif has_backorder %}
-    <p role="status">De bestelling heeft status backorder, maar er is geen tekortafspraak per product geregistreerd. Controleer de orderregistratie.</p>
+    <p class="flash flash-warning" role="status">De bestelling heeft status backorder, maar er is geen tekortafspraak per product geregistreerd. Controleer de orderregistratie.</p>
   {% endif %}
 
   {% if has_backorder and shortage_lines and not undelivered_shortages %}
-    <p role="status">Alle producten met een geregistreerde tekortafspraak zijn volledig afgeleverd. De algemene orderstatus staat nog op backorder en moet worden gecontroleerd.</p>
+    <p class="flash" role="status">Alle producten met een geregistreerde tekortafspraak zijn volledig afgeleverd. De algemene orderstatus staat nog op backorder en moet worden gecontroleerd.</p>
   {% endif %}
 
   <div class="stock-dashboard__table-wrap">
