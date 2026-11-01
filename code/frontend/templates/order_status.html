@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Orderstatus{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Verkoop en distributie</span>
+  <h1>Orderstatus controleren</h1>
+  <p>Bekijk de werkelijk vastgelegde status, leverdatum en het dagdeel van een bestelling. Een lege status wordt niet als een bevestigde levering gepresenteerd.</p>
+</section>
+<section class="stock-dashboard">
+  <form class="lookup-form" action="{{ url_for('sales.order_status') }}" method="get">
+    <label for="order-customer">Klantnummer (optioneel)</label>
+    <input id="order-customer" name="customer_id" type="number" min="1" step="1" value="{{ customer_id }}">
+    <button type="submit">Orderstatus opzoeken</button>
+  </form>
+  {% if orders %}
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Orders en hun vastgelegde status</caption>
+      <thead><tr><th scope="col">Ordernummer</th><th scope="col">Klant</th><th scope="col">Besteld op</th><th scope="col">Leverdatum</th><th scope="col">Dagdeel</th><th scope="col">Spoed</th><th scope="col">Status</th><th scope="col">Afleveradres</th></tr></thead>
+      <tbody>
+      {% for order in orders %}
+      <tr>
+        <th scope="row">{{ order.bestelling_id }}</th>
+        <td>{{ order.bedrijfsnaam }}</td>
+        <td>{{ order.besteld_op }}</td>
+        <td>{{ order.gewenste_leverdatum }}</td>
+        <td>{{ order.dagdeel|capitalize }}</td>
+        <td>{{ 'Ja' if order.spoed else 'Nee' }}</td>
+        <td><span class="status status--info">{{ order.status_naam or 'Nog niet vastgelegd' }}</span></td>
+        <td>{{ order.afleveradres }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p role="status">Geen bestellingen gevonden.</p>
+  {% endif %}
+  <p><a href="{{ url_for('sales.orders') }}">Terug naar voorraadcontrole</a></p>
+</section>
+{% endblock %}

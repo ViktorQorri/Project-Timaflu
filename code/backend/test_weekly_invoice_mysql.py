@@ -144,6 +144,72 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
         self.assertEqual(repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,11,3)),[])
         self.assertEqual(repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3)),[])
 
+    def test_partial_first_order_keeps_its_discount_in_later_week(self):
+        # De korting hoort bij de eerste BESTELLING, niet alleen bij haar eerste levering.
+        with self.db.cursor() as c:
+            c.execute("UPDATE Bestelregel SET aantal=7 WHERE bestelling_id=1 AND product_id=1")
+            c.execute("INSERT INTO Levering(bestelling_id) VALUES (1)")
+            later = c.lastrowid
+            c.execute("INSERT INTO Leveringregel(levering_id,product_id,aantal_geleverd) VALUES (%s,1,1)", (later,))
+            c.execute(
+                "INSERT INTO Leverpoging(levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend) "
+                "VALUES(%s,1,2,'13:00:00','afgeleverd',TRUE)", (later,)
+            )
+        self.db.commit()
+        repo=WeeklyInvoiceRepository(self.db)
+        repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,10,31))
+        second=repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3))
+        self.assertEqual(len(second),1)
+        invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(second[0],))
+        self.assertEqual(invoice["eenmalige_korting"],Decimal("10.36"))
+        self.assertEqual(invoice["bestellingskorting"],Decimal("5.45"))
+        self.assertEqual(invoice["totaal_bedrag"],Decimal("192.08"))
+        self.assertEqual(repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3)),[])
+
+    def test_500_euro_order_discount_survives_partial_delivery_below_threshold(self):
+        # Bij 2 van 6 stuks is de eerste levering kleiner dan 500, de bestelling niet.
+        with self.db.cursor() as c:
+            c.execute("UPDATE Leveringregel SET aantal_geleverd=2 WHERE levering_id=1 AND product_id=1")
+        self.db.commit()
+        ids=WeeklyInvoiceRepository(self.db).issue_week(
+            date(2026,10,19),TEST_ADDRESS,date(2026,10,31)
+        )
+        invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(ids[0],))
+        self.assertEqual(invoice["bestellingskorting"],Decimal("10.90"))
+
+    def test_reminder_spacing_duplicate_prevention_and_paid_invoice_safety(self):
+        repo=WeeklyInvoiceRepository(self.db)
+        ids=repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,10,31))
+        self.assertEqual(len(ids),1)
+        invoice_id=ids[0]
+        actions=AssessedRepository(self.db)
+        actions.record_payment_action(invoice_id,"reminder1",date(2026,11,8))
+        with self.assertRaises(DomainError):
+            actions.record_payment_action(invoice_id,"reminder1",date(2026,11,9))
+        with self.assertRaises(DomainError):
+            actions.record_payment_action(invoice_id,"reminder2",date(2026,11,14))
+        actions.record_payment_action(invoice_id,"reminder2",date(2026,11,15))
+        with self.assertRaises(DomainError):
+            actions.record_payment_action(invoice_id,"reminder2",date(2026,11,16))
+        row=self.fetchone(
+            "SELECT COUNT(*) AS n FROM Betalingsherinnering WHERE factuur_id=%s",
+            (invoice_id,))
+        self.assertEqual(row["n"],2)
+
+    def test_real_customer_lookup_and_order_status_from_mysql(self):
+        with self.app.test_client() as client:
+            customers=client.get("/customers?q=TEST")
+            self.assertEqual(customers.status_code,200)
+            self.assertIn(b"TEST Apotheek",customers.data)
+            self.assertIn(b"TEST: Factuurstraat 12, Breda",customers.data)
+            statuses=client.get("/orders/status?customer_id=1")
+            self.assertEqual(statuses.status_code,200)
+            self.assertIn(b"Orderstatus controleren",statuses.data)
+            self.assertIn(b"afgeleverd",statuses.data)
+            self.assertIn(b"verstuurd",statuses.data)
+            self.assertEqual(client.get("/orders/status?customer_id=wrong").status_code,400)
+        self.assertEqual(self.fetchone("SELECT COUNT(*) AS n FROM Bestelling")["n"],4)
+
     def test_missing_sender_address_and_incomplete_week_block_issuance(self):
         with self.app.test_client() as client:
             self.app.config["TIMAFLU_ADDRESS"]=""

@@ -249,6 +249,7 @@ CREATE TABLE Bestelling (
     extra_bezorgkosten DECIMAL(10,2)
         NOT NULL DEFAULT 0,
     toelichting_extra_bezorgkosten VARCHAR(255),
+    extra_bezorgkosten_factuur_id INT NULL,
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id),
@@ -473,6 +474,9 @@ CREATE TABLE Factuur (
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    extra_bezorgkosten_excl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_incl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
     bedrag_excl_btw DECIMAL(10,2) NULL,
     btw_bedrag DECIMAL(10,2) NULL,
     bedrag_incl_btw DECIMAL(10,2) NULL,
@@ -488,6 +492,11 @@ CREATE TABLE Factuur (
         REFERENCES Klant(klant_id)
 );
 
+
+-- Koppelt iedere afzonderlijk afgesproken bezorgtoeslag aantoonbaar aan één factuur.
+ALTER TABLE Bestelling
+    ADD CONSTRAINT fk_bestelling_bezorgkosten_factuur
+    FOREIGN KEY (extra_bezorgkosten_factuur_id) REFERENCES Factuur(factuur_id);
 
 -- =========================================
 -- 25. LEVERINGREGEL
