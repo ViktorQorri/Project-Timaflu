@@ -1,19 +1,20 @@
-"""Tests for the order status report, without requiring a live MySQL server."""
+"""Case checks for the read-only order status overview; no live DB required."""
 
 from datetime import date, datetime
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
 from app import create_app
 from repositories.order_status_report_repository import OrderStatusReportRepository
-from services.order_status_report_service import OrderStatusReportService
+
+DATABASE = Path(__file__).resolve().parents[1] / "database" / "queries.sql"
 
 
 class Cursor:
     def __init__(self, rows):
         self.rows = rows
         self.sql = None
-        self.params = None
 
     def __enter__(self):
         return self
@@ -37,24 +38,14 @@ class Connection:
         return self.cur
 
 
-class Repo:
-    def __init__(self, rows):
-        self.rows = rows
-        self.calls = []
-
-    def list_orders(self):
-        self.calls.append(True)
-        return self.rows
-
-
-def order(order_id, status, customer="Apotheek De Linde"):
+def order(number, status, customer="Apotheek De Linde", urgent=False):
     return {
-        "bestelling_id": order_id,
+        "bestelling_id": number,
         "bedrijfsnaam": customer,
         "besteld_op": datetime(2026, 10, 12, 9, 30),
         "gewenste_leverdatum": date(2026, 10, 14),
         "dagdeel": "ochtend",
-        "spoed": 0,
+        "spoed": urgent,
         "status_naam": status,
     }
 
@@ -64,67 +55,68 @@ class OrderStatusReportTests(TestCase):
         self.rows = [
             order(1, "wordt verzameld"),
             order(2, "verstuurd"),
-            order(3, None),
-            order(4, "backorder", "Ziekenhuis Oost"),
-            order(5, "afgeleverd", "Huisartsenpost Noord"),
+            order(3, "backorder", "Apotheek Oost"),
+            order(4, "afgeleverd", "Apotheek Noord"),
+            order(5, "niet afgeleverd", urgent=True),
+            order(6, None),
         ]
 
-    def groups(self, report):
-        return {group["key"]: group["orders"] for group in report["groups"]}
-
-    def test_repository_reads_orders_with_customer_and_status(self):
+    def test_repository_reads_status_with_customer_and_delivery(self):
         connection = Connection(self.rows)
-        result = OrderStatusReportRepository(connection).list_orders()
-        self.assertEqual(result, self.rows)
-        self.assertIn("JOIN Klant", connection.cur.sql)
+        rows = OrderStatusReportRepository(connection).list_orders()
+        self.assertEqual(rows, self.rows)
+        for term in ("JOIN Klant", "b.besteld_op", "b.gewenste_leverdatum",
+                     "b.dagdeel", "b.status_naam", "ORDER BY"):
+            self.assertIn(term, connection.cur.sql)
         self.assertNotIn("Bestelregel", connection.cur.sql)
-        self.assertIn("b.status_naam", connection.cur.sql)
+        self.assertNotIn("WHERE", connection.cur.sql.upper())
+        self.assertNotIn("%s", connection.cur.sql)
 
-    def test_open_orders_include_every_unfinished_status(self):
-        open_orders = self.groups(OrderStatusReportService(Repo(self.rows)).report())["open"]
-        self.assertEqual([row["bestelling_id"] for row in open_orders], [1, 2, 3])
+    def test_documented_sql_is_identical_to_application_query(self):
+        repo=OrderStatusReportRepository(Connection([]))
+        repo.list_orders()
+        source=repo.connection.cur.sql.strip()
+        documented=DATABASE.read_text(encoding="utf-8").split(
+            "-- Order status overview for GET /reports",1
+        )[1].split("SELECT ",1)[1].split(";",1)[0]
+        normalize=lambda value: " ".join(value.split()).lower()
+        self.assertEqual(normalize(source), normalize("SELECT " + documented))
 
-    def test_backorders_and_delivered_orders_are_separate(self):
-        report = OrderStatusReportService(Repo(self.rows)).report()
-        groups = self.groups(report)
-        self.assertEqual([row["bestelling_id"] for row in groups["backorder"]], [4])
-        self.assertEqual([row["bestelling_id"] for row in groups["delivered"]], [5])
-        self.assertEqual(report["total"], 5)
+    def test_page_shows_real_status_values_without_invented_groups(self):
+        app=create_app()
+        app.testing=True
+        with patch("routes.reports.get_connection", return_value=Connection(self.rows)):
+            with app.test_client() as client:
+                response=client.get("/reports")
+        self.assertEqual(response.status_code, 200)
+        html=response.get_data(as_text=True)
+        for word in ("Wordt verzameld", "Verstuurd", "Backorder", "Afgeleverd",
+                     "Niet afgeleverd", "Nog geen status", "Spoed",
+                     "Apotheek Noord", "14-10-2026"):
+            self.assertIn(word, html)
+        self.assertIn('tabindex="0"', html)
+        self.assertIn('role="region"', html)
+        self.assertNotIn("Openstaande orders", html)
+        self.assertNotIn("orders in deze periode", html)
+        self.assertNotIn('name="from"', html)
 
-    def test_repository_called_once_without_optional_filters(self):
-        repo = Repo([])
-        report = OrderStatusReportService(repo).report()
-        self.assertEqual(repo.calls, [True])
-        self.assertEqual(report["total"], 0)
+    def test_empty_database_returns_genuine_empty_state(self):
+        app=create_app()
+        app.testing=True
+        with patch("routes.reports.get_connection", return_value=Connection([])):
+            with app.test_client() as client:
+                response=client.get("/reports")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Geen bestellingen gevonden.", response.get_data(as_text=True))
 
-    def test_reports_page_renders_all_groups_and_empty_states(self):
-        app = create_app()
-        app.testing = True
-        with app.test_client() as client:
-            with patch("routes.reports.get_connection", return_value=Connection(self.rows)):
-                response = client.get("/reports")
-                self.assertEqual(response.status_code, 200)
-                html = response.get_data(as_text=True)
-                self.assertIn("Openstaande orders", html)
-                self.assertIn("Backorders", html)
-                self.assertIn("Afgeleverde orders", html)
-                self.assertIn("Ziekenhuis Oost", html)
-                self.assertIn("Huisartsenpost Noord", html)
-                self.assertIn("Wordt verzameld", html)
-                self.assertIn("Nog geen status", html)
-            with patch("routes.reports.get_connection", return_value=Connection([])):
-                response = client.get("/reports")
-                self.assertEqual(response.status_code, 200)
-                html = response.get_data(as_text=True)
-                self.assertIn("Geen backorders.", html)
-
-    def test_report_does_not_expose_extra_date_filters(self):
-        app = create_app()
-        app.testing = True
-        with app.test_client() as client:
-            with patch("routes.reports.get_connection", return_value=Connection(self.rows)):
-                response = client.get("/reports")
-                self.assertEqual(response.status_code, 200)
-                html = response.get_data(as_text=True)
-                self.assertNotIn('name="from"', html)
-                self.assertNotIn('name="to"', html)
+    def test_route_uses_one_read_only_query(self):
+        connection=Connection(self.rows)
+        app=create_app()
+        app.testing=True
+        with patch("routes.reports.get_connection",return_value=connection):
+            with app.test_client() as client:
+                response=client.get("/reports?from=2026-01-01")
+        self.assertEqual(response.status_code,200)
+        self.assertIn("SELECT",connection.cur.sql)
+        self.assertNotIn("INSERT",connection.cur.sql.upper())
+        self.assertNotIn("UPDATE",connection.cur.sql.upper())

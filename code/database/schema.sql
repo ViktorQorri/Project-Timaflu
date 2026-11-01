@@ -20,6 +20,7 @@ CREATE TABLE Klant (
     bedrijfsnaam VARCHAR(100) NOT NULL,
     telefoonnummer VARCHAR(25),
     contactpersoon VARCHAR(100),
+    eenmalige_korting_toegezegd BOOLEAN NOT NULL DEFAULT FALSE,
     afleveradres_id INT NOT NULL,
     betaaladres_id INT NOT NULL,
 
@@ -43,6 +44,7 @@ CREATE TABLE PotentieleKlant (
     contactgegevens VARCHAR(255),
     adres_id INT NOT NULL,
     klant_id INT UNIQUE,
+    opvolging_afgesloten BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (adres_id)
         REFERENCES Adres(adres_id),
@@ -84,6 +86,10 @@ CREATE TABLE Product (
     lange_omschrijving TEXT,
     minimale_bestelhoeveelheid INT NOT NULL,
     minimumvoorraad INT NOT NULL,
+    intern_bestelbaar BOOLEAN NOT NULL DEFAULT TRUE,
+-- FALSE = verwijderd uit het assortiment. De rij blijft bestaan,
+    -- omdat bestellingen, leveringen en facturen ernaar verwijzen.
+    in_assortiment BOOLEAN NOT NULL DEFAULT TRUE,
 
     CHECK (prijs_per_grootverpakking >= 0),
     CHECK (aantal_detailverpakkingen > 0),
@@ -460,9 +466,22 @@ CREATE TABLE Factuur (
     factuur_id INT AUTO_INCREMENT PRIMARY KEY,
     klant_id INT NOT NULL,
     factuurdatum DATE NOT NULL,
+    week_start DATE NULL,
+    afzenderadres VARCHAR(255) NULL,
+    factuuradres VARCHAR(255) NULL,
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    bedrag_excl_btw DECIMAL(10,2) NULL,
+    btw_bedrag DECIMAL(10,2) NULL,
+    bedrag_incl_btw DECIMAL(10,2) NULL,
+    bestellingskorting DECIMAL(10,2) NULL,
+    bedrag_na_bestellingskorting DECIMAL(10,2) NULL,
+    eenmalige_korting DECIMAL(10,2) NULL,
+    bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
+    klantenkorting DECIMAL(10,2) NULL,
+    totaal_bedrag DECIMAL(10,2) NULL,
+    CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
@@ -517,6 +536,17 @@ CREATE TABLE Betalingsherinnering (
 );
 
 
+-- Inkoopfacturen: expliciet onderdeel van de administratie uit de casus.
+CREATE TABLE Inkoopfactuur (
+    inkoopfactuur_id INT AUTO_INCREMENT PRIMARY KEY,
+    leverancier_id INT NOT NULL,
+    factuurdatum DATE NOT NULL,
+    bedrag DECIMAL(10,2) NOT NULL,
+    betaald_op DATE,
+    FOREIGN KEY (leverancier_id) REFERENCES Leverancier(leverancier_id),
+    CHECK (bedrag >= 0)
+);
+
 -- =========================================
 -- ORDERSTATUSSEN UIT DE CASUS
 -- =========================================
@@ -526,5 +556,6 @@ VALUES
     ('wordt verzameld'),
     ('verstuurd'),
     ('backorder'),
-    ('afgeleverd');
+    ('afgeleverd'),
+    ('niet afgeleverd');
 

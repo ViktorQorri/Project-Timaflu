@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.product_name }} verwijderen{% endblock %}
+
+{% block content %}
+  <section class="stock-dashboard" aria-labelledby="remove-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Inkoop · Productcatalogus</p>
+        <h1 id="remove-title">{{ product.product_name }} verwijderen?</h1>
+      </div>
+    </header>
+
+    <div class="stock-dashboard__empty product-remove">
+      <p>
+        {{ product.product_name }} ({{ product.article_number }}) wordt uit het assortiment gehaald.
+        Het product kan daarna niet meer verkocht of bijbesteld worden en verdwijnt uit de catalogus.
+      </p>
+      <p class="catalog__muted">Bestaande bestellingen, leveringen en facturen behouden hun gegevens.</p>
+      <form class="product-form__buttons" method="post">
+        <button class="button button--danger" type="submit">Verwijderen uit assortiment</button>
+        <a class="button button--secondary" href="{{ url_for('purchasing.products') }}">Annuleren</a>
+      </form>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.product_name ~ ' wijzigen' if product is defined else 'Product toevoegen' }}{% endblock %}
+
+{% block content %}
+  {% set editing = product is defined %}
+  {% set names = form.ingredient_name or [] %}
+  {% set quantities = form.ingredient_quantity or [] %}
+  {% set ingredient_rows = [2, names|length, quantities|length, form.ingredient_rows|default(2)|int]|max %}
+  <section class="stock-dashboard" aria-labelledby="product-form-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Inkoop · Productcatalogus</p>
+        <h1 id="product-form-title">{{ product.product_name ~ ' wijzigen' if editing else 'Product toevoegen' }}</h1>
+        <p class="stock-dashboard__subtitle">
+          {% if editing %}
+            Wijzig de productgegevens zoals ze in de catalogus staan.
+          {% else %}
+            Voer een medicijn in dat de directie heeft goedgekeurd, met de eerste leverancier.
+          {% endif %}
+        </p>
+      </div>
+    </header>
+
+    {% if not editing and not suppliers %}
+      <div class="stock-dashboard__empty" role="status">
+        <h2>Nog geen leveranciers</h2>
+        <p>Een nieuw product heeft een leverancier nodig. Voeg eerst de fabrikant toe.</p>
+      </div>
+    {% else %}
+      <form class="product-form" method="post">
+        <fieldset class="product-form__group">
+          <legend>Productgegevens</legend>
+          <div class="product-form__grid">
+            <label class="product-form__field">Naam van het medicijn
+              <input name="product_name" value="{{ form.product_name }}" maxlength="100" required>
+            </label>
+            <label class="product-form__field">Artikelnummer
+              <input name="article_number" value="{{ form.article_number }}" maxlength="50" required>
+            </label>
+            <label class="product-form__field">Bestelcode
+              <input name="order_code" value="{{ form.order_code }}" maxlength="50" required>
+            </label>
+            <label class="product-form__field">Verpakkingssoort
+              <input name="package_type" value="{{ form.package_type }}" maxlength="50" list="package-types">
+              <datalist id="package-types">
+                {% for type in ['doos', 'strip', 'glazen fles', 'plastic fles', 'verstuiver', 'injectienaald'] %}
+                  <option value="{{ type }}">
+                {% endfor %}
+              </datalist>
+            </label>
+            <label class="product-form__field">Detailverpakkingen per grootverpakking
+              <input name="number_of_retail_packages" type="number" min="1" step="1" value="{{ form.number_of_retail_packages }}" required>
+            </label>
+            <label class="product-form__field">Prijs per grootverpakking (€)
+              <input name="price_per_bulk_package" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" value="{{ form.price_per_bulk_package }}" placeholder="12,50" required>
+            </label>
+            <label class="product-form__field">Minimale bestelhoeveelheid
+              <input name="minimum_order_quantity" type="number" min="1" step="1" value="{{ form.minimum_order_quantity }}" required>
+            </label>
+            <label class="product-form__field">Minimumvoorraad
+              <input name="minimum_stock" type="number" min="0" step="1" value="{{ form.minimum_stock }}" required>
+            </label>
+            <label class="product-form__field product-form__field--wide">Korte omschrijving
+              <input name="short_description" value="{{ form.short_description }}" maxlength="255">
+            </label>
+            <label class="product-form__field product-form__field--wide">Lange omschrijving
+              <textarea name="long_description" rows="4">{{ form.long_description }}</textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="product-form__group">
+          <legend>Werkzame stoffen</legend>
+          <input type="hidden" name="ingredient_rows" value="{{ ingredient_rows }}">
+          <p class="product-form__hint">Minimaal één. Laat rijen die je niet nodig hebt leeg.</p>
+          {% for index in range(ingredient_rows) %}
+            <div class="product-form__ingredient">
+              <label class="product-form__field">Werkzame stof
+                <input name="ingredient_name" value="{{ names[index] if index < names|length else '' }}" maxlength="100"{% if index == 0 %} required{% endif %}>
+              </label>
+              <label class="product-form__field">Hoeveelheid
+                <input name="ingredient_quantity" value="{{ quantities[index] if index < quantities|length else '' }}" maxlength="50" placeholder="500 mg"{% if index == 0 %} required{% endif %}>
+              </label>
+            </div>
+          {% endfor %}
+          <button type="submit" name="form_action" value="add_ingredient" formnovalidate>
+            Nog een werkzame stof toevoegen
+          </button>
+        </fieldset>
+
+        {% if not editing %}
+          <fieldset class="product-form__group">
+            <legend>Eerste leverancier</legend>
+            <div class="product-form__grid">
+              <label class="product-form__field">Leverancier
+                <select name="supplier_id" required>
+                  <option value="">Kies een leverancier</option>
+                  {% for supplier in suppliers %}
+                    <option value="{{ supplier.supplier_id }}"{% if form.supplier_id|string == supplier.supplier_id|string %} selected{% endif %}>{{ supplier.name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label class="product-form__field">Inkoopprijs (€)
+                <input name="purchase_price" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" value="{{ form.purchase_price }}" placeholder="9,75" required>
+              </label>
+            </div>
+          </fieldset>
+        {% endif %}
+
+        {% if error %}
+          <p class="form-error" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <div class="product-form__buttons">
+          <button class="button button--primary" type="submit">{{ 'Wijzigingen opslaan' if editing else 'Toevoegen aan assortiment' }}</button>
+          <a class="button button--secondary" href="{{ url_for('purchasing.products') }}">Annuleren</a>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}
