@@ -190,7 +190,7 @@ SELECT 1 FROM Factuur WHERE klant_id=1
 SELECT COUNT(*) AS paid_count,
                        COUNT(f.totaal_bedrag) AS known_amount_count,
                        COALESCE(SUM(f.totaal_bedrag),0) AS annual
-                FROM Factuur AS f
+                FROM FactuurOverzicht AS f
                 WHERE f.klant_id=1 AND f.betaald_op>= '2025-01-01' AND f.betaald_op< '2026-01-01';
 
 -- AssessedRepository.customer_order_count
@@ -214,7 +214,7 @@ SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
        f.klantenkorting,
        f.totaal_bedrag,
        k.bedrijfsnaam, a.adres
-                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
 WHERE f.klant_id=1 AND f.betaald_op IS NULL
                 ORDER BY f.factuurdatum DESC;
@@ -751,12 +751,11 @@ UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
 -- Persist a completed and explicitly calculated weekly invoice once.
 -- This UPDATE may only run after the original order discounts are known.
 -- The application checks that the snapshot has not previously been recorded.
-SELECT factuur_id, totaal_bedrag FROM Factuur WHERE factuur_id=1 FOR UPDATE;
+SELECT factuur_id, bedrag_excl_btw FROM Factuur WHERE factuur_id=1 FOR UPDATE;
 UPDATE Factuur SET
-    bedrag_excl_btw=40.00, btw_bedrag=3.60, bedrag_incl_btw=43.60,
-    bestellingskorting=0.00, bedrag_na_bestellingskorting=43.60,
-    eenmalige_korting=4.36, bedrag_na_eenmalige_korting=39.24,
-    klantenkorting=1.96, totaal_bedrag=37.28
+    bedrag_excl_btw=40.00, btw_bedrag=3.60,
+    bestellingskorting=0.00, eenmalige_korting=4.36,
+    klantenkorting=1.96
 WHERE factuur_id=1;
 -- The amounts here illustrate the SQL shape, not any live customer's discount.
 -- =========================================
@@ -785,7 +784,7 @@ LEFT JOIN (
            COUNT(*) AS paid_count,
            COUNT(f.totaal_bedrag) AS known_amount_count,
            SUM(f.totaal_bedrag) AS jaaromzet
-    FROM Factuur AS f
+    FROM FactuurOverzicht AS f
     WHERE YEAR(f.betaald_op) = 2026
     GROUP BY f.klant_id
 ) AS o ON o.klant_id = k.klant_id
@@ -866,7 +865,7 @@ WHERE klant_id = 1;
 SELECT COUNT(*) AS paid_count,
        COUNT(f.totaal_bedrag) AS known_amount_count,
        COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet
-FROM Factuur AS f
+FROM FactuurOverzicht AS f
 WHERE f.klant_id = 1
   AND f.betaald_op >= '2025-01-01'
   AND f.betaald_op < '2026-01-01';
@@ -1055,7 +1054,7 @@ SELECT k.klant_id, k.bedrijfsnaam,
        COUNT(f.totaal_bedrag) AS bekende_facturen,
        COUNT(f.factuur_id) - COUNT(f.totaal_bedrag) AS onbekende_facturen,
        SUM(f.totaal_bedrag) AS bekend_factuurbedrag
-FROM Factuur AS f
+FROM FactuurOverzicht AS f
 JOIN Klant AS k ON k.klant_id = f.klant_id
 WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
 GROUP BY k.klant_id, k.bedrijfsnaam
@@ -1067,7 +1066,7 @@ SELECT DATE_FORMAT(f.factuurdatum, '%Y-%m') AS periode,
        COUNT(f.totaal_bedrag) AS bekende_facturen,
        COUNT(f.factuur_id) - COUNT(f.totaal_bedrag) AS onbekende_facturen,
        SUM(f.totaal_bedrag) AS bekend_factuurbedrag
-FROM Factuur AS f
+FROM FactuurOverzicht AS f
 WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
 GROUP BY periode
 ORDER BY periode ASC;
@@ -1075,7 +1074,7 @@ ORDER BY periode ASC;
 -- Issue #30: top medicines by quantities on invoiced delivered lines.
 SELECT p.product_id, p.artikelnummer, p.productnaam,
        SUM(lr.aantal_geleverd) AS aantal_verkocht
-FROM Factuur AS f
+FROM FactuurOverzicht AS f
 JOIN Leveringregel AS lr ON lr.factuur_id = f.factuur_id
 JOIN Product AS p ON p.product_id = lr.product_id
 WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
@@ -1167,9 +1166,7 @@ INSERT INTO Factuur
 -- WeeklyInvoiceRepository._issue_customer example 7
 UPDATE Factuur
                            SET extra_bezorgkosten_excl_btw=10.00,
-                               extra_bezorgkosten_btw=0.90,
-                               extra_bezorgkosten_incl_btw=10.90,
-                               totaal_bedrag=100.00
+                               extra_bezorgkosten_btw=0.90
                            WHERE factuur_id=2;
 
 -- WeeklyInvoiceRepository._issue_customer example 8
@@ -1205,7 +1202,7 @@ UPDATE Bestelling AS b
 -- WeeklyInvoiceRepository.issued_invoice example 1
 SELECT f.*, k.bedrijfsnaam,
                        COALESCE(f.factuuradres,a.adres) AS adres
-                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
                 WHERE f.factuur_id=2;
 

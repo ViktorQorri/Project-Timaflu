@@ -76,7 +76,7 @@ class SnapshotCursor:
     def __exit__(self,*a): return False
     def execute(self,sql,args): self.sql.append(sql); self.params.append(args)
     def fetchone(self):
-        return {"factuur_id":9,"totaal_bedrag":self.existing}
+        return {"factuur_id":9,"bedrag_excl_btw":self.existing}
 
 class SnapshotDB:
     def __init__(self,existing=None):
@@ -175,9 +175,9 @@ class HistoricalInvoiceTests(TestCase):
         AssessedRepository(db).save_invoice_snapshot(9,doc)
         self.assertEqual(db.commits,1)
         self.assertEqual(db.rollbacks,0)
-        self.assertEqual(len(db.c.params[-1]),10)
+        self.assertEqual(len(db.c.params[-1]),6)
         self.assertEqual(db.c.params[-1][-1],9)
-        self.assertEqual(db.c.params[-1][-2],Decimal("37.28"))
+        self.assertEqual(db.c.params[-1][-2],Decimal("1.96"))
         existing=SnapshotDB(existing=Decimal("37.28"))
         with self.assertRaises(DomainError):
             AssessedRepository(existing).save_invoice_snapshot(9,doc)
@@ -193,11 +193,24 @@ class HistoricalInvoiceTests(TestCase):
         invoice=next(n for n in tables if n.find("./value[@key='name']").text=="factuur")
         cols={n.find("./value[@key='name']").text:n for n in invoice.iter("value")
               if n.get("struct-name")=="db.mysql.Column"}
-        for name in ("bedrag_excl_btw","btw_bedrag","bedrag_incl_btw","bestellingskorting",
-                     "bedrag_na_bestellingskorting","eenmalige_korting",
-                     "bedrag_na_eenmalige_korting","klantenkorting","totaal_bedrag"):
+        for name in ("bedrag_excl_btw","btw_bedrag","bestellingskorting",
+                     "eenmalige_korting","klantenkorting"):
             self.assertIn(name,cols)
             self.assertEqual(cols[name].find("./value[@key='isNotNull']").text,"0")
             self.assertEqual(
                 cols[name].find("./link[@key='simpleType']").text,
                 "com.mysql.rdbms.mysql.datatype.decimal")
+
+    def test_invoice_eer_does_not_store_derived_amounts(self):
+        repo = Path(__file__).resolve().parents[2]
+        with zipfile.ZipFile(repo / "eer.mwb") as z:
+            root = ET.fromstring(z.read("document.mwb.xml"))
+        tables = [n for n in root.iter("value") if n.get("struct-name") == "db.mysql.Table"]
+        invoice = next(n for n in tables if n.find("./value[@key='name']").text == "factuur")
+        cols = {n.find("./value[@key='name']").text for n in invoice.iter("value")
+                if n.get("struct-name") == "db.mysql.Column"}
+        self.assertFalse(cols.intersection({
+            "bedrag_incl_btw", "bedrag_na_bestellingskorting",
+            "bedrag_na_eenmalige_korting", "extra_bezorgkosten_incl_btw",
+            "totaal_bedrag"
+        }))

@@ -66,9 +66,10 @@ class PaymentReminderMySqlTests(unittest.TestCase):
             ):
                 cursor.execute(
                     """INSERT INTO Factuur
-                       (klant_id, factuurdatum, betaald_op, totaal_bedrag,
-                        factuuradres, afzenderadres)
-                       VALUES (1, %s, %s, %s, %s, %s)""",
+                       (klant_id, factuurdatum, betaald_op, bedrag_excl_btw,
+                        btw_bedrag, bestellingskorting, eenmalige_korting,
+                        klantenkorting, factuuradres, afzenderadres)
+                       VALUES (1, %s, %s, %s, 0, 0, 0, 0, %s, %s)""",
                     (today - timedelta(days=days), paid_on, amount,
                      "TEST: Oud factuuradres, Breda", "TEST: Timaflu afzender"),
                 )

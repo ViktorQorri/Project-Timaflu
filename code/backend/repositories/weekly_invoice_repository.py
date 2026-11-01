@@ -217,12 +217,9 @@ class WeeklyInvoiceRepository:
                     cursor.execute(
                         """UPDATE Factuur
                            SET extra_bezorgkosten_excl_btw=%s,
-                               extra_bezorgkosten_btw=%s,
-                               extra_bezorgkosten_incl_btw=%s,
-                               totaal_bedrag=%s
+                               extra_bezorgkosten_btw=%s
                            WHERE factuur_id=%s""",
-                        (extra_ex, extra_vat, extra_gross,
-                         euro(invoice["total"] + extra_gross), invoice_id)
+                        (extra_ex, extra_vat, invoice_id)
                     )
                     for charge in charges:
                         cursor.execute(
@@ -279,7 +276,7 @@ class WeeklyInvoiceRepository:
             cursor.execute("""
                 SELECT f.*, k.bedrijfsnaam,
                        COALESCE(f.factuuradres,a.adres) AS adres
-                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
                 WHERE f.factuur_id=%s
             """, (invoice_id,))

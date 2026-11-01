@@ -30,9 +30,12 @@ GROUPS = [
 def collect(connection, schema):
     with connection.cursor(dictionary=True) as cursor:
         cursor.execute("""
-            SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_KEY
-            FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=%s
-            ORDER BY TABLE_NAME,ORDINAL_POSITION
+            SELECT c.TABLE_NAME,c.COLUMN_NAME,c.COLUMN_TYPE,c.IS_NULLABLE,c.COLUMN_KEY
+            FROM information_schema.COLUMNS AS c
+            JOIN information_schema.TABLES AS t
+              ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
+            WHERE c.TABLE_SCHEMA=%s AND t.TABLE_TYPE = 'BASE TABLE'
+            ORDER BY c.TABLE_NAME,c.ORDINAL_POSITION
         """, (schema,))
         columns = cursor.fetchall()
         cursor.execute("""

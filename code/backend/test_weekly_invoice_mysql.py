@@ -90,7 +90,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
             invoice_id = self.fetchone(
                 "SELECT factuur_id FROM Factuur WHERE week_start=%s", (week,)
             )["factuur_id"]
-            invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(invoice_id,))
+            invoice=self.fetchone("SELECT * FROM FactuurOverzicht WHERE factuur_id=%s",(invoice_id,))
             self.assertEqual(invoice["bedrag_excl_btw"],Decimal("700.00"))
             self.assertEqual(invoice["btw_bedrag"],Decimal("63.00"))
             self.assertEqual(invoice["bedrag_incl_btw"],Decimal("763.00"))
@@ -138,7 +138,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
         self.assertEqual(len(first),1)
         second=repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3))
         self.assertEqual(len(second),1)
-        next_invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(second[0],))
+        next_invoice=self.fetchone("SELECT * FROM FactuurOverzicht WHERE factuur_id=%s",(second[0],))
         self.assertEqual(next_invoice["eenmalige_korting"],Decimal("0.00"))
         self.assertEqual(next_invoice["totaal_bedrag"],Decimal("103.55"))
         self.assertEqual(repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,11,3)),[])
@@ -160,7 +160,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
         repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,10,31))
         second=repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3))
         self.assertEqual(len(second),1)
-        invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(second[0],))
+        invoice=self.fetchone("SELECT * FROM FactuurOverzicht WHERE factuur_id=%s",(second[0],))
         self.assertEqual(invoice["eenmalige_korting"],Decimal("10.36"))
         self.assertEqual(invoice["bestellingskorting"],Decimal("5.45"))
         self.assertEqual(invoice["totaal_bedrag"],Decimal("192.08"))
@@ -174,7 +174,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
         ids=WeeklyInvoiceRepository(self.db).issue_week(
             date(2026,10,19),TEST_ADDRESS,date(2026,10,31)
         )
-        invoice=self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s",(ids[0],))
+        invoice=self.fetchone("SELECT * FROM FactuurOverzicht WHERE factuur_id=%s",(ids[0],))
         self.assertEqual(invoice["bestellingskorting"],Decimal("10.90"))
 
     def test_reminder_spacing_duplicate_prevention_and_paid_invoice_safety(self):
@@ -227,7 +227,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
             date(2026, 10, 19), TEST_ADDRESS, date(2026, 10, 31)
         )
         self.assertEqual(len(issued), 1)
-        invoice = self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s", (issued[0],))
+        invoice = self.fetchone("SELECT * FROM FactuurOverzicht WHERE factuur_id=%s", (issued[0],))
         self.assertEqual(invoice["eenmalige_korting"], Decimal("62.13"))
         self.assertEqual(invoice["klantenkorting"], Decimal("100.23"))
         self.assertEqual(invoice["totaal_bedrag"], Decimal("567.94"))

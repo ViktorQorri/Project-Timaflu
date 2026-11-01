@@ -64,12 +64,14 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
                        ('Hoge omzet', 1, 1), ('Nieuwe apotheek', 1, 1)
             """)
             cursor.execute("""
-                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op, totaal_bedrag)
-                VALUES (1, '2025-10-01', '2025-11-01', 9999.99),
-                       (1, '2025-12-10', NULL, 500000.00),
-                       (1, '2024-08-01', '2024-08-04', 500000.00),
-                       (2, '2025-12-01', '2025-12-11', 10000.00),
-                       (3, '2025-12-15', '2025-12-31', 20000.00)
+                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op,
+                                     bedrag_excl_btw, btw_bedrag, bestellingskorting,
+                                     eenmalige_korting, klantenkorting)
+                VALUES (1, '2025-10-01', '2025-11-01', 9999.99, 0, 0, 0, 0),
+                       (1, '2025-12-10', NULL, 500000.00, 0, 0, 0, 0),
+                       (1, '2024-08-01', '2024-08-04', 500000.00, 0, 0, 0, 0),
+                       (2, '2025-12-01', '2025-12-11', 10000.00, 0, 0, 0, 0),
+                       (3, '2025-12-15', '2025-12-31', 20000.00, 0, 0, 0, 0)
             """)
             cursor.execute("""
                 INSERT INTO Product (artikelnummer, bestelcode, productnaam,
@@ -152,8 +154,10 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
         # Changes to previous-year invoices must not affect the already fixed 2026 rate.
         with self.db.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op, totaal_bedrag)
-                VALUES (1, '2025-12-30', '2025-12-31', 30000.00)
+                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op,
+                                     bedrag_excl_btw, btw_bedrag, bestellingskorting,
+                                     eenmalige_korting, klantenkorting)
+                VALUES (1, '2025-12-30', '2025-12-31', 30000.00, 0, 0, 0, 0)
             """)
         self.db.commit()
         quote = self.service.calculate_total_amount(1, [(1, 10)], date(2026, 11, 1))
@@ -347,8 +351,10 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
     def test_incomplete_paid_invoice_does_not_partially_write_next_year(self):
         with self.db.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op, totaal_bedrag)
-                VALUES (4, '2025-11-01', '2025-11-10', NULL)
+                INSERT INTO Factuur (klant_id, factuurdatum, betaald_op,
+                                     bedrag_excl_btw, btw_bedrag, bestellingskorting,
+                                     eenmalige_korting, klantenkorting)
+                VALUES (4, '2025-11-01', '2025-11-10', NULL, 0, 0, 0, 0)
             """)
         self.db.commit()
         with self.assertRaises(DomainError):

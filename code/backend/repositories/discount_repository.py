@@ -115,7 +115,7 @@ class DiscountRepository:
             SELECT COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet,
                    COUNT(*) AS betaalde_facturen,
                    COUNT(f.totaal_bedrag) AS facturen_met_bedrag
-            FROM Factuur AS f
+            FROM FactuurOverzicht AS f
             WHERE f.klant_id = %s AND YEAR(f.betaald_op) = %s
         """, (customer_id, year))
         if row["betaalde_facturen"] != row["facturen_met_bedrag"]:

@@ -30,7 +30,7 @@ class CustomerRepository:
                        COUNT(*) AS paid_count,
                        COUNT(f.totaal_bedrag) AS known_amount_count,
                        SUM(f.totaal_bedrag) AS jaaromzet
-                FROM Factuur AS f
+                FROM FactuurOverzicht AS f
                 WHERE YEAR(f.betaald_op) = %s
                 GROUP BY f.klant_id
             ) AS o ON o.klant_id = k.klant_id

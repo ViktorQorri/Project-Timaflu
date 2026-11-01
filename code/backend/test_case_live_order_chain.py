@@ -116,7 +116,7 @@ class RealOrderChainTests(unittest.TestCase):
                 ids=WeeklyInvoiceRepository(get_connection()).issue_week(
                     week,"TEST fictief",issued_on=week+timedelta(days=7))
             self.assertEqual(len(ids),1)
-            self.assertEqual(self.scalar("SELECT totaal_bedrag FROM Factuur"),Decimal("279.58"))
+            self.assertEqual(self.scalar("SELECT totaal_bedrag FROM FactuurOverzicht"),Decimal("279.58"))
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leveringregel WHERE factuur_id IS NOT NULL"),1)
 
     def test_shortage_needs_customer_choice_and_never_reserves_missing_stock(self):
@@ -180,10 +180,10 @@ class RealOrderChainTests(unittest.TestCase):
                     week, "TEST fictief", issued_on=week + timedelta(days=7),
                     delivery_cost_vat_percent="9")
             self.assertEqual(len(issued), 1)
-            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_incl_btw FROM Factuur"), Decimal("10.90"))
+            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_incl_btw FROM FactuurOverzicht"), Decimal("10.90"))
             self.assertEqual(self.scalar("SELECT extra_bezorgkosten_excl_btw FROM Factuur"), Decimal("10.00"))
             self.assertEqual(self.scalar("SELECT extra_bezorgkosten_btw FROM Factuur"), Decimal("0.90"))
-            self.assertEqual(self.scalar("SELECT totaal_bedrag FROM Factuur"), Decimal("290.48"))
+            self.assertEqual(self.scalar("SELECT totaal_bedrag FROM FactuurOverzicht"), Decimal("290.48"))
             self.assertEqual(self.scalar("SELECT extra_bezorgkosten_factuur_id FROM Bestelling"), issued[0])
             with self.app.app_context():
                 again = WeeklyInvoiceRepository(get_connection()).issue_week(
