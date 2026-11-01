@@ -42,12 +42,12 @@ SCREENS = [
     ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
-    ("/reports", "Rapportage (statisch scherm)"),
+    ("/reports", "Orderstatusoverzicht"),
     ("/api/health", "Database API gezondheid"),
 ]
 MODULES = ["routes.home","routes.purchasing","routes.sales",
            "routes.distribution","routes.administration",
-           "routes.weekly_invoices","routes.acquisition","routes.api"]
+           "routes.weekly_invoices","routes.acquisition","routes.reports","routes.api"]
 
 
 class RecorderCursor:

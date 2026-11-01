@@ -809,12 +809,59 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ]
 ```
 
-## Rapportage (statisch scherm)
+## Orderstatusoverzicht
 
 Scherm: /reports
 HTTP-status: 200
 
-*Geen SQL-query: statisch/placeholder-scherm.*
+### Query 1
+```sql
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam FROM Bestelling AS b JOIN Klant AS k ON k.klant_id = b.klant_id ORDER BY b.besteld_op DESC, b.bestelling_id DESC
+```
+Parameters: ```json
+[]
+```
+Resultaat: 4 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "bestelling_id": 4,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "besteld_op": "2026-10-29 09:00:00",
+    "gewenste_leverdatum": "2026-10-30",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd"
+  },
+  {
+    "bestelling_id": 3,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "besteld_op": "2026-10-21 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "verstuurd"
+  },
+  {
+    "bestelling_id": 2,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "besteld_op": "2026-10-20 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "middag",
+    "spoed": 0,
+    "status_naam": "afgeleverd"
+  },
+  {
+    "bestelling_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "besteld_op": "2026-10-19 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd"
+  }
+]
+```
 
 ## Database API gezondheid
 
