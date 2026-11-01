@@ -142,7 +142,7 @@
         <button type="submit">Bekijken</button>
       </form>
 
-      <div class="stock-dashboard__table-wrap">
+      <div class="stock-dashboard__table-wrap delivery-page__schedule">
         <table class="stock-dashboard__table">
           <caption>Geplande bezorgpogingen op {{ day }}</caption>
           <thead>
@@ -166,7 +166,7 @@
                 <td data-label="Koerier">{{ item.koerier or "Niet bekend" }}</td>
                 <td data-label="Regio">{{ item.koeriersregio or "Geen vaste regio" }}</td>
                 <td data-label="Bestelling">{{ item.bestelling_id }}</td>
-                <td>{{ "Spoed" if item.spoed else "Regulier" }}</td>
+                <td data-label="Spoed">{{ "Spoed" if item.spoed else "Regulier" }}</td>
                 <td data-label="Klant">{{ item.bedrijfsnaam }}</td>
                 <td data-label="Adres">{{ item.adres }}</td>
                 <td data-label="Contact">{{ item.contactpersoon }} - {{ item.telefoonnummer }}</td>
