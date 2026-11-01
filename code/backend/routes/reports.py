@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template
 
 from db import get_connection
 from repositories.order_status_report_repository import OrderStatusReportRepository
@@ -9,10 +9,6 @@ reports = Blueprint("reports", __name__)
 
 @reports.get("/reports")
 def index():
-    """Show the reports page with the order status report."""
+    """Show current order statuses; no unsupported period-based reporting rules."""
     service = OrderStatusReportService(OrderStatusReportRepository(get_connection()))
-    report = service.report(
-        request.args.get("from", "", type=str),
-        request.args.get("to", "", type=str),
-    )
-    return render_template("reports.html", report=report)
+    return render_template("reports.html", report=service.report())

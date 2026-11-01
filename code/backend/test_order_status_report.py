@@ -5,7 +5,6 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from app import create_app
-from domain.errors import DomainError
 from repositories.order_status_report_repository import OrderStatusReportRepository
 from services.order_status_report_service import OrderStatusReportService
 
@@ -22,8 +21,8 @@ class Cursor:
     def __exit__(self, *args):
         return False
 
-    def execute(self, sql, params):
-        self.sql, self.params = sql, params
+    def execute(self, sql):
+        self.sql = sql
 
     def fetchall(self):
         return self.rows
@@ -43,8 +42,8 @@ class Repo:
         self.rows = rows
         self.calls = []
 
-    def list_orders(self, date_from, date_to):
-        self.calls.append((date_from, date_to))
+    def list_orders(self):
+        self.calls.append(True)
         return self.rows
 
 
@@ -57,7 +56,6 @@ def order(order_id, status, customer="Apotheek De Linde"):
         "dagdeel": "ochtend",
         "spoed": 0,
         "status_naam": status,
-        "aantal_regels": 2,
     }
 
 
@@ -76,42 +74,28 @@ class OrderStatusReportTests(TestCase):
 
     def test_repository_reads_orders_with_customer_and_status(self):
         connection = Connection(self.rows)
-        result = OrderStatusReportRepository(connection).list_orders(date(2026, 10, 1), None)
+        result = OrderStatusReportRepository(connection).list_orders()
         self.assertEqual(result, self.rows)
         self.assertIn("JOIN Klant", connection.cur.sql)
-        self.assertIn("LEFT JOIN Bestelregel", connection.cur.sql)
+        self.assertNotIn("Bestelregel", connection.cur.sql)
         self.assertIn("b.status_naam", connection.cur.sql)
-        self.assertEqual(connection.cur.params, (date(2026, 10, 1), date(2026, 10, 1), None, None))
 
     def test_open_orders_include_every_unfinished_status(self):
-        open_orders = self.groups(OrderStatusReportService(Repo(self.rows)).report("", ""))["open"]
+        open_orders = self.groups(OrderStatusReportService(Repo(self.rows)).report())["open"]
         self.assertEqual([row["bestelling_id"] for row in open_orders], [1, 2, 3])
 
     def test_backorders_and_delivered_orders_are_separate(self):
-        report = OrderStatusReportService(Repo(self.rows)).report("", "")
+        report = OrderStatusReportService(Repo(self.rows)).report()
         groups = self.groups(report)
         self.assertEqual([row["bestelling_id"] for row in groups["backorder"]], [4])
         self.assertEqual([row["bestelling_id"] for row in groups["delivered"]], [5])
         self.assertEqual(report["total"], 5)
 
-    def test_period_is_parsed_and_passed_to_repository(self):
+    def test_repository_called_once_without_optional_filters(self):
         repo = Repo([])
-        report = OrderStatusReportService(repo).report(" 2026-10-01 ", "2026-10-31")
-        self.assertEqual(repo.calls, [(date(2026, 10, 1), date(2026, 10, 31))])
-        self.assertEqual(report["date_from"], date(2026, 10, 1))
+        report = OrderStatusReportService(repo).report()
+        self.assertEqual(repo.calls, [True])
         self.assertEqual(report["total"], 0)
-
-    def test_invalid_date_rejected_before_query(self):
-        repo = Repo(self.rows)
-        with self.assertRaises(DomainError):
-            OrderStatusReportService(repo).report("31-10-2026", "")
-        self.assertEqual(repo.calls, [])
-
-    def test_start_after_end_rejected_before_query(self):
-        repo = Repo(self.rows)
-        with self.assertRaises(DomainError):
-            OrderStatusReportService(repo).report("2026-11-01", "2026-10-01")
-        self.assertEqual(repo.calls, [])
 
     def test_reports_page_renders_all_groups_and_empty_states(self):
         app = create_app()
@@ -129,17 +113,18 @@ class OrderStatusReportTests(TestCase):
                 self.assertIn("Wordt verzameld", html)
                 self.assertIn("Nog geen status", html)
             with patch("routes.reports.get_connection", return_value=Connection([])):
-                response = client.get("/reports?from=2026-10-01&to=2026-10-31")
+                response = client.get("/reports")
                 self.assertEqual(response.status_code, 200)
                 html = response.get_data(as_text=True)
-                self.assertIn("Geen backorders in deze periode", html)
-                self.assertIn("01-10-2026", html)
+                self.assertIn("Geen backorders.", html)
 
-    def test_reports_page_rejects_invalid_period(self):
+    def test_report_does_not_expose_extra_date_filters(self):
         app = create_app()
         app.testing = True
         with app.test_client() as client:
             with patch("routes.reports.get_connection", return_value=Connection(self.rows)):
-                response = client.get("/reports?from=2026-11-01&to=2026-10-01")
-                self.assertEqual(response.status_code, 400)
-                self.assertIn("begindatum", response.get_data(as_text=True))
+                response = client.get("/reports")
+                self.assertEqual(response.status_code, 200)
+                html = response.get_data(as_text=True)
+                self.assertNotIn('name="from"', html)
+                self.assertNotIn('name="to"', html)
