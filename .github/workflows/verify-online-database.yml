@@ -17,7 +17,7 @@ jobs:
       DB_USER: ${{ secrets.TIMAFLU_DB_USER }}
       DB_PASSWORD: ${{ secrets.TIMAFLU_DB_PASSWORD }}
       DB_REQUIRE_TLS: "1"
-      DB_SSL_CA: ${{ runner.temp }}/timaflu-mysql-ca.pem
+      DB_SSL_CA: timaflu-mysql-ca.pem
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
