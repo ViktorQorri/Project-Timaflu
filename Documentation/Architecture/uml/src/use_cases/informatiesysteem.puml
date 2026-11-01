@@ -9,6 +9,7 @@ actor "Inkoopmedewerker" as Purchaser
 actor "Administratiemedewerker" as Admin
 actor "Koerier" as Courier
 actor "Acquisitiemedewerker" as Acquisition
+actor "Directie" as Management
 
 rectangle "Timaflu Systeem" {
     
@@ -21,15 +22,21 @@ rectangle "Timaflu Systeem" {
     Robot --> (Verzamelbak scannen)
     Robot --> (Deelorder verzamelen)
     Robot --> (Ordercompleetheid melden)
+    Robot --> (Volgende deelorder opvragen)
     
     (Deelorder verzamelen) ..> (Voorraad controleren) : <<include>>
     
     Distro --> (Order verpakken)
+    Distro --> (Bezorgritten toewijzen)
     
     Purchaser --> (Voorraad bewaken)
     Purchaser --> (Producten bijbestellen)
+    Purchaser --> (Nieuw medicijn beoordelen)
+    Management --> (Nieuw medicijn beoordelen)
     
     Admin --> (Facturatie beheren)
+    Admin --> (Inkoopfacturen betalen)
+    Admin --> (Jaarlijkse klantenkorting vaststellen)
     
     Courier --> (Ritgegevens raadplegen)
     Courier --> (Telefoonnummer klant opzoeken)

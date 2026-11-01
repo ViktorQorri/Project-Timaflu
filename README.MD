@@ -1,6 +1,6 @@
 # Timaflu
 
-School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes. We are working on it in a group of 6.
+School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes.
 
 ## Scope
 
@@ -37,17 +37,13 @@ All products must be traceable to each other: the same entities and naming in di
 ## Software architecture
 
 The frontend (HTML and CSS only) is rendered by a Python backend (Flask) that reads and writes a MySQL database. The robots use a JSON API on the same backend. See [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) for the full description and the diagram.
-## Diagrams with draw.io
+## Bewerkbare diagrambronnen
 
-We create all diagrams in [draw.io](https://www.drawio.com/) (diagrams.net).
-
-- Save the source files as `.drawio` in the repository so everyone can edit them.
-- Also export each diagram as `.png` or `.svg` with the same file name, so it can be viewed directly in documents and on GitHub.
-- Use clear file names, for example `activity-sales.drawio` and `activity-sales.png`.
-- When making changes, always update both the `.drawio` file and the export so they do not drift apart.
-- Use the same names in diagrams as in the other products (traceability).
-
-Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
+Het EER is bewerkbaar in MySQL Workbench (`eer.mwb`) en heeft een actuele SVG-export.
+De architectuur gebruikt `architecture.drawio` en de bijbehorende SVG.
+Activity diagrams, usecase-diagrammen, DKD en sequence diagrams hebben PlantUML-bronnen
+in `Documentation/Architecture/uml/src/` en overeenkomstige exports in `uml/export/`.
+Behoud bij wijzigingen de afstemming tussen diagrammen, MySQL en Python.
 
 ## Casus en oplevering
 
@@ -55,19 +51,28 @@ De oorspronkelijke casus in `Documentation/brightspace/` is leidend.
 De verplichte EER blijft beschikbaar als
 [SVG](Documentation/Architecture/eer-mysql-verified.svg) en het bewerkbare
 MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
-verwijderd. De verplichte query-output per scherm wordt uit een geïsoleerde
-MySQL-testdatabase gegenereerd met `python code/database/audit_ui_queries.py`
-naar `deliverables/query-output-per-screen.md`. Dit bestand staat niet in Git.
-`python code/build_deliverables.py --output-dir deliverables` neemt het rapport
-vervolgens op in het database-ZIP-bestand voor de school.
+verwijderd. De actuele MySQL-queryuitvoer per scherm staat in
+[query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md).
+Dit rapport is op een geÃ¯soleerde MySQL 8.4-database gemeten. Bij wijzigingen aan
+schermen of queries moet opnieuw worden gemeten met
+`python code/database/audit_ui_queries.py`; dat produceert een bijgewerkt
+`deliverables/query-output-per-screen.md`.
+Met `python code/build_deliverables.py --output-dir deliverables` zijn de vier
+schoolarchieven ook uit een schone checkout te maken. Een opnieuw gemeten
+lokaal rapport krijgt voorrang op het ingecheckte bewijs.
+
 
 ## Documentation
 
 | Document | Location |
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
+| Projectaanpak en taakverdeling | [Documentation/Projectbeheer/projectaanpak.md](Documentation/Projectbeheer/projectaanpak.md) |
+| Controle schoolcriteria | [Documentation/Projectbeheer/beoordelingscontrole.md](Documentation/Projectbeheer/beoordelingscontrole.md) |
+| Reflectiewerkblad | [Documentation/Projectbeheer/reflectie-werkblad.md](Documentation/Projectbeheer/reflectie-werkblad.md) |
+| Notulen ter verificatie | [Documentation/Meetings/notulen-2026-10-30-ter-verificatie.md](Documentation/Meetings/notulen-2026-10-30-ter-verificatie.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
-| Databasequeries en echte output | Gegenereerd in `deliverables/query-output-per-screen.md`, opgenomen in `timaflu-database-en-queries.zip` |
+| Databasequeries en echte output | [Queryrapport](Documentation/Architecture/query-output-per-screen.md), opgenomen in `timaflu-database-en-queries.zip` |
 | Schermontwerpen en traceability | [Documentation/Architecture/screens/README.md](Documentation/Architecture/screens/README.md) |
 | API-specificatie | [Documentation/Architecture/api-specification.md](Documentation/Architecture/api-specification.md) |
 | Domain class diagram (PlantUML), sources and multiplicities | [DKD (PlantUML)](Documentation/Architecture/uml/src/domain/dkd-timaflu.puml) |
@@ -83,6 +88,6 @@ vervolgens op in het database-ZIP-bestand voor de school.
 - Code and files: this repository, one branch per ticket, changes via pull request
 - Every pull request is reviewed by at least 1 other group member before it is merged
 - Communication: WhatsApp for short and urgent messages, Discord for substantive discussion
-- Decisions: at least 4 of the 6 votes
+- Decisions: 3 of the 5 votes under current collaboration agreements v2.0
 
 See the [collaboration agreements](Documentation/Conflict-prevention/collaboration-agreements.md) for the full agreements.

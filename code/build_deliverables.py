@@ -18,6 +18,7 @@ from database.validate_eer_schema import validate as validate_eer_schema
 ROOT = Path(__file__).resolve().parents[1]
 QUERY_REPORT = ROOT / "deliverables/query-output-per-screen.md"
 QUERY_ARCHIVE_PATH = "Documentation/Architecture/query-output-per-screen.md"
+TRACKED_QUERY_REPORT = ROOT / QUERY_ARCHIVE_PATH
 
 ARCHIVES = {
     "timaflu-backend.zip": (
@@ -108,13 +109,14 @@ def build(output_dir: Path):
         archive = output_dir / filename
         generated_query_report = None
         if filename == "timaflu-database-en-queries.zip":
-            if not QUERY_REPORT.is_file():
+            # Prefer a new local MySQL measurement, but permit a clean checkout.
+            query_source = QUERY_REPORT if QUERY_REPORT.is_file() else TRACKED_QUERY_REPORT
+            if not query_source.is_file():
                 raise RuntimeError(
-                    "MySQL-queryrapport ontbreekt. Genereer eerst "
-                    "deliverables/query-output-per-screen.md met "
-                    "python code/database/audit_ui_queries.py op een geïsoleerde testdatabase."
+                    "MySQL-queryrapport ontbreekt. Genereer eerst het rapport "
+                    "op een geÃ¯soleerde MySQL-testdatabase."
                 )
-            generated_query_report = QUERY_REPORT.read_bytes()
+            generated_query_report = query_source.read_bytes()
             validate_query_report(generated_query_report)
         with ZipFile(archive, "w", compression=ZIP_DEFLATED, compresslevel=9) as zipped:
             for relative in source_paths:
