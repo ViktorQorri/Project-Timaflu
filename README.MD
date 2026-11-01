@@ -55,10 +55,11 @@ De oorspronkelijke casus in `Documentation/brightspace/` is leidend.
 De verplichte EER blijft beschikbaar als
 [SVG](Documentation/Architecture/eer-mysql-verified.svg) en het bewerkbare
 MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
-verwijderd. De verplichte query-output per scherm staat in
-[query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md).
-ZIP-bestanden voor de school worden uitsluitend bij inlevering lokaal gegenereerd
-met `python code/build_deliverables.py --output-dir deliverables`.
+verwijderd. De verplichte query-output per scherm wordt uit een geïsoleerde
+MySQL-testdatabase gegenereerd met `python code/database/audit_ui_queries.py`
+naar `deliverables/query-output-per-screen.md`. Dit bestand staat niet in Git.
+`python code/build_deliverables.py --output-dir deliverables` neemt het rapport
+vervolgens op in het database-ZIP-bestand voor de school.
 
 ## Documentation
 
@@ -66,7 +67,7 @@ met `python code/build_deliverables.py --output-dir deliverables`.
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
-| Databasequeries en echte output | [Documentation/Architecture/query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md) |
+| Databasequeries en echte output | Gegenereerd in `deliverables/query-output-per-screen.md`, opgenomen in `timaflu-database-en-queries.zip` |
 | Schermontwerpen en traceability | [Documentation/Architecture/screens/README.md](Documentation/Architecture/screens/README.md) |
 | API-specificatie | [Documentation/Architecture/api-specification.md](Documentation/Architecture/api-specification.md) |
 | Domain class diagram (PlantUML), sources and multiplicities | [DKD (PlantUML)](Documentation/Architecture/uml/src/domain/dkd-timaflu.puml) |

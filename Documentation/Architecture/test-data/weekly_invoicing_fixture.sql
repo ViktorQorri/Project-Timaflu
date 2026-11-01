@@ -45,3 +45,22 @@ INSERT INTO PotentieleKlant(bedrijfsnaam,contactpersoon,contactgegevens,adres_id
 VALUES('TEST Prospectapotheek','TEST prospect','0600000001',4);
 INSERT INTO Acquisitiebezoek(potentiele_klant_id,bezoekdatum)
 VALUES(1,'2026-09-15');
+
+-- Additional comparable suppliers demonstrate ascending purchase-price sorting.
+INSERT INTO Adres(adres) VALUES ('TEST: Leveranciersweg 2'), ('TEST: Leveranciersweg 3');
+INSERT INTO Leverancier(naam,adres_id,contactpersoon,telefoonnummer)
+VALUES ('TEST Fabrikant duurder',5,'TEST contact duur','0600000002'),
+       ('TEST Fabrikant goedkoper',6,'TEST contact goedkoop','0600000003');
+INSERT INTO LeveranciersAanbod(leverancier_id,product_id,inkoopprijs)
+VALUES (2,1,92.00),(3,1,42.00);
+-- An already confirmed purchase order proves the purchasing overview.
+INSERT INTO Inkoopbestelling (leverancier_id,besteld_op,status_naam)
+VALUES (3,'2026-10-20 08:00:00','besteld');
+INSERT INTO Inkoopbestelregel (inkoopbestelling_id,product_id,aantal)
+VALUES (1,1,2);
+-- A second prospect proves acquisition ordering by last visit.
+INSERT INTO Adres(adres) VALUES ('TEST: Prospectlaan 4');
+INSERT INTO PotentieleKlant(bedrijfsnaam,contactpersoon,contactgegevens,adres_id)
+VALUES ('TEST Prospectapotheek tweede','TEST prospect 2','0600000004',7);
+INSERT INTO Acquisitiebezoek(potentiele_klant_id,bezoekdatum)
+VALUES (2,'2026-08-15');

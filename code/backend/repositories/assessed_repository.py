@@ -92,7 +92,7 @@ class AssessedRepository:
                 SELECT COUNT(*) AS paid_count,
                        COUNT(f.totaal_bedrag) AS known_amount_count,
                        COALESCE(SUM(f.totaal_bedrag),0) AS annual
-                FROM Factuur AS f
+                FROM FactuurOverzicht AS f
                 WHERE f.klant_id=%s AND f.betaald_op>= %s AND f.betaald_op< %s
             """, (customer_id, date(year,1,1), date(year+1,1,1)))
             result = c.fetchone()
@@ -125,7 +125,7 @@ class AssessedRepository:
                        f.klantenkorting,
                        f.totaal_bedrag,
                        k.bedrijfsnaam, a.adres
-                FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
 WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 ORDER BY f.factuurdatum DESC
@@ -521,35 +521,6 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 self.db.rollback()
                 raise
 
-    def close_prospect_followup(self, prospect_id, cutoff):
-        """A definitive no after the callback ends acquisition; do not contact again."""
-        try:
-            with self.db.cursor(dictionary=True) as cursor:
-                cursor.execute(
-                    "SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant "
-                    "WHERE potentiele_klant_id=%s FOR UPDATE", (prospect_id,))
-                prospect = cursor.fetchone()
-                if prospect is None or prospect["opvolging_afgesloten"]:
-                    raise DomainError("Deze opvolging bestaat niet of is al afgesloten.")
-                cursor.execute(
-                    "SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek "
-                    "WHERE potentiele_klant_id=%s", (prospect_id,))
-                visited = cursor.fetchone()
-                if not visited or not visited["laatste_bezoek"] or visited["laatste_bezoek"] > cutoff:
-                    raise DomainError("Opvolging mag pas een maand na het bezoek worden afgesloten.")
-                if prospect["klant_id"] is not None:
-                    cursor.execute("SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=%s",
-                                   (prospect["klant_id"],))
-                    if cursor.fetchone()["aantal"]:
-                        raise DomainError("Deze apotheek heeft al besteld; opvolging is niet nodig.")
-                cursor.execute(
-                    "UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE "
-                    "WHERE potentiele_klant_id=%s", (prospect_id,))
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
-            raise
-
     def unpaid_invoice_overview(self, today):
         """AD18: all unpaid customer invoices, reminders and weeks outstanding."""
         with self.db.cursor(dictionary=True) as cursor:
@@ -560,7 +531,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                           k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
                           first_reminder.verstuurd_op AS eerste_herinnering,
                           second_reminder.verstuurd_op AS tweede_herinnering
-                   FROM Factuur AS f
+                   FROM FactuurOverzicht AS f
                    JOIN Klant AS k ON k.klant_id = f.klant_id
                    LEFT JOIN Betalingsherinnering AS first_reminder
                      ON first_reminder.factuur_id = f.factuur_id
@@ -613,7 +584,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                           k.bedrijfsnaam, a.adres AS huidig_factuuradres,
                           first_reminder.verstuurd_op AS eerste_herinnering,
                           second_reminder.verstuurd_op AS tweede_herinnering
-                   FROM Factuur AS f
+                   FROM FactuurOverzicht AS f
                    JOIN Klant AS k ON k.klant_id = f.klant_id
                    JOIN Adres AS a ON a.adres_id = k.betaaladres_id
                    LEFT JOIN Betalingsherinnering AS first_reminder
@@ -729,20 +700,27 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
     def save_invoice_snapshot(self, invoice_id, invoice_data, commit=True):
         """Store the issued invoice amounts once, not recomputed at payment time."""
         from domain.business import euro
-        values = tuple(euro(invoice_data[field]) for _, field in [('bedrag_excl_btw', 'total_ex_vat'), ('btw_bedrag', 'vat_9_percent'), ('bedrag_incl_btw', 'total_incl_vat'), ('bestellingskorting', 'order_discount'), ('bedrag_na_bestellingskorting', 'total_after_order_discount'), ('eenmalige_korting', 'first_order_discount'), ('bedrag_na_eenmalige_korting', 'total_after_first_order_discount'), ('klantenkorting', 'customer_discount'), ('totaal_bedrag', 'total')])
+        # Record only independent facts; the view derives all intermediate totals.
+        base_fields = (
+            "total_ex_vat", "vat_9_percent", "order_discount",
+            "first_order_discount", "customer_discount"
+        )
+        values = tuple(euro(invoice_data[field]) for field in base_fields)
         try:
             with self.db.cursor(dictionary=True) as cursor:
                 cursor.execute(
-                    "SELECT factuur_id, totaal_bedrag FROM Factuur WHERE factuur_id=%s FOR UPDATE",
+                    "SELECT factuur_id, bedrag_excl_btw FROM Factuur WHERE factuur_id=%s FOR UPDATE",
                     (invoice_id,),
                 )
                 current = cursor.fetchone()
                 if current is None:
                     raise DomainError("Factuur niet gevonden.")
-                if current["totaal_bedrag"] is not None:
+                if current["bedrag_excl_btw"] is not None:
                     raise DomainError("Het factuurbedrag is al definitief vastgelegd.")
                 cursor.execute(
-                    """UPDATE Factuur SET bedrag_excl_btw=%s, btw_bedrag=%s, bedrag_incl_btw=%s, bestellingskorting=%s, bedrag_na_bestellingskorting=%s, eenmalige_korting=%s, bedrag_na_eenmalige_korting=%s, klantenkorting=%s, totaal_bedrag=%s WHERE factuur_id=%s""",
+                    """UPDATE Factuur SET bedrag_excl_btw=%s, btw_bedrag=%s,
+                       bestellingskorting=%s, eenmalige_korting=%s,
+                       klantenkorting=%s WHERE factuur_id=%s""",
                     values + (invoice_id,),
                 )
             if commit:
@@ -781,7 +759,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                         """SELECT COUNT(*) AS paid_count,
                                   COUNT(totaal_bedrag) AS known_count,
                                   COALESCE(SUM(totaal_bedrag), 0) AS jaaromzet
-                           FROM Factuur
+                           FROM FactuurOverzicht
                            WHERE klant_id=%s AND betaald_op >= %s AND betaald_op <= %s""",
                         (customer_id, date(as_of.year, 1, 1), as_of),
                     )

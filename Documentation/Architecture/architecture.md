@@ -287,8 +287,7 @@ code/
     static/css/          stylesheets
   database/
     schema.sql           creates the tables
-    seed.sql             fills the tables with relevant data (to be written)
-    queries.sql          the queries per screen (to be written)
+    queries.sql          queries and example values for the screens
 ```
 
 The frontend folder only contains HTML templates and CSS, so it can be handed in as the frontend zip. The backend folder is handed in as the backend zip.
@@ -310,11 +309,15 @@ The frontend folder only contains HTML templates and CSS, so it can be handed in
 - Unexpected errors are logged on the server and the user sees a general error page without technical details.
 - If the database cannot be reached, the user sees an error page and the problem is logged.
 
-## Testing
+## Controle voor de oplevering
 
-- Repositories are tested against a test database or by hand with the queries from the query document.
-- Each screen is checked by hand on desktop size. The order picking and distribution screens are also checked on a phone.
-- The output of the queries in the query document comes from the real database, not from made up data.
+De automatische regressietests en oude generatoren zijn tijdens de opschoning verwijderd.
+Bij verdere wijzigingen is handmatige controle nodig:
+
+- Vergelijk de MySQL-tabellen en kolommen met het bewerkbare EER in `eer.mwb`.
+- Controleer dat de queryvoorbeelden per scherm overeenkomen met de echte SQL in de repositories.
+- Controleer alle schermen op desktop; orderpicking en distributie ook mobiel.
+- De vastgelegde query-output is afkomstig van een eerdere geïsoleerde MySQL 8.4-testomgeving en moet na wijzigingen die de uitvoer beïnvloeden opnieuw worden vastgesteld.
 
 ## Hosting and deployment
 

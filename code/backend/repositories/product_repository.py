@@ -9,7 +9,7 @@ PRODUCT_COLUMNS = """
     p.product_id, p.artikelnummer, p.bestelcode, p.productnaam,
     p.prijs_per_grootverpakking, p.verpakkingssoort, p.aantal_detailverpakkingen,
     p.korte_omschrijving, p.lange_omschrijving, p.minimale_bestelhoeveelheid,
-    p.minimumvoorraad, p.in_assortiment
+    p.minimumvoorraad, p.in_assortiment, p.intern_bestelbaar
 """
 
 
@@ -268,6 +268,7 @@ class ProductRepository:
             minimum_order_quantity=row["minimale_bestelhoeveelheid"],
             minimum_stock=row["minimumvoorraad"],
             in_assortment=bool(row["in_assortiment"]),
+            internal_reorder_eligible=bool(row["intern_bestelbaar"]),
         )
 
     @staticmethod

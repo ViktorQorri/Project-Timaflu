@@ -48,18 +48,3 @@ def complete_follow_up(prospect_id):
             "success",
         )
     return redirect(url_for("acquisition.index"))
-
-@acquisition.post("/acquisition/decline")
-def decline_followup():
-    """Original case: after rejecting the incentive, stop further acquisition."""
-    try:
-        prospect_id=int(request.form["prospect_id"])
-    except (KeyError, ValueError) as exc:
-        raise DomainError("Ongeldig prospectnummer.") from exc
-    if prospect_id < 1 or request.form.get("declined") != "yes":
-        raise DomainError("Bevestig dat de apotheek geen interesse heeft.")
-    AssessedRepository(get_connection()).close_prospect_followup(
-        prospect_id, previous_month(date.today())
-    )
-    flash("Acquisitieopvolging afgesloten; geen verdere actie.", "success")
-    return redirect(url_for("acquisition.index"))

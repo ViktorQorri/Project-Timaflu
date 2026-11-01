@@ -62,8 +62,11 @@ Open http://127.0.0.1:5000. The homepage is static; database errors are shown wh
 ## Opleverbestanden maken
 
 De school vraagt aparte ZIP-bestanden voor Python-backend en HTML/CSS-website,
-plus het actuele EER, de databasequeries en de ontwerpproducten. Maak ze vanuit
-de repositoryhoofdmappen met:
+plus het actuele EER, de databasequeries en de ontwerpproducten. Genereer
+eerst het queryrapport met `python code/database/audit_ui_queries.py` tegen een
+geïsoleerde lokale MySQL-testdatabase, zoals in de broncode beveiligd.
+Het rapport komt in de genegeerde map `deliverables/` en blijft buiten Git.
+Maak daarna de ZIP-bestanden vanuit de repositoryhoofdmap met:
 
 ```powershell
 python code/build_deliverables.py --output-dir deliverables
@@ -76,8 +79,8 @@ schermen blijft de Python-backend nodig. De databasebestanden zijn
 MySQL-scripts en documentatie, geen automatisch gepubliceerde online database.
 
 De ZIP-bestanden worden niet opgeslagen in Git. Maak deze lokaal wanneer
-de schooloplevering plaatsvindt. Er worden alleen Git-tracked bronnen opgenomen;
-lokale wachtwoorden en tijdelijke gegevens blijven uitgesloten.
+de schooloplevering plaatsvindt. Alleen Git-tracked bronbestanden en het lokaal gegenereerde queryrapport
+worden opgenomen; lokale wachtwoorden en overige tijdelijke gegevens niet.
 
 ## Adding a screen
 
