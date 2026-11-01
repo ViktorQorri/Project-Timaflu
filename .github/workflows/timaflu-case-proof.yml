@@ -1,4 +1,5 @@
 name: Timaflu casuscontrole MySQL en UML
+
 on:
   pull_request:
   push:
@@ -26,6 +27,8 @@ jobs:
       TIMAFLU_TEST_MYSQL_HOST: 127.0.0.1
       TIMAFLU_TEST_MYSQL_PORT: "3306"
       TIMAFLU_TEST_MYSQL_PASSWORD: TestTemporaryOnly94
+      CASEPROOF_DB_PORT: "3306"
+      CASEPROOF_DB_PASSWORD: TestTemporaryOnly94
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,22 +36,42 @@ jobs:
           python-version: "3.13"
       - name: Dependencies
         run: python -m pip install -r code/backend/requirements.txt
-      - name: Unit and actual MySQL integration tests
+      - name: Five independent rounds of unit and real MySQL integration tests
         working-directory: code/backend
-        run: python -m unittest discover -p "test_*.py" -v
-      - name: Case screen semantics and UML tests
         run: |
-          python Documentation/Architecture/screens/test_case_screens.py
-          python -m unittest discover -s Documentation/Architecture/uml/tests -p "test_*.py"
+          for round in 1 2 3 4 5; do
+            echo "FULL CASE REGRESSION ROUND $round OF 5"
+            python -m unittest discover -p "test_*.py" -q
+          done
+      - name: Five concurrent robot integration test rounds
+        run: |
+          for round in 1 2 3 4 5; do
+            echo "REAL MYSQL ROBOT ROUND $round OF 5"
+            python Documentation/Architecture/test-data/run_robot_concurrency_mysql.py
+          done
+      - name: Five official backend case scenario and migration rounds
+        run: |
+          for round in 1 2 3 4 5; do
+            echo "OFFICIAL CASE AND MIGRATIONS ROUND $round OF 5"
+            python Documentation/Architecture/test-data/run_caseproof_mysql.py
+            python Documentation/Architecture/test-data/run_caseproof_migrations.py
+          done
+      - name: Five case screen semantics and UML rounds
+        run: |
+          for round in 1 2 3 4 5; do
+            echo "DESIGN AND UML ROUND $round OF 5"
+            python Documentation/Architecture/screens/test_case_screens.py
+            python -m unittest discover -s Documentation/Architecture/uml/tests -p "test_*.py"
+          done
       - name: Query synchronization and class diagram
         run: |
           python code/database/generate_weekly_queries.py --check
           python code/database/generate_backend_uml.py --check
-      - name: Reproduce query output for every screen
+      - name: Reproduce query output for each working page
         run: python code/database/audit_ui_queries.py
-      - name: Validate final EER against live MySQL information_schema
-        run: python code/database/generate_eer.py --database timaflu_casus_test_94
-      - name: Save reproducible query evidence
+      - name: Validate final EER against actual MySQL information_schema
+        run: python code/database/generate_eer.py --database timaflu_casus_test_94 --check
+      - name: Save reproducible MySQL evidence
         uses: actions/upload-artifact@v4
         with:
           name: timaflu-casus-mysql-evidence
