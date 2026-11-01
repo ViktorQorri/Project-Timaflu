@@ -33,7 +33,7 @@ ARCHIVES = {
         (
             "eer.mwb",
             "Documentation/Architecture/eer-mysql-verified.svg",
-            "Documentation/Architecture/eer-mysql-schema.json",
+
         ),
     ),
     "timaflu-ontwerpen.zip": (
