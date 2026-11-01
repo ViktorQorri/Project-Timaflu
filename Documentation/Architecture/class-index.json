@@ -313,6 +313,21 @@
     ]
   },
   {
+    "module": "repositories.discount_repository",
+    "class": "DiscountRepository",
+    "methods": [
+      "__init__",
+      "_fetchall",
+      "_fetchone",
+      "list_customers",
+      "find_customer",
+      "list_products",
+      "find_product",
+      "count_previous_orders",
+      "sum_purchases"
+    ]
+  },
+  {
     "module": "repositories.health_repository",
     "class": "HealthRepository",
     "methods": [
@@ -333,6 +348,16 @@
       "offers",
       "set_price",
       "remove_offer"
+    ]
+  },
+  {
+    "module": "repositories.order_repository",
+    "class": "OrderRepository",
+    "methods": [
+      "__init__",
+      "is_customer_blocked",
+      "available_stock",
+      "save_order"
     ]
   },
   {
@@ -434,6 +459,24 @@
     ]
   },
   {
+    "module": "services.discount_service",
+    "class": "DiscountService",
+    "methods": [
+      "__init__",
+      "form_options",
+      "calculate_total_amount",
+      "calculate_order_discount",
+      "calculate_one_time_discount",
+      "calculate_annual_revenue",
+      "determine_discount_percentage",
+      "calculate_customer_discount",
+      "calculate_total_after_discount",
+      "_discount",
+      "_find_customer",
+      "_price_order_lines"
+    ]
+  },
+  {
     "module": "services.health_service",
     "class": "HealthService",
     "methods": [
@@ -456,6 +499,16 @@
       "_positive_id",
       "_validate",
       "remove_offer"
+    ]
+  },
+  {
+    "module": "services.order_service",
+    "class": "OrderService",
+    "methods": [
+      "__init__",
+      "prepare",
+      "place",
+      "_delivery_date"
     ]
   },
   {
