@@ -165,8 +165,11 @@ class DistributionService:
             agreed_date = date.fromisoformat(str(new_date or ""))
         except ValueError as error:
             raise DomainError("Kies een geldige nieuwe leverdatum.") from error
-        if agreed_date <= date.today():
-            raise DomainError("Kies een nieuwe leverdatum na vandaag.")
+        if agreed_date < date.today():
+            raise DomainError("Een nieuwe leverdatum kan niet in het verleden liggen.")
+        # A retry today is valid when the two failed visits were yesterday.
+        # The repository separately requires the new day to be after the
+        # failed route date; the case does not require waiting until tomorrow.
         if part_of_day not in ("ochtend", "middag"):
             raise DomainError("Kies ochtend of middag voor de nieuwe levering.")
         try:
