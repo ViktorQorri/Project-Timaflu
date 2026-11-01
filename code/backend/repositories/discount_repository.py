@@ -34,7 +34,7 @@ class DiscountRepository:
     def list_products(self):
         """Return every catalog product with its price for the order line selection."""
         return self._fetchall("""
-            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
             ORDER BY productnaam ASC
         """)
@@ -42,7 +42,7 @@ class DiscountRepository:
     def find_product(self, product_id):
         """Return one catalog product with its price, or None when the id is unknown."""
         return self._fetchone("""
-            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
             WHERE product_id = %s
         """, (product_id,))
@@ -57,11 +57,15 @@ class DiscountRepository:
         return int(row["aantal_bestellingen"])
 
     def sum_purchases(self, customer_id, year):
-        """SD01 sumPurchases(previousYear): order line value of all orders placed in that year."""
+        """Annual revenue consists of paid, actually delivered medicines (case: Administratie)."""
         row = self._fetchone("""
-            SELECT COALESCE(SUM(r.aantal * r.prijs_per_eenheid), 0) AS jaaromzet
-            FROM Bestelling AS b
-            JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
-            WHERE b.klant_id = %s AND YEAR(b.besteld_op) = %s
+            SELECT COALESCE(SUM(l.aantal_geleverd * r.prijs_per_eenheid), 0) AS jaaromzet
+            FROM Factuur AS f
+            JOIN Leveringregel AS l ON l.factuur_id = f.factuur_id
+            JOIN Levering AS v ON v.levering_id = l.levering_id
+            JOIN Bestelling AS b ON b.bestelling_id = v.bestelling_id
+            JOIN Bestelregel AS r
+              ON r.bestelling_id = b.bestelling_id AND r.product_id = l.product_id
+            WHERE f.klant_id = %s AND YEAR(f.betaald_op) = %s
         """, (customer_id, year))
         return row["jaaromzet"]

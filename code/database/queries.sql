@@ -57,25 +57,29 @@ ORDER BY p.productnaam ASC;
 SELECT klant_id, bedrijfsnaam
 FROM Klant
 ORDER BY bedrijfsnaam ASC;
-SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
 FROM Product
 ORDER BY productnaam ASC;
 -- The chosen customer and the catalog price of each order line.
 SELECT klant_id, bedrijfsnaam
 FROM Klant
 WHERE klant_id = 1;
-SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
 FROM Product
 WHERE product_id = 1;
 -- SD01 countPreviousOrders(customer): 0 means first order, 10% one-time discount.
 SELECT COUNT(*) AS aantal_bestellingen
 FROM Bestelling
 WHERE klant_id = 1;
--- SD01 sumPurchases(previousYear): annual revenue for the customer discount (Tabel 1).
-SELECT COALESCE(SUM(r.aantal * r.prijs_per_eenheid), 0) AS jaaromzet
-FROM Bestelling AS b
-JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
-WHERE b.klant_id = 1 AND YEAR(b.besteld_op) = 2025;
+-- Paid revenue of delivered items in the previous calendar year (case: Administratie).
+SELECT COALESCE(SUM(l.aantal_geleverd * r.prijs_per_eenheid), 0) AS jaaromzet
+FROM Factuur AS f
+JOIN Leveringregel AS l ON l.factuur_id = f.factuur_id
+JOIN Levering AS v ON v.levering_id = l.levering_id
+JOIN Bestelling AS b ON b.bestelling_id = v.bestelling_id
+JOIN Bestelregel AS r
+  ON r.bestelling_id = b.bestelling_id AND r.product_id = l.product_id
+WHERE f.klant_id = 1 AND YEAR(f.betaald_op) = 2025;
 
 -- Enter a telephone order, /orders/new (issues #9 and #10, AD05 Enter order).
 -- Same queries as OrderRepository with example parameters.

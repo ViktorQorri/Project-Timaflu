@@ -50,9 +50,7 @@
       </fieldset>
       <div class="order-form__actions">
         <button type="submit" class="discount-form__submit">Totaal berekenen</button>
-        {% if line_rows < max_line_rows %}
-          <button type="submit" name="add_line" value="1" class="order-add-line" formnovalidate>+ Medicijn toevoegen</button>
-        {% endif %}
+        <button type="submit" name="add_line" value="1" class="order-add-line" formnovalidate>+ Medicijn toevoegen</button>
       </div>
     </div>
 
@@ -93,10 +91,11 @@
           <h2 id="discount-summary-title">Totaalbedrag voor {{ calculation.customer.bedrijfsnaam }}</h2>
           <p class="discount-summary__basis">
             {% if calculation.first_order %}
-              <span class="discount-tag">Eerste bestelling</span> Eenmalige korting van 10%, geen klantenkorting.
+              <span class="discount-tag">Eerste bestelling</span> Eenmalige korting van 10% en klantenkorting.
             {% else %}
-              <span class="discount-tag">Bestaande klant</span> Jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
+              <span class="discount-tag">Bestaande klant</span>
             {% endif %}
+            Betaalde jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
           </p>
           <dl class="discount-summary__rows">
             <div class="discount-summary__row"><dt>Subtotaal</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>

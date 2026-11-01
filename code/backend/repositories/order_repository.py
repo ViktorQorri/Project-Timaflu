@@ -37,7 +37,7 @@ class OrderRepository:
             cur.execute(AVAILABLE_QUERY, (product_id, product_id))
             return int(cur.fetchone()["beschikbaar"])
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None):
         """Save the order, its lines and the reservations in one transaction.
 
         The customer and every product are locked first and the stock is counted again,
@@ -78,6 +78,8 @@ class OrderRepository:
                     (customer_id,),
                 )
                 first_order = int(cur.fetchone()["aantal_bestellingen"]) == 0
+                if expected_first_order is not None and first_order != expected_first_order:
+                    raise ConflictError("Er is inmiddels een andere bestelling geplaatst. Bereken de korting opnieuw.")
 
                 priced = []
                 # Lock in product order, so two orders with the same products cannot deadlock.
@@ -92,6 +94,8 @@ class OrderRepository:
                     product = cur.fetchone()
                     if product is None:
                         raise NotFoundError("Dit medicijn staat niet in de catalogus.")
+                    if "expected_price" in line and product["prijs_per_grootverpakking"] != line["expected_price"]:
+                        raise ConflictError("De catalogusprijs is gewijzigd. Bereken het totaal opnieuw.")
                     cur.execute(AVAILABLE_QUERY, (line["product_id"], line["product_id"]))
                     available = int(cur.fetchone()["beschikbaar"])
                     short = available < line["quantity"]

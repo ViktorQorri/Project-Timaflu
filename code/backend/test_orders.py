@@ -53,8 +53,9 @@ class FakeOrderRepository:
     def available_stock(self, product_id):
         return self.stock[product_id]
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None):
         self.saved.append((customer_id, lines, delivery_date, part_of_day, urgent))
+        self.expected_first_order = expected_first_order
         return {"order_id": 15, "first_order": False,
                 "backorders": [line["product_id"] for line in lines if line["backorder"]]}
 
@@ -197,6 +198,20 @@ class OrderRepositoryTests(TestCase):
         self.assertEqual(inserts(db, "Bestelregel")[1], (15, 2, 5, Decimal("20.00"), True))
         self.assertEqual(inserts(db, "Voorraadreservering"), [(15, 1, 10)])
 
+    def test_changed_first_order_status_rejects_stale_discount(self):
+        db = Connection(previous_orders=1)
+        with self.assertRaises(ConflictError):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2), "ochtend",
+                                           False, expected_first_order=True)
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
+    def test_changed_catalogue_price_rejects_stale_total(self):
+        db = Connection()
+        order_line = {**line(1, 1), "expected_price": Decimal("80.00")}
+        with self.assertRaises(ConflictError):
+            OrderRepository(db).save_order(7, [order_line], date(2026, 11, 2), "ochtend", False)
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
     def test_changed_stock_rejects_whole_order(self):
         db = Connection(stock={1: 50, 2: 3})
         with self.assertRaises(ConflictError) as raised:
@@ -287,12 +302,11 @@ class OrderPageTests(TestCase):
         self.assertIn("Totaal berekenen", first_button)
         self.assertNotIn("name=", first_button)
 
-    def test_add_line_stops_at_the_maximum(self):
+    def test_more_than_twenty_lines_are_not_arbitrarily_blocked(self):
         query = "&".join(["product_id=&quantity="] * 20) + "&add_line=1"
         page = self.request(FakeOrderRepository(), "get", f"/orders/new?{query}").get_data(as_text=True)
-        self.assertIn('id="product-19"', page)
-        self.assertNotIn('id="product-20"', page)
-        self.assertNotIn("+ Medicijn toevoegen", page)
+        self.assertIn('id="product-20"', page)
+        self.assertIn("+ Medicijn toevoegen", page)
 
     def test_saved_order_redirects_with_order_number(self):
         repository = FakeOrderRepository()

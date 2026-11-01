@@ -113,14 +113,16 @@ class OrderDiscountTests(TestCase):
             with self.subTest(revenue=revenue):
                 self.assertEqual(DiscountService.determine_discount_percentage(Decimal(revenue)), percentage)
 
-    def test_first_order_gets_one_time_discount_only(self):
+    def test_first_order_gets_one_time_and_customer_discount(self):
         repository = FakeRepository(previous_orders=0, revenue=Decimal("50000"))
         result = calculate(repository, [("1", "10")])
         self.assertTrue(result["first_order"])
-        self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "one_time"])
+        self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "one_time", "customer"])
         self.assertEqual(result["discounts"][1]["amount"], Decimal("95.00"))
-        self.assertEqual(result["total_amount"], Decimal("855.00"))
-        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual(result["discounts"][2]["base"], Decimal("855.00"))
+        self.assertEqual(result["discounts"][2]["amount"], Decimal("128.25"))
+        self.assertEqual(result["total_amount"], Decimal("726.75"))
+        self.assertEqual(repository.purchase_years, [(7, 2025)])
 
     def test_existing_customer_discount_over_amount_after_order_discount(self):
         repository = FakeRepository(previous_orders=2, revenue=Decimal("15000.00"))
@@ -143,6 +145,20 @@ class OrderDiscountTests(TestCase):
     def test_empty_rows_are_ignored(self):
         result = calculate(FakeRepository(), [("", ""), ("1", "1"), (None, None)])
         self.assertEqual(len(result["lines"]), 1)
+
+    def test_minimum_order_quantity_comes_from_product_catalogue(self):
+        product = PRODUCTS[1]
+        original = product.get("minimale_bestelhoeveelheid")
+        try:
+            product["minimale_bestelhoeveelheid"] = 3
+            with self.assertRaisesRegex(DomainError, "Minimale bestelhoeveelheid"):
+                calculate(FakeRepository(), [("1", "2")])
+            self.assertEqual(calculate(FakeRepository(), [("1", "3")])["lines"][0]["quantity"], 3)
+        finally:
+            if original is None:
+                product.pop("minimale_bestelhoeveelheid")
+            else:
+                product["minimale_bestelhoeveelheid"] = original
 
     def test_invalid_input_rejected(self):
         cases = {
@@ -175,8 +191,9 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(connection.c.statements[-1][1], (7,))
         self.assertEqual(repository.sum_purchases(7, 2025), Decimal("1234.50"))
         query, params = connection.c.statements[-1]
+        self.assertIn("JOIN Leveringregel", query)
         self.assertIn("JOIN Bestelregel", query)
-        self.assertIn("YEAR(b.besteld_op) = %s", query)
+        self.assertIn("YEAR(f.betaald_op) = %s", query)
         self.assertEqual(params, (7, 2025))
         self.assertEqual(repository.find_product(1), PRODUCTS[1])
         self.assertEqual(connection.commits, 0)

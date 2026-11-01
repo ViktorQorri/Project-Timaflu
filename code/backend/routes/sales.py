@@ -16,7 +16,6 @@ sales = Blueprint("sales", __name__)
 # Order line rows on the order form: three to start with, one more per "Medicijn toevoegen",
 # one less per "Verwijderen" but never fewer than three. Empty rows are ignored.
 ORDER_LINE_ROWS = 3
-MAX_ORDER_LINE_ROWS = 20
 
 
 @sales.get("/customers")
@@ -97,9 +96,9 @@ def _order_form(values):
 
 
 def _render_order(service, form, calculation, error):
-    line_rows = min(max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"]), MAX_ORDER_LINE_ROWS)
+    line_rows = max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"])
     return render_template(
         "order_new.html", form=form, calculation=calculation, error=error, line_rows=line_rows,
-        max_line_rows=MAX_ORDER_LINE_ROWS, parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(),
+        parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(),
         **service.discount_service.form_options(),
     )

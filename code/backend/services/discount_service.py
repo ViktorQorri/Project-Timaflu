@@ -3,8 +3,8 @@
 Business rules from the case (Current-processes, Tabel 1):
 - 5% order discount over the order total when the total is EUR 500 or more;
 - the next discount is calculated over the amount left after the order discount;
-- first order of a customer: one-time 10% discount;
-- existing customer: customer discount based on the previous year's annual revenue.
+- first order of a customer: an additional one-time 10% discount;
+- every customer receives a customer discount based on the previous year's paid revenue.
 Every amount is rounded to cents (ROUND_HALF_UP) after each step.
 """
 
@@ -68,13 +68,13 @@ class DiscountService:
 
         previous_year = (order_date or date.today()).year - 1
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
-        annual_revenue = None
         if first_order:
             discounts.append(self.calculate_one_time_discount(amount))
-        else:
-            annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
-            percentage = self.determine_discount_percentage(annual_revenue)
-            discounts.append(self.calculate_customer_discount(amount, percentage))
+            amount = discounts[-1]["total_after"]
+
+        annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
+        percentage = self.determine_discount_percentage(annual_revenue)
+        discounts.append(self.calculate_customer_discount(amount, percentage))
 
         return {
             "customer": customer,
@@ -166,6 +166,11 @@ class DiscountService:
             product = self.repository.find_product(product_id)
             if product is None:
                 raise NotFoundError("Dit medicijn staat niet in de catalogus.")
+            minimum = product.get("minimale_bestelhoeveelheid", 1)
+            if quantity < minimum:
+                raise DomainError(
+                    f"Minimale bestelhoeveelheid voor {product['productnaam']} is {minimum}."
+                )
             price = to_cents(product["prijs_per_grootverpakking"])
             lines.append({**product, "quantity": quantity, "line_total": to_cents(price * quantity)})
         if not lines:

@@ -70,8 +70,9 @@ class OrderService:
         saved = self.repository.save_order(
             calculation["customer"]["klant_id"],
             [{"product_id": line["product_id"], "productnaam": line["productnaam"],
-              "quantity": line["quantity"], "backorder": line["backorder"]} for line in calculation["lines"]],
-            delivery_date, part_of_day, bool(urgent),
+              "quantity": line["quantity"], "backorder": line["backorder"],
+              "expected_price": line["prijs_per_grootverpakking"]} for line in calculation["lines"]],
+            delivery_date, part_of_day, bool(urgent), calculation["first_order"],
         )
         return {**saved, "delivery_date": delivery_date, "part_of_day": part_of_day,
                 "total_amount": calculation["total_amount"]}
