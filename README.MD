@@ -1,6 +1,6 @@
 # Timaflu
 
-School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes. The application is developed by a student project group; its current composition and decision procedure are documented separately in the collaboration agreements and actual meeting records.
+School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes. We are working on it in a group of 6
 
 ## Scope
 
@@ -86,7 +86,3 @@ vervolgens op in het database-ZIP-bestand voor de school.
 - Decisions: at least 4 of the 6 votes
 
 See the [collaboration agreements](Documentation/Conflict-prevention/collaboration-agreements.md) for the full agreements.
-
-## LU3-controle en bewijs
-
-Het actuele technische controleoverzicht staat in [LU3-criteria en bewijs](Documentation/Toetsing/lu3-criteria-en-bewijs.md). Niet-bevestigde gebeurtenissen worden niet als uitgevoerde vergadering of reflectie opgevoerd. Persoonlijke reflecties en SLB-opdrachten worden afzonderlijk in het schoolportfolio bijgehouden.
