@@ -51,8 +51,25 @@ class OrderStatusNotificationService:
         if order is None:
             raise NotFoundError(f"Order {order_id} is niet gevonden.")
         order = _with_status(order)
+        lines = self.repository.find_order_lines(order_id)
+        has_backorder = order.get("status_naam") == "backorder"
+
+        # AD05 marks accepted shortages per order line. Confirmed deliveries
+        # come from Leveringregel joined to successful Leverpoging records.
+        # Never describe a fully delivered product as an outstanding backorder
+        # merely because its historical shortage choice remains TRUE.
+        accepted_lines = [
+            line for line in lines if line["afnemen_bij_tekort"] == 1
+        ]
+        backorder_lines = (
+            [line for line in accepted_lines
+             if line["aantal_afgeleverd"] < line["aantal"]]
+            if has_backorder else []
+        )
         return {
             "order": order,
-            "lines": self.repository.find_order_lines(order_id),
-            "has_backorder": order.get("status_naam") == "backorder",
+            "lines": lines,
+            "has_backorder": has_backorder,
+            "accepted_backorder_lines": accepted_lines,
+            "backorder_lines": backorder_lines,
         }

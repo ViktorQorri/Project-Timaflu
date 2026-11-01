@@ -25,12 +25,34 @@
     </div>
     <div class="order-status__card">
       <dt>Backorder</dt>
-      <dd>{% if has_backorder %}<span class="order-status__label order-status__label--warning">Order in backorder</span>{% else %}Niet als backorder geregistreerd{% endif %}</dd>
+      <dd>
+        {% if backorder_lines %}
+          <span class="order-status__label order-status__label--warning">{{ backorder_lines|length }} geregistreerde backorder{{ 'regels' if backorder_lines|length != 1 else 'regel' }}</span>
+        {% elif has_backorder and accepted_backorder_lines %}
+          <span class="order-status__label order-status__label--warning">Status controleren</span>
+        {% elif has_backorder %}
+          <span class="order-status__label order-status__label--warning">Producten niet geregistreerd</span>
+        {% else %}
+          Niet als backorder geregistreerd
+        {% endif %}
+      </dd>
     </div>
   </dl>
 
-  {% if has_backorder %}
-    <p role="status">De bestelling staat op backorder. Een actueel backorderaantal per product is niet geregistreerd. De afspraken bij een tekort staan hieronder.</p>
+  {% if backorder_lines %}
+    <section aria-labelledby="backorder-products-title">
+      <h2 id="backorder-products-title">Producten in backorder</h2>
+      <ul>
+        {% for line in backorder_lines %}
+          <li>{{ line.productnaam }} ({{ line.artikelnummer }})</li>
+        {% endfor %}
+      </ul>
+      <p class="stock-dashboard__subtitle">Deze producten zijn bij tekort geaccepteerd en nog niet volledig als afgeleverd geregistreerd. Het actuele aantal in backorder is niet afzonderlijk vastgelegd.</p>
+    </section>
+  {% elif has_backorder and accepted_backorder_lines %}
+    <p role="status">De bestelling heeft nog de status backorder, maar de als backorder aangemerkte producten zijn volgens de geregistreerde leverpogingen volledig afgeleverd. Controleer of de orderstatus nog klopt.</p>
+  {% elif has_backorder %}
+    <p role="status">De bestelling staat op backorder, maar er zijn geen afzonderlijke producten als backorder vastgelegd. Geef geen productdetails door zonder de registratie te controleren.</p>
   {% endif %}
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
@@ -40,8 +62,9 @@
           <th scope="col">Medicijn</th>
           <th scope="col">Artikelnummer</th>
           <th scope="col" class="stock-dashboard__number">Besteld</th>
+          <th scope="col" class="stock-dashboard__number">Bevestigd afgeleverd</th>
           <th scope="col" class="stock-dashboard__number">Prijs per eenheid</th>
-          <th scope="col">Bij tekort afnemen?</th>
+          <th scope="col">Backorder per product</th>
         </tr>
       </thead>
       <tbody>
@@ -50,19 +73,24 @@
             <th scope="row">{{ line.productnaam }}</th>
             <td>{{ line.artikelnummer }}</td>
             <td class="stock-dashboard__number">{{ line.aantal }}</td>
+            <td class="stock-dashboard__number">{{ line.aantal_afgeleverd }}</td>
             <td class="stock-dashboard__number">€ {{ '%.2f'|format(line.prijs_per_eenheid)|replace('.', ',') }}</td>
             <td>
               {% if line.afnemen_bij_tekort is none %}
-                Niet vastgelegd
+                Geen tekortkeuze vastgelegd
+              {% elif line.afnemen_bij_tekort and has_backorder and line.aantal_afgeleverd >= line.aantal %}
+                Aflevering bevestigd, orderstatus controleren
+              {% elif line.afnemen_bij_tekort and has_backorder %}
+                <span class="order-status__label order-status__label--warning">In backorder, aflevering niet compleet</span>
               {% elif line.afnemen_bij_tekort %}
-                Ja
+                Tekortafspraak geregistreerd
               {% else %}
-                Nee
+                Niet afnemen bij tekort
               {% endif %}
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="5">Geen orderregels gevonden.</td></tr>
+          <tr><td colspan="6">Geen orderregels gevonden.</td></tr>
         {% endfor %}
       </tbody>
     </table>

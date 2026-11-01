@@ -692,10 +692,23 @@ WHERE b.bestelling_id = 12;
 
 -- PR #97: orderregels en klantkeuze bij tekort, GET /orders/12/status.
 -- Dezelfde SELECT als OrderStatusNotificationRepository.find_order_lines().
--- afnemen_bij_tekort: TRUE / FALSE / NULL; dit is geen
--- actueel per-product-backorderaantal.
+-- afnemen_bij_tekort is de geregistreerde keuze van de klant, geen actuele hoeveelheid.
+-- Alleen een Levering met een succesvolle Leverpoging telt als afgeleverd.
+-- EXISTS voorkomt dubbeltelling bij meerdere leverpogingen voor een levering.
 SELECT p.artikelnummer, p.productnaam, br.aantal,
-       br.prijs_per_eenheid, br.afnemen_bij_tekort
+       br.prijs_per_eenheid, br.afnemen_bij_tekort,
+       COALESCE((
+           SELECT SUM(lr.aantal_geleverd)
+           FROM Levering AS lv
+           JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id
+           WHERE lv.bestelling_id = br.bestelling_id
+             AND lr.product_id = br.product_id
+             AND EXISTS (
+                 SELECT 1 FROM Leverpoging AS lp
+                 WHERE lp.levering_id = lv.levering_id
+                   AND lp.resultaat = 'afgeleverd'
+             )
+       ), 0) AS aantal_afgeleverd
 FROM Bestelregel AS br
 JOIN Product AS p ON p.product_id = br.product_id
 WHERE br.bestelling_id = 12

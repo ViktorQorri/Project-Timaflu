@@ -38,7 +38,19 @@ class OrderStatusNotificationRepository:
         """The products ordered and the customer's recorded shortage decision."""
         query = """
             SELECT p.artikelnummer, p.productnaam, br.aantal,
-                   br.prijs_per_eenheid, br.afnemen_bij_tekort
+                   br.prijs_per_eenheid, br.afnemen_bij_tekort,
+                   COALESCE((
+                       SELECT SUM(lr.aantal_geleverd)
+                       FROM Levering AS lv
+                       JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id
+                       WHERE lv.bestelling_id = br.bestelling_id
+                         AND lr.product_id = br.product_id
+                         AND EXISTS (
+                             SELECT 1 FROM Leverpoging AS lp
+                             WHERE lp.levering_id = lv.levering_id
+                               AND lp.resultaat = 'afgeleverd'
+                         )
+                   ), 0) AS aantal_afgeleverd
             FROM Bestelregel AS br
             JOIN Product AS p ON p.product_id = br.product_id
             WHERE br.bestelling_id = %s
