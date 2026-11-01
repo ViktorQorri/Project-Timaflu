@@ -13,6 +13,7 @@ import mysql.connector
 
 from app import create_app
 from domain.errors import DomainError, NotFoundError
+from repositories.assessed_repository import AssessedRepository
 from repositories.order_status_notification_repository import OrderStatusNotificationRepository
 from services.order_status_notification_service import OrderStatusNotificationService
 
@@ -221,9 +222,52 @@ class OrderStatusNotificationTests(TestCase):
         with app.test_client() as client:
             with patch("routes.sales.get_connection", return_value=Connection(self.order, rows)):
                 page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("Productregistratie ontbreekt", page)
+        self.assertIn("Geen tekortkeuze per product vastgelegd", page)
         self.assertIn("geen tekortafspraak per product geregistreerd", page)
         self.assertNotIn("Paracetamol (T-1):", page)
+
+    def test_delivered_status_conflict_is_visible_and_accepted_shortage_is_preserved(self):
+        order = {**self.order, "status_naam": "afgeleverd"}
+        result = self.service(Connection(order, self.lines)).status_overview(12)
+        self.assertTrue(result["delivery_status_conflict"])
+        self.assertEqual(len(result["shortage_lines"]), 1)
+        app = create_app()
+        app.testing = True
+        with app.test_client() as client:
+            with patch("routes.sales.get_connection", return_value=Connection(order, self.lines)):
+                page = client.get("/orders/12/status").get_data(as_text=True)
+        self.assertIn("Controleer deze orderstatus", page)
+        self.assertIn("ondertekende leveringen", page)
+        self.assertIn('role="alert"', page)
+
+    def test_fully_signed_delivered_lines_have_no_false_status_warning(self):
+        order = {**self.order, "status_naam": "afgeleverd"}
+        lines = [
+            {**self.lines[0], "aantal_afgeleverd": 10},
+            self.lines[1],  # Customer declined this shortage; no delivery due.
+            {**self.lines[2], "aantal_afgeleverd": 3},
+        ]
+        result = self.service(Connection(order, lines)).status_overview(12)
+        self.assertFalse(result["delivery_status_conflict"])
+        app = create_app()
+        app.testing = True
+        with app.test_client() as client:
+            with patch("routes.sales.get_connection", return_value=Connection(order, lines)):
+                page = client.get("/orders/12/status").get_data(as_text=True)
+        self.assertNotIn("Controleer deze orderstatus", page)
+
+    def test_delivery_status_update_sql_is_mirrored_in_query_document(self):
+        from repositories.assessed_repository import MARK_ORDER_DELIVERED_IF_COMPLETE
+        document = (Path(__file__).parents[1] / "database" / "queries.sql").read_text(
+            encoding="utf-8"
+        )
+        sample = " ".join(
+            MARK_ORDER_DELIVERED_IF_COMPLETE.replace("%s", "1").split()
+        ) + ";"
+        self.assertEqual(
+            " ".join(document.split()).count(sample), 2,
+            "AD12 SQL examples for both delivery attempts must match the backend.",
+        )
 
     def test_all_queries_read_only_and_documented_sql_matches(self):
         conn = Connection(self.order, self.lines, [self.order])
@@ -260,6 +304,7 @@ class OrderStatusNotificationTests(TestCase):
             "Paracetamol (T-1): Deels afgeleverd", "Ibuprofen", "Vitamine C",
             "Ja, bij tekort afnemen", "Nee, bij tekort niet afnemen",
             "Niet geregistreerd", "Bevestigd afgeleverd", "Geregistreerde voortgang",
+            "Prijs per eenheid", "€ 5,20", "€ 3,99",
             "Voorraad voor deze bestelling gereserveerd",
             "order-status-notification.css",
         ):
@@ -482,6 +527,189 @@ class OrderStatusMySQLIntegrationTests(TestCase):
             try:
                 with admin.cursor() as cursor:
                     cursor.execute(f"DROP DATABASE IF EXISTS `{name}`")
+                admin.commit()
+            finally:
+                admin.close()
+
+@skipUnless(
+    os.getenv("TIMAFLU_TEST_ALLOW_RESET") == "isolated"
+    and os.getenv("TIMAFLU_TEST_MYSQL_HOST") == "127.0.0.1",
+    "Requires an explicitly isolated MySQL database.",
+)
+class FullOrderDeliveryStatusMySQLTests(TestCase):
+    def test_one_successful_shipment_never_marks_partly_delivered_order_complete(self):
+        """AD12: mark the whole order delivered only after all accepted lines arrive."""
+        options = {
+            "host": "127.0.0.1",
+            "port": int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
+            "user": os.getenv("TIMAFLU_TEST_MYSQL_USER", "root"),
+            "password": os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"],
+        }
+        schema_name = "timaflu_pr97_complete_" + uuid.uuid4().hex[:10]
+        admin = mysql.connector.connect(**options)
+        connection = None
+        try:
+            with admin.cursor() as cursor:
+                cursor.execute(f"CREATE DATABASE `{schema_name}`")
+            admin.commit()
+            connection = mysql.connector.connect(database=schema_name, **options)
+            schema = (Path(__file__).parents[1] / "database" / "schema.sql").read_text(encoding="utf-8")
+            statements = "\n".join(
+                line for line in schema.splitlines() if not line.lstrip().startswith("--")
+            )
+            with connection.cursor() as cursor:
+                for statement in statements.split(";"):
+                    if statement.strip():
+                        cursor.execute(statement)
+                cursor.execute("INSERT INTO Adres (adres) VALUES ('TEST adres')")
+                address = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Klant (bedrijfsnaam, afleveradres_id, betaaladres_id)
+                       VALUES ('TEST apotheek', %s, %s)""",
+                    (address, address),
+                )
+                customer = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Bestelling (
+                           klant_id, afleveradres_id, betaaladres_id, besteld_op,
+                           gewenste_leverdatum, dagdeel, status_naam
+                       ) VALUES (%s, %s, %s, '2026-10-30', '2026-10-31',
+                                 'ochtend', 'verstuurd')""",
+                    (customer, address, address),
+                )
+                order_id = cursor.lastrowid
+                products = {}
+                for article, ordered, accepted in (
+                    ("ITEM-A", 4, None),
+                    ("ITEM-B", 3, True),
+                    ("DECLINED", 2, False),
+                ):
+                    cursor.execute(
+                        """INSERT INTO Product (
+                             artikelnummer, bestelcode, productnaam,
+                             prijs_per_grootverpakking, aantal_detailverpakkingen,
+                             minimale_bestelhoeveelheid, minimumvoorraad
+                         ) VALUES (%s, %s, %s, 10, 1, 1, 0)""",
+                        (article, "CODE-" + article, article),
+                    )
+                    products[article] = cursor.lastrowid
+                    cursor.execute(
+                        """INSERT INTO Bestelregel (
+                             bestelling_id, product_id, aantal, prijs_per_eenheid,
+                             afnemen_bij_tekort
+                         ) VALUES (%s, %s, %s, 10, %s)""",
+                        (order_id, products[article], ordered, accepted),
+                    )
+                cursor.execute(
+                    "INSERT INTO Koerier (naam, beschikbaar) VALUES ('TEST koerier', TRUE)"
+                )
+                courier = cursor.lastrowid
+                cursor.execute(
+                    "INSERT INTO Rit (koerier_id, ritdatum) VALUES (%s, '2026-10-31')",
+                    (courier,),
+                )
+                trip = cursor.lastrowid
+                delivery_ids = []
+                for index, (article, count) in enumerate(
+                    (("ITEM-A", 4), ("ITEM-B", 3)), start=1
+                ):
+                    cursor.execute(
+                        "INSERT INTO Levering (bestelling_id) VALUES (%s)", (order_id,)
+                    )
+                    delivery_id = cursor.lastrowid
+                    delivery_ids.append(delivery_id)
+                    cursor.execute(
+                        """INSERT INTO Leveringregel (levering_id, product_id, aantal_geleverd)
+                           VALUES (%s, %s, %s)""",
+                        (delivery_id, products[article], count),
+                    )
+                    cursor.execute(
+                        """INSERT INTO Leverpoging (
+                             levering_id, pogingnummer, rit_id, geplande_tijd,
+                             resultaat, ontvangst_getekend
+                           ) VALUES (%s, 1, %s, '10:00:00', %s, %s)""",
+                        (
+                            delivery_id, trip,
+                            None if index == 1 else "niet aanwezig",
+                            None if index == 1 else False,
+                        ),
+                    )
+                cursor.execute(
+                    """INSERT INTO Leverpoging (
+                           levering_id, pogingnummer, rit_id, geplande_tijd,
+                           resultaat, ontvangst_getekend
+                       ) VALUES (%s, 2, %s, '11:00:00', NULL, NULL)""",
+                    (delivery_ids[1], trip),
+                )
+            connection.commit()
+
+            def persisted_status():
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT status_naam FROM Bestelling WHERE bestelling_id = %s",
+                        (order_id,),
+                    )
+                    return cursor.fetchone()[0]
+
+            repo = AssessedRepository(connection)
+            detail = OrderStatusNotificationService(
+                OrderStatusNotificationRepository(connection)
+            )
+
+            repo.record_first_attempt_delivery(delivery_ids[0], date(2026, 10, 31), "yes")
+            self.assertEqual(
+                persisted_status(), "verstuurd",
+                "One signed shipment must not mark the entire incomplete order delivered.",
+            )
+            partial = detail.status_overview(order_id)
+            by_article = {line["artikelnummer"]: line for line in partial["lines"]}
+            self.assertEqual(by_article["ITEM-A"]["aantal_afgeleverd"], 4)
+            self.assertEqual(by_article["ITEM-B"]["aantal_afgeleverd"], 0)
+            self.assertEqual(by_article["ITEM-B"]["in_open_levering"], 3)
+
+            # An invalid historic delivery flag without a signature is not proof.
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """UPDATE Leverpoging SET resultaat='afgeleverd',
+                       ontvangst_getekend=FALSE
+                       WHERE levering_id=%s AND pogingnummer=2""",
+                    (delivery_ids[1],),
+                )
+            connection.commit()
+            self.assertEqual(
+                {line["artikelnummer"]: line for line in detail.status_overview(order_id)["lines"]}
+                ["ITEM-B"]["aantal_afgeleverd"], 0,
+            )
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """UPDATE Leverpoging SET resultaat=NULL,
+                       ontvangst_getekend=NULL
+                       WHERE levering_id=%s AND pogingnummer=2""",
+                    (delivery_ids[1],),
+                )
+            connection.commit()
+
+            repo.record_second_attempt_outcome(
+                delivery_ids[1], date(2026, 10, 31), "afgeleverd", "yes"
+            )
+            self.assertEqual(persisted_status(), "afgeleverd")
+            complete = detail.status_overview(order_id)
+            self.assertEqual(
+                {line["artikelnummer"]: line["aantal_afgeleverd"]
+                 for line in complete["lines"]},
+                {"DECLINED": 0, "ITEM-A": 4, "ITEM-B": 3},
+            )
+            self.assertEqual(
+                [line["artikelnummer"] for line in complete["shortage_lines"]],
+                ["ITEM-B"],
+                "The customer's earlier shortage agreement remains as history.",
+            )
+        finally:
+            if connection is not None:
+                connection.close()
+            try:
+                with admin.cursor() as cursor:
+                    cursor.execute(f"DROP DATABASE IF EXISTS `{schema_name}`")
                 admin.commit()
             finally:
                 admin.close()

@@ -70,6 +70,7 @@ class OrderStatusNotificationRepository:
                              SELECT 1 FROM Leverpoging AS lp
                              WHERE lp.levering_id = lv.levering_id
                                AND lp.resultaat = 'afgeleverd'
+                               AND lp.ontvangst_getekend = TRUE
                          )
                    ), 0) AS in_open_levering,
                    COALESCE((
@@ -82,6 +83,7 @@ class OrderStatusNotificationRepository:
                              SELECT 1 FROM Leverpoging AS lp
                              WHERE lp.levering_id = lv.levering_id
                                AND lp.resultaat = 'afgeleverd'
+                               AND lp.ontvangst_getekend = TRUE
                          )
                    ), 0) AS aantal_afgeleverd
             FROM Bestelregel AS br

@@ -29,13 +29,21 @@
         {% if shortage_lines %}
           {{ shortage_lines|length }} product{{ 'en' if shortage_lines|length != 1 else '' }}
         {% elif has_backorder %}
-          <span class="order-status__label order-status__label--warning">Productregistratie ontbreekt</span>
+          <span class="order-status__label order-status__label--warning">Geen tekortkeuze per product vastgelegd</span>
         {% else %}
           Geen vastgelegd
         {% endif %}
       </dd>
     </div>
   </dl>
+
+  {% if delivery_status_conflict %}
+    <p role="alert">
+      Controleer deze orderstatus: de bestelling is geregistreerd als afgeleverd,
+      maar de ondertekende leveringen bevestigen niet dat alle nog af te nemen
+      orderregels volledig zijn geleverd. Geef de status niet als definitief door.
+    </p>
+  {% endif %}
 
   {% if shortage_lines %}
     <section aria-labelledby="shortage-agreements-title">
@@ -66,6 +74,7 @@
           <th scope="col">Medicijn</th>
           <th scope="col">Artikelnummer</th>
           <th scope="col" class="stock-dashboard__number">Besteld</th>
+          <th scope="col" class="stock-dashboard__number">Prijs per eenheid</th>
           <th scope="col" class="stock-dashboard__number">Bevestigd afgeleverd</th>
           <th scope="col">Tekortafspraak</th>
           <th scope="col">Geregistreerde voortgang</th>
@@ -77,6 +86,7 @@
             <th scope="row">{{ line.productnaam }}</th>
             <td>{{ line.artikelnummer }}</td>
             <td class="stock-dashboard__number">{{ line.aantal }}</td>
+            <td class="stock-dashboard__number">€ {{ '%.2f'|format(line.prijs_per_eenheid)|replace('.', ',') }}</td>
             <td class="stock-dashboard__number">{{ line.aantal_afgeleverd }}</td>
             <td>
               {% if line.afnemen_bij_tekort is none %}
@@ -90,7 +100,7 @@
             <td>{{ line.proces_label }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="6">Geen orderregels gevonden.</td></tr>
+          <tr><td colspan="7">Geen orderregels gevonden.</td></tr>
         {% endfor %}
       </tbody>
     </table>

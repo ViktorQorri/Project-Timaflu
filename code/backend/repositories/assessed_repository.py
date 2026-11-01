@@ -3,6 +3,41 @@ from datetime import date
 from domain.errors import DomainError
 
 
+# AD12: A successful shipment does not mean every line of the customer order
+# was delivered. Only mark the full order as delivered once all order lines
+# still accepted by the customer have their signed delivery quantity recorded.
+# A declined shortage (afnemen_bij_tekort = FALSE) does not require delivery.
+MARK_ORDER_DELIVERED_IF_COMPLETE = """
+    UPDATE Bestelling AS b
+    JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+    SET b.status_naam = 'afgeleverd'
+    WHERE l.levering_id = %s
+      AND EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND br.afnemen_bij_tekort IS NOT FALSE
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM Bestelregel AS br
+          WHERE br.bestelling_id = b.bestelling_id
+            AND br.afnemen_bij_tekort IS NOT FALSE
+            AND br.aantal > COALESCE((
+                SELECT SUM(lr.aantal_geleverd)
+                FROM Levering AS previous
+                JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id
+                WHERE previous.bestelling_id = br.bestelling_id
+                  AND lr.product_id = br.product_id
+                  AND EXISTS (
+                      SELECT 1 FROM Leverpoging AS lp
+                      WHERE lp.levering_id = previous.levering_id
+                        AND lp.resultaat = 'afgeleverd'
+                        AND lp.ontvangst_getekend = TRUE
+                  )
+            ), 0)
+      )
+"""
+
+
 class AssessedRepository:
     def __init__(self, connection):
         self.db = connection
@@ -107,10 +142,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 cursor.execute(
                     """UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
                        WHERE levering_id=%s AND pogingnummer=1""", (delivery_id,))
-                cursor.execute(
-                    """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
-                       SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
-                    (delivery_id,))
+                cursor.execute(MARK_ORDER_DELIVERED_IF_COMPLETE, (delivery_id,))
             self.db.commit()
         except Exception:
             self.db.rollback()
@@ -181,11 +213,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                     (outcome, outcome == "afgeleverd", delivery_id),
                 )
                 if outcome == "afgeleverd":
-                    c.execute(
-                        """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
-                           SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
-                        (delivery_id,),
-                    )
+                    c.execute(MARK_ORDER_DELIVERED_IF_COMPLETE, (delivery_id,))
                 else:
                     c.execute(
                         """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id

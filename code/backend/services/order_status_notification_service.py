@@ -92,10 +92,26 @@ class OrderStatusNotificationService:
             line for line in shortage_lines
             if line["aantal_afgeleverd"] < line["aantal"]
         ]
+        # A cancelled shortage (FALSE / 0) is not due for delivery. NULL
+        # means there was no recorded shortage choice and the line remains due.
+        due_lines = [
+            line for line in detailed_lines if line["afnemen_bij_tekort"] != 0
+        ]
+        delivery_status_conflict = (
+            order.get("status_naam") == "afgeleverd"
+            and (
+                not due_lines
+                or any(
+                    line["aantal_afgeleverd"] != line["aantal"]
+                    for line in due_lines
+                )
+            )
+        )
         return {
             "order": order,
             "lines": detailed_lines,
             "has_backorder": has_backorder,
             "shortage_lines": shortage_lines,
             "undelivered_shortages": undelivered_shortages,
+            "delivery_status_conflict": delivery_status_conflict,
         }
