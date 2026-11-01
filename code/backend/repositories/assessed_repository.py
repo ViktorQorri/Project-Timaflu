@@ -147,7 +147,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
                        b.bestelling_id, b.status_naam, b.spoed,
                        k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
-                       ko.koerier_id, ko.naam AS koerier,
+                       ko.koerier_id, ko.naam AS koerier, ko.regio AS koeriersregio,
                        a.adres, r.ritdatum
                 FROM Leverpoging lp
                 JOIN Rit r ON r.rit_id=lp.rit_id

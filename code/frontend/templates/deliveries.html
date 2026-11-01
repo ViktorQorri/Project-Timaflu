@@ -149,6 +149,7 @@
             <tr>
               <th scope="col">Tijd</th>
               <th scope="col">Koerier</th>
+              <th scope="col">Regio</th>
               <th scope="col">Bestelling</th>
               <th scope="col">Spoed</th>
               <th scope="col">Klant</th>
@@ -162,12 +163,13 @@
             {% for item in schedule %}
               <tr>
                 <td data-label="Tijd">{{ item.geplande_tijd }}</td>
-                <td>{{ item.koerier or "Niet bekend" }}</td>
+                <td data-label="Koerier">{{ item.koerier or "Niet bekend" }}</td>
+                <td data-label="Regio">{{ item.koeriersregio or "Geen vaste regio" }}</td>
                 <td data-label="Bestelling">{{ item.bestelling_id }}</td>
                 <td>{{ "Spoed" if item.spoed else "Regulier" }}</td>
                 <td data-label="Klant">{{ item.bedrijfsnaam }}</td>
                 <td data-label="Adres">{{ item.adres }}</td>
-                <td data-label="Contact">{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
+                <td data-label="Contact">{{ item.contactpersoon }} - {{ item.telefoonnummer }}</td>
                 <td data-label="Status">{{ item.resultaat or "nog niet afgeleverd" }}</td>
                 <td data-label="Afhandeling">
                   {% if item.can_register_first_attempt %}
@@ -240,7 +242,7 @@
                 </td>
               </tr>
             {% else %}
-              <tr><td colspan="9">Geen ritten.</td></tr>
+              <tr><td colspan="10">Geen ritten.</td></tr>
             {% endfor %}
           </tbody>
         </table>
