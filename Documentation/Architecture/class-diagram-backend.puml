@@ -186,6 +186,7 @@ package "repositories" {
     +_validate_receipt()
     +_record_delivered_lines()
     +_mark_order_after_delivery()
+    +record_first_attempt_delivery()
     +record_second_attempt_outcome()
     +record_failed_delivery_followup()
     +prospect_followups()

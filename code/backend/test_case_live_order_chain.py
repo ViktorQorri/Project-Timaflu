@@ -86,12 +86,12 @@ class RealOrderChainTests(unittest.TestCase):
                 data={"quote_token":token,"customer_approved":"yes"}).status_code,400)
             self.assertEqual(client.post("/api/picking-bins",
                 json={"bin_code":"TEST-BIN-01","sub_order_id":1,"aisle":"A"}).status_code,200)
-            result=client.post("/api/robots/1/complete",json={"aisle":"A","suborder_id":1})
+            result=client.post("/api/robots/1/complete",json={"aisle":"A","suborder_id":1,"collected":[{"product_id":1,"quantity":3}]})
             self.assertEqual(result.status_code,200,result.data[:300])
             self.assertEqual(self.scalar("SELECT aantal FROM Magazijnlocatie"),2)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Voorraadreservering"),0)
             self.assertEqual(client.post("/api/robots/1/complete",
-                json={"aisle":"A","suborder_id":1}).status_code,409)
+                json={"aisle":"A","suborder_id":1,"collected":[{"product_id":1,"quantity":3}]}).status_code,409)
             self.assertEqual(client.get("/order-picking").status_code,200)
             self.assertEqual(client.post("/order-picking/orders/1/pack").status_code,302)
             self.assertEqual(self.scalar("SELECT aantal_geleverd FROM Leveringregel"),3)
@@ -137,7 +137,7 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(client.post("/api/picking-bins",
                 json={"bin_code": "RETRY-BIN", "sub_order_id": 1, "aisle": "A"}).status_code, 200)
             self.assertEqual(client.post("/api/robots/1/complete",
-                json={"aisle": "A", "suborder_id": 1}).status_code, 200)
+                json={"aisle": "A", "suborder_id": 1, "collected":[{"product_id":1,"quantity":3}]}).status_code, 200)
             self.assertEqual(client.post("/order-picking/orders/1/pack").status_code, 302)
             self.assertEqual(client.post("/deliveries/plan",
                 data={"delivery_id": 1, "courier_id": 1, "day": first.isoformat(),

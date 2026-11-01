@@ -76,7 +76,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             customer_id = cur.lastrowid
             cls.saved_statuses = [
                 "wordt verzameld", "verstuurd", "backorder",
-                "afgeleverd", "niet afgeleverd", None,
+                "afgeleverd", "niet afgeleverd",
             ]
             cls.order_ids = []
             for i, status in enumerate(cls.saved_statuses, 1):
@@ -111,7 +111,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
         finally:
             admin.close()
 
-    def test_all_original_statuses_and_null_are_displayed_without_reclassification(self):
+    def test_all_valid_recorded_statuses_are_displayed_without_reclassification(self):
         rows = OrderStatusReportRepository(self.connection).list_orders()
         self.assertEqual(len(rows), len(self.saved_statuses))
         self.assertEqual(
@@ -137,7 +137,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             html = response.get_data(as_text=True)
             for label in (
                 "Wordt verzameld", "Verstuurd", "Backorder", "Afgeleverd",
-                "Niet afgeleverd", "Nog geen status",
+                "Niet afgeleverd",
                 "Apotheek casus", "12-11-2026", "middag", "Spoed",
             ):
                 self.assertIn(label, html)

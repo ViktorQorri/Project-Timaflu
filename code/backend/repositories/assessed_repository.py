@@ -299,18 +299,54 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
     @staticmethod
     def _mark_order_after_delivery(cursor, delivery_id):
         """Count all signed deliveries before marking an order fully delivered."""
+        # A partial signed shipment must not change 'verstuurd' into a
+        # fictional 'afgeleverd'; an existing recorded backorder remains one.
+        # The original case uses a recorded status, never infers a new one.
         cursor.execute(MARK_ORDER_DELIVERED_IF_COMPLETE, (delivery_id,))
-        if cursor.rowcount == 0:
-            # The original order still has undelivered, accepted medicine lines.
-            # An already completed or invoiced order is never reopened.
-            cursor.execute(
-                """UPDATE Bestelling AS b
-                   JOIN Levering AS l ON l.bestelling_id=b.bestelling_id
-                   SET b.status_naam='backorder'
-                   WHERE l.levering_id=%s
-                     AND b.status_naam NOT IN ('afgeleverd','gefactureerd')""",
-                (delivery_id,),
-            )
+
+    def record_first_attempt_delivery(self, delivery_id, delivery_day, signature_confirmed):
+        """Confirm a pre-packed first delivery without inventing a new delivery line.
+
+        The distribution preparation flow has already recorded the packed
+        medicines in Leveringregel. Only the signed receipt is new here.
+        """
+        if signature_confirmed != "yes":
+            raise DomainError("Bevestig dat de klant heeft getekend voor ontvangst.")
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT lp.resultaat
+                       FROM Leverpoging AS lp
+                       JOIN Rit AS r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND lp.pogingnummer=1
+                         AND r.ritdatum=%s FOR UPDATE""",
+                    (delivery_id, delivery_day),
+                )
+                attempt=cursor.fetchone()
+                if attempt is None:
+                    raise DomainError("Eerste bezorgpoging niet gevonden.")
+                if attempt["resultaat"] is not None:
+                    raise DomainError("Eerste bezorgpoging is al verwerkt.")
+                cursor.execute(
+                    "SELECT COUNT(*) AS lines FROM Leveringregel WHERE levering_id=%s",
+                    (delivery_id,),
+                )
+                if not cursor.fetchone()["lines"]:
+                    raise DomainError("Er zijn geen ingepakte medicijnen om af te leveren.")
+                cursor.execute(
+                    """UPDATE Leverpoging SET resultaat='afgeleverd',
+                              ontvangst_getekend=TRUE
+                       WHERE levering_id=%s AND pogingnummer=1
+                         AND resultaat IS NULL""",
+                    (delivery_id,),
+                )
+                if cursor.rowcount != 1:
+                    raise DomainError("De bezorgpoging is ondertussen verwerkt.")
+                self._mark_order_after_delivery(cursor, delivery_id)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
 
     def record_second_attempt_outcome(self, delivery_id, delivery_day, outcome, signature_confirmed):
         """Record second visit only after it takes place; never invent a signature."""
@@ -340,11 +376,7 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                     (outcome, outcome == "afgeleverd", delivery_id),
                 )
                 if outcome == "afgeleverd":
-                    c.execute(
-                        """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
-                           SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
-                        (delivery_id,),
-                    )
+                    self._mark_order_after_delivery(c, delivery_id)
                 else:
                     c.execute(
                         """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
