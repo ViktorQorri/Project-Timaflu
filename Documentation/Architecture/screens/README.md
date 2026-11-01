@@ -47,14 +47,13 @@ De belangrijkste beslismomenten hebben daarnaast afzonderlijke zichtbare schermt
 - Alle knoppen en invoervelden in deze ontwerpbijlagen zijn uitgeschakeld.
 - PR #114 behandelt de toepassing van de huisstijl op de werkende Flask/Jinja-frontend; deze ontwerpen vervangen die functionaliteit niet.
 
-## Reproduceren en controleren
+## Bijwerken en controleren
 
-- screen_specs.py: één bron voor 28 titels, groepen, velden, acties en tabellen.
-- screen_states.py: casusgebonden uitzonderingssituaties als schermvarianten.
-- case_render.py: herbruikbare HTML-uitvoer, factuurvoorbeeld en ontwerpvarianten.
-- python generate_wireframes.py: vernieuwt de 28 HTML-bestanden, index en deze README.
-- In previews/ staan screenshots van belangrijke casusschermen op 390 en 1440 px: AD02, AD05, AD09, AD12, AD16, AD23 en AD27.
-- Geen JavaScript, React, nieuwe bedrijfsstatussen of fictieve gegevens.
+- De 28 statische HTML/CSS-schermontwerpen blijven het opleverproduct. Bewerk ze rechtstreeks wanneer de bijbehorende activity diagrams veranderen.
+- `index.html` vormt het overzicht van alle ontwerpen.
+- Controleer handmatig de casuskoppelingen, factuurvelden, uitzonderingssituaties en mobiele weergave van orderpicking en distributie.
+- Er is geen script meer om deze bestanden opnieuw te genereren; de oude generatorhulpmiddelen en testpreviews zijn verwijderd.
+- De ontwerpen bevatten geen JavaScript en simuleren geen werkelijke bedrijfsgegevens.
 
 ## Brondocumenten
 
