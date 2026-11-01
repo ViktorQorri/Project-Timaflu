@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Openstaande klantfacturen{% endblock %}
+{% block content %}
+<section class="invoice-page" aria-labelledby="outstanding-title">
+  <header class="invoice-page__intro">
+    <p class="invoice-page__eyebrow">Administratie</p>
+    <h1 id="outstanding-title">Openstaande klantfacturen</h1>
+    <p>Controleer per factuur de betaalstatus, verzonden herinneringen en de volgende casusstap.
+       Betalingsherinneringen worden pas als verzonden geregistreerd na daadwerkelijke verzending.</p>
+    <p><a href="{{ url_for('administration.invoices') }}">Terug naar facturen beheren</a></p>
+  </header>
+
+  <div class="stock-dashboard__table-wrap">
+    <table class="stock-dashboard__table">
+      <caption>Alle nog niet volledig betaalde klantfacturen</caption>
+      <thead>
+        <tr>
+          <th scope="col">Factuur</th>
+          <th scope="col">Klant</th>
+          <th scope="col">Contactpersoon en telefoonnummer</th>
+          <th scope="col">Factuurdatum</th>
+          <th scope="col">Weken open</th>
+          <th scope="col">Openstaand bedrag</th>
+          <th scope="col">Eerste herinnering</th>
+          <th scope="col">Tweede herinnering</th>
+          <th scope="col">Vervolgactie</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <th scope="row">{{ invoice.factuur_id }}</th>
+            <td>{{ invoice.bedrijfsnaam }}</td>
+            <td>{{ invoice.contactpersoon or "Niet bekend" }} - {{ invoice.telefoonnummer or "Niet bekend" }}</td>
+            <td>{{ invoice.factuurdatum.strftime('%d-%m-%Y') }}</td>
+            <td>{{ invoice.weken_open }}</td>
+            <td>{% if invoice.totaal_bedrag is not none %}€ {{ invoice.totaal_bedrag }}{% else %}Niet vastgelegd{% endif %}</td>
+            <td>{{ invoice.eerste_herinnering.strftime('%d-%m-%Y') if invoice.eerste_herinnering else 'Niet verzonden' }}</td>
+            <td>{{ invoice.tweede_herinnering.strftime('%d-%m-%Y') if invoice.tweede_herinnering else 'Niet verzonden' }}</td>
+            <td>
+              {% if invoice.vervolgactie == 'eerste' and invoice.totaal_bedrag is not none %}
+                <a href="{{ url_for('administration.printable_reminder', invoice_id=invoice.factuur_id, sequence=1) }}">Eerste herinnering voorbereiden</a>
+              {% elif invoice.vervolgactie == 'tweede' and invoice.totaal_bedrag is not none %}
+                <a href="{{ url_for('administration.printable_reminder', invoice_id=invoice.factuur_id, sequence=2) }}">Tweede herinnering voorbereiden</a>
+              {% elif invoice.vervolgactie == 'contact' %}
+                Klant bellen en standaard betalingsregeling voorstellen.
+              {% elif invoice.vervolgactie == 'betalingsregeling' %}
+                Betalingsregeling vastgelegd.
+              {% elif invoice.vervolgactie == 'incasso' %}
+                Incasso ingeschakeld; klant blijft geblokkeerd voor nieuwe orders.
+              {% elif invoice.vervolgactie == 'herinnerd' %}
+                Twee herinneringen geregistreerd; betaalstatus blijven controleren.
+              {% elif invoice.vervolgactie == 'beoordelen' %}
+                Eerste herinnering ontbreekt; controleer opvolging handmatig.
+              {% elif invoice.totaal_bedrag is none %}
+                Definitief factuurbedrag ontbreekt. Geen bedrag schatten.
+              {% else %}
+                Nog geen herinnering nodig of wachten tot volgende week.
+              {% endif %}
+              <div>
+                <a href="{{ url_for('administration.invoices', customer_id=invoice.klant_id) }}">Klantfacturen en acties bekijken</a>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="9">Er zijn geen openstaande klantfacturen.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -550,12 +550,122 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
             self.db.rollback()
             raise
 
+    def unpaid_invoice_overview(self, today):
+        """AD18: all unpaid customer invoices, reminders and weeks outstanding."""
+        with self.db.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT f.factuur_id, f.klant_id, f.factuurdatum,
+                          f.totaal_bedrag, f.betaald_op,
+                          f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld,
+                          k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                          first_reminder.verstuurd_op AS eerste_herinnering,
+                          second_reminder.verstuurd_op AS tweede_herinnering
+                   FROM Factuur AS f
+                   JOIN Klant AS k ON k.klant_id = f.klant_id
+                   LEFT JOIN Betalingsherinnering AS first_reminder
+                     ON first_reminder.factuur_id = f.factuur_id
+                    AND first_reminder.volgnummer = 1
+                   LEFT JOIN Betalingsherinnering AS second_reminder
+                     ON second_reminder.factuur_id = f.factuur_id
+                    AND second_reminder.volgnummer = 2
+                   WHERE f.betaald_op IS NULL
+                   ORDER BY f.factuurdatum, f.factuur_id"""
+            )
+            invoices = cursor.fetchall()
+
+        for invoice in invoices:
+            days = max((today - invoice["factuurdatum"]).days, 0)
+            invoice["weken_open"] = days // 7
+            if invoice["incasso_ingeschakeld"]:
+                action = "incasso"
+            elif invoice["betalingsregeling_geaccepteerd"]:
+                action = "betalingsregeling"
+            elif days >= 21:
+                action = "contact"
+            elif (days >= 14 and invoice["eerste_herinnering"] is not None
+                  and invoice["tweede_herinnering"] is None
+                  and (today - invoice["eerste_herinnering"]).days >= 7):
+                action = "tweede"
+            elif days >= 14 and invoice["eerste_herinnering"] is None:
+                action = "beoordelen"
+            elif days >= 14 and invoice["tweede_herinnering"] is not None:
+                action = "herinnerd"
+            elif days >= 7 and invoice["eerste_herinnering"] is None:
+                action = "eerste"
+            else:
+                action = "geen"
+            invoice["vervolgactie"] = action
+        return invoices
+
+    def reminder_document(self, invoice_id, sequence, today):
+        """Prepare a printable reminder from the real, unpaid invoice.
+
+        Do not change the database until the employee confirms actual dispatch.
+        The case has billing addresses but does not provide customer email addresses.
+        """
+        if sequence not in (1, 2):
+            raise DomainError("Alleen een eerste of tweede betalingsherinnering is toegestaan.")
+        with self.db.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT f.factuur_id, f.klant_id, f.factuurdatum, f.betaald_op,
+                          f.totaal_bedrag, f.afzenderadres, f.factuuradres,
+                          f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld,
+                          k.bedrijfsnaam, a.adres AS huidig_factuuradres,
+                          first_reminder.verstuurd_op AS eerste_herinnering,
+                          second_reminder.verstuurd_op AS tweede_herinnering
+                   FROM Factuur AS f
+                   JOIN Klant AS k ON k.klant_id = f.klant_id
+                   JOIN Adres AS a ON a.adres_id = k.betaaladres_id
+                   LEFT JOIN Betalingsherinnering AS first_reminder
+                     ON first_reminder.factuur_id = f.factuur_id
+                    AND first_reminder.volgnummer = 1
+                   LEFT JOIN Betalingsherinnering AS second_reminder
+                     ON second_reminder.factuur_id = f.factuur_id
+                    AND second_reminder.volgnummer = 2
+                   WHERE f.factuur_id = %s""",
+                (invoice_id,),
+            )
+            invoice = cursor.fetchone()
+        if invoice is None:
+            raise NotFoundError("Factuur niet gevonden.")
+        if invoice["betaald_op"] is not None:
+            raise DomainError("De factuur is betaald; verstuur geen herinnering.")
+        if invoice["incasso_ingeschakeld"] or invoice["betalingsregeling_geaccepteerd"]:
+            raise DomainError("De factuur is al in incasso of een betalingsregeling.")
+        if invoice["totaal_bedrag"] is None:
+            raise DomainError("Het definitieve factuurbedrag ontbreekt; verzin geen bedrag.")
+        if invoice["totaal_bedrag"] <= 0:
+            raise DomainError("Er is geen positief openstaand bedrag voor deze factuur.")
+        invoice["ontvangeradres"] = invoice["factuuradres"] or invoice["huidig_factuuradres"]
+        if not invoice["ontvangeradres"]:
+            raise DomainError("Het factuuradres is niet bekend.")
+        elapsed_days = (today - invoice["factuurdatum"]).days
+        if elapsed_days < sequence * 7:
+            raise DomainError("Deze herinnering is nog niet aan de beurt.")
+        if elapsed_days >= (sequence + 1) * 7:
+            raise DomainError(
+                "Deze herinneringsweek is voorbij; volg de volgende casusstap."
+            )
+        if sequence == 1:
+            if invoice["eerste_herinnering"] is not None:
+                raise ConflictError("De eerste herinnering is al verzonden.")
+        else:
+            if invoice["tweede_herinnering"] is not None:
+                raise ConflictError("De tweede herinnering is al verzonden.")
+            first = invoice["eerste_herinnering"]
+            if first is None:
+                raise DomainError("Verstuur eerst de eerste herinnering.")
+            if (today - first).days < 7:
+                raise DomainError("Tussen de herinneringen moet minimaal een week zitten.")
+        return invoice
+
     def record_payment_action(self, invoice_id, action, today):
         """Record the case's reminders, full payment, or rejected plan/debt collection."""
         with self.db.cursor(dictionary=True) as cursor:
             try:
                 cursor.execute(
-                    "SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op "
+                    "SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op, "
+                    "f.incasso_ingeschakeld,f.betalingsregeling_geaccepteerd "
                     "FROM Factuur f WHERE f.factuur_id=%s FOR UPDATE", (invoice_id,))
                 invoice=cursor.fetchone()
                 if not invoice:
@@ -563,10 +673,18 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 if action in ("reminder1", "reminder2"):
                     if invoice["betaald_op"]:
                         raise DomainError("Paid invoices need no reminder")
+                    if (invoice.get("incasso_ingeschakeld")
+                            or invoice.get("betalingsregeling_geaccepteerd")):
+                        raise DomainError(
+                            "Geen herinnering tijdens incasso of een betalingsregeling."
+                        )
                     sequence=1 if action=="reminder1" else 2
                     min_days=sequence*7
-                    if (today-invoice["factuurdatum"]).days<min_days:
-                        raise DomainError("Reminder is not due")
+                    elapsed_days=(today-invoice["factuurdatum"]).days
+                    if elapsed_days<min_days or elapsed_days>=min_days+7:
+                        raise DomainError(
+                            "Herinnering niet toegestaan buiten de betreffende onbetaalde week."
+                        )
                     cursor.execute(
                         "SELECT verstuurd_op FROM Betalingsherinnering "
                         "WHERE factuur_id=%s AND volgnummer=%s", (invoice_id, sequence))

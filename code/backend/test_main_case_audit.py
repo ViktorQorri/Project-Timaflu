@@ -99,6 +99,9 @@ class MainCaseAuditTests(TestCase):
                     self.assertEqual(client.post("/invoices/actions", data=args).status_code, 400)
                     self.assertEqual(FakeRepo.calls, [])
                     args["offer_refused_confirmed"]="yes"
+                    self.assertEqual(client.post("/invoices/actions", data=args).status_code, 400)
+                    self.assertEqual(FakeRepo.calls, [])
+                    args["agency_acceptance_confirmed"]="yes"
                     self.assertEqual(client.post("/invoices/actions", data=args).status_code, 302)
         self.assertEqual(FakeRepo.calls, [(4, "payment_plan_rejected")])
 

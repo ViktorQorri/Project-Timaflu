@@ -98,6 +98,40 @@ def pay_purchase_invoice(invoice_id):
     return redirect(url_for("administration.invoices"))
 
 
+@administration.get("/invoices/outstanding")
+def outstanding_invoices():
+    """AD18: unpaid invoices across customers and recommended next action."""
+    invoices = AssessedRepository(get_connection()).unpaid_invoice_overview(date.today())
+    return render_template("outstanding_invoices.html", invoices=invoices)
+
+
+@administration.get("/invoices/<int:invoice_id>/reminders/<int:sequence>")
+def printable_reminder(invoice_id, sequence):
+    """Produce a postal reminder; do not record it as sent when merely opened."""
+    invoice = AssessedRepository(get_connection()).reminder_document(
+        invoice_id, sequence, date.today()
+    )
+    return render_template(
+        "payment_reminder.html", invoice=invoice, sequence=sequence, today=date.today()
+    )
+
+
+@administration.post("/invoices/<int:invoice_id>/reminders/<int:sequence>/sent")
+def reminder_sent(invoice_id, sequence):
+    """Record dispatch only after the employee confirms actual physical sending."""
+    from flask import flash, redirect, url_for
+    from domain.errors import DomainError
+
+    if request.form.get("sent_confirmed") != "yes":
+        raise DomainError("Bevestig dat je de betalingsherinnering werkelijk hebt verzonden.")
+    today = date.today()
+    repository = AssessedRepository(get_connection())
+    repository.reminder_document(invoice_id, sequence, today)
+    repository.record_payment_action(invoice_id, f"reminder{sequence}", today)
+    flash(f"Herinnering {sequence} als verzonden geregistreerd.", "success")
+    return redirect(url_for("administration.outstanding_invoices"))
+
+
 @administration.post("/invoices/actions")
 def invoice_action():
     from flask import redirect, url_for, flash
@@ -107,10 +141,19 @@ def invoice_action():
     action=request.form.get("action","")
     if not invoice_id or not customer_id:
         raise DomainError("Invoice and customer are required")
-    if action not in ("reminder1","reminder2","payment_plan_accepted","payment_plan_rejected","mark_paid"):
-        raise DomainError("Unknown invoice action")
-    if action=="payment_plan_rejected" and request.form.get("offer_refused_confirmed") != "yes":
-        raise DomainError("Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd.")
+    if action not in ("payment_plan_accepted", "payment_plan_rejected", "mark_paid"):
+        raise DomainError(
+            "Herinneringen worden na het verzenden via het herinneringsscherm geregistreerd."
+        )
+    if action=="payment_plan_rejected":
+        if request.form.get("offer_refused_confirmed") != "yes":
+            raise DomainError(
+                "Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd."
+            )
+        if request.form.get("agency_acceptance_confirmed") != "yes":
+            raise DomainError(
+                "Bevestig dat het incassobureau de opdracht heeft geaccepteerd."
+            )
     repo=AssessedRepository(get_connection())
     # Validate invoice ownership for every mutation, not only mark_paid.
     # Otherwise a forged form can modify another customer's invoice.

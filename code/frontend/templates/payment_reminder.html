@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Eerste' if sequence == 1 else 'Tweede' }} betalingsherinnering factuur {{ invoice.factuur_id }}{% endblock %}
+{% block content %}
+  <style>
+    /* Start: Printklare betalingsherinnering volgens de Timaflu-casus. */
+    .reminder-letter { font: 16px/1.6 Arial, sans-serif; color: #111; margin: 2rem auto; padding: 0 1rem; max-width: 48rem; }
+    h1 { font-size: 1.45rem; }
+    .reminder-letter .sender { font-weight: bold; }
+    .reminder-letter .recipient { margin: 2rem 0; white-space: pre-line; }
+    .reminder-letter .metadata { margin: 1.8rem 0; }
+    .reminder-letter .instructions { background: #f4f6f8; padding: 1rem; margin-bottom: 2rem; }
+    .reminder-letter button { padding: 0.6rem 1rem; cursor: pointer; }
+    @media print {
+      .site-header, .site-footer, .skip-link { display: none !important; }
+      #main-content { margin: 0; padding: 0; }
+      .reminder-letter { margin: 0; padding: 0; max-width: none; }
+      .no-print { display: none !important; }
+      @page { margin: 20mm; }
+    }
+    /* End: Printklare betalingsherinnering volgens de Timaflu-casus. */
+  </style>
+<section class="reminder-letter">
+  <section class="instructions no-print" aria-label="Werkwijze">
+    <h2>Verzending door de administratie</h2>
+    <p>Druk deze brief af met de afdrukfunctie van de browser en verstuur deze naar het factuuradres.
+       Het openen of afdrukken van de brief registreert <strong>geen</strong> verzending.
+       Vink de bevestiging onderaan pas aan nadat de brief daadwerkelijk is verzonden.</p>
+    <p><a href="{{ url_for('administration.outstanding_invoices') }}">Terug naar openstaande facturen</a></p>
+  </section>
+
+  <header>
+    <p class="sender">Timaflu</p>
+    {% if invoice.afzenderadres %}<p>{{ invoice.afzenderadres }}</p>{% endif %}
+  </header>
+  <div class="recipient">
+    {{ invoice.bedrijfsnaam }}
+    {{ invoice.ontvangeradres }}
+  </div>
+  <div class="metadata">
+    <p>Datum: {{ today.strftime('%d-%m-%Y') }}</p>
+    <p>Betreft: {{ 'Eerste' if sequence == 1 else 'Tweede' }} betalingsherinnering voor factuur {{ invoice.factuur_id }}</p>
+  </div>
+
+  <article class="reminder-letter__content">
+    <h1>{{ 'Eerste' if sequence == 1 else 'Tweede' }} betalingsherinnering</h1>
+    <p>Geachte heer/mevrouw,</p>
+    {% if sequence == 2 %}
+      <p>Wij hebben je op {{ invoice.eerste_herinnering.strftime('%d-%m-%Y') }}
+         eerder herinnerd aan onderstaande factuur. Volgens onze administratie staat deze nog open.</p>
+    {% else %}
+      <p>Volgens onze administratie is onderstaande factuur nog niet betaald.</p>
+    {% endif %}
+    <p>Factuurnummer: <strong>{{ invoice.factuur_id }}</strong><br>
+       Factuurdatum: {{ invoice.factuurdatum.strftime('%d-%m-%Y') }}<br>
+       Openstaand factuurbedrag: <strong>€ {{ invoice.totaal_bedrag }}</strong></p>
+    <p>Wij verzoeken je het volledige openstaande bedrag te voldoen. Als je inmiddels hebt betaald,
+       beschouw deze herinnering dan als niet van toepassing zodra wij de betaling hebben verwerkt.
+       Neem bij vragen contact op met Timaflu.</p>
+    <p>Met vriendelijke groet,<br>Administratie Timaflu</p>
+  </article>
+
+  <section class="no-print" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Verzending registreren</h2>
+    <form method="post" action="{{ url_for('administration.reminder_sent', invoice_id=invoice.factuur_id, sequence=sequence) }}">
+      <label>
+        <input type="checkbox" name="sent_confirmed" value="yes" required>
+        Ik bevestig dat deze herinneringsbrief daadwerkelijk naar de klant is verzonden.
+      </label>
+      <p><button type="submit">Verzending registreren</button></p>
+    </form>
+  </section>
+</section>
+{% endblock %}

@@ -49,6 +49,8 @@ SCREENS = [
     ("/order-picking", "Orderpicking (statisch scherm)"),
     ("/deliveries?day=2026-10-22", "Distributierooster"),
     ("/invoices?customer_id=1", "Openstaande facturen"),
+    ("/invoices/outstanding", "Openstaande klantfacturen en betalingsherinneringen"),
+    ("/invoices/1/reminders/1", "Eerste betalingsherinnering, echte factuur en vast referentiemoment"),
     ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
@@ -207,6 +209,15 @@ def main():
                         stack.enter_context(patch(
                             module+".get_connection", return_value=proxy
                         ))
+                    if url == "/invoices/1/reminders/1":
+                        # The fictional invoice is dated 2026-10-31. Simulate
+                        # 2026-11-08 (8 days later) to exercise an actually due
+                        # postal reminder without changing any invoice or
+                        # reminder row in the isolated test database.
+                        audit_date = stack.enter_context(
+                            patch("routes.administration.date")
+                        )
+                        audit_date.today.return_value = date(2026, 11, 8)
                     response = client.get(url)
                 report += [f"## {heading}", "", f"Scherm: {url}",
                            f"HTTP-status: {response.status_code}", ""]
