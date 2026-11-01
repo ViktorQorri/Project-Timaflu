@@ -93,4 +93,31 @@
     </table>
   </div>
 </section>
+<section class="stock-dashboard" aria-labelledby="courier-planning-title">
+  <h2 id="courier-planning-title">Verpakte leveringen aan een koerier toewijzen</h2>
+  <p>Controleer zelf de regiotoewijzing, spoedbeschikbaarheid en het met de klant afgesproken dagdeel. Er wordt niets automatisch toegezegd.</p>
+  {% for shipment in pending %}
+  <article class="page-panel">
+    <h3>Levering #{{ shipment.levering_id }} · {{ shipment.bedrijfsnaam }}</h3>
+    <p>Bestelling {{ shipment.bestelling_id }} · {{ shipment.adres }} · {{ shipment.gewenste_leverdatum }} ({{ shipment.dagdeel }}){% if shipment.spoed %} · Spoed{% endif %}</p>
+    <form method="post" action="{{ url_for('distribution.plan_courier') }}" class="stacked-form">
+      <input type="hidden" name="delivery_id" value="{{ shipment.levering_id }}">
+      <label>Koerier
+        <select name="courier_id" required>
+          <option value="">Kies beschikbare koerier</option>
+          {% for courier in couriers %}
+          <option value="{{ courier.koerier_id }}">{{ courier.naam }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Afgesproken leverdag <input type="date" name="day" value="{{ shipment.gewenste_leverdatum }}" required></label>
+      <label>Geplande levertijd <input type="time" name="time" required></label>
+      <label><input type="checkbox" name="courier_assignment_confirmed" value="yes" required> Koerier, regio en eventuele spoed zijn handmatig bevestigd.</label>
+      <button type="submit">Levering aan koeriersrooster toevoegen</button>
+    </form>
+  </article>
+  {% else %}
+  <p>Geen verpakte leveringen die nog moeten worden ingepland.</p>
+  {% endfor %}
+</section>
 {% endblock %}

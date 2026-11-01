@@ -64,6 +64,10 @@ class DesignSystemTests(TestCase):
             stack.enter_context(patch("routes.home.HealthService"))
             bins = stack.enter_context(patch("routes.order_picking.PickingBinService"))
             bins.return_value.bins.return_value = []
+            packing = stack.enter_context(patch("routes.order_picking.DistributionPreparationRepository"))
+            packing.return_value.ready_to_pack.return_value = []
+            planned = stack.enter_context(patch("routes.distribution.DistributionPreparationRepository"))
+            planned.return_value.pending_shipments.return_value = ([], [])
             deliveries = stack.enter_context(patch("routes.distribution.AssessedRepository"))
             deliveries.return_value.delivery_schedule.return_value = []
             acquisition = stack.enter_context(patch("routes.acquisition.AssessedRepository"))

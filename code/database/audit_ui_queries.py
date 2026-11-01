@@ -26,6 +26,7 @@ SCREENS = [
     ("/", "Home en databasecontrole"),
     ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
     ("/orders?q=Testmedicijn&quantity=1", "Telefonische verkoop en beschikbaarheid"),
+    ("/orders/new", "Telefonische orderinvoer met actuele klant- en productgegevens"),
     ("/orders/status", "Bestellingen en echte orderstatus"),
     ("/products", "Productcatalogus"),
     ("/products/new", "Product toevoegen: leverancierskeuze"),

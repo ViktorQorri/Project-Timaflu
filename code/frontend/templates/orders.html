@@ -5,6 +5,7 @@
   <span class="eyebrow">Verkoop</span>
   <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
   <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
+  <p><a class="button button--primary" href="{{ url_for('sales.new_telephone_order') }}">Complete telefonische bestelling opnemen</a></p>
   <form method="get" action="{{ url_for('sales.orders') }}" class="lookup-form">
     <div class="form-field">
       <label for="medicine-query">Naam van het medicijn of artikelnummer</label>

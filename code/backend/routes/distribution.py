@@ -2,6 +2,7 @@ from datetime import date, time
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from db import get_connection
 from repositories.assessed_repository import AssessedRepository
+from repositories.distribution_preparation_repository import DistributionPreparationRepository
 from domain.errors import DomainError
 
 distribution=Blueprint("distribution",__name__)
@@ -29,7 +30,26 @@ def deliveries():
     except (ValueError, TypeError) as exc:
         raise DomainError("Ongeldige rooster- of leveringsdatum.") from exc
     schedule=AssessedRepository(get_connection()).delivery_schedule(day)
-    return render_template("deliveries.html",day=day,schedule=schedule)
+    pending, couriers = DistributionPreparationRepository(get_connection()).pending_shipments()
+    return render_template("deliveries.html", day=day, schedule=schedule,
+                           pending=pending, couriers=couriers)
+
+
+@distribution.post("/deliveries/plan")
+def plan_courier():
+    try:
+        delivery_id = int(request.form["delivery_id"])
+        courier_id = int(request.form["courier_id"])
+        day = date.fromisoformat(request.form["day"])
+        planned = time.fromisoformat(request.form["time"])
+    except (KeyError, ValueError, TypeError) as exc:
+        raise DomainError("Koerier, levering, datum en tijd zijn verplicht.") from exc
+    if request.form.get("courier_assignment_confirmed") != "yes":
+        raise DomainError("Bevestig eerst dat deze koerier de levering kan aannemen.")
+    DistributionPreparationRepository(get_connection()).schedule(
+        delivery_id, courier_id, day, planned)
+    flash("Levering aan de koeriersrit toegevoegd.", "success")
+    return redirect(url_for("distribution.deliveries", day=day.isoformat()))
 
 @distribution.post("/deliveries/second-attempt")
 def second_attempt():
