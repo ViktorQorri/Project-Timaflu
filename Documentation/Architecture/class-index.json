@@ -333,6 +333,24 @@
     ]
   },
   {
+    "module": "repositories.discount_repository",
+    "class": "DiscountRepository",
+    "methods": [
+      "__init__",
+      "_fetchall",
+      "_fetchone",
+      "list_customers",
+      "find_customer",
+      "list_products",
+      "find_product",
+      "count_previous_orders",
+      "get_customer_discount_percentage",
+      "list_customer_ids",
+      "save_annual_discounts",
+      "sum_purchases"
+    ]
+  },
+  {
     "module": "repositories.distribution_preparation_repository",
     "class": "DistributionPreparationRepository",
     "methods": [
@@ -513,6 +531,25 @@
       "update",
       "deactivate",
       "validate"
+    ]
+  },
+  {
+    "module": "services.discount_service",
+    "class": "DiscountService",
+    "methods": [
+      "__init__",
+      "form_options",
+      "calculate_total_amount",
+      "calculate_order_discount",
+      "calculate_one_time_discount",
+      "update_annual_discounts",
+      "calculate_annual_revenue",
+      "determine_discount_percentage",
+      "calculate_customer_discount",
+      "calculate_total_after_discount",
+      "_discount",
+      "_find_customer",
+      "_price_order_lines"
     ]
   },
   {

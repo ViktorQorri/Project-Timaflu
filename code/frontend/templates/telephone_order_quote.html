@@ -8,7 +8,9 @@
 </section>
 <section class="stock-dashboard">
   <h2>{{ quote.customer.bedrijfsnaam }}</h2>
-  <p>Leverdatum: {{ quote.day }}. Dagdeel: {{ quote.slot }}{% if quote.urgent %}. Spoed: ja, koeriersplanning moet apart worden bevestigd{% endif %}.</p>
+  <p>Afleveradres: {{ quote.customer.afleveradres }}</p>
+  <p>Factuuradres: {{ quote.customer.factuuradres }}</p>
+  <p>Leverdatum: {{ quote.day }}. Dagdeel: {{ quote.slot }}{% if quote.urgent %}. Spoed: vandaag, maximaal drie uur na orderplaatsing; bevestig vooraf de koeriersbeschikbaarheid{% endif %}.</p>
   <div class="stock-dashboard__table-wrap" tabindex="0" role="region" aria-label="Bestelregels">
     <table class="stock-dashboard__table">
       <thead><tr><th>Medicijn</th><th>Aantal</th><th>Beschikbaar</th><th>Prijs per stuk</th><th>Regeltotaal excl. btw</th><th>Afspraak</th></tr></thead>

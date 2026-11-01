@@ -2,6 +2,8 @@
 INSERT INTO Adres(adres) VALUES ('TEST: Factuurstraat 12, Breda'), ('TEST: Afleverstraat 8, Breda');
 INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
 VALUES ('TEST Apotheek B.V.','0612345678','TEST medewerker',2,1);
+-- This is the 2026 rate determined from 2025 paid turnover, not an invoice-time guess.
+INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage) VALUES (1, 2026, 5.00);
 INSERT INTO Product(artikelnummer,bestelcode,productnaam,prijs_per_grootverpakking,
   aantal_detailverpakkingen,minimale_bestelhoeveelheid,minimumvoorraad)
 VALUES('TEST-001','TEST-CODE','Testmedicijn',100.00,1,1,1);

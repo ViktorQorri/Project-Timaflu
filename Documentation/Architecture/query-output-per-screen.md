@@ -49,7 +49,7 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "afleveradres": "TEST: Afleverstraat 8, Breda",
     "factuuradres": "TEST: Factuurstraat 12, Breda",
     "jaaromzet": "0",
-    "kortingspercentage": null
+    "kortingspercentage": "5.00"
   }
 ]
 ```

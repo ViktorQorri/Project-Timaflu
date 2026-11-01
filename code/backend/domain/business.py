@@ -22,12 +22,22 @@ class CustomerDiscount:
 
 
 class Order:
-    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderTotal=None):
+    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderTotal=None,
+                 customerDiscountPercentage=None):
         self.subtotal = euro(subtotal)
         # Bij deelfacturatie blijft de volledige bestelling beslissend voor de 500-eurogrens.
         self.orderTotal = euro(orderTotal) if orderTotal is not None else self.subtotal
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
+        # Real orders use the annual rate fixed on 31 December; historical dummy
+        # calculations can still exercise the documented revenue tiers.
+        if customerDiscountPercentage is None:
+            self.customerDiscountPercentage = None
+        else:
+            rate = euro(customerDiscountPercentage)
+            if rate not in (Decimal("5"), Decimal("10"), Decimal("15")):
+                raise ValueError("Ongeldig vastgelegd klantenkortingspercentage.")
+            self.customerDiscountPercentage = rate
 
     def calculateOrderDiscount(self):
         return euro(self.subtotal * Decimal("0.05")) if self.orderTotal >= 500 else euro(0)
@@ -37,7 +47,10 @@ class Order:
 
     def calculateCustomerDiscount(self):
         after = self.subtotal - self.calculateOrderDiscount() - self.calculateOneTimeDiscount()
-        return euro(after * CustomerDiscount().determinePercentage(self.annualRevenue))
+        rate = (CustomerDiscount().determinePercentage(self.annualRevenue)
+                if self.customerDiscountPercentage is None
+                else self.customerDiscountPercentage / Decimal("100"))
+        return euro(after * rate)
 
     def calculateTotalAmount(self):
         a = self.calculateOrderDiscount()
@@ -97,7 +110,8 @@ class Invoice:
         self.paymentPlanAccepted = None
         self.debtCollectionEnabled = False
 
-    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder, orderTotal=None):
+    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue,
+                            firstOrder, orderTotal=None, customerDiscountPercentage=None):
         """Use explicitly confirmed discount inputs; never default historical facts."""
         items = []
         for line in lines:
@@ -109,7 +123,9 @@ class Invoice:
         subtotal = euro(sum((line["line_total"] for line in items), Decimal(0)))
         vat = euro(subtotal * Decimal("0.09"))
         gross = subtotal + vat
-        discounts = Order(gross, annualRevenue, firstOrder, orderTotal).calculateTotalAmount()
+        discounts = Order(
+            gross, annualRevenue, firstOrder, orderTotal, customerDiscountPercentage
+        ).calculateTotalAmount()
         after_order = euro(gross - discounts["order_discount"])
         after_first_order = euro(after_order - discounts["first_order_discount"])
         return {"total_after_order_discount": after_order,
@@ -138,7 +154,8 @@ class Invoice:
         for order in orders:
             detail = self.createWeeklyInvoice(
                 customerName, customerAddress, order["lines"],
-                annualRevenue, order["first_order"], order.get("order_total")
+                annualRevenue, order["first_order"], order.get("order_total"),
+                order.get("customer_discount_percentage")
             )
             for key in fields:
                 totals[key] = euro(totals[key] + detail[key])
