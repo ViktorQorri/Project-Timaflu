@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Orderstatus {{ order.bestelling_id }}{% endblock %}
+{% block extra_styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status-notification.css') }}">
+{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="order-status-title">
   <header class="stock-dashboard__intro">
@@ -10,28 +13,59 @@
     </div>
     <a class="order-status__link" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a>
   </header>
+
   <dl class="order-status__summary">
-    <div class="order-status__card"><dt>Status</dt><dd><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></dd></div>
-    <div class="order-status__card"><dt>Gewenste leverdatum</dt><dd>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</dd></div>
-    <div class="order-status__card"><dt>Laatste geregistreerde aflevering</dt><dd>{{ order.afgeleverd_op.strftime('%d-%m-%Y') if order.afgeleverd_op else 'Niet geregistreerd' }}</dd></div>
-    <div class="order-status__card"><dt>Backorderstatus</dt><dd>{% if has_backorder %}<span class="order-status__label order-status__label--warning">Order in backorder</span>{% else %}Niet als backorder geregistreerd{% endif %}</dd></div>
+    <div class="order-status__card">
+      <dt>Geregistreerde status</dt>
+      <dd><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></dd>
+    </div>
+    <div class="order-status__card">
+      <dt>Gewenste leverdatum en dagdeel</dt>
+      <dd>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</dd>
+    </div>
+    <div class="order-status__card">
+      <dt>Backorder</dt>
+      <dd>{% if has_backorder %}<span class="order-status__label order-status__label--warning">Order in backorder</span>{% else %}Niet als backorder geregistreerd{% endif %}</dd>
+    </div>
   </dl>
+
   {% if has_backorder %}
-    <p role="status">Welke orderregels nog geleverd moeten worden, is niet uit de voorraadreserveringen vast te stellen. Controleer de levering voordat je een aantal aan de klant doorgeeft.</p>
+    <p role="status">De bestelling staat op backorder. Een actueel backorderaantal per product is niet geregistreerd. De afspraken bij een tekort staan hieronder.</p>
   {% endif %}
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
-      <caption>Bestelde producten en geregistreerde voorraadreserveringen</caption>
-      <thead><tr><th scope="col">Product</th><th scope="col">Artikelnummer</th><th scope="col" class="stock-dashboard__number">Besteld</th><th scope="col" class="stock-dashboard__number">Gereserveerd</th></tr></thead>
+      <caption>Orderregels en geregistreerde keuzes bij voorraadtekort</caption>
+      <thead>
+        <tr>
+          <th scope="col">Medicijn</th>
+          <th scope="col">Artikelnummer</th>
+          <th scope="col" class="stock-dashboard__number">Besteld</th>
+          <th scope="col" class="stock-dashboard__number">Prijs per eenheid</th>
+          <th scope="col">Bij tekort afnemen?</th>
+        </tr>
+      </thead>
       <tbody>
         {% for line in lines %}
-          <tr><th scope="row">{{ line.productnaam }}</th><td>{{ line.artikelnummer }}</td><td class="stock-dashboard__number">{{ line.aantal }}</td><td class="stock-dashboard__number">{{ line.gereserveerd }}</td></tr>
+          <tr>
+            <th scope="row">{{ line.productnaam }}</th>
+            <td>{{ line.artikelnummer }}</td>
+            <td class="stock-dashboard__number">{{ line.aantal }}</td>
+            <td class="stock-dashboard__number">€ {{ '%.2f'|format(line.prijs_per_eenheid)|replace('.', ',') }}</td>
+            <td>
+              {% if line.afnemen_bij_tekort is none %}
+                Niet vastgelegd
+              {% elif line.afnemen_bij_tekort %}
+                Ja
+              {% else %}
+                Nee
+              {% endif %}
+            </td>
+          </tr>
         {% else %}
-          <tr><td colspan="4">Deze order heeft geen orderregels.</td></tr>
+          <tr><td colspan="5">Geen orderregels gevonden.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p class="stock-dashboard__subtitle">Klant: {{ order.contactpersoon or order.bedrijfsnaam }}{% if order.telefoonnummer %}, telefoon: {{ order.telefoonnummer }}{% endif %}. Afleveradres: {{ order.afleveradres }}</p>
 </section>
 {% endblock %}
