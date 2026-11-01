@@ -88,7 +88,11 @@ class WeeklyInvoiceRepository:
                 cursor.execute("""
                     SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
-                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
+                           (SELECT kd.percentage FROM Klantkorting kd
+                            WHERE kd.klant_id=b.klant_id
+                              AND kd.kalenderjaar=YEAR(b.besteld_op)
+                           ) AS customer_discount_percentage
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -111,17 +115,8 @@ class WeeklyInvoiceRepository:
                     self.db.rollback()
                     return None
 
-                year = end.year - 1
-                cursor.execute("""
-                    SELECT COUNT(*) AS paid_count,
-                           COUNT(totaal_bedrag) AS known_amount_count,
-                           COALESCE(SUM(totaal_bedrag),0) AS annual
-                    FROM Factuur
-                    WHERE klant_id=%s AND betaald_op >= %s AND betaald_op < %s
-                """, (customer_id, date(year,1,1), date(year+1,1,1)))
-                revenue = cursor.fetchone()
-                if revenue["paid_count"] != revenue["known_amount_count"]:
-                    raise DomainError("Betaalde historische facturen missen bedragen.")
+                if any(row["customer_discount_percentage"] is None for row in rows):
+                    raise DomainError("De klantenkorting voor een bestelling is niet vastgelegd.")
 
                 cursor.execute("""
                     SELECT bestelling_id FROM Bestelling WHERE klant_id=%s
@@ -135,7 +130,9 @@ class WeeklyInvoiceRepository:
                     if order_id not in orders:
                         orders[order_id] = {
                             "order_id": order_id,
-                            "first_order": order_id == first_order_id and not row["first_used"],
+                            "first_order": order_id == first_order_id,
+                            "already_marked": bool(row["first_used"]),
+                            "customer_discount_percentage": row["customer_discount_percentage"],
                             "lines": []
                         }
                     orders[order_id]["lines"].append({
@@ -144,7 +141,7 @@ class WeeklyInvoiceRepository:
                 # One first-order discount, even if acquisition also offered 10%.
                 invoice = Invoice(customer_id, "", issued_on).createWeeklyInvoiceForOrders(
                     customer["bedrijfsnaam"], customer["factuuradres"],
-                    list(orders.values()), revenue["annual"]
+                    list(orders.values()), 0
                 )
 
                 cursor.execute("""
@@ -169,7 +166,8 @@ class WeeklyInvoiceRepository:
                         raise DomainError("Factuurregel is intussen gewijzigd.")
 
                 for order in orders.values():
-                    if order["first_order"]:
+                    if order["first_order"] and not order["already_marked"]:
+                        # Legacy orders may not have set this flag at registration.
                         cursor.execute("""
                             UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE

@@ -10,7 +10,7 @@ from domain.errors import DomainError, NotFoundError
 from repositories.discount_repository import DiscountRepository
 from services.discount_service import DiscountService
 
-CUSTOMER = {"klant_id": 7, "bedrijfsnaam": "Apotheek De Brug", "eenmalige_korting_toegezegd": True}
+CUSTOMER = {"klant_id": 7, "bedrijfsnaam": "Apotheek De Brug", "eenmalige_korting_toegezegd": False}
 PRODUCTS = {
     1: {"product_id": 1, "artikelnummer": "TIM-1", "productnaam": "Medicine A",
         "prijs_per_grootverpakking": Decimal("100.00")},
@@ -20,10 +20,15 @@ PRODUCTS = {
 
 
 class FakeRepository:
-    def __init__(self, previous_orders=3, revenue=Decimal("0")):
+    def __init__(self, previous_orders=3, revenue=Decimal("0"),
+                 percentage=Decimal("5"), percentages=None, revenues=None):
         self.previous_orders = previous_orders
         self.revenue = revenue
+        self.revenues = revenues
+        self.percentages = {2026: percentage} if percentages is None else percentages
         self.purchase_years = []
+        self.discount_years = []
+        self.annual_saves = []
 
     def list_customers(self):
         return [CUSTOMER]
@@ -40,15 +45,26 @@ class FakeRepository:
     def count_previous_orders(self, customer_id):
         return self.previous_orders
 
+    def get_customer_discount_percentage(self, customer_id, year):
+        self.discount_years.append((customer_id, year))
+        return self.percentages.get(year)
+
+    def list_customer_ids(self):
+        return sorted(self.revenues) if self.revenues is not None else [CUSTOMER["klant_id"]]
+
+    def save_annual_discounts(self, year, rates):
+        self.annual_saves.append((year, rates))
+
     def sum_purchases(self, customer_id, year):
         self.purchase_years.append((customer_id, year))
-        return self.revenue
+        return self.revenues[customer_id] if self.revenues is not None else self.revenue
 
 
 class Cursor:
     """Answers each query by a word in its SQL, like the tables in schema.sql."""
 
-    def __init__(self, previous_orders, revenue):
+    def __init__(self, previous_orders, revenue, percentage=Decimal("10")):
+        self.percentage = percentage
         self.answers = {
             "COUNT(*)": {"aantal_bestellingen": previous_orders},
             "jaaromzet": {"jaaromzet": revenue, "betaalde_facturen": 1, "facturen_met_bedrag": 1},
@@ -68,6 +84,8 @@ class Cursor:
 
     def fetchone(self):
         query = self.statements[-1][0]
+        if "FROM Klantkorting" in query:
+            return None if self.percentage is None else {"percentage": self.percentage}
         if "AS jaaromzet" in query:
             return self.answers["jaaromzet"]
         return next(row for word, row in self.answers.items() if word in query)
@@ -77,9 +95,11 @@ class Cursor:
 
 
 class Connection:
-    def __init__(self, previous_orders=3, revenue=Decimal("12000.00")):
-        self.c = Cursor(previous_orders, revenue)
+    def __init__(self, previous_orders=3, revenue=Decimal("12000.00"),
+                 percentage=Decimal("10")):
+        self.c = Cursor(previous_orders, revenue, percentage)
         self.commits = 0
+        self.rollbacks = 0
 
     def cursor(self, dictionary=False):
         assert dictionary
@@ -87,6 +107,9 @@ class Connection:
 
     def commit(self):
         self.commits += 1
+
+    def rollback(self):
+        self.rollbacks += 1
 
 
 def calculate(repository, lines, order_date=date(2026, 10, 30)):
@@ -116,7 +139,7 @@ class OrderDiscountTests(TestCase):
                 self.assertEqual(DiscountService.determine_discount_percentage(Decimal(revenue)), percentage)
 
     def test_first_order_gets_one_time_and_customer_discount(self):
-        repository = FakeRepository(previous_orders=0, revenue=Decimal("50000"))
+        repository = FakeRepository(previous_orders=0, revenue=Decimal("50000"), percentage=Decimal("15"))
         result = calculate(repository, [("1", "10")])
         self.assertTrue(result["first_order"])
         self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "one_time", "customer"])
@@ -124,33 +147,79 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(result["discounts"][2]["base"], Decimal("855.00"))
         self.assertEqual(result["discounts"][2]["amount"], Decimal("128.25"))
         self.assertEqual(result["total_amount"], Decimal("726.75"))
-        self.assertEqual(repository.purchase_years, [(7, 2025)])
+        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual(repository.discount_years, [(7, 2026)])
 
-    def test_unpromised_first_order_has_no_one_time_discount(self):
-        previous = CUSTOMER["eenmalige_korting_toegezegd"]
-        try:
-            CUSTOMER["eenmalige_korting_toegezegd"] = False
-            result = calculate(FakeRepository(previous_orders=0), [("1", "10")])
-            self.assertTrue(result["first_order"])
-            self.assertFalse(result["one_time_discount"])
-            self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "customer"])
-            self.assertEqual(result["total_amount"], Decimal("902.50"))
-        finally:
-            CUSTOMER["eenmalige_korting_toegezegd"] = previous
+    def test_first_order_always_gets_ten_percent_without_acquisition_promise(self):
+        self.assertFalse(CUSTOMER["eenmalige_korting_toegezegd"])
+        result = calculate(FakeRepository(previous_orders=0), [("1", "10")])
+        self.assertTrue(result["first_order"])
+        self.assertTrue(result["one_time_discount"])
+        self.assertEqual([d["kind"] for d in result["discounts"]],
+                         ["order", "one_time", "customer"])
+        self.assertEqual(result["discounts"][1]["amount"], Decimal("95.00"))
+        self.assertEqual(result["total_amount"], Decimal("812.25"))
+
+    def test_new_customer_without_year_record_gets_and_keeps_base_rate(self):
+        repository = FakeRepository(previous_orders=0, percentages={})
+        result = calculate(repository, [("1", "10")])
+        self.assertEqual(result["customer_discount_percentage"], Decimal("5"))
+        self.assertEqual(result["total_amount"], Decimal("812.25"))
+
+    def test_existing_customer_missing_year_record_is_rejected(self):
+        with self.assertRaisesRegex(DomainError, "klantenkorting voor 2026"):
+            calculate(FakeRepository(previous_orders=1, percentages={}), [("1", "1")])
+
+    def test_only_stored_rate_is_used_even_when_revenue_differs(self):
+        repository = FakeRepository(previous_orders=2, revenue=Decimal("2000000"),
+                                    percentage=Decimal("5"))
+        result = calculate(repository, [("1", "10")])
+        self.assertEqual(result["total_amount"], Decimal("902.50"))
+        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual(result["customer_discount_percentage"], Decimal("5"))
+
+    def test_year_boundaries_use_rates_for_the_correct_calendar_year(self):
+        repository = FakeRepository(previous_orders=2,
+                                    percentages={2026: Decimal("5"), 2027: Decimal("15")})
+        old = calculate(repository, [("1", "10")], date(2026, 12, 31))
+        new = calculate(repository, [("1", "10")], date(2027, 1, 1))
+        self.assertEqual(old["total_amount"], Decimal("902.50"))
+        self.assertEqual(new["total_amount"], Decimal("807.50"))
+        self.assertEqual(repository.discount_years, [(7, 2026), (7, 2027)])
+
+    def test_year_end_stores_tiers_for_next_year_once(self):
+        repository = FakeRepository(revenues={
+            7: Decimal("9999.99"), 8: Decimal("10000.00"), 9: Decimal("20000.00")
+        })
+        result = DiscountService(repository).update_annual_discounts(date(2026, 12, 31))
+        self.assertEqual(result, {"discount_year": 2027, "customers": 3})
+        self.assertEqual(repository.annual_saves, [(2027, [
+            (7, Decimal("5")), (8, Decimal("10")), (9, Decimal("15"))
+        ])])
+        self.assertEqual(repository.purchase_years, [(7, 2026), (8, 2026), (9, 2026)])
+
+    def test_annual_process_refuses_any_day_other_than_december_31(self):
+        repository = FakeRepository(revenues={7: Decimal("25000.00")})
+        with self.assertRaisesRegex(DomainError, "31 december"):
+            DiscountService(repository).update_annual_discounts(date(2026, 12, 30))
+        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual(repository.annual_saves, [])
 
     def test_existing_customer_discount_over_amount_after_order_discount(self):
-        repository = FakeRepository(previous_orders=2, revenue=Decimal("15000.00"))
+        repository = FakeRepository(previous_orders=2, revenue=Decimal("15000.00"), percentage=Decimal("10"))
         result = calculate(repository, [("1", "10")])
         self.assertFalse(result["first_order"])
-        self.assertEqual(repository.purchase_years, [(7, 2025)])
-        self.assertEqual(result["annual_revenue"], Decimal("15000.00"))
+        self.assertEqual(repository.purchase_years, [])
+        self.assertEqual(result["discount_year"], 2026)
+        self.assertEqual(result["customer_discount_percentage"], Decimal("10"))
         customer_discount = result["discounts"][1]
         self.assertEqual((customer_discount["percentage"], customer_discount["base"]), (Decimal("10"), Decimal("950.00")))
         self.assertEqual(customer_discount["amount"], Decimal("95.00"))
         self.assertEqual(result["total_amount"], Decimal("855.00"))
 
     def test_rounds_to_cents_half_up_per_step(self):
-        result = calculate(FakeRepository(revenue=Decimal("25000")), [("1", "5"), ("2", "10")])
+        result = calculate(FakeRepository(revenue=Decimal("25000"), percentage=Decimal("15")),
+                           [("1", "5"), ("2", "10")])
         self.assertEqual(result["subtotal"], Decimal("500.10"))
         self.assertEqual(result["discounts"][0]["amount"], Decimal("25.01"))  # 25.005
         self.assertEqual(result["discounts"][1]["amount"], Decimal("71.26"))  # 15% of 475.09 = 71.2635
@@ -203,6 +272,9 @@ class OrderDiscountTests(TestCase):
         repository = DiscountRepository(connection)
         self.assertEqual(repository.count_previous_orders(7), 4)
         self.assertEqual(connection.c.statements[-1][1], (7,))
+        self.assertEqual(repository.get_customer_discount_percentage(7, 2026), Decimal("10"))
+        self.assertIn("FROM Klantkorting", connection.c.statements[-1][0])
+        self.assertEqual(connection.c.statements[-1][1], (7, 2026))
         self.assertEqual(repository.sum_purchases(7, 2025), Decimal("1234.50"))
         query, params = connection.c.statements[-1]
         self.assertIn("SUM(f.totaal_bedrag)", query)
@@ -211,3 +283,23 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(repository.find_product(1), PRODUCTS[1])
         self.assertIn("in_assortiment = TRUE", connection.c.statements[-1][0])
         self.assertEqual(connection.commits, 0)
+
+    def test_annual_repository_writes_new_rate_and_is_idempotent(self):
+        connection = Connection(percentage=None)
+        repository = DiscountRepository(connection)
+        repository.save_annual_discounts(2027, [(7, Decimal("5"))])
+        self.assertEqual(connection.commits, 1)
+        inserts = [(query, params) for query, params in connection.c.statements
+                   if "INSERT INTO Klantkorting" in query]
+        self.assertEqual(inserts[0][1], (7, 2027, Decimal("5")))
+
+        existing = Connection(percentage=Decimal("5"))
+        DiscountRepository(existing).save_annual_discounts(2027, [(7, Decimal("5"))])
+        self.assertEqual(existing.commits, 1)
+        self.assertFalse(any("INSERT INTO Klantkorting" in q for q, _ in existing.c.statements))
+
+    def test_annual_repository_refuses_changing_a_fixed_rate(self):
+        connection = Connection(percentage=Decimal("10"))
+        with self.assertRaisesRegex(DomainError, "al anders vastgesteld"):
+            DiscountRepository(connection).save_annual_discounts(2027, [(7, Decimal("15"))])
+        self.assertEqual((connection.commits, connection.rollbacks), (0, 1))

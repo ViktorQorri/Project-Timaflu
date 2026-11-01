@@ -530,7 +530,11 @@ SELECT factuur_id FROM Factuur
 -- WeeklyInvoiceRepository._issue_customer example 3
 SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
-                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
+                           (SELECT kd.percentage FROM Klantkorting kd
+                            WHERE kd.klant_id=b.klant_id
+                              AND kd.kalenderjaar=YEAR(b.besteld_op)
+                           ) AS customer_discount_percentage
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -549,26 +553,19 @@ SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                     FOR UPDATE;
 
 -- WeeklyInvoiceRepository._issue_customer example 4
-SELECT COUNT(*) AS paid_count,
-                           COUNT(totaal_bedrag) AS known_amount_count,
-                           COALESCE(SUM(totaal_bedrag),0) AS annual
-                    FROM Factuur
-                    WHERE klant_id=1 AND betaald_op >= '2025-01-01' AND betaald_op < '2026-01-01';
-
--- WeeklyInvoiceRepository._issue_customer example 5
 SELECT bestelling_id FROM Bestelling WHERE klant_id=1
                     ORDER BY besteld_op,bestelling_id LIMIT 1;
 
--- WeeklyInvoiceRepository._issue_customer example 6
+-- WeeklyInvoiceRepository._issue_customer example 5
 INSERT INTO Factuur
                     (klant_id,factuurdatum,week_start,afzenderadres,factuuradres)
                     VALUES (1,'2026-10-31','2026-10-19','Voorbeeldadres alleen voor test','Testapotheekstraat 1');
 
--- WeeklyInvoiceRepository._issue_customer example 7
+-- WeeklyInvoiceRepository._issue_customer example 6
 UPDATE Leveringregel SET factuur_id=2
                         WHERE levering_id=2 AND product_id=1 AND factuur_id IS NULL;
 
--- WeeklyInvoiceRepository._issue_customer example 8
+-- WeeklyInvoiceRepository._issue_customer example 7
 UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE
                             WHERE bestelling_id=2 AND eenmalige_korting_toegepast=FALSE;
@@ -595,7 +592,7 @@ SELECT lr.aantal_geleverd AS quantity,
 -- Order discount calculation on the new order screen, /orders/new (issue #10, SD01).
 -- Same SELECTs as DiscountRepository with example parameters.
 -- Customer and product choices for the form.
-SELECT klant_id, bedrijfsnaam, eenmalige_korting_toegezegd
+SELECT klant_id, bedrijfsnaam
 FROM Klant
 ORDER BY bedrijfsnaam ASC;
 SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
@@ -603,7 +600,7 @@ FROM Product
 WHERE in_assortiment = TRUE
 ORDER BY productnaam ASC;
 -- The chosen customer and the catalog price of each order line.
-SELECT klant_id, bedrijfsnaam, eenmalige_korting_toegezegd
+SELECT klant_id, bedrijfsnaam
 FROM Klant
 WHERE klant_id = 1;
 SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
@@ -620,6 +617,15 @@ SELECT COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet,
 FROM Factuur AS f
 WHERE f.klant_id = 1 AND YEAR(f.betaald_op) = 2025;
 
+-- SD01: read the already fixed discount for the order year; not previous-year revenue.
+SELECT percentage FROM Klantkorting WHERE klant_id = 1 AND kalenderjaar = 2026;
+-- AD28: customer IDs processed on 31 December.
+SELECT klant_id FROM Klant ORDER BY klant_id;
+-- AD28: insert each next-year percentage once (transactional in DiscountRepository).
+SELECT percentage FROM Klantkorting WHERE klant_id = 1 AND kalenderjaar = 2027 FOR UPDATE;
+INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
+VALUES (1, 2027, 5.00);
+
 -- Enter a telephone order, /orders/new (issues #9 and #10, AD05 Enter order).
 -- Same queries as OrderRepository with example parameters.
 -- A customer whose unpaid invoice is with the debt collection agency cannot order.
@@ -632,7 +638,7 @@ SELECT GREATEST(
     - COALESCE((SELECT SUM(aantal) FROM Voorraadreservering WHERE product_id = 1), 0),
     0) AS beschikbaar;
 -- Saving the order, run as one transaction. Lock the customer and read its addresses.
-SELECT klant_id, afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd
+SELECT klant_id, afleveradres_id, betaaladres_id
 FROM Klant
 WHERE klant_id = 1
 FOR UPDATE;

@@ -3,8 +3,9 @@
 Business rules from the case (Current-processes, Tabel 1):
 - 5% order discount over the order total when the total is EUR 500 or more;
 - the next discount is calculated over the amount left after the order discount;
-- a promised acquisition incentive on the first order: an additional one-time 10% discount;
-- every customer receives a customer discount based on the previous year's paid revenue.
+- every first order receives a one-time 10% discount (product description);
+- the customer discount uses the percentage already recorded for the order year
+  in Klantkorting; that percentage is determined on 31 December for the next year.
 Every amount is rounded to cents (ROUND_HALF_UP) after each step.
 """
 
@@ -49,8 +50,8 @@ class DiscountService:
         Args:
             customer_id: The id of the customer placing the order.
             order_lines: (product_id, quantity) pairs; pairs that are both empty are skipped.
-            order_date: The date of the order, today by default. Its previous year sets the
-                annual revenue used for the customer discount.
+            order_date: The order date, today by default. Its year selects the
+                already established annual customer discount.
 
         Returns:
             A dict with the customer, the priced lines, the subtotal, the applied discounts
@@ -66,15 +67,26 @@ class DiscountService:
             discounts.append(order_discount)
         amount = discounts[-1]["total_after"] if discounts else subtotal
 
-        previous_year = (order_date or date.today()).year - 1
+        discount_year = (order_date or date.today()).year
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
-        one_time_discount = first_order and bool(customer.get("eenmalige_korting_toegezegd"))
-        if one_time_discount:
+        if first_order:
             discounts.append(self.calculate_one_time_discount(amount))
             amount = discounts[-1]["total_after"]
 
-        annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
-        percentage = self.determine_discount_percentage(annual_revenue)
+        percentage = self.repository.get_customer_discount_percentage(
+            customer["klant_id"], discount_year
+        )
+        if percentage is None:
+            if not first_order:
+                raise DomainError(
+                    f"De klantenkorting voor {discount_year} is niet vastgelegd. "
+                    "Laat de jaarafsluiting controleren."
+                )
+            # A pharmacy registered after 31 December had no turnover in the prior year.
+            percentage = Decimal("5.00")
+        percentage = Decimal(percentage)
+        if percentage not in (Decimal("5"), Decimal("10"), Decimal("15")):
+            raise DomainError("Het vastgelegde kortingspercentage is ongeldig.")
         discounts.append(self.calculate_customer_discount(amount, percentage))
 
         return {
@@ -84,9 +96,9 @@ class DiscountService:
             "discounts": discounts,
             "total_amount": self.calculate_total_after_discount(subtotal, discounts),
             "first_order": first_order,
-            "one_time_discount": one_time_discount,
-            "previous_year": previous_year,
-            "annual_revenue": annual_revenue,
+            "one_time_discount": first_order,
+            "discount_year": discount_year,
+            "customer_discount_percentage": percentage,
         }
 
     def calculate_order_discount(self, subtotal):
@@ -96,11 +108,24 @@ class DiscountService:
         return self._discount("order", subtotal, ORDER_DISCOUNT_PERCENTAGE)
 
     def calculate_one_time_discount(self, amount):
-        """SD01 calculateOneTimeDiscount(10%) for the first order of a customer."""
+        """Apply the product description's 10% discount to the first order only."""
         return self._discount("one_time", amount, ONE_TIME_DISCOUNT_PERCENTAGE)
 
+    def update_annual_discounts(self, as_of=None):
+        """AD28: on 31 December, store next year's rates from this year's paid invoices."""
+        as_of = as_of or date.today()
+        if (as_of.month, as_of.day) != (12, 31):
+            raise DomainError("De jaarlijkse klantenkorting wordt op 31 december vastgesteld.")
+
+        rates = []
+        for customer_id in self.repository.list_customer_ids():
+            revenue = self.calculate_annual_revenue(customer_id, as_of.year)
+            rates.append((customer_id, self.determine_discount_percentage(revenue)))
+        self.repository.save_annual_discounts(as_of.year + 1, rates)
+        return {"discount_year": as_of.year + 1, "customers": len(rates)}
+
     def calculate_annual_revenue(self, customer_id, year):
-        """SD01 Customer.calculateAnnualRevenue(previousYear), via sumPurchases(previousYear)."""
+        """AD28: revenue from fully paid invoices during the closing calendar year."""
         return to_cents(self.repository.sum_purchases(customer_id, year))
 
     @staticmethod

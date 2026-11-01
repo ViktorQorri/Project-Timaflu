@@ -37,8 +37,8 @@ class FakeDiscountRepository:
     def count_previous_orders(self, customer_id):
         return 2
 
-    def sum_purchases(self, customer_id, year):
-        return Decimal("12000.00")
+    def get_customer_discount_percentage(self, customer_id, year):
+        return Decimal("10.00")
 
 
 class FakeOrderRepository:
@@ -53,10 +53,14 @@ class FakeOrderRepository:
     def available_stock(self, product_id):
         return self.stock[product_id]
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None, expected_one_time_discount=None):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent,
+                   expected_first_order=None, expected_one_time_discount=None,
+                   expected_discount_year=None, expected_customer_discount_percentage=None):
         self.saved.append((customer_id, lines, delivery_date, part_of_day, urgent))
         self.expected_first_order = expected_first_order
         self.expected_one_time_discount = expected_one_time_discount
+        self.expected_discount_year = expected_discount_year
+        self.expected_customer_discount_percentage = expected_customer_discount_percentage
         return {"order_id": 15, "first_order": False,
                 "backorders": [line["product_id"] for line in lines if line["backorder"]]}
 
@@ -92,6 +96,8 @@ class OrderServiceTests(TestCase):
         self.assertEqual([(line["product_id"], line["quantity"], line["backorder"]) for line in lines],
                          [(1, 10, False), (2, 5, True)])
         self.assertEqual((delivery_date, part_of_day, urgent), (date(2026, 11, 2), "ochtend", False))
+        self.assertEqual(repository.expected_discount_year, 2026)
+        self.assertEqual(repository.expected_customer_discount_percentage, Decimal("10"))
 
     def test_only_urgent_order_is_delivered_today(self):
         with self.assertRaises(DomainError):
@@ -118,7 +124,8 @@ class OrderServiceTests(TestCase):
 class Cursor:
     """Answers each query by a word in its SQL, like the tables in schema.sql."""
 
-    def __init__(self, stock, previous_orders, blocked, customer):
+    def __init__(self, stock, previous_orders, blocked, customer, annual_rate):
+        self.annual_rate = annual_rate
         self.stock = stock
         self.previous_orders = previous_orders
         self.blocked = blocked
@@ -143,6 +150,8 @@ class Cursor:
             return {"aantal_bestellingen": self.previous_orders}
         if "beschikbaar" in query:
             return {"beschikbaar": self.stock[params[0]]}
+        if "FROM Klantkorting" in query:
+            return None if self.annual_rate is None else {"percentage": self.annual_rate}
         if "FROM Klant" in query:
             return self.customer
         if "FROM Product" in query:
@@ -152,8 +161,11 @@ class Cursor:
 
 class Connection:
     def __init__(self, stock=None, previous_orders=0, blocked=False,
-                 customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4, "eenmalige_korting_toegezegd": True}):
-        self.cur = Cursor(stock or {1: 50, 2: 50}, previous_orders, blocked, customer)
+                 customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4,
+                           "eenmalige_korting_toegezegd": False},
+                 annual_rate=Decimal("10")):
+        self.cur = Cursor(stock or {1: 50, 2: 50}, previous_orders, blocked,
+                          customer, annual_rate)
         self.commits = 0
         self.rollbacks = 0
 
@@ -206,20 +218,53 @@ class OrderRepositoryTests(TestCase):
                                            False, expected_first_order=True)
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
 
-    def test_unpromised_discount_is_not_recorded(self):
-        db = Connection(customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4,
-                                  "eenmalige_korting_toegezegd": False})
+    def test_first_order_is_recorded_even_without_acquisition_promise(self):
+        db = Connection()
         saved = OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
-                                               "ochtend", False, True, False)
+                                               "ochtend", False, True, True)
         self.assertTrue(saved["first_order"])
-        self.assertEqual(inserts(db, "Bestelling")[0][-1], False)
+        self.assertEqual(inserts(db, "Bestelling")[0][-1], True)
 
-    def test_promise_change_rejects_stale_total(self):
-        db = Connection(customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4,
-                                  "eenmalige_korting_toegezegd": False})
-        with self.assertRaises(ConflictError):
+    def test_outdated_first_order_discount_is_rejected(self):
+        db = Connection()
+        with self.assertRaisesRegex(ConflictError, "eerste-orderkorting"):
             OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
-                                           "ochtend", False, True, True)
+                                           "ochtend", False, True, False)
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
+    def test_new_customer_without_annual_rate_gets_five_percent_recorded(self):
+        db = Connection(annual_rate=None)
+        OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                       "ochtend", False, True, True,
+                                       date.today().year, Decimal("5"))
+        self.assertEqual(inserts(db, "Klantkorting"), [
+            (7, date.today().year, Decimal("5.00"))
+        ])
+        self.assertEqual(inserts(db, "Bestelling")[0][-1], True)
+        self.assertEqual(db.commits, 1)
+
+    def test_existing_customer_without_annual_rate_cannot_order(self):
+        db = Connection(previous_orders=3, annual_rate=None)
+        with self.assertRaisesRegex(ConflictError, "niet vastgelegd"):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                           "ochtend", False, False, False,
+                                           date.today().year, Decimal("5"))
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
+    def test_stale_year_rate_is_rejected_without_writing(self):
+        db = Connection(previous_orders=3, annual_rate=Decimal("15"))
+        with self.assertRaisesRegex(ConflictError, "klantenkorting is gewijzigd"):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                           "ochtend", False, False, False,
+                                           date.today().year, Decimal("10"))
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
+    def test_year_change_between_calculation_and_save_is_rejected(self):
+        db = Connection()
+        with self.assertRaisesRegex(ConflictError, "kalenderjaar"):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                           "ochtend", False, True, True,
+                                           date.today().year + 1, Decimal("10"))
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
 
     def test_changed_catalogue_price_rejects_stale_total(self):
@@ -276,6 +321,7 @@ class OrderPageTests(TestCase):
         self.assertIn("Tekort", page)
         self.assertIn('name="backorder" value="2"', page)
         self.assertIn("Klantenkorting (10% over € 1.045,00)", page)
+        self.assertIn("Klantenkorting 2026: 10%", page)
         self.assertIn("Order opslaan", page)
 
     def test_form_starts_with_three_lines_and_adds_one_per_click(self):

@@ -90,14 +90,12 @@
         <section class="discount-summary" aria-labelledby="discount-summary-title">
           <h2 id="discount-summary-title">Totaalbedrag voor {{ calculation.customer.bedrijfsnaam }}</h2>
           <p class="discount-summary__basis">
-            {% if calculation.one_time_discount %}
-              <span class="discount-tag">Toegezegde eenmalige korting van 10%</span>
-            {% elif calculation.first_order %}
-              <span class="discount-tag">Eerste bestelling zonder toegezegde acquisitiekorting</span>
+            {% if calculation.first_order %}
+              <span class="discount-tag">Eerste bestelling: eenmalige korting van 10%</span>
             {% else %}
               <span class="discount-tag">Bestaande klant</span>
             {% endif %}
-            Betaalde jaaromzet {{ calculation.previous_year }}: {{ euro(calculation.annual_revenue) }}, klantenkorting {{ calculation.discounts[-1].percentage|int }}%.
+            Klantenkorting {{ calculation.discount_year }}: {{ calculation.customer_discount_percentage|int }}%.
           </p>
           <dl class="discount-summary__rows">
             <div class="discount-summary__row"><dt>Subtotaal</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>

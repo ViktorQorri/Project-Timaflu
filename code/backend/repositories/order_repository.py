@@ -1,4 +1,7 @@
 """Stock checks and saving a telephone order with its lines and reservations (AD05 Enter order)."""
+from datetime import date
+from decimal import Decimal
+
 from domain.errors import ConflictError, NotFoundError
 
 BLOCKED_MESSAGE = (
@@ -37,7 +40,9 @@ class OrderRepository:
             cur.execute(AVAILABLE_QUERY, (product_id, product_id))
             return int(cur.fetchone()["beschikbaar"])
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None, expected_one_time_discount=None):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent,
+                   expected_first_order=None, expected_one_time_discount=None,
+                   expected_discount_year=None, expected_customer_discount_percentage=None):
         """Save the order, its lines and the reservations in one transaction.
 
         The customer and every product are locked first and the stock is counted again,
@@ -51,6 +56,8 @@ class OrderRepository:
             delivery_date: The agreed delivery date.
             part_of_day: "ochtend" or "middag".
             urgent: True for an urgent order.
+            expected_*: Values calculated for the customer before approval; reject
+                changed first-order status or annual rate instead of changing the quote.
 
         Returns:
             A dict with the new order_id, first_order and the product ids saved as backorder.
@@ -59,7 +66,7 @@ class OrderRepository:
         try:
             with conn.cursor(dictionary=True) as cur:
                 cur.execute(
-                    """SELECT klant_id, afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd
+                    """SELECT klant_id, afleveradres_id, betaaladres_id
                        FROM Klant
                        WHERE klant_id = %s
                        FOR UPDATE""",
@@ -80,9 +87,30 @@ class OrderRepository:
                 first_order = int(cur.fetchone()["aantal_bestellingen"]) == 0
                 if expected_first_order is not None and first_order != expected_first_order:
                     raise ConflictError("Er is inmiddels een andere bestelling geplaatst. Bereken de korting opnieuw.")
-                one_time_discount = first_order and bool(customer.get("eenmalige_korting_toegezegd"))
+                one_time_discount = first_order
                 if expected_one_time_discount is not None and expected_one_time_discount != one_time_discount:
-                    raise ConflictError("De toegezegde acquisitiekorting is gewijzigd. Bereken opnieuw.")
+                    raise ConflictError("De eerste-orderkorting is gewijzigd. Bereken opnieuw.")
+
+                discount_year = date.today().year
+                if expected_discount_year is not None and expected_discount_year != discount_year:
+                    raise ConflictError("Het kalenderjaar is gewijzigd. Bereken de order opnieuw.")
+                cur.execute(
+                    """SELECT percentage FROM Klantkorting
+                       WHERE klant_id = %s AND kalenderjaar = %s FOR UPDATE""",
+                    (customer_id, discount_year),
+                )
+                recorded_rate = cur.fetchone()
+                if recorded_rate is None and not first_order:
+                    raise ConflictError(
+                        f"De klantenkorting voor {discount_year} is niet vastgelegd."
+                    )
+                discount_rate = (
+                    Decimal(recorded_rate["percentage"])
+                    if recorded_rate is not None else Decimal("5.00")
+                )
+                if (expected_customer_discount_percentage is not None
+                        and Decimal(expected_customer_discount_percentage) != discount_rate):
+                    raise ConflictError("De klantenkorting is gewijzigd. Bereken opnieuw.")
 
                 priced = []
                 # Lock in product order, so two orders with the same products cannot deadlock.
@@ -110,6 +138,14 @@ class OrderRepository:
                     priced.append({**line, "price": product["prijs_per_grootverpakking"], "short": short})
 
                 backorders = [line["product_id"] for line in priced if line["short"]]
+                if recorded_rate is None:
+                    # New customers registered after last December need the 5% base rate.
+                    # Do not persist it until the customer approves the actual order.
+                    cur.execute(
+                        """INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
+                           VALUES (%s, %s, %s)""",
+                        (customer_id, discount_year, discount_rate),
+                    )
                 cur.execute(
                     """INSERT INTO Bestelling (klant_id, afleveradres_id, betaaladres_id, besteld_op,
                                                gewenste_leverdatum, dagdeel, spoed, status_naam,

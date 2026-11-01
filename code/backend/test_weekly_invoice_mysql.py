@@ -144,6 +144,44 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
         self.assertEqual(repo.issue_week(date(2026,10,19),TEST_ADDRESS,date(2026,11,3)),[])
         self.assertEqual(repo.issue_week(date(2026,10,26),TEST_ADDRESS,date(2026,11,3)),[])
 
+    def test_order_registration_flag_does_not_remove_first_order_discount(self):
+        # PR #99 sets the flag when the customer accepts the order, not at invoicing.
+        # The invoice must still contain the agreed 10% first-order allowance.
+        with self.db.cursor() as cursor:
+            cursor.execute(
+                "UPDATE Bestelling SET eenmalige_korting_toegepast=TRUE "
+                "WHERE bestelling_id=1"
+            )
+            cursor.execute(
+                "UPDATE Klantkorting SET percentage=15 "
+                "WHERE klant_id=1 AND kalenderjaar=2026"
+            )
+        self.db.commit()
+        issued = WeeklyInvoiceRepository(self.db).issue_week(
+            date(2026, 10, 19), TEST_ADDRESS, date(2026, 10, 31)
+        )
+        self.assertEqual(len(issued), 1)
+        invoice = self.fetchone("SELECT * FROM Factuur WHERE factuur_id=%s", (issued[0],))
+        self.assertEqual(invoice["eenmalige_korting"], Decimal("62.13"))
+        self.assertEqual(invoice["klantenkorting"], Decimal("100.23"))
+        self.assertEqual(invoice["totaal_bedrag"], Decimal("567.94"))
+        self.assertEqual(self.fetchone(
+            "SELECT eenmalige_korting_toegepast AS applied FROM Bestelling "
+            "WHERE bestelling_id=1"
+        )["applied"], 1)
+
+    def test_weekly_invoicing_does_not_invent_missing_annual_rate(self):
+        with self.db.cursor() as cursor:
+            cursor.execute("DELETE FROM Klantkorting WHERE klant_id=1")
+        self.db.commit()
+        with self.assertRaisesRegex(DomainError, "niet vastgelegd"):
+            WeeklyInvoiceRepository(self.db).issue_week(
+                date(2026, 10, 19), TEST_ADDRESS, date(2026, 10, 31)
+            )
+        self.assertEqual(self.fetchone(
+            "SELECT COUNT(*) AS n FROM Factuur"
+        )["n"], 0)
+
     def test_missing_sender_address_and_incomplete_week_block_issuance(self):
         with self.app.test_client() as client:
             self.app.config["TIMAFLU_ADDRESS"]=""

@@ -190,6 +190,9 @@ package "repositories" {
     +list_products()
     +find_product()
     +count_previous_orders()
+    +get_customer_discount_percentage()
+    +list_customer_ids()
+    +save_annual_discounts()
     +sum_purchases()
   }
   class "repositories.health_repository.HealthRepository" as C37 {
@@ -283,6 +286,7 @@ package "services" {
     +calculate_total_amount()
     +calculate_order_discount()
     +calculate_one_time_discount()
+    +update_annual_discounts()
     +calculate_annual_revenue()
     +determine_discount_percentage()
     +calculate_customer_discount()

@@ -17,14 +17,13 @@ EXAMPLES = {
     ("_issue_customer", 0): ["1"],
     ("_issue_customer", 1): ["1", "'2026-10-19'"],
     ("_issue_customer", 2): ["1", "'2026-10-19'", "'2026-10-25'"],
-    ("_issue_customer", 3): ["1", "'2025-01-01'", "'2026-01-01'"],
-    ("_issue_customer", 4): ["1"],
-    ("_issue_customer", 5): [
+    ("_issue_customer", 3): ["1"],
+    ("_issue_customer", 4): [
         "1", "'2026-10-31'", "'2026-10-19'",
         "'Voorbeeldadres alleen voor test'", "'Testapotheekstraat 1'"
     ],
-    ("_issue_customer", 6): ["2", "2", "1"],
-    ("_issue_customer", 7): ["2"],
+    ("_issue_customer", 5): ["2", "2", "1"],
+    ("_issue_customer", 6): ["2"],
     ("issued_invoice", 0): ["2"],
     ("issued_invoice", 1): ["2"],
 }

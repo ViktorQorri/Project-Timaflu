@@ -77,6 +77,21 @@ def create_app(config=Config):
             raise click.ClickException(str(exc)) from exc
         click.echo(f"Weekfacturen vastgelegd: {len(ids)}; IDs: {','.join(map(str, ids))}")
 
+    @app.cli.command("update-annual-discounts")
+    def update_annual_discounts_command():
+        """AD28: run on 31 December to store next year's customer discounts."""
+        from db import get_connection
+        from repositories.discount_repository import DiscountRepository
+        from services.discount_service import DiscountService
+
+        result = DiscountService(
+            DiscountRepository(get_connection())
+        ).update_annual_discounts()
+        print(
+            f"Klantenkorting {result['discount_year']} vastgelegd voor "
+            f"{result['customers']} klanten."
+        )
+
     register_error_handlers(app)
     return app
 
