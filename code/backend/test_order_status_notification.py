@@ -283,6 +283,13 @@ class OrderStatusNotificationTests(TestCase):
                 self.assertIn("Geen order gevonden.", client.get("/orders?order=Onbekend").get_data(as_text=True))
                 self.assertEqual(client.get("/orders/99/status").status_code, 404)
 
+    def test_main_order_overview_and_pr97_detail_have_distinct_endpoints(self):
+        routes = {rule.rule: rule.endpoint for rule in create_app().url_map.iter_rules()}
+        self.assertEqual(routes["/orders/status"], "sales.order_status")
+        self.assertEqual(
+            routes["/orders/<int:order_id>/status"], "sales.order_status_detail"
+        )
+
     def test_idle_sales_page_does_not_connect_to_database(self):
         app = create_app()
         app.testing = True
