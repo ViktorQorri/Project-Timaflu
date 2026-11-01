@@ -1,5 +1,4 @@
 /* Start: PR #97, readable order-status lookup and detail display using Timaflu tokens. */
-.order-status__section-title { font-size: 25px; letter-spacing: -.3px; }
 .order-status__label {
   display: inline-block;
   border-radius: var(--radius-pill);

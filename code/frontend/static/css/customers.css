@@ -19,13 +19,6 @@
   color: var(--color-danger);
 }
 
-.customer-count {
-  background: var(--color-info-bg);
-  color: var(--color-info);
-  border-radius: var(--radius-pill);
-  padding: 8px 16px;
-  font-weight: 700;
-}
 .customer-table {
   min-width: 960px;
 }
@@ -73,30 +66,22 @@
   white-space: nowrap;
 }
 
-.customer-panel {
-  margin-top: 32px;
-  padding: 24px;
-  background: var(--color-surface);
+.customer-form {
+  margin-top: 16px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-}
-.customer-panel h2 {
-  font-size: 25px;
-  letter-spacing: -0.3px;
-}
-
-.customer-form {
-  margin-top: 20px;
+  padding: 22px;
+  background: var(--color-surface);
 }
 .customer-form__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 20px;
+  gap: 14px 18px;
 }
 .customer-form__field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 .customer-form__field--wide {
   grid-column: 1 / -1;

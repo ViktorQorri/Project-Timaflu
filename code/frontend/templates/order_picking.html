@@ -10,12 +10,12 @@
         <h1 id="picking-bins-title">Orderpicking en verzamelbakken</h1>
         <p class="stock-dashboard__subtitle">Verdeel beschikbare orders over robotgangen. Robots registreren daarna de gescande bakken automatisch.</p>
       </div>
-      <p class="picking-bins__count" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
+      <span class="stock-dashboard__count stock-dashboard__count--info" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
         {{ bins|length }} bakken geregistreerd
-      </p>
+      </span>
     </header>
 
-    <section aria-labelledby="orders-to-pick-title">
+    <section class="stock-dashboard__section" aria-labelledby="orders-to-pick-title">
       <h2 id="orders-to-pick-title">Orders klaar voor orderpicking</h2>
       {% if orders %}
         <div class="stock-dashboard__table-wrap">
@@ -54,13 +54,9 @@
       {% endif %}
     </section>
 
-    <section aria-labelledby="registered-bins-title">
-      <header class="stock-dashboard__intro">
-        <div>
-          <h2 id="registered-bins-title">Verzamelbakken</h2>
-          <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
-        </div>
-      </header>
+    <section class="stock-dashboard__section" aria-labelledby="registered-bins-title">
+      <h2 id="registered-bins-title">Verzamelbakken</h2>
+      <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
 
       {% if bins %}
         <div class="stock-dashboard__table-wrap">
@@ -99,10 +95,11 @@
         </div>
       {% endif %}
     </section>
-  </section>
-  <section class="stock-dashboard" aria-labelledby="package-title">
-    <h2 id="package-title">Verpakking en distributie</h2>
-    <p>Na het afronden van robotdeelorders worden de verzamelbakken op het distributiescherm gecontroleerd. Daar registreer je het verpakken en geef je de levering vrij.</p>
-    <a class="button" href="{{ url_for('distribution.deliveries') }}">Naar distributie</a>
+
+    <section class="stock-dashboard__section" aria-labelledby="package-title">
+      <h2 id="package-title">Verpakking en distributie</h2>
+      <p class="stock-dashboard__subtitle">Na het afronden van robotdeelorders worden de verzamelbakken op het distributiescherm gecontroleerd. Daar registreer je het verpakken en geef je de levering vrij.</p>
+      <a class="button button--secondary" href="{{ url_for('distribution.deliveries') }}">Naar distributie</a>
+    </section>
   </section>
 {% endblock %}

@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="customer-panel">
+    <div class="stock-dashboard__section stock-dashboard__panel">
       {% with action=url_for('sales.update_customer', customer_id=customer_id), submit_label='Wijzigingen opslaan', cancel_url=url_for('sales.customers') %}
         {% include "_customer_form.jinja" %}
       {% endwith %}

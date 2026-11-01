@@ -11,7 +11,7 @@
       <h1 id="order-status-title">Order {{ order.bestelling_id }}</h1>
       <p class="stock-dashboard__subtitle">{{ order.bedrijfsnaam }}, besteld op {{ order.besteld_op.strftime('%d-%m-%Y') }}</p>
     </div>
-    <a class="order-status__link" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a>
+    <div class="page-actions"><a class="button button--secondary" href="{{ url_for('sales.orders', order=order.bestelling_id) }}">Terug naar zoeken</a></div>
   </header>
 
   <dl class="order-status__summary">
@@ -53,7 +53,7 @@
   {% endif %}
 
   {% if shortage_lines %}
-    <section aria-labelledby="shortage-agreements-title">
+    <section class="stock-dashboard__section" aria-labelledby="shortage-agreements-title">
       <h2 id="shortage-agreements-title">Geregistreerde backorderafspraken</h2>
       <p class="stock-dashboard__subtitle">
         De klant heeft deze producten bij een voorraadtekort geaccepteerd.

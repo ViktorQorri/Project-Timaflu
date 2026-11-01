@@ -1,66 +1,79 @@
 {% extends "base.html" %}
 {% block title %}Telefonische bestelling opnemen{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Verkoop</span>
-  <h1>Telefonische bestelling opnemen</h1>
-  <p>Neem de bestelling op tijdens het gesprek. Controleer de voorraad en bespreek alle tekorten. Er wordt pas iets opgeslagen na een apart, uitdrukkelijk akkoord van de klant met het definitieve bedrag.</p>
-</section>
-<section class="stock-dashboard">
-<form class="stacked-form" method="post" action="{{ url_for('sales.preview_telephone_order') }}">
-  <div class="form-field">
-    <label for="telephone-customer">Klant</label>
-    <select id="telephone-customer" name="customer_id" required>
-      <option value="">Kies de klant</option>
-      {% for customer in customers %}
-      <option value="{{ customer.klant_id }}"{% if entered.customer_id == customer.klant_id|string %} selected{% endif %}>{{ customer.bedrijfsnaam }} (#{{ customer.klant_id }})</option>
+<section class="stock-dashboard" aria-labelledby="telephone-order-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Verkoop</p>
+      <h1 id="telephone-order-title">Telefonische bestelling opnemen</h1>
+      <p class="stock-dashboard__subtitle">Neem de bestelling op tijdens het gesprek. Controleer de voorraad en bespreek alle tekorten. Er wordt pas iets opgeslagen na een apart, uitdrukkelijk akkoord van de klant met het definitieve bedrag.</p>
+    </div>
+  </header>
+
+  <form method="post" action="{{ url_for('sales.preview_telephone_order') }}">
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="order-delivery-title">
+      <h2 id="order-delivery-title">Klant en levering</h2>
+      <div class="stock-dashboard__form">
+        <div class="form-field">
+          <label for="telephone-customer">Klant</label>
+          <select id="telephone-customer" name="customer_id" required>
+            <option value="">Kies de klant</option>
+            {% for customer in customers %}
+            <option value="{{ customer.klant_id }}"{% if entered.customer_id == customer.klant_id|string %} selected{% endif %}>{{ customer.bedrijfsnaam }} (#{{ customer.klant_id }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="telephone-day">Gewenste afleverdatum</label>
+          <input id="telephone-day" type="date" name="day" min="{{ today }}" value="{{ entered.day }}" required>
+        </div>
+        <div class="form-field">
+          <label for="telephone-slot">Dagdeel</label>
+          <select id="telephone-slot" name="slot" required>
+            <option value="ochtend"{% if entered.slot == 'ochtend' %} selected{% endif %}>Ochtend</option>
+            <option value="middag"{% if entered.slot == 'middag' %} selected{% endif %}>Middag</option>
+          </select>
+        </div>
+        <label><input type="checkbox" name="urgent" value="yes"{% if entered.urgent %} checked{% endif %}> Spoedbestelling, vandaag en binnen drie uur leveren (koerierbeschikbaarheid bevestigen)</label>
+      </div>
+    </section>
+
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="order-lines-title">
+      <h2 id="order-lines-title">Bestelregels</h2>
+      <p class="stock-dashboard__subtitle">Bij onvoldoende voorraad kies je volgens de afspraak met de klant of het hele medicijn later wordt afgenomen of vervalt. Deze keuze wordt pas bij het volgende scherm definitief bevestigd.</p>
+      {% for i in range(line_rows) %}
+        {% set chosen_product = entered.products[i] if i < entered.products|length else '' %}
+        {% set chosen_quantity = entered.quantities[i] if i < entered.quantities|length else '' %}
+        {% set chosen_shortage = entered.shortages[i] if i < entered.shortages|length else 'skip' %}
+        <fieldset class="stock-dashboard__form">
+          <legend>Medicijn {{ i + 1 }}</legend>
+          <div class="form-field">
+            <label for="medicine-{{ i }}">Medicijn</label>
+            <select id="medicine-{{ i }}" name="product_id">
+              <option value="">Geen medicijn op deze regel</option>
+              {% for product in products %}
+              <option value="{{ product.product_id }}"{% if chosen_product == product.product_id|string %} selected{% endif %}>{{ product.productnaam }} ({{ product.artikelnummer }}, min. {{ product.minimale_bestelhoeveelheid }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="quantity-{{ i }}">Aantal grootverpakkingen</label>
+            <input id="quantity-{{ i }}" type="number" name="quantity" min="1" step="1" value="{{ chosen_quantity }}">
+          </div>
+          <div class="form-field">
+            <label for="shortage-{{ i }}">Bij onvoldoende voorraad</label>
+            <select id="shortage-{{ i }}" name="shortage">
+              <option value="skip"{% if chosen_shortage == 'skip' %} selected{% endif %}>Klant ziet af van dit medicijn</option>
+              <option value="later"{% if chosen_shortage == 'later' %} selected{% endif %}>Klant wil dit medicijn later ontvangen (backorder)</option>
+            </select>
+          </div>
+        </fieldset>
       {% endfor %}
-    </select>
-  </div>
-  <div class="form-field">
-    <label for="telephone-day">Gewenste afleverdatum</label>
-    <input id="telephone-day" type="date" name="day" min="{{ today }}" value="{{ entered.day }}" required>
-  </div>
-  <div class="form-field">
-    <label for="telephone-slot">Dagdeel</label>
-    <select id="telephone-slot" name="slot" required>
-      <option value="ochtend"{% if entered.slot == 'ochtend' %} selected{% endif %}>Ochtend</option>
-      <option value="middag"{% if entered.slot == 'middag' %} selected{% endif %}>Middag</option>
-    </select>
-  </div>
-  <label><input type="checkbox" name="urgent" value="yes"{% if entered.urgent %} checked{% endif %}> Spoedbestelling, vandaag en binnen drie uur leveren (koerierbeschikbaarheid bevestigen)</label>
-  <h2>Bestelregels</h2>
-  <p>Bij onvoldoende voorraad kies je volgens de afspraak met de klant of het hele medicijn later wordt afgenomen of vervalt. Deze keuze wordt pas bij het volgende scherm definitief bevestigd.</p>
-  {% for i in range(line_rows) %}
-    {% set chosen_product = entered.products[i] if i < entered.products|length else '' %}
-    {% set chosen_quantity = entered.quantities[i] if i < entered.quantities|length else '' %}
-    {% set chosen_shortage = entered.shortages[i] if i < entered.shortages|length else 'skip' %}
-    <fieldset class="page-panel">
-      <legend>Medicijn {{ i + 1 }}</legend>
-      <div class="form-field">
-        <label for="medicine-{{ i }}">Medicijn</label>
-        <select id="medicine-{{ i }}" name="product_id">
-          <option value="">Geen medicijn op deze regel</option>
-          {% for product in products %}
-          <option value="{{ product.product_id }}"{% if chosen_product == product.product_id|string %} selected{% endif %}>{{ product.productnaam }} ({{ product.artikelnummer }}, min. {{ product.minimale_bestelhoeveelheid }})</option>
-          {% endfor %}
-        </select>
+      <div class="stock-dashboard__actions stock-dashboard__section">
+        <button type="submit" name="add_line" value="1" formmethod="get" formaction="{{ url_for('sales.new_telephone_order') }}" formnovalidate class="button button--secondary">+ Medicijn toevoegen</button>
+        <button type="submit">Beschikbaarheid en definitieve prijs controleren</button>
       </div>
-      <div class="form-field">
-        <label for="quantity-{{ i }}">Aantal grootverpakkingen</label>
-        <input id="quantity-{{ i }}" type="number" name="quantity" min="1" step="1" value="{{ chosen_quantity }}">
-      </div>
-      <div class="form-field">
-        <label for="shortage-{{ i }}">Bij onvoldoende voorraad</label>
-        <select id="shortage-{{ i }}" name="shortage">
-          <option value="skip"{% if chosen_shortage == 'skip' %} selected{% endif %}>Klant ziet af van dit medicijn</option>
-          <option value="later"{% if chosen_shortage == 'later' %} selected{% endif %}>Klant wil dit medicijn later ontvangen (backorder)</option>
-        </select>
-      </div>
-    </fieldset>
-  {% endfor %}
-  <button type="submit" name="add_line" value="1" formmethod="get" formaction="{{ url_for('sales.new_telephone_order') }}" formnovalidate>+ Medicijn toevoegen</button>
-  <button type="submit">Beschikbaarheid en definitieve prijs controleren</button>
-</form>
+    </section>
+  </form>
 </section>
 {% endblock %}

@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Openstaande klantfacturen{% endblock %}
 {% block content %}
-<section class="invoice-page" aria-labelledby="outstanding-title">
-  <header class="invoice-page__intro">
-    <p class="invoice-page__eyebrow">Administratie</p>
-    <h1 id="outstanding-title">Openstaande klantfacturen</h1>
-    <p>Controleer per factuur de betaalstatus, verzonden herinneringen en de volgende casusstap.
-       Betalingsherinneringen worden pas als verzonden geregistreerd na daadwerkelijke verzending.</p>
-    <p><a href="{{ url_for('administration.invoices') }}">Terug naar facturen beheren</a></p>
+<section class="stock-dashboard" aria-labelledby="outstanding-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Administratie</p>
+      <h1 id="outstanding-title">Openstaande klantfacturen</h1>
+      <p class="stock-dashboard__subtitle">Controleer per factuur de betaalstatus, verzonden herinneringen en de volgende casusstap.
+         Betalingsherinneringen worden pas als verzonden geregistreerd na daadwerkelijke verzending.</p>
+    </div>
+    <div class="page-actions">
+      <a class="button button--secondary" href="{{ url_for('administration.invoices') }}">Terug naar facturen beheren</a>
+    </div>
   </header>
 
   <div class="stock-dashboard__table-wrap">

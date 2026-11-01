@@ -143,7 +143,7 @@ a:hover {
 .site-header nav a {
   display: block;
   border-radius: var(--radius);
-  padding: 9px 10px;
+  padding: 9px 8px;
   color: var(--color-text-muted);
   font-size: 0.875rem;
   font-weight: 700;

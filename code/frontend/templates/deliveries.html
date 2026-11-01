@@ -4,23 +4,19 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
 {% endblock %}
 {% block content %}
-  <section class="stock-dashboard delivery-page" aria-labelledby="distribution-title">
-    <header class="stock-dashboard__intro delivery-page__intro">
+  <section class="stock-dashboard" aria-labelledby="distribution-title">
+    <header class="stock-dashboard__intro">
       <div>
-        <p class="delivery-page__eyebrow">Distributie</p>
+        <p class="stock-dashboard__eyebrow">Distributie</p>
         <h1 id="distribution-title">Leveringen en verzamelbakken</h1>
-        <p class="delivery-page__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
+        <p class="stock-dashboard__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
       </div>
     </header>
 
-    <section class="delivery-page__panel" aria-labelledby="couriers-title">
-      <div class="stock-dashboard__intro">
-        <div>
-          <h2 id="couriers-title">Koeriers</h2>
-          <p class="stock-dashboard__subtitle">Beheer koeriers en hun actuele beschikbaarheid.</p>
-        </div>
-      </div>
-      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="delivery-page__courier-form">
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="couriers-title">
+      <h2 id="couriers-title">Koeriers</h2>
+      <p class="stock-dashboard__subtitle">Beheer koeriers en hun actuele beschikbaarheid.</p>
+      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="stock-dashboard__form">
         <label for="courier-name">Naam koerier
           <input id="courier-name" name="name" maxlength="100" required>
         </label>
@@ -79,15 +75,11 @@
       {% endif %}
     </section>
 
-    <section class="delivery-page__panel" aria-labelledby="unscheduled-title">
-      <div class="stock-dashboard__intro">
-        <div>
-          <h2 id="unscheduled-title">Orders inplannen</h2>
-          <p class="stock-dashboard__subtitle">De afgesproken leverdatum blijft behouden.
-             Voor reguliere bestellingen halen koeriers hun laatste vracht uiterlijk om 17:00 uur op;
-             spoedleveringen vormen hierop een uitzondering. Controleer de regionale route.</p>
-        </div>
-      </div>
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="unscheduled-title">
+      <h2 id="unscheduled-title">Orders inplannen</h2>
+      <p class="stock-dashboard__subtitle">De afgesproken leverdatum blijft behouden.
+         Voor reguliere bestellingen halen koeriers hun laatste vracht uiterlijk om 17:00 uur op;
+         spoedleveringen vormen hierop een uitzondering. Controleer de regionale route.</p>
       {% for order in unscheduled_orders %}
         <article class="delivery-page__order-card" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
           <h3 id="schedule-order-{{ order.bestelling_id }}">
@@ -97,7 +89,7 @@
           <p>Afgesproken: {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
           {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
           {% if couriers|selectattr("beschikbaar")|list %}
-            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="delivery-page__schedule-form">
+            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="stock-dashboard__form">
               <input type="hidden" name="order_id" value="{{ order.bestelling_id }}">
               <label for="courier-{{ order.bestelling_id }}">Koerier
                 <select id="courier-{{ order.bestelling_id }}" name="courier_id" required>
@@ -133,9 +125,9 @@
       {% endfor %}
     </section>
 
-    <section class="delivery-page__panel" aria-labelledby="schedule-title">
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="schedule-title">
       <h2 id="schedule-title">Bezorgrooster</h2>
-      <form method="get" class="delivery-page__date-form">
+      <form method="get" class="stock-dashboard__form">
         <label for="delivery-day">Datum
           <input id="delivery-day" type="date" name="day" value="{{ day.isoformat() }}" required>
         </label>
@@ -249,7 +241,7 @@
       </div>
     </section>
 
-    <section class="delivery-page__panel" aria-labelledby="orders-title">
+    <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="orders-title">
       <div class="stock-dashboard__intro">
         <div>
           <h2 id="orders-title">Orders en verzamelbakken</h2>
