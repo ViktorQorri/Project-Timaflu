@@ -8,6 +8,44 @@
     <p class="invoice-page__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
   </header>
 
+  <section aria-labelledby="uninvoiced-deliveries-title">
+    <h2 id="uninvoiced-deliveries-title">Afgeleverd en nog niet gefactureerd</h2>
+    <p>Controleer de daadwerkelijk geleverde producten voordat je een weekfactuur aanmaakt.
+       De bestellings- en klantenkortingen worden bij het aanmaken per bestelling berekend.</p>
+    {% if uninvoiced_deliveries %}
+    <div class="stock-dashboard__table-wrap">
+      <table class="stock-dashboard__table">
+        <thead><tr><th>Order</th><th>Klant</th><th>Afgeleverd op</th>
+          <th>Geleverde producten excl. btw</th><th>Extra bezorgkosten</th><th>Actie</th></tr></thead>
+        <tbody>
+        {% for item in uninvoiced_deliveries %}
+          <tr>
+            <th scope="row">{{ item.bestelling_id }}</th>
+            <td>{{ item.bedrijfsnaam }}</td>
+            <td>{{ item.afgeleverd_op }}</td>
+            <td>€ {{ item.subtotaal }}</td>
+            <td>€ {{ item.extra_bezorgkosten }}</td>
+            <td>
+              <form method="post" action="{{ url_for('administration.create_invoice') }}">
+                <input type="hidden" name="customer_id" value="{{ item.klant_id }}">
+                <input type="hidden" name="week_of" value="{{ item.afgeleverd_op.isoformat() }}">
+                <label>
+                  <input type="checkbox" name="invoice_approved" value="yes" required>
+                  Afgeleverde regels gecontroleerd en factuur goedgekeurd
+                </label>
+                <button type="submit">Weekfactuur aanmaken</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p>Er zijn geen afgeleverde orders die nog gefactureerd moeten worden.</p>
+    {% endif %}
+  </section>
+
   <form method="get" class="invoice-search" role="search">
     <label for="invoice-customer">Klantnummer
       <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{ customer_id or '' }}">
@@ -26,6 +64,8 @@
         <label for="invoice-week">Datum in factuurweek
           <input id="invoice-week" type="date" name="week_of" required value="{{ today }}">
         </label>
+        <label><input type="checkbox" name="invoice_approved" value="yes" required>
+          Ik heb de afgeleverde regels gecontroleerd en de weekfactuur goedgekeurd.</label>
         <button type="submit">Weekfactuur aanmaken</button>
       </form>
     </section>

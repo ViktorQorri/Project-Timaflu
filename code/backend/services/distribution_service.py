@@ -122,13 +122,14 @@ class DistributionService:
             available,
         )
 
-    def schedule_delivery(self, order_id, courier_id, planned_time):
+    def schedule_delivery(self, order_id, courier_id, planned_time, region_confirmed=None):
         if not isinstance(planned_time, time):
             raise DomainError("Kies een geldige bezorgtijd.")
         return self.repository.schedule_delivery(
             self._positive_integer(order_id, "Bestelling"),
             self._positive_integer(courier_id, "Koerier"),
             planned_time,
+            region_confirmed,
         )
 
     def reschedule_failed_delivery(

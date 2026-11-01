@@ -89,7 +89,9 @@ def schedule_delivery():
         planned_time = time.fromisoformat(request.form["time"])
     except (KeyError, TypeError, ValueError) as error:
         raise DomainError("Kies een bestelling, koerier en geldige bezorgtijd.") from error
-    delivery_date = _service().schedule_delivery(order_id, courier_id, planned_time)
+    delivery_date = _service().schedule_delivery(
+        order_id, courier_id, planned_time, request.form.get("region_confirmed")
+    )
     flash("Levering ingepland.", "success")
     return redirect(
         url_for("distribution.deliveries", day=delivery_date.isoformat())

@@ -81,6 +81,14 @@
               <label for="delivery-time-{{ order.bestelling_id }}">Bezorgtijd
                 <input id="delivery-time-{{ order.bestelling_id }}" type="time" name="time" required>
               </label>
+              {% if not order.spoed %}
+                <label>
+                  <input type="checkbox" name="region_confirmed" value="yes" required>
+                  Ik heb bevestigd dat deze koerier in de regio van het afleveradres rijdt.
+                </label>
+              {% else %}
+                <p>Spoed: regio is geen beperking; zo nodig kan een externe spoedkoerier worden ingeschakeld.</p>
+              {% endif %}
               <button type="submit">Rit inplannen</button>
             </form>
           {% else %}

@@ -108,7 +108,7 @@ class DeliverySchedulingTests(TestCase):
         database = SchedulingDatabase()
 
         delivery_date = DistributionRepository(database).schedule_delivery(
-            12, 3, time(9, 15)
+            12, 3, time(9, 15), "yes"
         )
 
         self.assertEqual(delivery_date, date(2026, 11, 1))
@@ -123,10 +123,17 @@ class DeliverySchedulingTests(TestCase):
             any("INSERT INTO Levering" in query for query, _ in database.statements)
         )
 
+    def test_regular_delivery_requires_region_confirmation(self):
+        database = SchedulingDatabase()
+        with self.assertRaisesRegex(ConflictError, "koeriersregio"):
+            DistributionRepository(database).schedule_delivery(12, 3, time(9, 15))
+        self.assertEqual(database.commits, 0)
+        self.assertEqual(database.rollbacks, 1)
+
     def test_schedule_reuses_same_courier_route_for_that_date(self):
         database = SchedulingDatabase(existing_ride={"rit_id": 15})
 
-        DistributionRepository(database).schedule_delivery(12, 3, time(10, 0))
+        DistributionRepository(database).schedule_delivery(12, 3, time(10, 0), "yes")
 
         self.assertFalse(any("INSERT INTO Rit" in query for query, _ in database.statements))
         self.assertEqual(database.statements[-1][1], (20, 15, time(10, 0)))
@@ -150,7 +157,7 @@ class DeliverySchedulingTests(TestCase):
         database = SchedulingDatabase(courier={"koerier_id": 3, "beschikbaar": False})
 
         with self.assertRaises(ConflictError):
-            DistributionRepository(database).schedule_delivery(12, 3, time(9, 15))
+            DistributionRepository(database).schedule_delivery(12, 3, time(9, 15), "yes")
 
         self.assertEqual(database.commits, 0)
         self.assertEqual(database.rollbacks, 1)
@@ -160,7 +167,7 @@ class DeliverySchedulingTests(TestCase):
         database = SchedulingDatabase(existing_delivery={"levering_id": 6})
 
         with self.assertRaises(ConflictError):
-            DistributionRepository(database).schedule_delivery(12, 3, time(9, 15))
+            DistributionRepository(database).schedule_delivery(12, 3, time(9, 15), "yes")
 
         self.assertEqual(database.rollbacks, 1)
         self.assertEqual(len(database.statements), 3)
@@ -186,12 +193,13 @@ class DeliverySchedulingTests(TestCase):
                     service.return_value.schedule_delivery.return_value = date(2026, 11, 1)
                     response = client.post(
                         "/deliveries/schedule",
-                        data={"order_id": "12", "courier_id": "3", "time": "09:15"},
+                        data={"order_id": "12", "courier_id": "3", "time": "09:15",
+                              "region_confirmed": "yes"},
                     )
 
         self.assertEqual(response.status_code, 302)
         service.return_value.schedule_delivery.assert_called_once_with(
-            12, 3, time(9, 15)
+            12, 3, time(9, 15), "yes"
         )
         self.assertTrue(response.headers["Location"].endswith("day=2026-11-01"))
 

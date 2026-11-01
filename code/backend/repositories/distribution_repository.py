@@ -158,7 +158,7 @@ class DistributionRepository:
             self.connection.rollback()
             raise
 
-    def schedule_delivery(self, order_id, courier_id, planned_time):
+    def schedule_delivery(self, order_id, courier_id, planned_time, region_confirmed=None):
         """Create a delivery and first attempt for a released order."""
         try:
             with self.connection.cursor(dictionary=True) as cursor:
@@ -174,6 +174,11 @@ class DistributionRepository:
                     raise NotFoundError("Bestelling niet gevonden.")
                 if order["status_naam"] != "verstuurd":
                     raise ConflictError("Geef de bestelling eerst vrij voor distributie.")
+                # The case defines three geographic regions but no address-to-
+                # region boundaries. Therefore staff must confirm the matching
+                # region for a non-urgent trip, without inventing a location map.
+                if not order.get("spoed") and region_confirmed != "yes":
+                    raise ConflictError("Controleer en bevestig de eigen koeriersregio van het afleveradres.")
                 if order.get("spoed"):
                     planned_at = datetime.combine(order["gewenste_leverdatum"], planned_time)
                     ordered_at = order.get("besteld_op")

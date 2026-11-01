@@ -315,6 +315,32 @@ class AssessedRepository:
             self.db.rollback()
             raise
 
+    def uninvoiced_deliveries(self):
+        """Overview required before the weekly invoice is approved."""
+        with self.db.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT b.bestelling_id, k.klant_id, k.bedrijfsnaam,
+                          MAX(r.ritdatum) AS afgeleverd_op,
+                          SUM(lr.aantal_geleverd * br.prijs_per_eenheid) AS subtotaal,
+                          b.extra_bezorgkosten
+                   FROM Leveringregel AS lr
+                   JOIN Levering AS l ON l.levering_id = lr.levering_id
+                   JOIN Bestelling AS b ON b.bestelling_id = l.bestelling_id
+                   JOIN Klant AS k ON k.klant_id = b.klant_id
+                   JOIN Bestelregel AS br
+                     ON br.bestelling_id = b.bestelling_id
+                    AND br.product_id = lr.product_id
+                   JOIN Leverpoging AS lp
+                     ON lp.levering_id = lr.levering_id
+                    AND lp.resultaat = 'afgeleverd'
+                   JOIN Rit AS r ON r.rit_id = lp.rit_id
+                   WHERE lr.factuur_id IS NULL
+                   GROUP BY b.bestelling_id, k.klant_id, k.bedrijfsnaam,
+                            b.extra_bezorgkosten
+                   ORDER BY afgeleverd_op, k.bedrijfsnaam, b.bestelling_id"""
+            )
+            return cursor.fetchall()
+
     def outstanding_purchase_invoices(self):
         """List unpaid supplier invoices; receiving new stock is not implemented."""
         with self.db.cursor(dictionary=True) as cursor:

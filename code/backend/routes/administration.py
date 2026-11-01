@@ -50,10 +50,14 @@ def invoices():
                 **snapshots,
             }
             rows.append(doc)
-    purchase_invoices = AssessedRepository(get_connection()).outstanding_purchase_invoices()
+    repository = AssessedRepository(get_connection())
+    purchase_invoices = repository.outstanding_purchase_invoices()
+    uninvoiced_deliveries = repository.uninvoiced_deliveries()
     return render_template(
         "invoices.html", invoices=rows, customer_id=customer_id,
-        purchase_invoices=purchase_invoices, today=date.today().isoformat()
+        purchase_invoices=purchase_invoices,
+        uninvoiced_deliveries=uninvoiced_deliveries,
+        today=date.today().isoformat()
     )
 
 
@@ -79,6 +83,8 @@ def create_invoice():
     from datetime import timedelta
 
     customer_id = request.form.get("customer_id", type=int)
+    if request.form.get("invoice_approved") != "yes":
+        raise DomainError("Controleer de afgeleverde regels en keur de weekfactuur goed.")
     try:
         week_of = date.fromisoformat(request.form.get("week_of", ""))
     except ValueError as error:

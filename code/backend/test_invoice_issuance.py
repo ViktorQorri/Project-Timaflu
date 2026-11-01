@@ -154,6 +154,17 @@ class InvoiceIssuanceTests(TestCase):
         self.assertEqual(database.commits, 0)
         self.assertEqual(database.rollbacks, 1)
 
+    def test_weekly_invoice_requires_employee_approval(self):
+        app = create_app()
+        app.testing = True
+        with app.test_client() as client:
+            response = client.post(
+                "/invoices/create",
+                data={"customer_id": "1", "week_of": "2026-10-30"},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("keur de weekfactuur goed".encode(), response.data)
+
     def test_create_route_uses_monday_of_selected_week(self):
         app = create_app()
         app.testing = True
@@ -164,7 +175,7 @@ class InvoiceIssuanceTests(TestCase):
                     repository.return_value.create_weekly_invoice.return_value = 50
                     response = client.post(
                         "/invoices/create",
-                        data={"customer_id": "1", "week_of": "2026-10-30"},
+                        data={"customer_id": "1", "week_of": "2026-10-30", "invoice_approved": "yes"},
                     )
 
         self.assertEqual(response.status_code, 302)
