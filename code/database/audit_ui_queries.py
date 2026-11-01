@@ -4,6 +4,7 @@ Read-only screen visits run against an isolated local MySQL DB; a separately
 generated fictional invoice provides a non-empty invoice screen.
 """
 from contextlib import ExitStack
+from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 import importlib
@@ -67,21 +68,21 @@ class RecorderCursor:
 
     def execute(self, sql, params=()):
         self.cursor.execute(sql, params)
-        self.entry = {"sql": " ".join(sql.split()), "params": list(params or []),
+        self.entry = {"sql": "`n".join(line.rstrip() for line in sql.strip().splitlines()), "params": list(params or []),
                       "results": [], "row_count": 0}
         self.output.append(self.entry)
 
     def fetchall(self):
         rows = self.cursor.fetchall()
         self.entry["row_count"] = len(rows)
-        self.entry["results"] = rows[:15]
+        self.entry["results"] = deepcopy(rows[:15])
         return rows
 
     def fetchone(self):
         row = self.cursor.fetchone()
         if row is not None:
             self.entry["row_count"] += 1
-            self.entry["results"].append(row)
+            self.entry["results"].append(deepcopy(row))
         return row
 
     def __enter__(self):
@@ -195,8 +196,10 @@ def main():
     ]
     count = 0
     failures = []
+    audited_urls = set()
     with app.test_client() as client:
         for url, heading in SCREENS:
+            audited_urls.add(url)
             statements=[]
             conn = mysql.connector.connect(**options)
             proxy = RecorderConnection(conn, statements)
