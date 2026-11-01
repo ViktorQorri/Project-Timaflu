@@ -432,6 +432,12 @@
         "key": ""
       },
       {
+        "name": "actief",
+        "type": "tinyint(1)",
+        "nullable": false,
+        "key": ""
+      },
+      {
         "name": "eenmalige_korting_toegezegd",
         "type": "tinyint(1)",
         "nullable": false,

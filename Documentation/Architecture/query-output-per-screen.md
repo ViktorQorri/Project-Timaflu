@@ -33,10 +33,10 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT k.klant_id, k.bedrijfsnaam, k.telefoonnummer, k.contactpersoon, delivery.adres AS afleveradres, billing.adres AS factuuradres FROM Klant AS k JOIN Adres AS delivery ON delivery.adres_id=k.afleveradres_id JOIN Adres AS billing ON billing.adres_id=k.betaaladres_id WHERE (%s = '' OR k.bedrijfsnaam LIKE %s) ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC
+SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer, af.adres AS afleveradres, ba.adres AS factuuradres, CASE WHEN o.betaalde_facturen IS NULL THEN 0 WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL ELSE o.jaaromzet END AS jaaromzet, kk.percentage AS kortingspercentage FROM Klant AS k JOIN Adres AS af ON af.adres_id = k.afleveradres_id JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id LEFT JOIN ( SELECT f.klant_id, COUNT(*) AS betaalde_facturen, COUNT(f.totaal_bedrag) AS bekende_bedragen, SUM(f.totaal_bedrag) AS jaaromzet FROM Factuur AS f WHERE YEAR(f.betaald_op) = %s GROUP BY f.klant_id ) AS o ON o.klant_id = k.klant_id LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id AND kk.kalenderjaar = %s WHERE k.actief = TRUE AND (k.bedrijfsnaam LIKE %s OR k.contactpersoon LIKE %s OR k.telefoonnummer LIKE %s) ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC
 ```
 Parameters: ```json
-["TEST", "%TEST%"]
+[2026, 2026, "%TEST%", "%TEST%", "%TEST%"]
 ```
 Resultaat: 1 rij(en) (maximaal 15 getoond)
 ```json
@@ -44,10 +44,12 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
   {
     "klant_id": 1,
     "bedrijfsnaam": "TEST Apotheek B.V.",
-    "telefoonnummer": "0612345678",
     "contactpersoon": "TEST medewerker",
+    "telefoonnummer": "0612345678",
     "afleveradres": "TEST: Afleverstraat 8, Breda",
-    "factuuradres": "TEST: Factuurstraat 12, Breda"
+    "factuuradres": "TEST: Factuurstraat 12, Breda",
+    "jaaromzet": "0",
+    "kortingspercentage": null
   }
 ]
 ```
@@ -85,7 +87,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT klant_id, bedrijfsnaam FROM Klant ORDER BY bedrijfsnaam, klant_id
+SELECT klant_id, bedrijfsnaam FROM Klant WHERE actief=TRUE ORDER BY bedrijfsnaam, klant_id
 ```
 Parameters: ```json
 []

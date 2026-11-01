@@ -17,6 +17,7 @@ door echte medewerkers en gekoppelde hardware.
 | Proces | Werkend en controleerbaar | Nog niet extern aantoonbaar |
 | --- | --- | --- |
 | Verkoop | Medewerker selecteert klant, medicijnen, aantallen, spoed, dagdeel en datum. Per tekort kiest de klant afzien of later afnemen. Nieuwe, getekende prijsbevestiging met eenmalig token en expliciet klantakkoord. In één transactie worden bestelregels, voorraadreserveringen en ganggebonden robotdeelorders vastgelegd. Bij gewijzigde voorraad/prijs moet de klant opnieuw akkoord geven. | Echte telefonische klanttoestemming kan de software alleen door een medewerker laten bevestigen. |
+| Klantbeheer | Centrale MySQL-klantgegevens, klant aanmaken, bewerken en deactiveren met behoud van de historische bestellingen en facturen. Gedeactiveerde klanten verschijnen niet bij nieuwe telefoonorders en kunnen geen bestelling laten vastleggen. | De keuze en toestemming voor wijzigingen blijven een medewerkerhandeling. |
 | Voorraad en inkoop | Fysieke voorraad en reserveringen apart gevolgd. Minimale voorraad, leveranciers op inkoopprijs en handmatig bevestigde inkooporders. Robotafronding boekt feitelijke aantallen per schap af en geeft de bijbehorende reserveringen vrij in dezelfde transactie. | Bestaande papieren inventaris en echte robot/scanner moeten bij ingebruikname overeenkomen; inkomende voorraadontvangst behoort niet tot de casus. |
 | Orderpicking en distributie | Robots registreren unieke bakken. Afronding is niet dubbel mogelijk. Afgeronde deelorders kunnen worden verpakt, waarna een levering wordt klaargezet. Toewijzing aan beschikbare koerier na handmatige controle; een eerste en een tweede poging op dezelfde dag. Na tweemaal afwezig blijven de mislukte pogingen bewaard en worden al verpakte regels naar een nieuwe levering op de afgesproken dag verplaatst. | Werkelijke koerier/regiobeschikbaarheid, fysieke verpakking, rollerbaan en handtekening worden door mensen/apparaten gemeld. |
 | Administratie | Alleen afgeleverde en ondertekende regels worden wekelijks gefactureerd, met vastgelegde bedragen en adressen. Herinneringen, regeling en incasso volgen de beschreven stappen. Eenmalig met de klant afgesproken herbezorgkosten komen afzonderlijk in de weekfactuur, met onveranderlijke koppeling en controle op dubbele facturering. | Voor extra bezorgkosten noemt de casus geen btw-percentage. Facturatie van die toeslag wordt geweigerd zonder expliciet geconfigureerd, juridisch geverifieerd percentage. |
@@ -33,6 +34,9 @@ casus geeft geen percentage en daarom bestaat **geen standaardtarief**.
 
 De schemawijziging staat in
 `code/database/migrations/2026_11_01_delivery_charges.sql`.
+De vanuit de nieuwste `main` overgenomen klantdeactivatie staat afzonderlijk
+in `code/database/migrations/2026_11_01_customer_deactivation.sql`.
+De geïsoleerde migratietest controleert beide aanvullingen vanuit het oude schema.
 Eerdere facturen en oorspronkelijke bedragen worden niet herberekend.
 Elke bezorgtoeslag wordt gekoppeld aan maximaal één vastgelegde factuur.
 
