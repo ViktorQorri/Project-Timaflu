@@ -79,7 +79,7 @@ ORDER BY p.productnaam ASC;
 SELECT k.klant_id, k.bedrijfsnaam,
                                 k.eenmalige_korting_toegezegd, a.adres AS klantadres FROM Klant k
                          JOIN Adres a ON a.adres_id=k.betaaladres_id
-                         WHERE k.klant_id=1;
+                         WHERE k.klant_id=1 AND k.actief=TRUE;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT 1 FROM Factuur WHERE klant_id=1
                          AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
@@ -591,6 +591,82 @@ SELECT lr.aantal_geleverd AS quantity,
                 WHERE lr.factuur_id=2
                 ORDER BY b.bestelling_id, lr.product_id;
 -- END GENERATED WEEKLY INVOICE QUERIES
+
+-- =========================================
+-- Manage customers (issue #8, AD07), /customers
+-- Same queries as CustomerRepository, with example values instead of %s.
+-- =========================================
+
+-- Customer overview, GET /customers?q=...
+-- Same SELECT as CustomerRepository.list_customers() with example parameters:
+-- year 2026 (revenue and discount) and search 'Apotheek' (backend uses '%Apotheek%').
+-- An empty search uses '%%' and returns every customer.
+-- Annual revenue = net paid invoice totals, unknown if any paid invoice lacks a total.
+SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+       af.adres AS afleveradres, ba.adres AS factuuradres,
+       CASE WHEN o.betaalde_facturen IS NULL THEN 0
+            WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL
+            ELSE o.jaaromzet END AS jaaromzet,
+       kk.percentage AS kortingspercentage
+FROM Klant AS k
+JOIN Adres AS af ON af.adres_id = k.afleveradres_id
+JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
+LEFT JOIN (
+    SELECT f.klant_id,
+           COUNT(*) AS betaalde_facturen,
+           COUNT(f.totaal_bedrag) AS bekende_bedragen,
+           SUM(f.totaal_bedrag) AS jaaromzet
+    FROM Factuur AS f
+    WHERE YEAR(f.betaald_op) = 2026
+    GROUP BY f.klant_id
+) AS o ON o.klant_id = k.klant_id
+LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id
+                            AND kk.kalenderjaar = 2026
+WHERE k.actief = TRUE
+  AND (k.bedrijfsnaam LIKE '%Apotheek%' OR k.contactpersoon LIKE '%Apotheek%'
+   OR k.telefoonnummer LIKE '%Apotheek%')
+ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC;
+
+-- One customer for edit and deactivation confirmation, GET /customers/1/edit and /customers/1/deactivate
+-- Same SELECT as CustomerRepository.find_customer().
+SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+       af.adres AS afleveradres, ba.adres AS factuuradres
+FROM Klant AS k
+JOIN Adres AS af ON af.adres_id = k.afleveradres_id
+JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
+WHERE k.klant_id = 1 AND k.actief = TRUE;
+
+-- Create a customer, POST /customers
+-- Same statements as CustomerRepository.create(), in one transaction.
+-- 101 and 102 stand for the adres_id values returned by the two Adres inserts.
+INSERT INTO Adres (adres) VALUES ('Markt 1, 4811 AA Breda');
+INSERT INTO Adres (adres) VALUES ('Postbus 10, 4800 AA Breda');
+INSERT INTO Klant (bedrijfsnaam, telefoonnummer, contactpersoon,
+                   afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd)
+VALUES ('Apotheek De Markt', '076 123 45 67', 'J. Jansen', 101, 102, TRUE);
+
+-- Edit a customer, POST /customers/1/edit
+-- Same statements as CustomerRepository.update(), in one transaction.
+-- The SELECT locks the customer and returns the current addresses. Only a changed
+-- address gets a new Adres row (here the delivery address, new adres_id 103),
+-- so existing orders keep the address they were placed with.
+SELECT k.afleveradres_id, af.adres AS afleveradres,
+       k.betaaladres_id, ba.adres AS factuuradres
+FROM Klant AS k
+JOIN Adres AS af ON af.adres_id = k.afleveradres_id
+JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
+WHERE k.klant_id = 1 AND k.actief = TRUE
+FOR UPDATE;
+INSERT INTO Adres (adres) VALUES ('Markt 2, 4811 AA Breda');
+UPDATE Klant
+SET bedrijfsnaam = 'Apotheek De Markt', telefoonnummer = '076 123 45 67', contactpersoon = 'J. Jansen',
+    afleveradres_id = 103, betaaladres_id = 102
+WHERE klant_id = 1;
+
+-- Deactivate a customer, POST /customers/1/deactivate (AD07)
+-- Retain all related historical records.
+SELECT klant_id FROM Klant WHERE klant_id = 1 AND actief = TRUE FOR UPDATE;
+UPDATE Klant SET actief = FALSE WHERE klant_id = 1;
 
 
 -- Order status overview for GET /reports (case: status visible to employees).

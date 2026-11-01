@@ -61,6 +61,8 @@ class DesignSystemTests(TestCase):
         with ExitStack() as stack:
             for module in ("home", "order_picking", "distribution", "acquisition"):
                 stack.enter_context(patch(f"routes.{module}.get_connection", return_value=object()))
+            customers = stack.enter_context(patch("routes.sales.customer_service"))
+            customers.return_value.overview.return_value = []
             stack.enter_context(patch("routes.home.HealthService"))
             bins = stack.enter_context(patch("routes.order_picking.PickingBinService"))
             bins.return_value.bins.return_value = []
