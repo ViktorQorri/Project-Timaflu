@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-
 {% block title %}Fout {{ status }}{% endblock %}
-
 {% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Melding</span>
   <h1>Fout {{ status }}</h1>
-  <p>{{ message }}</p>
-  <p><a href="{{ url_for('home.index') }}">Terug naar home</a></p>
+  <p class="flash flash-error" role="alert">{{ message }}</p>
+  <a class="button button--secondary" href="{{ url_for('home.index') }}">Terug naar home</a>
+</section>
 {% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Factuur {{invoice.factuur_id}}{% endblock %}
+{% block content %}
+<section class="page-intro"><span class="eyebrow">Administratie</span>
+  <h1>Factuur {{invoice.factuur_id}}</h1>
+  <p>Factuurdatum: {{invoice.factuurdatum}}{% if invoice.week_start %}, factuurweek vanaf {{invoice.week_start}}{% endif %}</p>
+</section>
+<div class="invoice-parties">
+  <div><strong>Timaflu</strong>
+  <p>{% if invoice.afzenderadres %}{{invoice.afzenderadres}}{% else %}Afzenderadres niet vastgelegd (historische factuur).{% endif %}</p></div>
+  <div><strong>{{invoice.bedrijfsnaam}}</strong><p>{{invoice.adres}}</p></div>
+</div>
+<table class="stock-dashboard__table">
+<caption>Daadwerkelijk geleverde producten</caption>
+<thead><tr><th>Bestelling</th><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
+<tbody>
+{% for line in lines %}
+<tr><td>{{line.order_id}}</td><td>{{line.quantity}}</td><td>€ {{line.unit_price}}</td><td>€ {{line.line_total}}</td></tr>
+{% else %}<tr><td colspan="4">Geen geleverde factuurregels</td></tr>{% endfor %}
+</tbody></table>
+<dl class="invoice-totals">
+{% for label,value in [
+('Totaal excl. btw',amounts.total_ex_vat),
+('9% btw',amounts.vat_9_percent),
+('Totaal incl. btw',amounts.total_incl_vat),
+('Bestellingskorting',amounts.order_discount),
+('Totaal incl bestellingskorting',amounts.total_after_order_discount),
+('Eenmalige korting',amounts.first_order_discount),
+('Totaal incl eenmalige korting',amounts.total_after_first_order_discount),
+('Klantenkorting',amounts.customer_discount),
+('Totaal incl klantenkorting',amounts.total)
+] %}
+<dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
+{% endfor %}
+</dl>
+{% if not complete or not invoice.afzenderadres %}
+<p class="flash flash-warning">Deze historische factuur mist een oorspronkelijke snapshot of het afzenderadres. Vul geen fictieve waarden in.</p>
+{% endif %}
+<p><a href="{{url_for('weekly_invoices.weekly_overview')}}">Terug naar weekfacturen</a></p>
+{% endblock %}

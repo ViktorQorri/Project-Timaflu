@@ -8,6 +8,7 @@ actor "Distributiemedewerker" as Distro
 actor "Inkoopmedewerker" as Purchaser
 actor "Administratiemedewerker" as Admin
 actor "Koerier" as Courier
+actor "Acquisitiemedewerker" as Acquisition
 
 rectangle "Timaflu Systeem" {
     
@@ -31,7 +32,12 @@ rectangle "Timaflu Systeem" {
     Admin --> (Facturatie beheren)
     
     Courier --> (Ritgegevens raadplegen)
-    Courier --> (Klantnummer opzoeken)
+    Courier --> (Telefoonnummer klant opzoeken)
     Courier --> (Levering registreren)
+    Courier --> (Tweede afleverpoging registreren)
+
+    Acquisition --> (Acquisitiebezoek registreren)
+    Acquisition --> (Acquisitieoverzicht bekijken)
+    Acquisition --> (Potentiele klant opvolgen)
 }
 @enduml

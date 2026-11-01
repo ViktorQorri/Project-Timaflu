@@ -3,7 +3,7 @@
 Business rules from the case (Current-processes, Tabel 1):
 - 5% order discount over the order total when the total is EUR 500 or more;
 - the next discount is calculated over the amount left after the order discount;
-- first order of a customer: an additional one-time 10% discount;
+- a promised acquisition incentive on the first order: an additional one-time 10% discount;
 - every customer receives a customer discount based on the previous year's paid revenue.
 Every amount is rounded to cents (ROUND_HALF_UP) after each step.
 """
@@ -68,7 +68,8 @@ class DiscountService:
 
         previous_year = (order_date or date.today()).year - 1
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
-        if first_order:
+        one_time_discount = first_order and bool(customer.get("eenmalige_korting_toegezegd"))
+        if one_time_discount:
             discounts.append(self.calculate_one_time_discount(amount))
             amount = discounts[-1]["total_after"]
 
@@ -83,6 +84,7 @@ class DiscountService:
             "discounts": discounts,
             "total_amount": self.calculate_total_after_discount(subtotal, discounts),
             "first_order": first_order,
+            "one_time_discount": one_time_discount,
             "previous_year": previous_year,
             "annual_revenue": annual_revenue,
         }

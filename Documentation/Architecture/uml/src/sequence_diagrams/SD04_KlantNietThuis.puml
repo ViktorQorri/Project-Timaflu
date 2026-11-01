@@ -1,0 +1,70 @@
+@startuml
+title SD04 - Customer absent at delivery (AD12 / AD15 / AD27)
+autonumber
+
+actor "Courier employee" as CourierEmployee
+participant "route:Route" as Route
+participant "courier:Courier" as Courier
+actor "Customer contact" as Contact
+participant "first:DeliveryAttempt" as First
+participant "second:DeliveryAttempt" as Second
+participant "order:Order" as Order
+actor "Sales employee" as Sales
+
+CourierEmployee -> Route: showSchedule(date)
+activate Route
+note right of Route: Input: delivery date.
+Route --> CourierEmployee: times, customers, addresses, contact persons and phone numbers
+deactivate Route
+note right of CourierEmployee
+  At the first visit, nobody answers the door.
+  Call the customer before rescheduling (AD27).
+end note
+CourierEmployee -> Courier: lookUpCustomerPhoneNumber(customer)
+activate Courier
+Courier --> CourierEmployee: phone number
+deactivate Courier
+CourierEmployee -> Contact: Call customer after first unanswered visit
+Contact --> CourierEmployee: can or cannot receive now
+
+alt Customer can still receive during first visit
+  CourierEmployee -> Contact: Request signature for the received medicines
+  Contact --> CourierEmployee: signed proof of receipt
+  CourierEmployee -> First: recordReceiptSignature()
+  First --> CourierEmployee: signed receipt registered
+  CourierEmployee -> First: markDelivered(timestamp)
+  First --> CourierEmployee: delivery and time recorded
+  CourierEmployee -> Order: changeOrderStatus(delivered)
+  Order --> CourierEmployee: order status delivered
+else Customer cannot receive during first visit
+  CourierEmployee -> First: markRecipientAbsent()
+  First --> CourierEmployee: first attempt marked absent
+  note right of CourierEmployee: Leave a notice at the delivery address that a visit was attempted.
+  CourierEmployee -> Route: adjustSchedule()
+  Route --> CourierEmployee: second attempt scheduled for the SAME day
+  note right of CourierEmployee: The second result is not yet known when scheduled.
+  alt Recipient present at second attempt
+    CourierEmployee -> Contact: Request signature for the received medicines
+    Contact --> CourierEmployee: signed proof of receipt
+    CourierEmployee -> Second: recordReceiptSignature()
+    Second --> CourierEmployee: signature recorded
+    CourierEmployee -> Second: markDelivered(timestamp)
+    Second --> CourierEmployee: second attempt delivered and time recorded
+    CourierEmployee -> Order: changeOrderStatus(delivered)
+    Order --> CourierEmployee: order status delivered
+  else Recipient absent at second attempt
+    CourierEmployee -> Second: markRecipientAbsent()
+    Second --> CourierEmployee: second attempt marked absent
+    CourierEmployee -> Order: changeOrderStatus(notDelivered)
+    Order --> CourierEmployee: order status not delivered
+    note right of CourierEmployee: Return goods to the distribution area.
+    CourierEmployee -> Sales: Report undelivered order
+    Sales -> Contact: Agree new delivery date and morning/afternoon slot
+    Contact --> Sales: agreed date and time slot
+    Sales -> Order: setDeliveryTime(date, timeSlot)
+    Order --> Sales: appointment updated
+    Sales -> Order: recordAdditionalDeliveryCosts(amount, explanation)
+    Order --> Sales: extra costs and reason recorded
+  end
+end
+@enduml

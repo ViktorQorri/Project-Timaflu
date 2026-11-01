@@ -18,7 +18,7 @@ class DiscountRepository:
     def list_customers(self):
         """Return every customer for the selection list, ordered by company name."""
         return self._fetchall("""
-            SELECT klant_id, bedrijfsnaam
+            SELECT klant_id, bedrijfsnaam, eenmalige_korting_toegezegd
             FROM Klant
             ORDER BY bedrijfsnaam ASC
         """)
@@ -26,7 +26,7 @@ class DiscountRepository:
     def find_customer(self, customer_id):
         """Return one customer, or None when the id is unknown."""
         return self._fetchone("""
-            SELECT klant_id, bedrijfsnaam
+            SELECT klant_id, bedrijfsnaam, eenmalige_korting_toegezegd
             FROM Klant
             WHERE klant_id = %s
         """, (customer_id,))
@@ -57,15 +57,15 @@ class DiscountRepository:
         return int(row["aantal_bestellingen"])
 
     def sum_purchases(self, customer_id, year):
-        """Annual revenue consists of paid, actually delivered medicines (case: Administratie)."""
+        """Sum paid invoice amounts in the year, as recorded by administration."""
         row = self._fetchone("""
-            SELECT COALESCE(SUM(l.aantal_geleverd * r.prijs_per_eenheid), 0) AS jaaromzet
+            SELECT COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet,
+                   COUNT(*) AS betaalde_facturen,
+                   COUNT(f.totaal_bedrag) AS facturen_met_bedrag
             FROM Factuur AS f
-            JOIN Leveringregel AS l ON l.factuur_id = f.factuur_id
-            JOIN Levering AS v ON v.levering_id = l.levering_id
-            JOIN Bestelling AS b ON b.bestelling_id = v.bestelling_id
-            JOIN Bestelregel AS r
-              ON r.bestelling_id = b.bestelling_id AND r.product_id = l.product_id
             WHERE f.klant_id = %s AND YEAR(f.betaald_op) = %s
         """, (customer_id, year))
+        if row["betaalde_facturen"] != row["facturen_met_bedrag"]:
+            from domain.errors import DomainError
+            raise DomainError("Betaalde jaaromzet is niet volledig vastgelegd.")
         return row["jaaromzet"]

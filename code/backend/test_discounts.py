@@ -10,7 +10,7 @@ from domain.errors import DomainError, NotFoundError
 from repositories.discount_repository import DiscountRepository
 from services.discount_service import DiscountService
 
-CUSTOMER = {"klant_id": 7, "bedrijfsnaam": "Apotheek De Brug"}
+CUSTOMER = {"klant_id": 7, "bedrijfsnaam": "Apotheek De Brug", "eenmalige_korting_toegezegd": True}
 PRODUCTS = {
     1: {"product_id": 1, "artikelnummer": "TIM-1", "productnaam": "Medicine A",
         "prijs_per_grootverpakking": Decimal("100.00")},
@@ -51,7 +51,7 @@ class Cursor:
     def __init__(self, previous_orders, revenue):
         self.answers = {
             "COUNT(*)": {"aantal_bestellingen": previous_orders},
-            "jaaromzet": {"jaaromzet": revenue},
+            "jaaromzet": {"jaaromzet": revenue, "betaalde_facturen": 1, "facturen_met_bedrag": 1},
             "WHERE klant_id": CUSTOMER,
             "WHERE product_id": PRODUCTS[1],
         }
@@ -68,6 +68,8 @@ class Cursor:
 
     def fetchone(self):
         query = self.statements[-1][0]
+        if "AS jaaromzet" in query:
+            return self.answers["jaaromzet"]
         return next(row for word, row in self.answers.items() if word in query)
 
     def fetchall(self):
@@ -123,6 +125,18 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(result["discounts"][2]["amount"], Decimal("128.25"))
         self.assertEqual(result["total_amount"], Decimal("726.75"))
         self.assertEqual(repository.purchase_years, [(7, 2025)])
+
+    def test_unpromised_first_order_has_no_one_time_discount(self):
+        previous = CUSTOMER["eenmalige_korting_toegezegd"]
+        try:
+            CUSTOMER["eenmalige_korting_toegezegd"] = False
+            result = calculate(FakeRepository(previous_orders=0), [("1", "10")])
+            self.assertTrue(result["first_order"])
+            self.assertFalse(result["one_time_discount"])
+            self.assertEqual([d["kind"] for d in result["discounts"]], ["order", "customer"])
+            self.assertEqual(result["total_amount"], Decimal("902.50"))
+        finally:
+            CUSTOMER["eenmalige_korting_toegezegd"] = previous
 
     def test_existing_customer_discount_over_amount_after_order_discount(self):
         repository = FakeRepository(previous_orders=2, revenue=Decimal("15000.00"))
@@ -191,8 +205,7 @@ class OrderDiscountTests(TestCase):
         self.assertEqual(connection.c.statements[-1][1], (7,))
         self.assertEqual(repository.sum_purchases(7, 2025), Decimal("1234.50"))
         query, params = connection.c.statements[-1]
-        self.assertIn("JOIN Leveringregel", query)
-        self.assertIn("JOIN Bestelregel", query)
+        self.assertIn("SUM(f.totaal_bedrag)", query)
         self.assertIn("YEAR(f.betaald_op) = %s", query)
         self.assertEqual(params, (7, 2025))
         self.assertEqual(repository.find_product(1), PRODUCTS[1])

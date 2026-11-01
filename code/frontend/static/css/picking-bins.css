@@ -1,0 +1,21 @@
+/* Start: Issue #17 - register picking bins, using the existing Timaflu design tokens. */
+.picking-bins__count {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-weight: 700;
+}
+.picking-bins__status {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  font-weight: 700;
+}
+.picking-bins__status--done {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+/* End: Issue #17 register picking bins. */
