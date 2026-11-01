@@ -10,12 +10,12 @@
         <h1 id="picking-bins-title">Orderpicking en verzamelbakken</h1>
         <p class="stock-dashboard__subtitle">Verdeel beschikbare orders over robotgangen. Robots registreren daarna de gescande bakken automatisch.</p>
       </div>
-      <p class="picking-bins__count" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
+      <span class="stock-dashboard__count stock-dashboard__count--info" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
         {{ bins|length }} bakken geregistreerd
-      </p>
+      </span>
     </header>
 
-    <section aria-labelledby="orders-to-pick-title">
+    <section class="stock-dashboard__section" aria-labelledby="orders-to-pick-title">
       <h2 id="orders-to-pick-title">Orders klaar voor orderpicking</h2>
       {% if orders %}
         <div class="stock-dashboard__table-wrap">
@@ -54,13 +54,9 @@
       {% endif %}
     </section>
 
-    <section aria-labelledby="registered-bins-title">
-      <header class="stock-dashboard__intro">
-        <div>
-          <h2 id="registered-bins-title">Verzamelbakken</h2>
-          <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
-        </div>
-      </header>
+    <section class="stock-dashboard__section" aria-labelledby="registered-bins-title">
+      <h2 id="registered-bins-title">Verzamelbakken</h2>
+      <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
 
       {% if bins %}
         <div class="stock-dashboard__table-wrap">
@@ -99,20 +95,21 @@
         </div>
       {% endif %}
     </section>
-  </section>
-  <section class="stock-dashboard" aria-labelledby="package-title">
-    <h2 id="package-title">Verzamelde orders verpakken</h2>
-    <p>De huidige robotdeelorders moeten allemaal gereed zijn. Registreer na het werkelijk verpakken de producten voor bezorging.</p>
-    {% for order in ready_orders %}
-    <article class="page-panel">
-      <h3>Order #{{ order.bestelling_id }} · {{ order.bedrijfsnaam }}</h3>
-      <p>Verzameld: {{ order.collected }}. Eerder verpakt: {{ order.prepared }}.</p>
-      <form method="post" action="{{ url_for('order_picking.pack', order_id=order.bestelling_id) }}">
-        <button type="submit">Verpakking bevestigen en levering aanmaken</button>
-      </form>
-    </article>
-    {% else %}
-      <p>Geen afgeronde deelorders die nog verpakt moeten worden.</p>
-    {% endfor %}
+
+    <section class="stock-dashboard__section" aria-labelledby="package-title">
+      <h2 id="package-title">Verzamelde orders verpakken</h2>
+      <p class="stock-dashboard__subtitle">De huidige robotdeelorders moeten allemaal gereed zijn. Registreer na het werkelijk verpakken de producten voor bezorging.</p>
+      {% for order in ready_orders %}
+      <article class="stock-dashboard__panel">
+        <h3>Order #{{ order.bestelling_id }} · {{ order.bedrijfsnaam }}</h3>
+        <p>Verzameld: {{ order.collected }}. Eerder verpakt: {{ order.prepared }}.</p>
+        <form method="post" action="{{ url_for('order_picking.pack', order_id=order.bestelling_id) }}">
+          <button type="submit">Verpakking bevestigen en levering aanmaken</button>
+        </form>
+      </article>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Geen afgeronde deelorders die nog verpakt moeten worden.</p>
+      {% endfor %}
+    </section>
   </section>
 {% endblock %}

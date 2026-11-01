@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Fout {{ status }}{% endblock %}
 {% block content %}
-  <section class="error-page" aria-labelledby="error-title">
-    <div class="error-page__panel">
-      <p class="error-page__code">Fout {{ status }}</p>
-      <h1 id="error-title">Deze actie is niet gelukt</h1>
-      <p>{{ message }}</p>
-      <a class="button button--primary" href="{{ url_for('home.index') }}">Terug naar home</a>
-    </div>
+  <section class="stock-dashboard" aria-labelledby="error-title">
+    <header class="stock-dashboard__intro">
+      <div>
+        <p class="stock-dashboard__eyebrow">Foutmelding</p>
+        <h1 id="error-title">Deze actie is niet gelukt</h1>
+        <p class="stock-dashboard__subtitle">{{ message }}</p>
+      </div>
+      <span class="stock-dashboard__count">Fout {{ status }}</span>
+    </header>
+    <a class="button button--primary" href="{{ url_for('home.index') }}">Terug naar home</a>
   </section>
 {% endblock %}

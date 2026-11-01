@@ -10,14 +10,17 @@
         <h1 id="customers-title">Klanten</h1>
         <p class="stock-dashboard__subtitle">Klantgegevens op één plek, zodat alle afdelingen dezelfde informatie gebruiken.</p>
       </div>
-      <p class="customer-count">{{ customers|length }} {{ 'klant' if customers|length == 1 else 'klanten' }}</p>
+      <span class="stock-dashboard__count stock-dashboard__count--info">{{ customers|length }} {{ 'klant' if customers|length == 1 else 'klanten' }}</span>
     </header>
 
-    <form method="get" action="{{ url_for('sales.customers') }}" class="supplier-lookup" role="search">
-      <label for="customer-search">Zoek klant</label>
-      <input id="customer-search" name="q" type="search" value="{{ search }}" maxlength="100" placeholder="Bedrijfsnaam, contactpersoon of telefoonnummer">
-      <button type="submit">Zoeken</button>
-      {% if search %}<a class="customer-link" href="{{ url_for('sales.customers') }}">Alle klanten tonen</a>{% endif %}
+    <form method="get" action="{{ url_for('sales.customers') }}" class="stock-dashboard__form" role="search">
+      <label for="customer-search">Zoek klant
+        <input id="customer-search" name="q" type="search" value="{{ search }}" maxlength="100" placeholder="Bedrijfsnaam, contactpersoon of telefoonnummer">
+      </label>
+      <div class="stock-dashboard__actions">
+        <button type="submit">Zoeken</button>
+        {% if search %}<a class="button button--secondary" href="{{ url_for('sales.customers') }}">Alle klanten tonen</a>{% endif %}
+      </div>
     </form>
 
     {% if customers %}
@@ -78,7 +81,7 @@
       </div>
     {% endif %}
 
-    <section class="customer-panel" id="new-customer" aria-labelledby="new-customer-title">
+    <section class="stock-dashboard__section stock-dashboard__panel" id="new-customer" aria-labelledby="new-customer-title">
       <h2 id="new-customer-title">Nieuwe klant</h2>
       <p class="stock-dashboard__subtitle">De jaaromzet wordt automatisch bijgehouden uit betaalde facturen.</p>
       {% with action=url_for('sales.create_customer'), submit_label='Klant opslaan', cancel_url=None %}

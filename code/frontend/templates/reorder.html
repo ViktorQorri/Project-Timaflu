@@ -2,40 +2,50 @@
 {% block title %}Medicijnen bijbestellen{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="reorder-title">
-  <h1 id="reorder-title">Medicijnen bijbestellen</h1>
-  <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
-  <div class="stock-dashboard__table-wrap">
-    <table class="stock-dashboard__table">
-      <caption>Medicijnen onder de minimumvoorraad</caption>
-      <thead>
-        <tr>
-          <th scope="col">Product</th>
-          <th scope="col" class="stock-dashboard__number">Voorraad</th>
-          <th scope="col" class="stock-dashboard__number">Minimum</th>
-          <th scope="col" class="stock-dashboard__number">Tekort</th>
-          <th scope="col">Actie</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in shortages %}
-        <tr>
-          <th scope="row">{{ item.productnaam }}</th>
-          <td class="stock-dashboard__number">{{ item.voorraad }}</td>
-          <td class="stock-dashboard__number">{{ item.minimumvoorraad }}</td>
-          <td class="stock-dashboard__number">{{ item.tekort }}</td>
-          <td><a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Vergelijk leveranciers</a></td>
-        </tr>
-      {% else %}
-        <tr><td colspan="5">Er zijn geen voorraadtekorten.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Inkoop</p>
+      <h1 id="reorder-title">Medicijnen bijbestellen</h1>
+      <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
+    </div>
+  </header>
+
+  <section class="stock-dashboard__section" aria-labelledby="reorder-shortages-title">
+    <h2 id="reorder-shortages-title">Voorraadtekorten</h2>
+    <div class="stock-dashboard__table-wrap">
+      <table class="stock-dashboard__table">
+        <caption>Medicijnen onder de minimumvoorraad</caption>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col" class="stock-dashboard__number">Voorraad</th>
+            <th scope="col" class="stock-dashboard__number">Minimum</th>
+            <th scope="col" class="stock-dashboard__number">Tekort</th>
+            <th scope="col">Actie</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in shortages %}
+          <tr>
+            <th scope="row">{{ item.productnaam }}</th>
+            <td class="stock-dashboard__number">{{ item.voorraad }}</td>
+            <td class="stock-dashboard__number">{{ item.minimumvoorraad }}</td>
+            <td class="stock-dashboard__number">{{ item.tekort }}</td>
+            <td><a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Vergelijk leveranciers</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5">Er zijn geen voorraadtekorten.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
   {% if selected %}
-    <h2>Leveranciers voor {{ selected.productnaam }}</h2>
+  <section class="stock-dashboard__section" aria-labelledby="reorder-offers-title">
+    <h2 id="reorder-offers-title">Leveranciers voor {{ selected.productnaam }}</h2>
     {% if offers %}
-      <p>De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
+      <p class="stock-dashboard__subtitle">De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
           <thead>
@@ -76,41 +86,42 @@
         </table>
       </div>
     {% else %}
-      <p>Geen gekoppelde leverancier gevonden. De inkoper moet dit handmatig opvolgen.</p>
+      <p class="stock-dashboard__empty" role="status">Geen gekoppelde leverancier gevonden. De inkoper moet dit handmatig opvolgen.</p>
     {% endif %}
+  </section>
   {% endif %}
-</section>
 
-<section class="stock-dashboard" aria-labelledby="supplier-orders-title">
-  <h2 id="supplier-orders-title">Vastgelegde inkoopbestellingen</h2>
-  <p>De status ‘besteld’ betekent dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
-  <div class="stock-dashboard__table-wrap">
-    <table class="stock-dashboard__table">
-      <thead>
-        <tr>
-          <th scope="col">Bestelling</th>
-          <th scope="col">Vastgelegd op</th>
-          <th scope="col">Leverancier</th>
-          <th scope="col">Product</th>
-          <th scope="col" class="stock-dashboard__number">Aantal</th>
-          <th scope="col">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in recorded_orders %}
-        <tr>
-          <th scope="row">{{ item.inkoopbestelling_id }}</th>
-          <td>{{ item.besteld_op or 'Onbekend' }}</td>
-          <td>{{ item.leverancier }}</td>
-          <td>{{ item.productnaam }}</td>
-          <td class="stock-dashboard__number">{{ item.aantal }}</td>
-          <td>{{ item.status_naam or 'Onbekend' }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6">Er zijn nog geen inkoopbestellingen geregistreerd.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <section class="stock-dashboard__section" aria-labelledby="supplier-orders-title">
+    <h2 id="supplier-orders-title">Vastgelegde inkoopbestellingen</h2>
+    <p class="stock-dashboard__subtitle">De status ‘besteld’ betekent dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
+    <div class="stock-dashboard__table-wrap">
+      <table class="stock-dashboard__table">
+        <thead>
+          <tr>
+            <th scope="col">Bestelling</th>
+            <th scope="col">Vastgelegd op</th>
+            <th scope="col">Leverancier</th>
+            <th scope="col">Product</th>
+            <th scope="col" class="stock-dashboard__number">Aantal</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in recorded_orders %}
+          <tr>
+            <th scope="row">{{ item.inkoopbestelling_id }}</th>
+            <td>{{ item.besteld_op or 'Onbekend' }}</td>
+            <td>{{ item.leverancier }}</td>
+            <td>{{ item.productnaam }}</td>
+            <td class="stock-dashboard__number">{{ item.aantal }}</td>
+            <td>{{ item.status_naam or 'Onbekend' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">Er zijn nog geen inkoopbestellingen geregistreerd.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </section>
 {% endblock %}

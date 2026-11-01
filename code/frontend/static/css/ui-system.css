@@ -113,17 +113,7 @@ a:hover { color: #0a5c99; }
   text-decoration: none;
   white-space: nowrap;
 }
-.brand-mark {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  height: 35px;
-  width: 35px;
-  background: var(--blue);
-  color: white;
-  border-radius: 9px;
-}
-.brand-mark svg { height: 27px; width: 27px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.site-name .brand-mark { color: var(--navy); }
 .brand-accent { color: var(--blue); }
 .site-nav { overflow: hidden; min-width: 0; }
 .site-nav ul {
@@ -333,7 +323,7 @@ form:not(.supplier-lookup):not(.lookup-form):not(.product-form) > .form-field { 
 form:not(.supplier-lookup):not(.lookup-form):not(.product-form) > input:not([type="hidden"]):not([type="checkbox"]) { width: 100%; max-width: 640px; }
 table form { display: grid; align-items: start; gap: 8px; min-width: 150px; }
 table form label { font-size: 11px; margin: 0; }
-table form :is(input,select) { width: 100%; }
+table form :is(input:not([type="checkbox"]):not([type="radio"]),select) { width: 100%; }
 table form :is(button,.button) { width: fit-content; }
 .button, button, input[type="submit"] {
   display: inline-flex;
@@ -506,7 +496,6 @@ table caption, .stock-dashboard__table caption { color: var(--muted); font-size:
   .main-content { padding-inline: 20px; }
   .stock-dashboard { padding: 16px; }
   .site-name { font-size: 21px; }
-  .brand-mark { width: 32px; height: 32px; }
   .site-footer { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {

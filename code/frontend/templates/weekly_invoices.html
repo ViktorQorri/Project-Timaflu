@@ -1,36 +1,53 @@
 {% extends "base.html" %}
 {% block title %}Weekfacturen{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Administratie</span>
-  <h1>Weekfacturen genereren</h1>
-  <p>Alleen werkelijk afgeleverde, ondertekende regels van een volledig afgesloten week worden gefactureerd. Een herhaalde opdracht maakt geen tweede factuur.</p>
+<section class="stock-dashboard" aria-labelledby="weekly-invoices-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Administratie</p>
+      <h1 id="weekly-invoices-title">Weekfacturen genereren</h1>
+      <p class="stock-dashboard__subtitle">Alleen werkelijk afgeleverde, ondertekende regels van een volledig afgesloten week worden gefactureerd. Een herhaalde opdracht maakt geen tweede factuur.</p>
+    </div>
+  </header>
+
+  {% if not sender_address %}
+  <p class="flash flash-warning" role="alert">Het werkelijke afzenderadres ontbreekt. Stel TIMAFLU_ADDRESS in voordat je een factuur kunt uitgeven. De casus geeft geen straatadres.</p>
+  {% else %}
+  <p>Afzender op factuur: <strong>{{sender_address}}</strong></p>
+  {% endif %}
+
+  <section class="stock-dashboard__section" aria-labelledby="invoice-week-title">
+    <h2 id="invoice-week-title">Factuurweek controleren</h2>
+    <form class="stock-dashboard__form" action="{{ url_for('weekly_invoices.weekly_overview') }}" method="get">
+      <label for="week-start">Maandag van de factuurweek
+        <input type="date" name="week_start" id="week-start" value="{{week_start}}" required>
+      </label>
+      <button type="submit">Week controleren</button>
+    </form>
+    <p class="stock-dashboard__subtitle">Klanten met nog niet gefactureerde, getekende leveringen: <strong>{{customer_count}}</strong></p>
+  </section>
+
+  <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="issue-invoices-title">
+    <h2 id="issue-invoices-title">Facturen uitgeven</h2>
+    <form method="post" action="{{ url_for('weekly_invoices.weekly_overview') }}" class="stock-dashboard__form">
+      <input type="hidden" name="week_start" value="{{week_start}}">
+      <label>
+        <input type="checkbox" name="invoice_approved" value="yes" required>
+        Ik heb de afgeleverde, ondertekende orders en de factuurweek gecontroleerd.
+      </label>
+      <button type="submit" {% if not sender_address or not customer_count %}disabled{% endif %}>Facturen eenmalig uitgeven en bedragen opslaan</button>
+    </form>
+  </section>
+
+  {% if created %}
+  <section class="stock-dashboard__section" aria-labelledby="created-invoices-title">
+    <h2 id="created-invoices-title">Nieuw uitgegeven facturen</h2>
+    <ul>
+    {% for invoice_id in created %}
+    <li><a href="{{url_for('weekly_invoices.issued_invoice',invoice_id=invoice_id)}}">Factuur {{invoice_id}} bekijken</a></li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 </section>
-{% if not sender_address %}
-<p class="flash flash-warning" role="alert">Het werkelijke afzenderadres ontbreekt. Stel TIMAFLU_ADDRESS in voordat je een factuur kunt uitgeven. De casus geeft geen straatadres.</p>
-{% else %}
-<p>Afzender op factuur: <strong>{{sender_address}}</strong></p>
-{% endif %}
-<form class="lookup-form" action="{{ url_for('weekly_invoices.weekly_overview') }}" method="get">
-  <label for="week-start">Maandag van de factuurweek</label>
-  <input type="date" name="week_start" id="week-start" value="{{week_start}}" required>
-  <button type="submit">Week controleren</button>
-</form>
-<p>Klanten met nog niet gefactureerde, getekende leveringen: <strong>{{customer_count}}</strong></p>
-<form method="post" action="{{ url_for('weekly_invoices.weekly_overview') }}">
-  <input type="hidden" name="week_start" value="{{week_start}}">
-  <label>
-    <input type="checkbox" name="invoice_approved" value="yes" required>
-    Ik heb de afgeleverde, ondertekende orders en de factuurweek gecontroleerd.
-  </label>
-  <button type="submit" {% if not sender_address or not customer_count %}disabled{% endif %}>Facturen eenmalig uitgeven en bedragen opslaan</button>
-</form>
-{% if created %}
-<h2>Nieuw uitgegeven facturen</h2>
-<ul>
-{% for invoice_id in created %}
-<li><a href="{{url_for('weekly_invoices.issued_invoice',invoice_id=invoice_id)}}">Factuur {{invoice_id}} bekijken</a></li>
-{% endfor %}
-</ul>
-{% endif %}
 {% endblock %}
