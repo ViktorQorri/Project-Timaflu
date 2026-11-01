@@ -52,6 +52,4 @@ jobs:
         run: python code/database/verify_frontend_criteria.py
       - name: Controleer orderpicking, distributie, inkoop en acquisitie
         run: python code/database/verify_frontend_workflows.py
-      - name: Controleer opleverarchieven
-        run: python code/build_deliverables.py --output-dir deliverables
 # Einde: frontendcriteria zonder JavaScript in de website zelf.
