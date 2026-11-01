@@ -22,8 +22,8 @@ class FakeRobotRepository:
     def suborder_lines(self, ident):
         return [{"product_id": 7, "productnaam": "Medicijn", "aantal": 3}]
 
-    def complete(self, ident, suborder_id):
-        self.completed.append((ident, suborder_id))
+    def complete(self, ident, suborder_id, collected):
+        self.completed.append((ident, suborder_id, collected))
         return {"deelorder_id": suborder_id, "afgerond": True}
 
 
@@ -32,9 +32,8 @@ class FakeCursor:
         self.exists = exists
         self.bins = bins
         self.lines = lines
-        self.query_count = 0
         self.queries = []
-        self.last = ""
+        self.current_query = ""
         self.rowcount = 1
 
     def __enter__(self):
@@ -45,27 +44,26 @@ class FakeCursor:
 
     def execute(self, sql, parameters):
         self.queries.append((sql, parameters))
-        self.last = " ".join(sql.split())
+        self.current_query = " ".join(sql.split())
 
     def fetchone(self):
-        if "FROM Deelorder WHERE" in self.last:
-            return {"deelorder_id": 20, "afgerond": False} if self.exists else None
-        if "bin_count" in self.last:
+        if "FROM Deelorder AS d" in self.current_query:
+            return ({"deelorder_id": 20, "bestelling_id": 30,
+                     "gang": "A", "afgerond": False} if self.exists else None)
+        if "bin_count" in self.current_query:
             return {"bin_count": self.bins}
-        if "line_count" in self.last:
-            return {"line_count": self.lines}
-        if "FROM Product WHERE" in self.last:
+        if "FROM Product WHERE" in self.current_query:
             return {"product_id": 7}
-        if "FROM Voorraadreservering" in self.last:
+        if "FROM Voorraadreservering" in self.current_query:
             return {"aantal": 3}
-        raise AssertionError(self.last)
+        raise AssertionError(self.current_query)
 
     def fetchall(self):
-        if "FROM Deelorderregel dr" in self.last:
-            return [{"product_id": 7, "aantal": 3, "bestelling_id": 30}]
-        if "FROM Magazijnlocatie" in self.last:
-            return [{"gang": "A", "schapnummer": 4, "aantal": 3}]
-        raise AssertionError(self.last)
+        if "FROM Deelorderregel" in self.current_query:
+            return ([{"product_id": 7, "aantal": 3}] if self.lines else [])
+        if "FROM Magazijnlocatie" in self.current_query:
+            return [{"schapnummer": 4, "aantal": 3}]
+        raise AssertionError(self.current_query)
 
 
 class FakeConnection:
@@ -99,29 +97,40 @@ class RobotOrderTests(TestCase):
             self.service.next_order(1, "invalid")
 
     def test_completion_uses_correct_robot_and_suborder(self):
-        self.assertEqual(self.service.complete(1, "A", 20)["afgerond"], True)
-        self.assertEqual(self.repo.completed, [(1, 20)])
+        self.assertEqual(self.service.complete(1, "A", 20, [{"product_id": 7, "quantity": 3}])["afgerond"], True)
+        self.assertEqual(self.repo.completed, [(1, 20, {7: 3})])
 
     def test_transactions_require_registered_bin(self):
         bad = FakeConnection(bins=0)
         from domain.errors import ConflictError
         with self.assertRaises(ConflictError):
-            RobotOrderRepository(bad).complete(1, 20)
+            RobotOrderRepository(bad).complete(1, 20, {7: 3})
         self.assertEqual(bad.committed, 0)
         self.assertEqual(bad.rolled_back, 1)
         good = FakeConnection(bins=1)
-        self.assertEqual(RobotOrderRepository(good).complete(1, 20)["afgerond"], True)
+        self.assertEqual(RobotOrderRepository(good).complete(1, 20, {7: 3})["afgerond"], True)
         self.assertEqual(good.committed, 1)
-        self.assertTrue(any("UPDATE Magazijnlocatie" in sql for sql, _ in good.cursor_instance.queries))
-        self.assertTrue(any("DELETE FROM Voorraadreservering" in sql for sql, _ in good.cursor_instance.queries))
+        statements = [sql for sql, _ in good.cursor_instance.queries]
+        self.assertTrue(any("UPDATE Magazijnlocatie" in sql for sql in statements))
+        self.assertTrue(any("DELETE FROM Voorraadreservering" in sql for sql in statements))
+        self.assertTrue(any("SET afgerond = TRUE" in sql for sql in statements))
 
     def test_completion_rejects_empty_partial_order(self):
         from domain.errors import ConflictError
         connection = FakeConnection(lines=0)
         with self.assertRaises(ConflictError):
-            RobotOrderRepository(connection).complete(1, 20)
+            RobotOrderRepository(connection).complete(1, 20, {7: 3})
         self.assertEqual(connection.committed, 0)
         self.assertEqual(connection.rolled_back, 1)
+
+    def test_actual_counts_are_required_and_unique(self):
+        from domain.errors import DomainError
+        for reported in (None, [], {}, [{"product_id": 7, "quantity": -1}],
+                         [{"product_id": 7, "quantity": 3},
+                          {"product_id": 7, "quantity": 2}]):
+            with self.subTest(reported=reported), self.assertRaises(DomainError):
+                self.service.complete(1, "A", 20, reported)
+        self.assertEqual(self.repo.completed, [])
 
     def test_api_routes_and_validation(self):
         app = create_app()
@@ -134,7 +143,8 @@ class RobotOrderTests(TestCase):
                 response = client.get("/api/robots/1/next?aisle=B")
                 self.assertEqual(response.status_code, 404)
                 response = client.post("/api/robots/1/complete",
-                                       json={"aisle": "A", "suborder_id": 20})
+                                       json={"aisle": "A", "suborder_id": 20,
+                                             "collected": [{"product_id": 7, "quantity": 3}]})
                 self.assertEqual(response.status_code, 200)
                 response = client.post("/api/robots/1/complete", data="invalid")
                 self.assertEqual(response.status_code, 400)

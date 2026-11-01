@@ -250,6 +250,23 @@ class WeeklyInvoiceRepository:
                         """, (order["order_id"],))
                         if cursor.rowcount != 1:
                             raise DomainError("Eenmalige korting is al gebruikt.")
+                cursor.execute("""
+                    UPDATE Bestelling AS b
+                       SET b.status_naam = 'gefactureerd'
+                     WHERE b.klant_id=%s AND b.status_naam='afgeleverd'
+                       AND EXISTS (
+                          SELECT 1 FROM Levering AS l
+                          JOIN Leveringregel AS lr ON lr.levering_id=l.levering_id
+                          WHERE l.bestelling_id=b.bestelling_id
+                            AND lr.factuur_id=%s
+                       )
+                       AND NOT EXISTS (
+                          SELECT 1 FROM Levering AS l
+                          JOIN Leveringregel AS lr ON lr.levering_id=l.levering_id
+                          WHERE l.bestelling_id=b.bestelling_id
+                            AND lr.factuur_id IS NULL
+                       )
+                """, (customer_id,invoice_id))
                 self.db.commit()
                 return invoice_id
             except Exception:

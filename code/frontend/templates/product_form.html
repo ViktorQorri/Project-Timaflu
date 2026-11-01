@@ -109,8 +109,8 @@
 
         {% if not editing %}
           <label class="product-form__approval">
-            <input type="checkbox" name="director_approved" value="yes" required{% if form.director_approved == 'yes' %} checked{% endif %}>
-            De directie heeft besloten dat dit medicijn in het assortiment wordt opgenomen.
+            <input name="management_approved" type="checkbox" value="yes"{% if form.management_approved == 'yes' %} checked{% endif %} required>
+            De directie heeft dit nieuwe medicijn goedgekeurd voor opname in het assortiment.
           </label>
         {% endif %}
 

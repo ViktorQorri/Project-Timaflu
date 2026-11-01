@@ -10,23 +10,25 @@ class CustomerRepository:
     def list_customers(self, search, year):
         """Return matching customers with both addresses, annual revenue and discount for a year.
 
-        Net annual revenue is the sum of paid invoice totals in that calendar year.
-        A missing total on a paid invoice means the annual amount is unknown.
+        Annual revenue is the sum of persisted net totals from paid invoices in that year.
+        It is unknown when any such invoice has no recorded snapshot.
         """
         query = """
             SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
                    af.adres AS afleveradres, ba.adres AS factuuradres,
-                   CASE WHEN o.betaalde_facturen IS NULL THEN 0
-                        WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL
-                        ELSE o.jaaromzet END AS jaaromzet,
+                   CASE
+                       WHEN o.paid_count IS NULL THEN 0
+                       WHEN o.paid_count = o.known_amount_count THEN o.jaaromzet
+                       ELSE NULL
+                   END AS jaaromzet,
                    kk.percentage AS kortingspercentage
             FROM Klant AS k
             JOIN Adres AS af ON af.adres_id = k.afleveradres_id
             JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
             LEFT JOIN (
                 SELECT f.klant_id,
-                       COUNT(*) AS betaalde_facturen,
-                       COUNT(f.totaal_bedrag) AS bekende_bedragen,
+                       COUNT(*) AS paid_count,
+                       COUNT(f.totaal_bedrag) AS known_amount_count,
                        SUM(f.totaal_bedrag) AS jaaromzet
                 FROM Factuur AS f
                 WHERE YEAR(f.betaald_op) = %s
@@ -41,7 +43,7 @@ class CustomerRepository:
         """
         pattern = f"%{search}%"
         with self.connection.cursor(dictionary=True) as cursor:
-            cursor.execute(query, (year, year, pattern, pattern, pattern))
+            cursor.execute(query, (year, year + 1, pattern, pattern, pattern))
             return cursor.fetchall()
 
     def find_customer(self, customer_id):

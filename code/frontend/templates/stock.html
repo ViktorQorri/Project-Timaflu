@@ -12,7 +12,9 @@
       </div>
       <div class="page-actions">
         <a class="button button--secondary" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
-        <a class="button" href="{{ url_for('purchasing.reorder') }}">Medicijnen bijbestellen</a>
+        {% if shortages|selectattr('heeft_leverancier')|list %}
+          <a class="button" href="{{ url_for('purchasing.reorder') }}">Vergelijk leveranciers en prijzen</a>
+        {% endif %}
       </div>
       <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
         {{ shortages|length }} producten onder minimum
@@ -30,7 +32,7 @@
               <th scope="col" class="stock-dashboard__number">Voorraad</th>
               <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
               <th scope="col" class="stock-dashboard__number">Tekort</th>
-<th scope="col">Leveranciers</th>
+              <th scope="col">Actie</th>
             </tr>
           </thead>
           <tbody>
@@ -43,11 +45,12 @@
                 <td class="stock-dashboard__number">
                   <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
                 </td>
-<td>
+                <td>
                   {% if item.heeft_leverancier %}
-                    <a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Vergelijk leveranciers en prijzen</a>
+                    <a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Leveranciers bekijken</a>
+                    <a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Bijbestellen</a>
                   {% else %}
-                    <span>Geen leverancier; niet bijbestellen</span>
+                    <span class="stock-dashboard__shortage">Geen leverancier; niet bijbestellen</span>
                   {% endif %}
                 </td>
               </tr>

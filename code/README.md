@@ -18,9 +18,10 @@ code/
     .env.example
   frontend/
     templates/          Jinja2 templates, one per screen, all extend base.html
-    static/css/         style.css
+    static/css/         shared and screen-specific stylesheets
   database/
     schema.sql          creates the tables
+    migrations/         one-time updates for existing databases
 ```
 
 ## Run locally
@@ -36,6 +37,8 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    ```
 
 2. Run `database\schema.sql` against the `timaflu` database to create the tables.
+   For an existing database, apply each unapplied SQL file in `database\migrations\`
+   once, in filename order.
 
 3. Install the dependencies, from the `code` folder:
 
@@ -54,7 +57,29 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    flask --app app run --debug
    ```
 
-Open http://127.0.0.1:5000. The home page says "Database connected" when everything works. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
+Open http://127.0.0.1:5000. The home page says "Database verbonden" when the database connection is available. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
+
+## Opleverbestanden maken
+
+De school vraagt aparte ZIP-bestanden voor Python-backend en HTML/CSS-website,
+plus het actuele EER, de databasequeries en de ontwerpproducten. Maak ze vanuit
+de repositoryhoofdmappen met:
+
+```powershell
+python code/build_deliverables.py --output-dir deliverables
+```
+
+Dit levert `timaflu-backend.zip`, `timaflu-frontend.zip`,
+`timaflu-database-en-queries.zip` en `timaflu-ontwerpen.zip`.
+Het websitearchief bevat de Jinja/HTML-templates en CSS; voor dynamische
+schermen blijft de Python-backend nodig. De databasebestanden zijn
+MySQL-scripts en documentatie, geen automatisch gepubliceerde online database.
+
+Na een geslaagde GitHub Actions-run zijn dezelfde vier archieven ook te
+downloaden als artifact `timaflu-school-deliverables`. Alleen Git-tracked
+bronbestanden gaan mee: geen lokale `.env`, gebruikerswachtwoorden,
+`__pycache__` of tijdelijke testdatabases. De gegenereerde ZIPs hoeven
+niet in Git te worden gecommit.
 
 ## Adding a screen
 

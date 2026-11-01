@@ -103,7 +103,7 @@ class RobotMySQLConcurrencyTests(TestCase):
             try:
                 barrier2.wait(timeout=10)
                 try:
-                    return ("success", RobotOrderRepository(conn).complete(1, suborder))
+                    return ("success", RobotOrderRepository(conn).complete(1, suborder, {product: 3}))
                 except Exception as error:
                     return (type(error).__name__, str(error))
             finally:

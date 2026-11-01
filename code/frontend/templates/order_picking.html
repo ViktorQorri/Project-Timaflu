@@ -7,50 +7,98 @@
     <header class="stock-dashboard__intro">
       <div>
         <p class="stock-dashboard__eyebrow">Orderpicking</p>
-        <h1 id="picking-bins-title">Verzamelbakken</h1>
-        <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
+        <h1 id="picking-bins-title">Orderpicking en verzamelbakken</h1>
+        <p class="stock-dashboard__subtitle">Verdeel beschikbare orders over robotgangen. Robots registreren daarna de gescande bakken automatisch.</p>
       </div>
       <p class="picking-bins__count" aria-label="{{ bins|length }} verzamelbakken geregistreerd">
         {{ bins|length }} bakken geregistreerd
       </p>
     </header>
 
-    {% if bins %}
-      <div class="stock-dashboard__table-wrap">
-        <table class="stock-dashboard__table">
-          <caption>Geregistreerde verzamelbakken per order</caption>
-          <thead>
-            <tr>
-              <th scope="col">Bakcode</th>
-              <th scope="col" class="stock-dashboard__number">Order</th>
-              <th scope="col" class="stock-dashboard__number">Deelorder</th>
-              <th scope="col">Locatie</th>
-              <th scope="col" class="stock-dashboard__number">Robot</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for bin in bins %}
+    <section aria-labelledby="orders-to-pick-title">
+      <h2 id="orders-to-pick-title">Orders klaar voor orderpicking</h2>
+      {% if orders %}
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table">
+            <caption>Nieuwe orders met gereserveerde voorraad, nog niet verdeeld over robots</caption>
+            <thead>
               <tr>
-                <th scope="row">{{ bin.unieke_code }}</th>
-                <td class="stock-dashboard__number">{{ bin.bestelling_id }}</td>
-                <td class="stock-dashboard__number">{{ bin.deelorder_id }}</td>
-                <td>{% if bin.gang %}Gang {{ bin.gang }}{% else %}Onbekend{% endif %}</td>
-                <td class="stock-dashboard__number">{{ bin.robot_id }}</td>
-                <td>
-                  <span class="picking-bins__status{% if bin.afgerond %} picking-bins__status--done{% endif %}">{{ bin.status }}</span>
-                </td>
+                <th scope="col">Order</th>
+                <th scope="col">Klant</th>
+                <th scope="col">Gewenste leverdatum</th>
+                <th scope="col">Dagdeel</th>
+                <th scope="col">Spoed</th>
+                <th scope="col">Actie</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="stock-dashboard__empty" role="status">
-        <h2>Nog geen verzamelbakken</h2>
-        <p>Zodra een robot een bak scant, verschijnt die hier met de order en de locatie.</p>
-      </div>
-    {% endif %}
+            </thead>
+            <tbody>
+              {% for order in orders %}
+                <tr>
+                  <th scope="row">{{ order.bestelling_id }}</th>
+                  <td>{{ order.bedrijfsnaam }}</td>
+                  <td>{{ order.gewenste_leverdatum }}</td>
+                  <td>{{ order.dagdeel }}</td>
+                  <td>{% if order.spoed %}Ja{% else %}Nee{% endif %}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('order_picking.dispatch_order', order_id=order.bestelling_id) }}">
+                      <button type="submit">Verdeel over robots</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen nieuwe orders met gereserveerde voorraad die nog verdeeld moeten worden.</p>
+      {% endif %}
+    </section>
+
+    <section aria-labelledby="registered-bins-title">
+      <header class="stock-dashboard__intro">
+        <div>
+          <h2 id="registered-bins-title">Verzamelbakken</h2>
+          <p class="stock-dashboard__subtitle">Zie welke order in welke verzamelbakken zit. De robots registreren elke gescande bak automatisch.</p>
+        </div>
+      </header>
+
+      {% if bins %}
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table">
+            <caption>Geregistreerde verzamelbakken per order</caption>
+            <thead>
+              <tr>
+                <th scope="col">Bakcode</th>
+                <th scope="col" class="stock-dashboard__number">Order</th>
+                <th scope="col" class="stock-dashboard__number">Deelorder</th>
+                <th scope="col">Locatie</th>
+                <th scope="col" class="stock-dashboard__number">Robot</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bin in bins %}
+                <tr>
+                  <th scope="row">{{ bin.unieke_code }}</th>
+                  <td class="stock-dashboard__number">{{ bin.bestelling_id }}</td>
+                  <td class="stock-dashboard__number">{{ bin.deelorder_id }}</td>
+                  <td>{% if bin.gang %}Gang {{ bin.gang }}{% else %}Onbekend{% endif %}</td>
+                  <td class="stock-dashboard__number">{{ bin.robot_id }}</td>
+                  <td>
+                    <span class="picking-bins__status{% if bin.afgerond %} picking-bins__status--done{% endif %}">{{ bin.status }}</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="stock-dashboard__empty" role="status">
+          <h3>Nog geen verzamelbakken</h3>
+          <p>Zodra een robot een bak scant, verschijnt die hier met de order en de locatie.</p>
+        </div>
+      {% endif %}
+    </section>
   </section>
   <section class="stock-dashboard" aria-labelledby="package-title">
     <h2 id="package-title">Verzamelde orders verpakken</h2>

@@ -1,85 +1,189 @@
 {% extends "base.html" %}
 {% block title %}Openstaande facturen{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Administratie</span>
-  <h1>Openstaande facturen</h1>
-  <p>Zoek de facturen van een klant op. De bedragen hieronder worden uit de vastgelegde factuurgegevens gelezen en niet achteraf met geschatte kortingen herberekend.</p>
-</section>
-<form method="get" class="lookup-form">
-  <div class="form-field">
-    <label for="invoice-customer">Klantnummer</label>
-    <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{customer_id or ''}}">
-  </div>
-  <button type="submit">Facturen opzoeken</button>
-</form>
-{% for f in invoices %}
-<section class="stock-dashboard" aria-labelledby="invoice-{{f.invoice_number}}">
-  <header class="stock-dashboard__intro">
-    <div><span class="eyebrow">Factuur</span><h2 id="invoice-{{f.invoice_number}}"><a href="{{url_for('weekly_invoices.issued_invoice',invoice_id=f.invoice_number)}}">Factuur {{f.invoice_number}}</a></h2></div>
+<section class="invoice-page" aria-labelledby="invoice-page-title">
+  <header class="invoice-page__intro">
+    <p class="invoice-page__eyebrow">Administratie</p>
+    <h1 id="invoice-page-title">Facturen beheren</h1>
+    <p class="invoice-page__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
+    <p><a href="{{ url_for('administration.outstanding_invoices') }}">Overzicht openstaande klantfacturen en herinneringen</a></p>
   </header>
-  <div class="invoice-parties">
-    <div><strong>Datum</strong><p>{{f.date}}</p><strong>Timaflu</strong><p>{{f.sender_address or 'Afzenderadres: niet opgenomen in de casus'}}</p></div>
-    <div><strong>Factuurnummer</strong><p>{{f.invoice_number}}</p><strong>{{f.customer_name}}</strong><p>{{f.customer_address}}</p></div>
-  </div>
-  <div class="stock-dashboard__table-wrap">
-    <table class="stock-dashboard__table">
-      <caption>Daadwerkelijk geleverde producten</caption>
-      <thead><tr><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
-      <tbody>
-        {% for line in f.lines %}
-        <tr><td>{{line.quantity}}</td><td>€ {{line.unit_price}}</td><td>€ {{line.line_total}}</td></tr>
-        {% else %}
-        <tr><td colspan="3">Geen geleverde regels vastgelegd.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <dl class="invoice-totals">
-    {% for label,value in [
-      ('Totaal excl. btw',f.total_ex_vat),
-      ('9% btw',f.vat_9_percent),
-      ('Totaal incl. btw',f.total_incl_vat),
-      ('Bestellingskorting',f.order_discount),
-      ('Totaal incl. bestellingskorting',f.total_after_order_discount),
-      ('Eenmalige korting',f.first_order_discount),
-      ('Totaal incl. eenmalige korting',f.total_after_first_order_discount),
-      ('Klantenkorting',f.customer_discount),
-      ('Totaal incl. klantenkorting',f.total)
-    ] %}
-    <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
-    {% endfor %}
-    {% if f.extra_cost_gross %}
-    <dt>Afgesproken extra bezorgkosten excl. btw</dt><dd>€ {{ f.extra_cost_ex }}</dd>
-    <dt>Btw over extra bezorgkosten</dt><dd>€ {{ f.extra_cost_vat }}</dd>
-    <dt>Extra bezorgkosten incl. btw</dt><dd>€ {{ f.extra_cost_gross }}</dd>
-    {% endif %}
-    <dt><strong>Definitief te betalen</strong></dt><dd><strong>€ {{ f.final_total }}</strong></dd>
-  </dl>
-  {% if not f.snapshot_complete %}
-  <p class="flash flash-warning" role="status">Een historisch factuurbedrag of een toegepaste korting is niet vastgelegd. Een eerder verzonden bedrag mag niet worden herberekend met aangenomen korting.</p>
+
+  {% if today is defined and today and today[5:] == '-12-31' %}
+    <section class="invoice-create" aria-labelledby="annual-discounts-title">
+      <h2 id="annual-discounts-title">Jaarlijkse klantkortingen</h2>
+      <p>Stel op 31 december de klantkorting voor volgend jaar vast op basis van de
+         volledig betaalde facturen van dit kalenderjaar (5%, 10% of 15%).</p>
+      <form method="post" action="{{ url_for('administration.determine_annual_discounts') }}">
+        <label><input type="checkbox" name="discounts_confirmed" value="yes" required>
+          Ik heb de betaalde jaaromzet gecontroleerd.
+        </label>
+        <button type="submit">Kortingen voor volgend jaar vastleggen</button>
+      </form>
+    </section>
   {% endif %}
-  <h3>Betalingsopvolging</h3>
-  <p>{{f.action}}</p>
-  <form method="post" action="{{url_for('administration.invoice_action')}}" class="stacked-form">
-    <input type="hidden" name="invoice_id" value="{{f.invoice_number}}">
-    <input type="hidden" name="customer_id" value="{{customer_id}}">
-    <label for="invoice-action-{{f.invoice_number}}">Actie</label>
-    <select id="invoice-action-{{f.invoice_number}}" name="action">
-      <option value="reminder1">Eerste herinnering</option>
-      <option value="reminder2">Tweede herinnering</option>
-      <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
-      <option value="payment_plan_rejected">Betalingsregeling geweigerd, incasso</option>
-      {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
-    </select>
-    <label><input type="checkbox" name="offer_refused_confirmed" value="yes">
-      Alleen voor incasso: de betalingsregeling is daadwerkelijk aangeboden en door de klant geweigerd.</label>
-    <label for="invoice-amount-{{f.invoice_number}}">Ontvangen bedrag (alleen bij volledig betaald)</label>
-    <input id="invoice-amount-{{f.invoice_number}}" type="number" min="0" step="0.01" name="received_amount">
-    <button type="submit">Actie registreren</button>
+
+  <section aria-labelledby="uninvoiced-deliveries-title">
+    <h2 id="uninvoiced-deliveries-title">Afgeleverd en nog niet gefactureerd</h2>
+    <p>Controleer de daadwerkelijk geleverde producten voordat je een weekfactuur aanmaakt.
+       De bestellings- en klantenkortingen worden bij het aanmaken per bestelling berekend.</p>
+    {% if uninvoiced_deliveries %}
+    <div class="stock-dashboard__table-wrap">
+      <table class="stock-dashboard__table">
+        <thead><tr><th>Order</th><th>Klant</th><th>Afgeleverd op</th>
+          <th>Geleverde producten excl. btw</th><th>Extra bezorgkosten</th><th>Actie</th></tr></thead>
+        <tbody>
+        {% for item in uninvoiced_deliveries %}
+          <tr>
+            <th scope="row">{{ item.bestelling_id }}</th>
+            <td>{{ item.bedrijfsnaam }}</td>
+            <td>{{ item.afgeleverd_op }}</td>
+            <td>€ {{ item.subtotaal }}</td>
+            <td>€ {{ item.extra_bezorgkosten }}</td>
+            <td>
+              <a href="{{ url_for('weekly_invoices.weekly_overview') }}">
+                Naar de gecontroleerde weekfacturatie
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p>Er zijn geen afgeleverde orders die nog gefactureerd moeten worden.</p>
+    {% endif %}
+  </section>
+
+  <form method="get" class="invoice-search" role="search">
+    <label for="invoice-customer">Klantnummer
+      <input id="invoice-customer" type="number" min="1" name="customer_id" required value="{{ customer_id or '' }}">
+    </label>
+    <button type="submit">Facturen opzoeken</button>
   </form>
+
+  <p><a href="{{ url_for('weekly_invoices.weekly_overview') }}">
+    Weekfacturen voor een afgesloten week controleren en uitgeven
+  </a></p>
+
+  <section aria-label="Factuuroverzicht">
+    {% for f in invoices %}
+      <article class="invoice-card" aria-labelledby="invoice-{{ f.invoice_number }}">
+        <header class="invoice-card__header">
+          <div>
+            <h2 id="invoice-{{ f.invoice_number }}">Factuur {{ f.invoice_number }}</h2>
+            <p class="invoice-card__meta">{{ f.date }} · {{ f.customer_name }} · {{ f.customer_address }}</p>
+          </div>
+          <p class="invoice-card__meta">Betalingsopvolging: <strong>{{ f.action }}</strong></p>
+        </header>
+
+        <div class="invoice-card__lines">
+          <table>
+            <caption>Geleverde factuurregels</caption>
+            <thead>
+              <tr><th scope="col">Aantal</th><th scope="col">Prijs per eenheid</th><th scope="col">Regeltotaal</th></tr>
+            </thead>
+            <tbody>
+              {% for r in f.lines %}
+                <tr><td>{{ r.quantity }}</td><td>€ {{ r.unit_price }}</td><td>€ {{ r.line_total }}</td></tr>
+              {% else %}
+                <tr><td colspan="3">Geen factuurregels vastgelegd.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <dl class="invoice-card__totals">
+          <div><dt>Totaal excl. btw</dt><dd>{% if f.total_ex_vat is not none %}€ {{ f.total_ex_vat }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>9% btw</dt><dd>{% if f.vat_9_percent is not none %}€ {{ f.vat_9_percent }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Totaal incl. btw</dt><dd>{% if f.total_incl_vat is not none %}€ {{ f.total_incl_vat }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Bestellingskorting</dt><dd>{% if f.order_discount is not none %}€ {{ f.order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Na bestellingskorting</dt><dd>{% if f.total_after_order_discount is not none %}€ {{ f.total_after_order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Eenmalige korting</dt><dd>{% if f.first_order_discount is not none %}€ {{ f.first_order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Na eenmalige korting</dt><dd>{% if f.total_after_first_order_discount is not none %}€ {{ f.total_after_first_order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          <div><dt>Klantenkorting</dt><dd>{% if f.customer_discount is not none %}€ {{ f.customer_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          {% if f.extra_delivery_costs is not none and f.extra_delivery_costs > 0 %}
+            <div><dt>Extra bezorgkosten wegens niet thuis</dt><dd>€ {{ f.extra_delivery_costs }}</dd></div>
+          {% endif %}
+          <div class="invoice-card__total"><dt>Te betalen</dt><dd>{% if f.total is not none %}€ {{ f.total }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+        </dl>
+
+        {% if not f.snapshot_complete %}
+          <p class="flash-warning" role="status">
+            Historische korting of totaal ontbreekt. Het eerder verstuurde definitieve
+            factuurbedrag kan niet worden herberekend uit alleen de geleverde regels.
+          </p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('administration.invoice_action') }}" class="invoice-action">
+          <input type="hidden" name="invoice_id" value="{{ f.invoice_number }}">
+          <input type="hidden" name="customer_id" value="{{ customer_id }}">
+          <label for="invoice-action-{{ f.invoice_number }}">Actie
+            <select id="invoice-action-{{ f.invoice_number }}" name="action">
+              <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
+              <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
+              {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
+            </select>
+          </label>
+          <label>
+            <input type="checkbox" name="offer_refused_confirmed" value="yes">
+            Alleen bij incasso: de klant heeft de aangeboden standaard betalingsregeling geweigerd.
+          </label>
+          <label>
+            <input type="checkbox" name="agency_acceptance_confirmed" value="yes">
+            Alleen bij incasso: het incassobureau heeft de opdracht daadwerkelijk geaccepteerd.
+          </label>
+          <label for="received-amount-{{ f.invoice_number }}">Ontvangen bedrag (alleen bij volledige betaling)
+            <input id="received-amount-{{ f.invoice_number }}" type="number" min="0" step="0.01" name="received_amount">
+          </label>
+          <button type="submit">Actie registreren</button>
+        </form>
+      </article>
+    {% else %}
+      {% if customer_id %}
+        <p class="stock-dashboard__empty" role="status">Geen facturen gevonden voor deze klant.</p>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Zoek op klantnummer om facturen te bekijken.</p>
+      {% endif %}
+    {% endfor %}
+  </section>
+
+  <section class="invoice-create" aria-labelledby="purchase-invoices-title">
+    <div>
+      <h2 id="purchase-invoices-title">Openstaande inkoopfacturen</h2>
+      <p>Na de wekelijkse klantfacturatie worden inkoopfacturen betaald.
+         Het systeem registreert de betaling; het voert geen bankbetaling uit.</p>
+    </div>
+    {% if purchase_invoices %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <thead><tr><th scope="col">Inkoopfactuur</th><th scope="col">Leverancier</th>
+            <th scope="col">Factuurdatum</th><th scope="col">Bedrag</th>
+            <th scope="col">Betaling</th></tr></thead>
+          <tbody>
+          {% for item in purchase_invoices %}
+            <tr>
+              <th scope="row">{{ item.inkoopfactuur_id }}</th>
+              <td>{{ item.leverancier }}</td>
+              <td>{{ item.factuurdatum }}</td>
+              <td>€ {{ item.bedrag }}</td>
+              <td>
+                <form method="post" action="{{ url_for('administration.pay_purchase_invoice', invoice_id=item.inkoopfactuur_id) }}">
+                  <label>
+                    <input type="checkbox" name="payment_confirmed" value="yes" required>
+                    Factuur gecontroleerd en volledig betaald
+                  </label>
+                  <button type="submit">Betaling registreren</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>Er zijn geen openstaande inkoopfacturen.</p>
+    {% endif %}
+  </section>
 </section>
-{% else %}
-{% if customer_id %}<p role="status">Geen facturen gevonden.</p>{% endif %}
-{% endfor %}
 {% endblock %}

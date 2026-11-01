@@ -1,64 +1,52 @@
-"""Regression checks for the two distinct first-visit delivery outcomes."""
+"""Regressies voor een ondertekende eerste aflevering zonder extra bezoek."""
 import unittest
-from datetime import date
+from datetime import date, time
 from unittest.mock import patch
 from app import create_app
 from domain.errors import DomainError
 from repositories.assessed_repository import AssessedRepository
-
-
-class FirstDeliveryCursor:
-    def __init__(self, state):
-        self.state = state
-        self.queries = []
-    def __enter__(self): return self
-    def __exit__(self, *args): return False
-    def execute(self, query, params=()):
-        self.queries.append(query)
-        if "SET resultaat='afgeleverd'" in query:
-            self.state["result"] = "afgeleverd"
-    def fetchone(self): return {"resultaat": self.state["result"]}
-
-
-class DB:
-    def __init__(self, result=None):
-        self.state = {"result": result}
-        self.c = FirstDeliveryCursor(self.state)
-        self.commits = 0
-        self.rollbacks = 0
-    def cursor(self, dictionary=False): return self.c
-    def commit(self): self.commits += 1
-    def rollback(self): self.rollbacks += 1
+from test_distribution import FakeConnection
 
 
 class FirstDeliveryTests(unittest.TestCase):
     def test_signed_first_delivery(self):
-        db = DB()
-        repo = AssessedRepository(db)
         with self.assertRaises(DomainError):
-            repo.record_first_attempt_delivery(1, date(2026, 10, 31), None)
-        self.assertEqual(db.commits, 0)
-        repo.record_first_attempt_delivery(1, date(2026, 10, 31), "yes")
-        self.assertEqual(db.state["result"], "afgeleverd")
-        self.assertEqual(db.commits, 1)
-        self.assertTrue(any("UPDATE Bestelling" in q for q in db.c.queries))
-        self.assertFalse(any("INSERT INTO Leverpoging" in q for q in db.c.queries))
+            AssessedRepository(None).register_first_delivery_attempt(
+                1, date(2026, 10, 31), True, False
+            )
+        db=FakeConnection(one_rows=[{
+            "resultaat":None,"geplande_tijd":time(9),"rit_id":5,
+        }])
+        AssessedRepository(db).register_first_delivery_attempt(
+            1,date(2026,10,31),True,True
+        )
+        self.assertEqual(db.commits,1)
+        statements=[q for q,_ in db.cursor_instance.statements]
+        self.assertTrue(any("INSERT INTO Leveringregel" in q for q in statements))
+        self.assertFalse(any("INSERT INTO Leverpoging" in q for q in statements))
         with self.assertRaises(DomainError):
-            repo.record_first_attempt_delivery(1, date(2026, 10, 31), "yes")
+            duplicate=FakeConnection(one_rows=[{
+                "resultaat":"afgeleverd","geplande_tijd":time(9),"rit_id":5,
+            }])
+            AssessedRepository(duplicate).register_first_delivery_attempt(
+                1,date(2026,10,31),True,True
+            )
 
     def test_route_and_template(self):
-        app = create_app()
-        app.config.update(TESTING=True, SECRET_KEY="test")
+        app=create_app()
+        app.config.update(TESTING=True,SECRET_KEY="test")
         class Stub:
-            def __init__(self): self.calls = []
-            def record_first_attempt_delivery(self, *args): self.calls.append(args)
-        stub = Stub()
-        with patch("routes.distribution.get_connection", return_value=object()):
-            with patch("routes.distribution.AssessedRepository", return_value=stub):
+            def __init__(self):self.calls=[]
+            def register_first_delivery_attempt(self,*args):self.calls.append(args)
+        stub=Stub()
+        with patch("routes.distribution.get_connection",return_value=object()):
+            with patch("routes.distribution.AssessedRepository",return_value=stub):
                 with app.test_client() as client:
-                    response = client.post("/deliveries/first-attempt/delivered", data={
-                        "day": "2026-10-31", "delivery_id": "1", "signature_confirmed": "yes"})
-                    self.assertEqual(response.status_code, 302)
-        self.assertEqual(stub.calls, [(1, date(2026, 10, 31), "yes")])
-        template = app.jinja_loader.get_source(app.jinja_env, "deliveries.html")[0]
-        self.assertIn("distribution.first_attempt_delivered", template)
+                    response=client.post("/deliveries/first-attempt",data={
+                        "day":"2026-10-31","delivery_id":"1",
+                        "outcome":"afgeleverd","receipt_signed":"1"
+                    })
+        self.assertEqual(response.status_code,302)
+        self.assertEqual(stub.calls,[(1,date(2026,10,31),True,True,None)])
+        template=app.jinja_loader.get_source(app.jinja_env,"deliveries.html")[0]
+        self.assertIn("distribution.first_attempt",template)

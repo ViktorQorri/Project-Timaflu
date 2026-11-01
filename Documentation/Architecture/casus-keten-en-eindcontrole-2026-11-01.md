@@ -79,6 +79,40 @@ fictieve gegevens. Bij echte inzet moeten eerst beveiliging, toegang,
 robotidentiteiten en gegevensverwerking expliciet worden overeengekomen.
 Geen verzonnen accounts, wachtwoorden of auditrecords toevoegen.
 
+## Aanvullende controle na de nieuwste hoofdbranch
+
+De actuele controle vertrekt vanuit `main` na PR #123. De originele
+`Current-processes.md`, `Desired-process.md` en `Product-description.md`
+blijven leidend. De route-inventaris bevat 28 GET-routes voor medewerkers,
+één voor databasegezondheid en één aparte robot-JSON-dispatch zonder
+medewerkersscherm. Het verslag toetst 30 GET-verzoeken, inclusief een extra
+orderzoekvariant. Het reproduceerbare programma
+`code/database/audit_ui_queries.py` legt voor ieder verzoek de daadwerkelijk door MySQL
+uitgevoerde SQL, parameters en verkregen uitvoer vast in
+[query-output-per-screen.md](query-output-per-screen.md). De controle faalt
+voortaan als een medewerkersscherm niet wordt gemeten. De exacte uitvoer en
+de werkelijke MySQL-serverversie worden bij iedere CI-run opnieuw bepaald.
+
+De werkende website en de statische ontwerpen blijven verschillende
+opleverproducten. Schermontwerpen worden op 390, 768 en 1440 px beoordeeld;
+de medewerkersschermen krijgen daarnaast een aparte controle op beschikbare
+stylesheets. Een ontbrekende gedeelde CSS-link is verwijderd.
+Op Floris test zijn 30 daadwerkelijk gerenderde Flask-schermverzoeken op
+390, 768 en 1440 px in Chrome vijfmaal gecontroleerd: **450 van 450
+controles geslaagd**, zonder HTTP-fouten, ontbrekende lokale bestanden,
+JavaScript of horizontale documentoverflow. Deze controle is reproduceerbaar
+met `python Documentation/Architecture/test-data/verify_flask_chrome.py --rounds 5`
+met een afzonderlijk geïnstalleerde Playwright-testomgeving en de geïsoleerde
+lokale MySQL-fixture. De website zelf gebruikt geen Playwright.
+
+De officiële ZIP-oplevering is reproduceerbaar met
+`python code/build_deliverables.py --output-dir deliverables`. Dit maakt
+een backendarchief, frontendarchief, database- en queryarchief en een
+ontwerparchief. Na geslaagde GitHub Actions zijn die vier bestanden via het
+artifact `timaflu-school-deliverables` beschikbaar. De ZIPs bevatten geen
+lokale `.env`-bestanden en het frontendarchief is nadrukkelijk een
+Flask/Jinja-frontend, geen zelfstandig gehoste website.
+
 ## Voor inzet buiten de testomgeving
 
 - Echt bedrijfsafzenderadres `TIMAFLU_ADDRESS`, productionele MySQL en

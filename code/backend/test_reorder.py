@@ -1,4 +1,4 @@
-"""Case-based tests for the manual replenishment workflow (#57)."""
+"""Case-based tests for the manually confirmed replenishment workflow."""
 
 from unittest import TestCase
 from unittest.mock import patch
@@ -10,8 +10,13 @@ from services.reorder_service import ReorderService
 
 class Stock:
     def shortages(self):
-        return [{"product_id": 7, "productnaam": "Medicijn A",
-                 "voorraad": 2, "minimumvoorraad": 10, "tekort": 8}]
+        return [{
+            "product_id": 7,
+            "productnaam": "Medicijn A",
+            "voorraad": 2,
+            "minimumvoorraad": 10,
+            "tekort": 8,
+        }]
 
 
 class Suppliers:
@@ -33,8 +38,8 @@ class Purchases:
     def __init__(self):
         self.calls = []
 
-    def record_order(self, supplier_id, product_id, quantity):
-        self.calls.append((supplier_id, product_id, quantity))
+    def record_order(self, supplier_id, product_id, quantity, confirmed):
+        self.calls.append((supplier_id, product_id, quantity, confirmed))
         return 44
 
     def recorded_orders(self):
@@ -53,46 +58,56 @@ class ReorderTests(TestCase):
         self.purchases = Purchases()
         self.service = ReorderService(Stock(), Suppliers(), self.purchases)
 
-    def test_select_shortage_and_sorted_matching_offers(self):
+    def test_shortage_has_matching_offers_sorted_by_price(self):
         view = self.service.overview("7")
         self.assertEqual(view["selected"]["tekort"], 8)
-        self.assertEqual([r["leverancier_id"] for r in view["offers"]], [2, 5])
+        self.assertEqual([offer["leverancier_id"] for offer in view["offers"]], [2, 5])
 
-    def test_reject_non_shortage(self):
+    def test_only_current_shortages_can_be_selected(self):
         for value in ("8", "abc"):
             with self.assertRaises(DomainError):
                 self.service.overview(value)
 
-    def test_requires_supplier_contact_confirmation(self):
+    def test_supplier_contact_and_valid_offer_are_required(self):
         with self.assertRaises(DomainError):
             self.service.record_confirmed("7", "2", "8", None)
-        self.assertEqual(self.purchases.calls, [])
-        self.assertEqual(self.service.record_confirmed("7", "2", "8", "yes"), 44)
-
-    def test_confirmed_order_requires_current_shortage_and_matching_supplier(self):
         with self.assertRaises(DomainError):
             self.service.record_confirmed("8", "2", "8", "yes")
         with self.assertRaises(DomainError):
             self.service.record_confirmed("7", "99", "8", "yes")
         self.assertEqual(self.purchases.calls, [])
 
-    def test_get_renders_and_post_requires_confirmation(self):
+        self.assertEqual(self.service.record_confirmed("7", "2", "8", "yes"), 44)
+        self.assertEqual(self.purchases.calls, [("2", "7", "8", "yes")])
+
+    def test_expensive_supplier_requires_unavailable_cheaper_suppliers(self):
+        with self.assertRaisesRegex(DomainError, "goedkoopste"):
+            self.service.record_confirmed("7", "5", "8", "yes")
+        self.assertEqual(self.purchases.calls, [])
+        self.assertEqual(
+            self.service.record_confirmed("7", "5", "8", "yes", "yes"), 44
+        )
+
+    def test_reorder_page_renders_offers_and_recorded_orders(self):
         app = create_app()
         app.config.update(TESTING=True, SECRET_KEY="test-secret")
         with patch("routes.purchasing._reorder_service", return_value=self.service):
             with app.test_client() as client:
                 response = client.get("/reorder?product_id=7")
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(b"Goedkoop", response.data)
-                self.assertIn(b"Fabrikant heeft deze bestelling bevestigd", response.data)
-                response = client.post("/reorder", data={
-                    "product_id": "7", "supplier_id": "2", "quantity": "8"
-                })
-                self.assertEqual(response.status_code, 400)
-                self.assertEqual(self.purchases.calls, [])
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Goedkoop", response.data)
+        self.assertIn(b"laagste prijs", response.data)
+        self.assertIn(b"Vastgelegde inkoopbestellingen", response.data)
+        self.assertIn(b"besteld", response.data)
+
+    def test_reorder_post_requires_contact_confirmation(self):
+        app = create_app()
+        app.testing = True
+        app.config["SECRET_KEY"] = "test-secret"
+        with patch("routes.purchasing._reorder_service", return_value=self.service):
+            with app.test_client() as client:
                 response = client.post("/reorder", data={
                     "product_id": "7", "supplier_id": "2", "quantity": "8",
-                    "confirmed": "yes",
                 })
-                self.assertEqual(response.status_code, 302)
-                self.assertEqual(len(self.purchases.calls), 1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.purchases.calls, [])

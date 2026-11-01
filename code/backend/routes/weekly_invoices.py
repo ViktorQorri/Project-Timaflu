@@ -29,6 +29,8 @@ def weekly_overview():
         request.values.get("week_start", previous_completed_week().isoformat())
     )
     if request.method == "POST":
+        if request.form.get("invoice_approved") != "yes":
+            raise DomainError("Controleer en bevestig de uitgifte van weekfacturen.")
         ids = WeeklyInvoiceRepository(get_connection()).issue_week(
             week_start, current_app.config.get("TIMAFLU_ADDRESS", ""),
             delivery_cost_vat_percent=current_app.config.get("TIMAFLU_DELIVERY_COST_VAT_PERCENT", "")

@@ -534,3 +534,14 @@ table caption, .stock-dashboard__table caption { color: var(--muted); font-size:
 }
 /* Timaflu case process forms and invoice fields. END */
 /* Timaflu frontend design system. End: shared layout and semantic component styles. */
+
+/* Start: Navigatie Timaflu voor mobiele orderpicking- en distributieschermen zonder JavaScript. */
+.mobile-navigation { display: none; }
+@media (max-width: 760px) {
+  .mobile-navigation { display: block; width: 100%; }
+  .mobile-navigation summary { cursor: pointer; padding: 0.75rem; font-weight: 700; }
+  .mobile-navigation nav ul { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.5rem 1rem; list-style: none; }
+  .mobile-navigation nav a { display: block; padding: 0.55rem 0; }
+  .site-header .desktop-navigation { display: none; }
+}
+/* End: Navigatie Timaflu. */

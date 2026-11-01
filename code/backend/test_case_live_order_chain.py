@@ -16,7 +16,7 @@ class RealOrderChainTests(unittest.TestCase):
     def setUp(self):
         self.name="timaflu_orderchain_"+uuid4().hex[:10]
         self.options=dict(host="127.0.0.1",port=int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
-                          user="root",password=os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"])
+                          user="root",password=os.getenv("TIMAFLU_TEST_MYSQL_PASSWORD", ""))
         self.admin=mysql.connector.connect(**self.options)
         with self.admin.cursor() as c: c.execute("CREATE DATABASE "+self.name)
         self.admin.commit()
@@ -34,7 +34,7 @@ class RealOrderChainTests(unittest.TestCase):
                          VALUES('TEST-01','ORDER-TEST','TEST Medicijn',100,1,1,1)""")
             c.execute("INSERT INTO Robot(robot_id,gang) VALUES(1,'A')")
             c.execute("INSERT INTO Magazijnlocatie(gang,schapnummer,product_id,aantal) VALUES('A',1,1,5)")
-            c.execute("INSERT INTO Koerier(naam,beschikbaar) VALUES('TEST Koerier',TRUE)")
+            c.execute("INSERT INTO Koerier(naam,regio,beschikbaar) VALUES('TEST Koerier','TEST regio Breda',TRUE)")
         self.db.commit()
         self.app=create_app()
         self.app.config.update(TESTING=True,SECRET_KEY="test-orderchain",
@@ -78,6 +78,7 @@ class RealOrderChainTests(unittest.TestCase):
             token=self.token(preview)
             self.assertEqual(client.post("/orders/confirm",
                 data={"quote_token":token,"customer_approved":"yes"}).status_code,302)
+            self.assertIsNone(self.scalar("SELECT afnemen_bij_tekort FROM Bestelregel"))
             self.assertEqual(self.scalar("SELECT aantal FROM Voorraadreservering"),3)
             self.assertEqual(self.scalar("SELECT aantal FROM Magazijnlocatie"),5)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Deelorder"),1)
@@ -85,23 +86,31 @@ class RealOrderChainTests(unittest.TestCase):
                 data={"quote_token":token,"customer_approved":"yes"}).status_code,400)
             self.assertEqual(client.post("/api/picking-bins",
                 json={"bin_code":"TEST-BIN-01","sub_order_id":1,"aisle":"A"}).status_code,200)
-            result=client.post("/api/robots/1/complete",json={"aisle":"A","suborder_id":1})
+            result=client.post("/api/robots/1/complete",json={"aisle":"A","suborder_id":1,"collected":[{"product_id":1,"quantity":3}]})
             self.assertEqual(result.status_code,200,result.data[:300])
             self.assertEqual(self.scalar("SELECT aantal FROM Magazijnlocatie"),2)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Voorraadreservering"),0)
             self.assertEqual(client.post("/api/robots/1/complete",
-                json={"aisle":"A","suborder_id":1}).status_code,409)
+                json={"aisle":"A","suborder_id":1,"collected":[{"product_id":1,"quantity":3}]}).status_code,409)
             self.assertEqual(client.get("/order-picking").status_code,200)
-            self.assertEqual(client.post("/order-picking/orders/1/pack").status_code,302)
-            self.assertEqual(self.scalar("SELECT aantal_geleverd FROM Leveringregel"),3)
-            self.assertEqual(client.post("/order-picking/orders/1/pack").status_code,409)
+            self.assertEqual(client.post("/deliveries/1/pack",
+                data={"box_count":"1"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT aantal_verhuisdozen FROM Bestelling"),1)
+            # Packing does not count as delivery. Only a signed receipt does.
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leveringregel"),0)
+            self.assertEqual(client.post("/deliveries/1/pack",
+                data={"box_count":"1"}).status_code,409)
+            self.assertEqual(client.post("/deliveries/1/release").status_code,302)
             self.assertEqual(client.get("/deliveries").status_code,200)
-            self.assertEqual(client.post("/deliveries/plan",
-                data={"delivery_id":1,"courier_id":1,"day":day.isoformat(),
-                      "time":"10:00","courier_assignment_confirmed":"yes"}).status_code,302)
+            self.assertEqual(client.post("/deliveries/schedule",
+                data={"order_id":1,"courier_id":1,"time":"10:00",
+                      "region_confirmed":"yes"}).status_code,302)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leverpoging"),1)
-            self.assertEqual(client.post("/deliveries/first-attempt/delivered",
-                data={"day":day.isoformat(),"delivery_id":"1","signature_confirmed":"yes"}).status_code,302)
+            self.assertEqual(client.post("/deliveries/first-attempt",
+                data={"day":day.isoformat(),"delivery_id":"1",
+                      "outcome":"afgeleverd","receipt_signed":"1"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT aantal_geleverd FROM Leveringregel"),3)
+            self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"afgeleverd")
             with self.app.app_context():
                 week=day-timedelta(days=day.weekday())
                 ids=WeeklyInvoiceRepository(get_connection()).issue_week(
@@ -122,6 +131,7 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Voorraadreservering"),0)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Deelorder"),0)
             self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"backorder")
+            self.assertEqual(self.scalar("SELECT afnemen_bij_tekort FROM Bestelregel"),1)
 
     def test_two_failed_visits_can_be_rescheduled_and_charge_billed_once(self):
         first = date.today()+timedelta(days=1)
@@ -134,31 +144,36 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(client.post("/api/picking-bins",
                 json={"bin_code": "RETRY-BIN", "sub_order_id": 1, "aisle": "A"}).status_code, 200)
             self.assertEqual(client.post("/api/robots/1/complete",
-                json={"aisle": "A", "suborder_id": 1}).status_code, 200)
-            self.assertEqual(client.post("/order-picking/orders/1/pack").status_code, 302)
-            self.assertEqual(client.post("/deliveries/plan",
-                data={"delivery_id": 1, "courier_id": 1, "day": first.isoformat(),
-                      "time": "10:00", "courier_assignment_confirmed": "yes"}).status_code, 302)
+                json={"aisle": "A", "suborder_id": 1, "collected":[{"product_id":1,"quantity":3}]}).status_code, 200)
+            self.assertEqual(client.post("/deliveries/1/pack",
+                data={"box_count":"1"}).status_code,302)
+            self.assertEqual(client.post("/deliveries/1/release").status_code,302)
+            self.assertEqual(client.post("/deliveries/schedule",
+                data={"order_id":1,"courier_id":1,"time":"10:00",
+                      "region_confirmed":"yes"}).status_code,302)
+            # The return visit is scheduled at the moment of first absence.
+            self.assertEqual(client.post("/deliveries/first-attempt",
+                data={"day":first.isoformat(),"delivery_id":1,
+                      "outcome":"niet aanwezig","second_time":"14:00"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leverpoging"),2)
             self.assertEqual(client.post("/deliveries/second-attempt",
-                data={"day": first.isoformat(), "delivery_id": 1,
-                      "time": "14:00"}).status_code, 302)
-            self.assertEqual(client.post("/deliveries/second-attempt/result",
-                data={"day": first.isoformat(), "delivery_id": 1,
-                      "outcome": "niet aanwezig"}).status_code, 302)
-            followup = client.post("/deliveries/failed-followup",
-                data={"day": first.isoformat(), "delivery_id": 1,
-                      "requested_date": retry.isoformat(), "time_slot": "ochtend",
-                      "customer_contact_confirmed": "yes",
-                      "extra_cost": "10.90", "explanation": "Twee keer niet aanwezig"})
-            self.assertEqual(followup.status_code, 302, followup.data[:300])
-            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Levering"), 2)
-            self.assertEqual(self.scalar("SELECT levering_id FROM Leveringregel"), 2)
-            self.assertEqual(client.post("/deliveries/plan",
-                data={"delivery_id": 2, "courier_id": 1, "day": retry.isoformat(),
-                      "time": "10:00", "courier_assignment_confirmed": "yes"}).status_code, 302)
-            self.assertEqual(client.post("/deliveries/first-attempt/delivered",
-                data={"day": retry.isoformat(), "delivery_id": 2,
-                      "signature_confirmed": "yes"}).status_code, 302)
+                data={"day":first.isoformat(),"delivery_id":1,"time":"14:00",
+                      "outcome":"niet aanwezig"}).status_code,302)
+            followup=client.post("/deliveries/1/reschedule",
+                data={"new_date":retry.isoformat(),"part_of_day":"ochtend",
+                      "customer_contact_confirmed":"yes","additional_cost":"10.90",
+                      "explanation":"Twee keer niet aanwezig"})
+            self.assertEqual(followup.status_code,302,followup.data[:300])
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Levering"),1)
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Leveringregel"),0)
+            self.assertEqual(client.post("/deliveries/schedule",
+                data={"order_id":1,"courier_id":1,"time":"10:00",
+                      "region_confirmed":"yes"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Levering"),2)
+            self.assertEqual(client.post("/deliveries/first-attempt",
+                data={"day":retry.isoformat(),"delivery_id":2,
+                      "outcome":"afgeleverd","receipt_signed":"1"}).status_code,302)
+            self.assertEqual(self.scalar("SELECT levering_id FROM Leveringregel"),2)
             week = retry - timedelta(days=retry.weekday())
             with self.app.app_context():
                 issued = WeeklyInvoiceRepository(get_connection()).issue_week(

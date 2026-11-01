@@ -1,56 +1,116 @@
 {% extends "base.html" %}
 {% block title %}Medicijnen bijbestellen{% endblock %}
 {% block content %}
-<section class="stock-dashboard">
-  <span class="eyebrow">Inkoop</span>
-  <h1>Medicijnen bijbestellen</h1>
+<section class="stock-dashboard" aria-labelledby="reorder-title">
+  <h1 id="reorder-title">Medicijnen bijbestellen</h1>
   <p class="stock-dashboard__subtitle">Vergelijk de inkoopprijzen en neem zelf contact op met de fabrikant voordat je de bestelling vastlegt.</p>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
       <caption>Medicijnen onder de minimumvoorraad</caption>
-      <thead><tr><th>Product</th><th>Voorraad</th><th>Minimum</th><th>Tekort</th><th>Actie</th></tr></thead>
+      <thead>
+        <tr>
+          <th scope="col">Product</th>
+          <th scope="col" class="stock-dashboard__number">Voorraad</th>
+          <th scope="col" class="stock-dashboard__number">Minimum</th>
+          <th scope="col" class="stock-dashboard__number">Tekort</th>
+          <th scope="col">Actie</th>
+        </tr>
+      </thead>
       <tbody>
       {% for item in shortages %}
-      <tr><th scope="row">{{ item.productnaam }}</th><td>{{ item.voorraad }}</td><td>{{ item.minimumvoorraad }}</td><td>{{ item.tekort }}</td>
-        <td><a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Vergelijk fabrikanten</a></td></tr>
+        <tr>
+          <th scope="row">{{ item.productnaam }}</th>
+          <td class="stock-dashboard__number">{{ item.voorraad }}</td>
+          <td class="stock-dashboard__number">{{ item.minimumvoorraad }}</td>
+          <td class="stock-dashboard__number">{{ item.tekort }}</td>
+          <td><a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Vergelijk leveranciers</a></td>
+        </tr>
       {% else %}
-      <tr><td colspan="5">Er zijn geen voorraadtekorten.</td></tr>
+        <tr><td colspan="5">Er zijn geen voorraadtekorten.</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
+
   {% if selected %}
-  <h2>Leveranciers voor {{ selected.productnaam }}</h2>
-  {% if offers %}
-  <p>De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
+    <h2>Leveranciers voor {{ selected.productnaam }}</h2>
+    {% if offers %}
+      <p>De goedkoopste leverancier staat bovenaan. Controleer zelf of deze kan leveren.</p>
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <thead>
+            <tr>
+              <th scope="col">Leverancier</th>
+              <th scope="col">Contactpersoon</th>
+              <th scope="col">Telefoon</th>
+              <th scope="col" class="stock-dashboard__number">Inkoopprijs</th>
+              <th scope="col">Bestelling vastleggen</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for offer in offers %}
+            <tr>
+              <th scope="row">{{ offer.leverancier }}{% if loop.first %} (laagste prijs){% endif %}</th>
+              <td>{{ offer.contactpersoon or 'Niet ingevuld' }}</td>
+              <td>{{ offer.telefoonnummer or 'Niet ingevuld' }}</td>
+              <td class="stock-dashboard__number">€ {{ '%.2f'|format(offer.inkoopprijs) }}</td>
+              <td>
+                <form method="post" action="{{ url_for('purchasing.reorder') }}">
+                  <input type="hidden" name="product_id" value="{{ selected.product_id }}">
+                  <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
+                  <label for="quantity-{{ offer.leverancier_id }}">Aantal</label>
+                  <input id="quantity-{{ offer.leverancier_id }}" type="number" name="quantity" min="1" step="1" value="{{ selected.tekort }}" required>
+                  <label><input type="checkbox" name="confirmed" value="yes" required> Fabrikant heeft deze bestelling bevestigd</label>
+                  {% if offer.inkoopprijs > offers[0].inkoopprijs %}
+                    <label>
+                      <input type="checkbox" name="cheaper_unavailable" value="yes" required>
+                      Alle goedkopere leveranciers zijn benaderd en kunnen niet leveren.
+                    </label>
+                  {% endif %}
+                  <button type="submit">Inkooporder registreren</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>Geen gekoppelde leverancier gevonden. De inkoper moet dit handmatig opvolgen.</p>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="stock-dashboard" aria-labelledby="supplier-orders-title">
+  <h2 id="supplier-orders-title">Vastgelegde inkoopbestellingen</h2>
+  <p>De status ‘besteld’ betekent dat de inkoper de bestelling na contact heeft vastgelegd. Ontvangst van voorraad valt buiten de casus.</p>
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
-      <thead><tr><th>Fabrikant</th><th>Contact</th><th>Telefoon</th><th>Inkoopprijs</th><th>Vastleggen</th></tr></thead>
+      <thead>
+        <tr>
+          <th scope="col">Bestelling</th>
+          <th scope="col">Vastgelegd op</th>
+          <th scope="col">Leverancier</th>
+          <th scope="col">Product</th>
+          <th scope="col" class="stock-dashboard__number">Aantal</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
       <tbody>
-      {% for offer in offers %}
-      <tr>
-        <th scope="row">{{ offer.leverancier }}{% if loop.first %} <span class="status status--success">Laagste prijs</span>{% endif %}</th>
-        <td>{{ offer.contactpersoon or 'Niet ingevuld' }}</td>
-        <td>{{ offer.telefoonnummer or 'Niet ingevuld' }}</td>
-        <td>€ {{ '%.2f'|format(offer.inkoopprijs) }}</td>
-        <td>
-          <form method="post" action="{{ url_for('purchasing.reorder') }}">
-            <input type="hidden" name="product_id" value="{{ selected.product_id }}">
-            <input type="hidden" name="supplier_id" value="{{ offer.leverancier_id }}">
-            <label for="quantity-{{ offer.leverancier_id }}">Aantal</label>
-            <input id="quantity-{{ offer.leverancier_id }}" type="number" name="quantity" min="1" step="1" value="{{ selected.tekort }}" required>
-            <label><input type="checkbox" name="confirmed" value="yes" required> Fabrikant heeft deze bestelling bevestigd</label>
-            <button type="submit">Bevestigde inkoop registreren</button>
-          </form>
-        </td>
-      </tr>
+      {% for item in recorded_orders %}
+        <tr>
+          <th scope="row">{{ item.inkoopbestelling_id }}</th>
+          <td>{{ item.besteld_op or 'Onbekend' }}</td>
+          <td>{{ item.leverancier }}</td>
+          <td>{{ item.productnaam }}</td>
+          <td class="stock-dashboard__number">{{ item.aantal }}</td>
+          <td>{{ item.status_naam or 'Onbekend' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Er zijn nog geen inkoopbestellingen geregistreerd.</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
-  {% else %}
-    <p>Geen gekoppelde fabrikant gevonden. De inkoper moet dit handmatig opvolgen.</p>
-  {% endif %}
-  {% endif %}
 </section>
 {% endblock %}
