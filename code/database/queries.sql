@@ -532,19 +532,6 @@ INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,bet
 -- Query 5 (illustrative input, not a claimed database result)
 UPDATE PotentieleKlant SET klant_id=1, opvolging_afgesloten=TRUE WHERE potentiele_klant_id=1;
 
--- AssessedRepository.close_prospect_followup (only after a month and explicit refusal)
--- Query 1: lock the prospective customer to avoid simultaneous conversion.
-SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant
-WHERE potentiele_klant_id=1 FOR UPDATE;
--- Query 2: last visit must be at least one month old.
-SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek
-WHERE potentiele_klant_id=1;
--- Query 3: only when linked to an existing customer; do not retry someone who ordered.
-SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=1;
--- Query 4: no more acquisition once interest is declined.
-UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE
-WHERE potentiele_klant_id=1;
-
 -- AssessedRepository.record_payment_action
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE f.factuur_id=1 FOR UPDATE;
