@@ -86,8 +86,14 @@
       {
         "name": "status_naam",
         "type": "varchar(40)",
-        "nullable": true,
+        "nullable": false,
         "key": "MUL"
+      },
+      {
+        "name": "aantal_verhuisdozen",
+        "type": "int",
+        "nullable": false,
+        "key": ""
       },
       {
         "name": "eenmalige_korting_toegepast",
@@ -352,6 +358,18 @@
         "type": "int",
         "nullable": false,
         "key": "MUL"
+      },
+      {
+        "name": "besteld_op",
+        "type": "datetime",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "status_naam",
+        "type": "varchar(30)",
+        "nullable": true,
+        "key": ""
       }
     ],
     "Inkoopbestelregel": [
@@ -486,6 +504,18 @@
       {
         "name": "naam",
         "type": "varchar(100)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "regio",
+        "type": "varchar(100)",
+        "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "extern",
+        "type": "tinyint(1)",
         "nullable": false,
         "key": ""
       },
