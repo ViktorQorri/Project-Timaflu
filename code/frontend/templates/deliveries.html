@@ -1,123 +1,345 @@
 {% extends "base.html" %}
 {% block title %}Bezorgrooster{% endblock %}
 {% block extra_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
 {% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Distributie</span>
-  <h1>Bezorgrooster</h1>
-  <p>Registreer een eerste afwezigheid, plan de tweede bezorgpoging op dezelfde dag en leg pas na het tweede bezoek de uitkomst vast.</p>
-</section>
-<form method="get" class="lookup-form">
-  <div class="form-field">
-    <label for="delivery-date">Datum</label>
-    <input id="delivery-date" type="date" name="day" value="{{day}}" required>
-  </div>
-  <button type="submit">Rooster bekijken</button>
-</form>
-<section class="stock-dashboard stock-dashboard--deliveries">
-  <div class="stock-dashboard__table-wrap">
-    <table class="stock-dashboard__table">
-      <caption>Ritten en bezorgpogingen op {{day}}</caption>
-      <thead><tr><th>Tijd</th><th>Bestelling</th><th>Klant</th><th>Adres</th><th>Contact</th><th>Status</th><th>Afhandeling</th></tr></thead>
-      <tbody>
-        {% for item in schedule %}
-        <tr>
-          <td data-label="Tijd">{{item.geplande_tijd}}</td>
-          <td data-label="Bestelling">{{item.bestelling_id}}</td>
-          <th scope="row" data-label="Klant">{{item.bedrijfsnaam}}</th>
-          <td data-label="Adres">{{item.adres}}</td>
-          <td data-label="Contact">{{item.contactpersoon}} / {{item.telefoonnummer}}</td>
-          <td data-label="Status">{{item.resultaat or 'Nog niet afgehandeld'}}</td>
-          <td data-label="Afhandeling">
-            {% if item.pogingnummer == 1 and not item.resultaat %}
-            <form method="post" action="{{url_for('distribution.first_attempt_delivered')}}">
-              <input type="hidden" name="day" value="{{day}}">
-              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
-              <label><input type="checkbox" name="signature_confirmed" value="yes" required>
-                Ontvangstondertekening is bevestigd</label>
-              <button type="submit">Afgeleverd bij eerste bezoek</button>
-            </form>
-            <form method="post" action="{{url_for('distribution.second_attempt')}}">
-              <input type="hidden" name="day" value="{{day}}">
-              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
-              <label for="retry-{{item.levering_id}}">Tijd tweede bezoek vandaag</label>
-              <input id="retry-{{item.levering_id}}" type="time" name="time" required>
-              <button type="submit">Niet aanwezig, tweede poging plannen</button>
-            </form>
-            {% elif item.pogingnummer == 2 and not item.resultaat %}
-            <form method="post" action="{{url_for('distribution.second_attempt_result')}}">
-              <input type="hidden" name="day" value="{{day}}">
-              <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
-              <label for="outcome-{{item.levering_id}}">Uitkomst tweede bezoek</label>
-              <select id="outcome-{{item.levering_id}}" name="outcome" required>
-                <option value="">Kies de uitkomst</option>
-                <option value="afgeleverd">Afgeleverd</option>
-                <option value="niet aanwezig">Opnieuw niet aanwezig</option>
-              </select>
-              <label><input type="checkbox" name="signature_confirmed" value="yes"> Klant heeft voor ontvangst getekend (verplicht bij aflevering)</label>
-              <button type="submit">Uitkomst registreren</button>
-            </form>
-            {% elif item.pogingnummer == 2 and item.resultaat == 'niet aanwezig' %}
-              <p>Niet afgeleverd. Verkoop neemt contact op met de klant over een nieuwe afspraak en eventuele extra kosten.</p>
-              <form method="post" action="{{url_for('distribution.failed_followup')}}">
-                <input type="hidden" name="day" value="{{day}}">
-                <input type="hidden" name="delivery_id" value="{{item.levering_id}}">
-                <label><input type="checkbox" name="customer_contact_confirmed" value="yes" required>
-                  Contact met klant bevestigd</label>
-                <label>Nieuwe leverdatum <input type="date" name="requested_date" required></label>
-                <label>Dagdeel
-                  <select name="time_slot" required>
-                    <option value="ochtend">Ochtend</option>
-                    <option value="middag">Middag</option>
-                  </select>
+  <section class="stock-dashboard delivery-page" aria-labelledby="distribution-title">
+    <header class="stock-dashboard__intro delivery-page__intro">
+      <div>
+        <p class="delivery-page__eyebrow">Distributie</p>
+        <h1 id="distribution-title">Leveringen en verzamelbakken</h1>
+        <p class="delivery-page__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
+      </div>
+    </header>
+
+    <section class="delivery-page__panel" aria-labelledby="couriers-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="couriers-title">Koeriers</h2>
+          <p class="stock-dashboard__subtitle">Beheer koeriers en hun actuele beschikbaarheid.</p>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="delivery-page__courier-form">
+        <label for="courier-name">Naam koerier
+          <input id="courier-name" name="name" maxlength="100" required>
+        </label>
+        <label for="courier-region">Regio eigen koerier
+          <input id="courier-region" name="region" maxlength="100"
+                 placeholder="Naam van de bestaande koeriersregio">
+        </label>
+        <label>
+          <input type="checkbox" name="external" value="yes">
+          Externe spoedkoerier (geen vaste regio)
+        </label>
+        <button type="submit">Koerier toevoegen</button>
+      </form>
+      {% if couriers %}
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table delivery-page__courier-table">
+            <thead>
+              <tr><th scope="col">Koerier</th><th scope="col">Soort</th>
+                  <th scope="col">Regio</th><th scope="col">Beschikbaarheid</th>
+                  <th scope="col">Actie</th></tr>
+            </thead>
+            <tbody>
+              {% for courier in couriers %}
+                <tr>
+                  <th scope="row">{{ courier.naam }}</th>
+                  <td>{{ "Externe spoedkoerier" if courier.extern else "Eigen koerier" }}</td>
+                  <td>
+                    {% if courier.extern %}
+                      Geen vaste regio
+                    {% else %}
+                      <form method="post" action="{{ url_for('distribution.update_courier_region', courier_id=courier.koerier_id) }}">
+                        <label for="courier-region-{{ courier.koerier_id }}">Regio
+                          <input id="courier-region-{{ courier.koerier_id }}" name="region"
+                                 value="{{ courier.regio or '' }}" maxlength="100" required>
+                        </label>
+                        <button type="submit">Regio opslaan</button>
+                      </form>
+                    {% endif %}
+                  </td>
+                  <td>{% if courier.beschikbaar %}Beschikbaar{% else %}Niet beschikbaar{% endif %}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('distribution.update_courier_availability', courier_id=courier.koerier_id) }}">
+                      <input type="hidden" name="available" value="{{ 0 if courier.beschikbaar else 1 }}">
+                      <button type="submit">
+                        {{ "Onbeschikbaar maken" if courier.beschikbaar else "Beschikbaar melden" }}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn nog geen koeriers toegevoegd.</p>
+      {% endif %}
+    </section>
+
+    <section class="delivery-page__panel" aria-labelledby="unscheduled-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="unscheduled-title">Orders inplannen</h2>
+          <p class="stock-dashboard__subtitle">De afgesproken leverdatum blijft behouden.
+             Voor reguliere bestellingen halen koeriers hun laatste vracht uiterlijk om 17:00 uur op;
+             spoedleveringen vormen hierop een uitzondering. Controleer de regionale route.</p>
+        </div>
+      </div>
+      {% for order in unscheduled_orders %}
+        <article class="delivery-page__order-card" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
+          <h3 id="schedule-order-{{ order.bestelling_id }}">
+            Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}
+          </h3>
+          <p>{{ order.afleveradres }} · {{ order.telefoonnummer }}</p>
+          <p>Afgesproken: {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
+          {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
+          {% if couriers|selectattr("beschikbaar")|list %}
+            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="delivery-page__schedule-form">
+              <input type="hidden" name="order_id" value="{{ order.bestelling_id }}">
+              <label for="courier-{{ order.bestelling_id }}">Koerier
+                <select id="courier-{{ order.bestelling_id }}" name="courier_id" required>
+                  <option value="">Kies een beschikbare koerier</option>
+                  {% for courier in couriers if courier.beschikbaar
+                       and (order.spoed or (not courier.extern and courier.regio))
+                       and (not courier.extern or not available_internal) %}
+                    <option value="{{ courier.koerier_id }}">{{ courier.naam }}
+                      ({{ "extern" if courier.extern else courier.regio }})</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label for="delivery-time-{{ order.bestelling_id }}">Bezorgtijd
+                <input id="delivery-time-{{ order.bestelling_id }}" type="time" name="time" required>
+              </label>
+              {% if not order.spoed %}
+                <label>
+                  <input type="checkbox" name="region_confirmed" value="yes" required>
+                  Ik heb bevestigd dat deze koerier in de regio van het afleveradres rijdt en de bestelling vóór 17:00 uur bij het magazijn ophaalt.
                 </label>
-                <label>Met de klant afgesproken extra bezorgkosten inclusief eventuele btw
-                  <input type="number" name="extra_cost" value="0.00" min="0" step="0.01" required>
-                </label>
-                <label>Toelichting extra kosten
-                  <textarea name="explanation" rows="2"></textarea>
-                </label>
-                <button type="submit">Nieuwe afspraak en kosten vastleggen</button>
-              </form>
+              {% else %}
+                <p>Spoed: kies eerst een beschikbare eigen koerier, ongeacht regio.
+                   Alleen wanneer geen eigen koerier beschikbaar is, kies je een externe spoedkoerier.</p>
+              {% endif %}
+              <button type="submit">Rit inplannen</button>
+            </form>
+          {% else %}
+            <p class="stock-dashboard__empty" role="status">Maak eerst een koerier beschikbaar.</p>
+          {% endif %}
+        </article>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen vrijgegeven orders zonder rit.</p>
+      {% endfor %}
+    </section>
+
+    <section class="delivery-page__panel" aria-labelledby="schedule-title">
+      <h2 id="schedule-title">Bezorgrooster</h2>
+      <form method="get" class="delivery-page__date-form">
+        <label for="delivery-day">Datum
+          <input id="delivery-day" type="date" name="day" value="{{ day.isoformat() }}" required>
+        </label>
+        <button type="submit">Bekijken</button>
+      </form>
+
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Geplande bezorgpogingen op {{ day }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tijd</th>
+              <th scope="col">Koerier</th>
+              <th scope="col">Regio</th>
+              <th scope="col">Bestelling</th>
+              <th scope="col">Spoed</th>
+              <th scope="col">Klant</th>
+              <th scope="col">Adres</th>
+              <th scope="col">Contact</th>
+              <th scope="col">Resultaat</th>
+              <th scope="col">Actie</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in schedule %}
+              <tr>
+                <td data-label="Tijd">{{ item.geplande_tijd }}</td>
+                <td data-label="Koerier">{{ item.koerier or "Niet bekend" }}</td>
+                <td data-label="Regio">{{ item.koeriersregio or "Geen vaste regio" }}</td>
+                <td data-label="Bestelling">{{ item.bestelling_id }}</td>
+                <td>{{ "Spoed" if item.spoed else "Regulier" }}</td>
+                <td data-label="Klant">{{ item.bedrijfsnaam }}</td>
+                <td data-label="Adres">{{ item.adres }}</td>
+                <td data-label="Contact">{{ item.contactpersoon }} - {{ item.telefoonnummer }}</td>
+                <td data-label="Status">{{ item.resultaat or "nog niet afgeleverd" }}</td>
+                <td data-label="Afhandeling">
+                  {% if item.can_register_first_attempt %}
+                    <form method="post" action="{{ url_for('distribution.first_attempt') }}">
+                      <input type="hidden" name="day" value="{{ day.isoformat() }}">
+                      <input type="hidden" name="delivery_id" value="{{ item.levering_id }}">
+                      <label for="first-outcome-{{ item.levering_id }}">Resultaat eerste poging</label>
+                      <select id="first-outcome-{{ item.levering_id }}" name="outcome">
+                        <option value="afgeleverd">Afgeleverd</option>
+                        <option value="niet aanwezig">Niet aanwezig</option>
+                      </select>
+                      <label for="return-time-{{ item.levering_id }}">Tweede poging later vandaag (alleen bij niet aanwezig)
+                        <input id="return-time-{{ item.levering_id }}" type="time" name="second_time">
+                      </label>
+                      <label class="delivery-receipt">
+                          <input type="checkbox" name="receipt_signed" value="1">
+                          De klant heeft daadwerkelijk voor ontvangst getekend (bij aflevering verplicht)
+                        </label>
+                        <button type="submit">Registreer eerste poging</button>
+                    </form>
+                  {% elif item.can_register_second_attempt %}
+                    <form method="post" action="{{ url_for('distribution.second_attempt') }}">
+                      <input type="hidden" name="day" value="{{ day.isoformat() }}">
+                      <input type="hidden" name="delivery_id" value="{{ item.levering_id }}">
+                      <p>Tweede bezorgpoging gepland om {{ item.geplande_tijd }}.</p>
+                      <input type="hidden" name="time" value="{{ item.geplande_tijd.strftime('%H:%M') }}">
+                      <label for="second-outcome-{{ item.levering_id }}">Resultaat tweede poging</label>
+                      <select id="second-outcome-{{ item.levering_id }}" name="outcome">
+                        <option value="afgeleverd">Afgeleverd</option>
+                        <option value="niet aanwezig">Niet afgeleverd</option>
+                      </select>
+                      <label class="delivery-receipt">
+                          <input type="checkbox" name="receipt_signed" value="1">
+                          De klant heeft daadwerkelijk voor ontvangst getekend (bij aflevering verplicht)
+                        </label>
+                        <button type="submit">Registreer tweede poging</button>
+                    </form>
+                  {% elif item.can_reschedule %}
+                    <p class="stock-dashboard__shortage" role="status">
+                      Tweede aflevering mislukt. De koerier brengt het pakket terug naar de distributiehoek;
+                      verkoop neemt contact op met de klant.
+                    </p>
+                    <form method="post" action="{{ url_for('distribution.reschedule_failed_delivery', delivery_id=item.levering_id) }}">
+                      <label for="retry-date-{{ item.levering_id }}">Nieuwe leverdatum
+                        <input id="retry-date-{{ item.levering_id }}" type="date"
+                               name="new_date" min="{{ today }}" required>
+                      </label>
+                      <label for="retry-slot-{{ item.levering_id }}">Afgesproken dagdeel
+                        <select id="retry-slot-{{ item.levering_id }}" name="part_of_day" required>
+                          <option value="">Kies een dagdeel</option>
+                          <option value="ochtend">Ochtend</option>
+                          <option value="middag">Middag</option>
+                        </select>
+                      </label>
+                      <label for="retry-cost-{{ item.levering_id }}">Extra bezorgkosten (€)
+                        <input id="retry-cost-{{ item.levering_id }}" type="number" name="additional_cost"
+                               min="0" max="99999999.99" step="0.01" value="0.00" required>
+                      </label>
+                      <label for="retry-reason-{{ item.levering_id }}">Toelichting extra kosten en situatie
+                        <textarea id="retry-reason-{{ item.levering_id }}" name="explanation"
+                                  maxlength="255" required></textarea>
+                      </label>
+                      <label>
+                        <input type="checkbox" name="customer_contact_confirmed" value="yes" required>
+                        Verkoop heeft met de klant een nieuwe leverafspraak gemaakt.
+                      </label>
+                      <button type="submit">Nieuwe bezorgafspraak vastleggen</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
             {% else %}
-              <span class="status status--info">Afgehandeld</span>
+              <tr><td colspan="10">Geen ritten.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="delivery-page__panel" aria-labelledby="orders-title">
+      <div class="stock-dashboard__intro">
+        <div>
+          <h2 id="orders-title">Orders en verzamelbakken</h2>
+          <p class="stock-dashboard__subtitle">Bakken zijn per order gegroepeerd. Verpak pas als alle deelorders afgerond zijn.</p>
+        </div>
+        <span class="stock-dashboard__count">{{ orders|length }} orders</span>
+      </div>
+
+      {% if orders %}
+        {% for order in orders %}
+          <section class="stock-dashboard__table-wrap" aria-labelledby="order-{{ order.bestelling_id }}">
+            <div class="stock-dashboard__intro">
+              <div>
+                <h3 id="order-{{ order.bestelling_id }}">Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}</h3>
+                <p>{{ order.afleveradres }} · {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
+                {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
+              </div>
+              <p>Status: <strong>{{ order.status_naam or "Onbekend" }}</strong></p>
+            </div>
+
+            <table class="stock-dashboard__table">
+              <caption>{{ order.bakken|length }} verzamelbakken bij deze bestelling</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Verzamelbak</th>
+                  <th scope="col">Deelorder</th>
+                  <th scope="col">Gang</th>
+                  <th scope="col">Verzamelen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bin in order.bakken %}
+                  <tr>
+                    <th scope="row">{{ bin.unieke_code }}</th>
+                    <td>{{ bin.deelorder_id }}</td>
+                    <td>{{ bin.gang or "Onbekend" }}</td>
+                    <td>{% if bin.afgerond %}Afgerond{% else %}Bezig{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <h4>Orderregels</h4>
+            <table class="stock-dashboard__table">
+              <thead>
+                <tr>
+                  <th scope="col">Artikelnummer</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Aantal</th>
+                  <th scope="col">Tekort afnemen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for line in order.bestelregels %}
+                  <tr>
+                    <th scope="row">{{ line.artikelnummer }}</th>
+                    <td>{{ line.productnaam }}</td>
+                    <td>{{ line.aantal }}</td>
+                    <td>{% if line.afnemen_bij_tekort %}Ja{% else %}Nee{% endif %}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4">Geen orderregels gevonden.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            {% if order.kan_verpakken %}
+              <form method="post" action="{{ url_for('distribution.pack_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
+                <label for="box-count-{{ order.bestelling_id }}">Aantal verhuisdozen</label>
+                <input id="box-count-{{ order.bestelling_id }}" name="box_count" type="number" min="1" step="1" required>
+                <button type="submit">Verpakking registreren</button>
+              </form>
+            {% elif order.status_naam == "ingepakt" and order.kan_vrijgeven %}
+              <p>{{ order.aantal_verhuisdozen }} verhuisdozen geregistreerd.</p>
+              <a href="{{ url_for('distribution.packing_label', order_id=order.bestelling_id) }}">
+                Adreslabel{% if order.spoed %} en spoedlabel{% endif %} afdrukken
+              </a>
+              <form method="post" action="{{ url_for('distribution.release_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
+                <button type="submit">Vrijgeven voor distributie</button>
+              </form>
+            {% elif not order.alle_deelorders_afgerond %}
+              <p class="stock-dashboard__subtitle">Verpakken is mogelijk zodra alle deelorders afgerond zijn.</p>
+            {% elif order.status_naam == "backorder" %}
+              <p class="stock-dashboard__subtitle">Deze bestelling heeft een backorder en kan nog niet worden verpakt.</p>
             {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="7">Geen ritten op deze datum.</td></tr>
+          </section>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-<section class="stock-dashboard" aria-labelledby="courier-planning-title">
-  <h2 id="courier-planning-title">Verpakte leveringen aan een koerier toewijzen</h2>
-  <p>Controleer zelf de regiotoewijzing, spoedbeschikbaarheid en het met de klant afgesproken dagdeel. Er wordt niets automatisch toegezegd.</p>
-  {% for shipment in pending %}
-  <article class="page-panel">
-    <h3>Levering #{{ shipment.levering_id }} · {{ shipment.bedrijfsnaam }}</h3>
-    <p>Bestelling {{ shipment.bestelling_id }} · {{ shipment.adres }} · {{ shipment.gewenste_leverdatum }} ({{ shipment.dagdeel }}){% if shipment.spoed %} · Spoed{% endif %}</p>
-    <form method="post" action="{{ url_for('distribution.plan_courier') }}" class="stacked-form">
-      <input type="hidden" name="delivery_id" value="{{ shipment.levering_id }}">
-      <label>Koerier
-        <select name="courier_id" required>
-          <option value="">Kies beschikbare koerier</option>
-          {% for courier in couriers %}
-          <option value="{{ courier.koerier_id }}">{{ courier.naam }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>Afgesproken leverdag <input type="date" name="day" value="{{ shipment.gewenste_leverdatum }}" required></label>
-      <label>Geplande levertijd <input type="time" name="time" required></label>
-      <label><input type="checkbox" name="courier_assignment_confirmed" value="yes" required> Koerier, regio en eventuele spoed zijn handmatig bevestigd.</label>
-      <button type="submit">Levering aan koeriersrooster toevoegen</button>
-    </form>
-  </article>
-  {% else %}
-  <p>Geen verpakte leveringen die nog moeten worden ingepland.</p>
-  {% endfor %}
-</section>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen bestellingen met geregistreerde verzamelbakken.</p>
+      {% endif %}
+    </section>
+  </section>
 {% endblock %}

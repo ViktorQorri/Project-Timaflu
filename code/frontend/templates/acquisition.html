@@ -1,73 +1,103 @@
 {% extends "base.html" %}
 {% block title %}Acquisitie{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Acquisitie</span>
-  <h1>Acquisitiebezoek en opvolging</h1>
-  <p>Leg een bezoek aan een potentiële apotheek vast en controleer na een maand of de apotheek daadwerkelijk een bestelling heeft geplaatst.</p>
-</section>
-<section class="stock-dashboard" aria-labelledby="visit-heading">
-  <h2 id="visit-heading">Bezoek registreren</h2>
-  <form class="stacked-form" method="post" action="{{ url_for('acquisition.record_visit') }}">
-    <div class="form-field">
-      <label for="visit-company">Bedrijf</label>
-      <input id="visit-company" name="company" required>
-    </div>
-    <div class="form-field">
-      <label for="visit-contact">Contactpersoon</label>
-      <input id="visit-contact" name="contact" required>
-    </div>
-    <div class="form-field">
-      <label for="visit-details">Contactgegevens</label>
-      <input id="visit-details" name="details" required>
-    </div>
-    <div class="form-field">
-      <label for="visit-address">Adres</label>
-      <input id="visit-address" name="address" required>
-    </div>
-    <div class="form-field">
-      <label for="visit-date">Bezoekdatum</label>
-      <input id="visit-date" name="visit_date" type="date" required>
-    </div>
-    <button type="submit">Bezoek opslaan</button>
-  </form>
-</section>
-<section class="stock-dashboard" aria-labelledby="followups-heading">
-  <h2 id="followups-heading">Opvolgen na minimaal één maand zonder bestelling</h2>
-  {% for prospect in prospects %}
-  <article class="page-panel" aria-labelledby="prospect-{{ prospect.potentiele_klant_id }}">
-    <h3 id="prospect-{{ prospect.potentiele_klant_id }}">{{ prospect.bedrijfsnaam }}</h3>
-    <p>{{ prospect.contactpersoon }} / {{ prospect.contactgegevens }}</p>
-    <p>{{ prospect.adres }}. Laatste bezoek: {{ prospect.bezoekdatum }}</p>
-    {% if prospect.klant_id %}
-      <p role="status">Deze apotheek heeft al een klantaccount, maar heeft nog geen bestelling geplaatst. Bel de contactpersoon; maak geen dubbel account aan.</p>
-    {% else %}
-      <form class="stacked-form" method="post" action="{{ url_for('acquisition.create_customer') }}">
-        <input type="hidden" name="prospect_id" value="{{ prospect.potentiele_klant_id }}">
-        <div class="form-field">
-          <label for="billing-{{ prospect.potentiele_klant_id }}">Factuuradres</label>
-          <input id="billing-{{ prospect.potentiele_klant_id }}" name="billing_address" required>
-        </div>
-        <div class="form-field">
-          <label for="delivery-{{ prospect.potentiele_klant_id }}">Afleveradres</label>
-          <input id="delivery-{{ prospect.potentiele_klant_id }}" name="delivery_address" required>
-        </div>
-        <label><input type="checkbox" name="consent" value="yes" required> Klant geeft toestemming voor account en eenmalige korting</label>
-        <button type="submit">Klantaccount aanmaken</button>
+  <section class="stock-dashboard acquisition-page" aria-labelledby="acquisition-title">
+    <header class="stock-dashboard__intro acquisition-page__intro">
+      <div>
+        <p class="acquisition-page__eyebrow">Acquisitie</p>
+        <h1 id="acquisition-title">Potentiële klanten</h1>
+        <p class="acquisition-page__subtitle">Registreer bezoeken en volg apotheken na één maand op.</p>
+      </div>
+      <span class="stock-dashboard__count">{{ follow_ups|length }} opvolgingen</span>
+    </header>
+
+    <section class="acquisition-page__section acquisition-panel" aria-labelledby="new-prospect-title">
+      <h2 id="new-prospect-title">Bezoek registreren</h2>
+      <form method="post" action="{{ url_for('acquisition.register_prospect') }}" class="acquisition-form">
+        <label class="acquisition-form__field" for="company-name">Bedrijfsnaam
+          <input id="company-name" name="company_name" maxlength="100" required>
+        </label>
+        <label class="acquisition-form__field" for="contact-person">Contactpersoon
+          <input id="contact-person" name="contact_person" maxlength="100" required>
+        </label>
+        <label class="acquisition-form__field" for="contact-details">Contactgegevens
+          <input id="contact-details" name="contact_details" maxlength="255" required>
+        </label>
+        <label class="acquisition-form__field" for="prospect-address">Adres
+          <input id="prospect-address" name="address" maxlength="255" required>
+        </label>
+        <label class="acquisition-form__field" for="visit-date">Bezoekdatum
+          <input id="visit-date" name="visit_date" type="date" required>
+        </label>
+        <button class="acquisition-form__submit" type="submit">Bezoek vastleggen</button>
       </form>
-    {% endif %}
-    <form class="stacked-form" method="post" action="{{ url_for('acquisition.decline_followup') }}">
-      <input type="hidden" name="prospect_id" value="{{ prospect.potentiele_klant_id }}">
-      <label><input type="checkbox" name="declined" value="yes" required>
-        De apotheek heeft na het vervolggesprek geen interesse; verdere acquisitie stopt.</label>
-      <button type="submit">Opvolging afsluiten</button>
-    </form>
-  </article>
-  {% else %}
-    <div class="stock-dashboard__empty" role="status">
-      <h3>Geen opvolging nodig</h3>
-      <p>Er zijn momenteel geen apotheken die minimaal één maand geleden zijn bezocht en nog geen bestelling hebben geplaatst.</p>
-    </div>
-  {% endfor %}
-</section>
+    </section>
+
+    <section class="acquisition-page__section" aria-labelledby="follow-ups-title">
+      <h2 id="follow-ups-title">Opvolging na één maand</h2>
+      {% if follow_ups %}
+        <div class="stock-dashboard__table-wrap">
+          <table class="stock-dashboard__table acquisition-page__table">
+            <caption>Open potentiële klanten zonder bestelling, gesorteerd op oudste bezoek</caption>
+            <thead>
+              <tr>
+                <th scope="col">Apotheek</th>
+                <th scope="col">Contactpersoon</th>
+                <th scope="col">Contactgegevens</th>
+                <th scope="col">Adres</th>
+                <th scope="col">Laatste bezoek</th>
+                <th scope="col">Opvolging</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for prospect in follow_ups %}
+                <tr>
+                  <th scope="row">{{ prospect.bedrijfsnaam }}</th>
+                  <td>{{ prospect.contactpersoon }}</td>
+                  <td>{{ prospect.contactgegevens }}</td>
+                  <td>{{ prospect.adres }}</td>
+                  <td>{{ prospect.laatste_bezoek }}</td>
+                  <td>
+                    <div class="acquisition-follow-up">
+                      <form method="post" action="{{ url_for('acquisition.complete_follow_up', prospect_id=prospect.potentiele_klant_id) }}">
+                        <input type="hidden" name="outcome" value="convert">
+                        <label for="delivery-{{ prospect.potentiele_klant_id }}">Afleveradres
+                          <input id="delivery-{{ prospect.potentiele_klant_id }}" name="delivery_address" value="{{ prospect.adres }}" maxlength="255" required>
+                        </label>
+                        <label for="invoice-{{ prospect.potentiele_klant_id }}">Factuuradres
+                          <input id="invoice-{{ prospect.potentiele_klant_id }}" name="invoice_address" maxlength="255" required>
+                        </label>
+                        <label for="phone-{{ prospect.potentiele_klant_id }}">Telefoonnummer
+                          <input id="phone-{{ prospect.potentiele_klant_id }}" name="phone_number" maxlength="25">
+                        </label>
+                        <button type="submit">Klant aanmaken en 10% korting registreren</button>
+                      </form>
+                      <form method="post" action="{{ url_for('acquisition.complete_follow_up', prospect_id=prospect.potentiele_klant_id) }}">
+                        <input type="hidden" name="outcome" value="no_interest">
+                        <label>
+                          <input type="checkbox" name="decision_confirmed" value="yes" required>
+                          De apotheek heeft dit tijdens het opvolggesprek bevestigd.
+                        </label>
+                        <button type="submit">Geen interesse</button>
+                      </form>
+                      <form method="post" action="{{ url_for('acquisition.complete_follow_up', prospect_id=prospect.potentiele_klant_id) }}">
+                        <input type="hidden" name="outcome" value="no_consent">
+                        <label>
+                          <input type="checkbox" name="decision_confirmed" value="yes" required>
+                          De apotheek heeft dit tijdens het opvolggesprek bevestigd.
+                        </label>
+                        <button type="submit">Geen toestemming voor account</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stock-dashboard__empty" role="status">Er zijn geen potentiële klanten die nu opgevolgd moeten worden.</p>
+      {% endif %}
+    </section>
+  </section>
 {% endblock %}

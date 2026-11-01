@@ -28,32 +28,27 @@ class MainCaseAuditTests(TestCase):
         self.assertNotIn(chr(96)+"n", source)
 
     def test_acquisition_refusal_is_accessible_in_the_real_form(self):
-        prospect = dict(
-            potentiele_klant_id=3, bedrijfsnaam="TEST Apotheek", contactpersoon="TEST Contact",
-            contactgegevens="0612345678", adres="Testadres", bezoekdatum=date(2026, 9, 1),
-            klant_id=None,
+        prospect=dict(
+            potentiele_klant_id=3,bedrijfsnaam="TEST Apotheek",contactpersoon="TEST Contact",
+            contactgegevens="0612345678",adres="Testadres",laatste_bezoek=date(2026,9,1)
         )
-        class FakeRepo:
-            def __init__(self, connection):
-                pass
-            def prospect_followups(self, cutoff):
-                return [prospect]
-        with patch("routes.acquisition.get_connection", return_value=object()):
-            with patch("routes.acquisition.AssessedRepository", FakeRepo):
-                response = self.app.test_client().get("/acquisition")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'action="/acquisition/decline"', response.data)
-        self.assertIn(b'name="declined"', response.data)
-        self.assertIn(b'Opvolging afsluiten', response.data)
+        with patch("routes.acquisition._service") as service:
+            service.return_value.due_follow_ups.return_value=[prospect]
+            response=self.app.test_client().get("/acquisition")
+        self.assertEqual(response.status_code,200)
+        self.assertIn(b'action="/acquisition/prospects/3/follow-up"',response.data)
+        self.assertIn(b'name="decision_confirmed"',response.data)
+        self.assertIn(b'value="no_interest"',response.data)
+        self.assertIn(b"Geen interesse",response.data)
 
     def test_catalog_requires_explicit_director_approval_even_without_browser(self):
         service = ProductService(FakeProductRepository(), FakeSupplierRepository())
         with self.assertRaisesRegex(DomainError, "directie"):
-            service.add_product(form_data(director_approved=""))
+            service.add_product(form_data(management_approved=""))
         with self.assertRaisesRegex(DomainError, "directie"):
-            service.add_product(form_data(director_approved="no"))
+            service.add_product(form_data(management_approved="no"))
         self.assertIn(
-            'name="director_approved"',
+            'name="management_approved"',
             (ROOT / "code/frontend/templates/product_form.html").read_text(encoding="utf-8")
         )
 
@@ -61,11 +56,13 @@ class MainCaseAuditTests(TestCase):
         with self.app.test_client() as client:
             requests = [
                 client.get("/deliveries?day=wrong"),
-                client.post("/deliveries/second-attempt", data={}),
-                client.post("/deliveries/second-attempt/result", data={"day": "wrong"}),
-                client.post("/deliveries/failed-followup", data={"delivery_id": "oops"}),
+                client.post("/deliveries/second-attempt",data={}),
+                client.post("/deliveries/first-attempt",data={"day":"wrong"}),
+                client.post("/deliveries/2/reschedule",data={
+                    "new_date":"wrong","customer_contact_confirmed":""
+                }),
             ]
-        self.assertEqual([r.status_code for r in requests], [400, 400, 400, 400])
+        self.assertEqual([r.status_code for r in requests],[400,400,400,400])
 
     def test_negative_or_non_numeric_sales_discount_is_rejected(self):
         class FakeDiscountRepository:

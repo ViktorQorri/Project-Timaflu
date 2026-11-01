@@ -72,6 +72,10 @@ class DiscountRepository:
         """, (customer_id, year))
         return None if row is None else row["percentage"]
 
+    def find_annual_percentage(self, customer_id, calendar_year):
+        """Return the rate fixed for the order year, used by weekly invoices."""
+        return self.get_customer_discount_percentage(customer_id, calendar_year)
+
     def list_customer_ids(self):
         """All customers to process in the 31 December annual determination."""
         return [row["klant_id"] for row in self._fetchall(

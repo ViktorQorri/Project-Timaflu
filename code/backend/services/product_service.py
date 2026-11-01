@@ -66,9 +66,8 @@ class ProductService:
             DomainError: A value is missing or invalid, or the supplier does not exist.
             ConflictError: The article number or order code is already in use.
         """
-        # De casus vereist een expliciet directiebesluit vóór opname in het assortiment.
-        if data.get("director_approved") != "yes":
-            raise DomainError("Bevestig eerst dat de directie dit medicijn heeft goedgekeurd.")
+        if data.get("management_approved") != "yes":
+            raise DomainError("Voeg een medicijn pas toe nadat de directie het heeft goedgekeurd.")
         product = read_product(data)
         offer = read_supplier_offer(data)
         if self.supplier_repository.get_by_id(offer.supplier_id) is None:

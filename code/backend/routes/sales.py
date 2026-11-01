@@ -15,6 +15,8 @@ from repositories.customer_repository import CustomerRepository
 from repositories.order_status_notification_repository import OrderStatusNotificationRepository
 from repositories.sales_stock_repository import SalesStockRepository
 from repositories.sales_case_repository import SalesCaseRepository
+from repositories.order_status_notification_repository import OrderStatusNotificationRepository
+from services.order_status_notification_service import OrderStatusNotificationService
 from repositories.telephone_order_repository import TelephoneOrderRepository
 from services.customer_service import CustomerService
 from services.order_status_notification_service import OrderStatusNotificationService
@@ -141,6 +143,10 @@ def calculate_order_discount():
         raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from exc
     if customer_id<=0:
         raise DomainError("Klantnummer moet positief zijn.")
+    try:
+        subtotal = euro(subtotal)
+    except (ValueError, InvalidOperation) as exc:
+        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
     repository = DiscountRepository(get_connection())
     customer = repository.find_customer(customer_id)
     if customer is None:

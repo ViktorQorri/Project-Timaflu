@@ -134,15 +134,23 @@ class CaseConformityTests(TestCase):
         self.assertFalse(any("SET betaald_op" in q for q,_ in db.statements))
 
     def test_retry_must_be_later_that_day(self):
-        db = DeliveryConnection()
-        with self.assertRaises(DomainError):
-            AssessedRepository(db).schedule_second_attempt(
-                4, time(9, 0), date(2026, 10, 30))
-        self.assertEqual(db.commits, 0)
-        self.assertFalse(db.state["second_exists"])
-        AssessedRepository(db).schedule_second_attempt(
-            4, time(14, 0), date(2026, 10, 30))
-        self.assertTrue(db.state["second_exists"])
+        from test_distribution import FakeConnection
+        for invalid in (time(9),time(10),time(18)):
+            db=FakeConnection(one_rows=[{
+                "resultaat":None,"geplande_tijd":time(10),"rit_id":5
+            }])
+            with self.assertRaises(DomainError):
+                AssessedRepository(db).register_first_delivery_attempt(
+                    4,date(2026,10,30),False,False,invalid
+                )
+            self.assertEqual(db.commits,0)
+        allowed=FakeConnection(one_rows=[{
+            "resultaat":None,"geplande_tijd":time(10),"rit_id":5
+        }])
+        AssessedRepository(allowed).register_first_delivery_attempt(
+            4,date(2026,10,30),False,False,time(14)
+        )
+        self.assertEqual(allowed.commits,1)
 
     def test_failed_delivery_followup_rejects_unconfirmed_or_invalid_plan(self):
         missing = CaseDB(failed_delivery=False)
@@ -168,22 +176,32 @@ class CaseConformityTests(TestCase):
                             for sql,_ in valid.statements))
 
     def test_decline_form_requires_explicit_confirmation(self):
-        app = create_app()
-        app.config.update(TESTING=True, SECRET_KEY="test")
-        class Stub:
-            def __init__(self): self.calls=[]
-            def close_prospect_followup(self, *args): self.calls.append(args)
-        stub=Stub()
-        with patch("routes.acquisition.get_connection", return_value=object()):
-            with patch("routes.acquisition.AssessedRepository", return_value=stub):
-                with app.test_client() as c:
-                    bad=c.post("/acquisition/decline",data={"prospect_id":"3"})
-                    self.assertEqual(bad.status_code,400)
-                    good=c.post("/acquisition/decline",data={
-                        "prospect_id":"3","declined":"yes"})
-                    self.assertEqual(good.status_code,302)
-        self.assertEqual(len(stub.calls),1)
-        self.assertEqual(stub.calls[0][0],3)
+        app=create_app()
+        app.config.update(TESTING=True,SECRET_KEY="test")
+        prospect={
+            "potentiele_klant_id":3,"bedrijfsnaam":"Apotheek",
+            "contactpersoon":"Contact","contactgegevens":"06123",
+            "adres":"Teststraat 1","laatste_bezoek":date(2026,9,1)
+        }
+        with patch("routes.acquisition._service") as service:
+            service.return_value.due_follow_ups.return_value=[prospect]
+            service.return_value.complete_follow_up.return_value=None
+            with app.test_client() as client:
+                screen=client.get("/acquisition")
+                self.assertEqual(screen.status_code,200)
+                self.assertIn(b'name="decision_confirmed"',screen.data)
+                bad=client.post("/acquisition/prospects/3/follow-up",data={"outcome":"no_interest"})
+                self.assertEqual(bad.status_code,400)
+                good=client.post("/acquisition/prospects/3/follow-up",data={
+                    "outcome":"no_interest","decision_confirmed":"yes"
+                })
+                self.assertEqual(good.status_code,302)
+            service.return_value.complete_follow_up.assert_called_once()
+            args=service.return_value.complete_follow_up.call_args.args
+            self.assertEqual(args[0],3)
+            self.assertEqual(dict(args[1]),{
+                "outcome":"no_interest","decision_confirmed":"yes"
+            })
 
     def test_measured_query_samples_mirror_screen_fields(self):
         root=Path(__file__).resolve().parents[2]

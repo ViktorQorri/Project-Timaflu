@@ -18,9 +18,10 @@ code/
     .env.example
   frontend/
     templates/          Jinja2 templates, one per screen, all extend base.html
-    static/css/         style.css
+    static/css/         shared and screen-specific stylesheets
   database/
     schema.sql          creates the tables
+    migrations/         one-time updates for existing databases
 ```
 
 ## Run locally
@@ -36,6 +37,8 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    ```
 
 2. Run `database\schema.sql` against the `timaflu` database to create the tables.
+   For an existing database, apply each unapplied SQL file in `database\migrations\`
+   once, in filename order.
 
 3. Install the dependencies, from the `code` folder:
 
@@ -54,7 +57,7 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    flask --app app run --debug
    ```
 
-Open http://127.0.0.1:5000. The home page says "Database connected" when everything works. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
+Open http://127.0.0.1:5000. The home page says "Database verbonden" when the database connection is available. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
 
 ## Adding a screen
 

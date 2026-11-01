@@ -56,40 +56,42 @@ class DesignSystemTests(TestCase):
     def test_dashboard_and_mobile_process_layout(self):
         app = create_app()
         app.config.update(TESTING=True)
-        # A template render test should isolate database access. Real MySQL route
-        # behavior is tested separately in the repository integration suite.
         with ExitStack() as stack:
-            for module in ("home", "order_picking", "distribution", "acquisition"):
-                stack.enter_context(patch(f"routes.{module}.get_connection", return_value=object()))
-            customers = stack.enter_context(patch("routes.sales.customer_service"))
-            customers.return_value.overview.return_value = []
+            for name in ("home", "order_picking", "distribution", "acquisition",
+                         "sales", "administration", "reports"):
+                stack.enter_context(patch(f"routes.{name}.get_connection", return_value=object()))
+
             stack.enter_context(patch("routes.home.HealthService"))
-            bins = stack.enter_context(patch("routes.order_picking.PickingBinService"))
-            bins.return_value.bins.return_value = []
-            packing = stack.enter_context(patch("routes.order_picking.DistributionPreparationRepository"))
-            packing.return_value.ready_to_pack.return_value = []
-            planned = stack.enter_context(patch("routes.distribution.DistributionPreparationRepository"))
-            planned.return_value.pending_shipments.return_value = ([], [])
-            deliveries = stack.enter_context(patch("routes.distribution.AssessedRepository"))
-            deliveries.return_value.delivery_schedule.return_value = []
-            acquisition = stack.enter_context(patch("routes.acquisition.AssessedRepository"))
-            acquisition.return_value.prospect_followups.return_value = []
-            stack.enter_context(patch("routes.sales.get_connection", return_value=object()))
-            customers = stack.enter_context(patch("routes.sales.SalesCaseRepository"))
-            customers.return_value.customers.return_value = []
-            customers.return_value.order_statuses.return_value = []
-            # Only the order status overview is changed by PR95. Keep smoke tests
-            # independent from a live DB; the real MySQL integration suite tests it.
-            stack.enter_context(patch("routes.reports.get_connection", return_value=object()))
-            report_repository = stack.enter_context(
-                patch("routes.reports.OrderStatusReportRepository")
-            )
-            report_repository.return_value.list_orders.return_value = []
+            customer_service=stack.enter_context(patch("routes.sales.customer_service"))
+            customer_service.return_value.overview.return_value=[]
+
+            picking=stack.enter_context(patch("routes.order_picking.PickingBinService"))
+            picking.return_value.bins.return_value=[]
+            robot=stack.enter_context(patch("routes.order_picking.RobotOrderRepository"))
+            robot.return_value.orders_ready_for_dispatch.return_value=[]
+
+            distribution=stack.enter_context(patch("routes.distribution.DistributionService"))
+            distribution.return_value.orders_with_bins.return_value=[]
+            distribution.return_value.orders_to_schedule.return_value=[]
+            distribution.return_value.couriers.return_value=[]
+            deliveries=stack.enter_context(patch("routes.distribution.AssessedRepository"))
+            deliveries.return_value.delivery_schedule.return_value=[]
+
+            acquisition=stack.enter_context(patch("routes.acquisition._service"))
+            acquisition.return_value.due_follow_ups.return_value=[]
+
+            admin=stack.enter_context(patch("routes.administration.AssessedRepository"))
+            admin.return_value.outstanding_purchase_invoices.return_value=[]
+            admin.return_value.uninvoiced_deliveries.return_value=[]
+
+            report=stack.enter_context(patch("routes.reports.OrderStatusReportRepository"))
+            report.return_value.list_orders.return_value=[]
+
             with app.test_client() as client:
-                for route in ("/", "/customers", "/orders/status", "/order-picking", "/deliveries",
-                              "/invoices", "/acquisition", "/reports"):
-                    response = client.get(route)
-                    self.assertEqual(response.status_code, 200, route)
-                    self.assertIn(b"ui-system.css", response.data, route)
-                    self.assertIn(b"mobile-navigation", response.data, route)
-                    self.assertIn(b"main-content", response.data, route)
+                for route in ("/", "/customers", "/orders", "/order-picking",
+                              "/deliveries", "/invoices", "/acquisition", "/reports"):
+                    response=client.get(route)
+                    self.assertEqual(response.status_code,200,route)
+                    self.assertIn(b"ui-system.css",response.data,route)
+                    self.assertIn(b"mobile-navigation",response.data,route)
+                    self.assertIn(b"main-content",response.data,route)

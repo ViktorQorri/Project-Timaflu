@@ -36,9 +36,29 @@ class RobotOrderService:
             "lines": self.repository.suborder_lines(next_order["deelorder_id"]),
         }
 
-    def complete(self, robot_id, aisle, suborder_id):
+    def complete(self, robot_id, aisle, suborder_id, collected):
+        """Require the robot to report exactly what was actually collected.
+
+        Counts are in the same package units as the assigned sub-order lines.
+        A missing product and a duplicate product are not silently assumed.
+        """
         robot_id = self._validate_robot(robot_id, aisle)
-        return self.repository.complete(robot_id, self._id(suborder_id))
+        suborder_id = self._id(suborder_id)
+        if not isinstance(collected, list) or not collected:
+            raise DomainError("Stuur per deelorderregel het werkelijk verzamelde aantal.")
+        quantities = {}
+        for item in collected:
+            if not isinstance(item, dict):
+                raise DomainError("Gebruik product_id en quantity per verzameld medicijn.")
+            product_id = item.get("product_id")
+            quantity = item.get("quantity")
+            if (type(product_id) is not int or product_id < 1
+                    or type(quantity) is not int or not 0 <= quantity <= 2_147_483_647):
+                raise DomainError("Productnummer en verzameld aantal moeten gehele getallen zijn.")
+            if product_id in quantities:
+                raise DomainError("Een product mag maar eenmaal in het verzamelde resultaat staan.")
+            quantities[product_id] = quantity
+        return self.repository.complete(robot_id, suborder_id, quantities)
 
     def generate_suborders(self, order_id):
         """Split a confirmed order from recorded stock reservations."""

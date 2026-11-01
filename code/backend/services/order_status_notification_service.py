@@ -7,6 +7,9 @@ STATUSES = {
     "verstuurd": ("Verstuurd", "info"),
     "backorder": ("Backorder", "warning"),
     "afgeleverd": ("Afgeleverd", "success"),
+    "gefactureerd": ("Gefactureerd", "success"),
+    "ingepakt": ("Ingepakt", "info"),
+    "nieuw": ("Nieuw", "info"),
 }
 NO_STATUS = ("Niet geregistreerd", "neutral")
 MAX_SEARCH_LENGTH = 100

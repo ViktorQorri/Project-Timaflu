@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Adreslabel voor bestelling {{ label.bestelling_id }}{% endblock %}
+{% block content %}
+<style>
+
+    body { font: 16px/1.5 Arial, sans-serif; margin: 2rem; color: #111; }
+    .label { border: 2px solid #111; padding: 1.5rem; max-width: 30rem; }
+    .label__name { display: block; font-size: 1.5rem; margin-bottom: 1rem; }
+    .label__rush { display: block; font-size: 2rem; font-weight: bold; }
+    .label p { white-space: pre-line; }
+    @media print {
+      body { margin: 0; }
+      .instructions { display: none; }
+      .label { margin: 0; border: 2px solid #111; break-inside: avoid; }
+    }
+
+  .site-header, .site-footer, .skip-link { display: none; }
+</style>
+  <p class="instructions">
+    Dit is het printklare adreslabel. Druk af via de afdrukfunctie van de browser.
+  </p>
+  <section class="label" aria-label="Adreslabel">
+    <p>Bestelling {{ label.bestelling_id }} | {{ label.aantal_verhuisdozen }} verhuisdozen</p>
+    {% if label.spoed %}<strong class="label__rush">SPOED</strong>{% endif %}
+    <strong class="label__name">{{ label.bedrijfsnaam }}</strong>
+    <p>{{ label.afleveradres }}</p>
+    <p>Telefoon: {{ label.telefoonnummer or "Niet beschikbaar" }}</p>
+  </section>
+{% endblock %}

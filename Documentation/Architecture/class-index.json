@@ -299,6 +299,17 @@
     "methods": []
   },
   {
+    "module": "repositories.acquisition_repository",
+    "class": "AcquisitionRepository",
+    "methods": [
+      "__init__",
+      "find_due_follow_ups",
+      "register_prospect",
+      "complete_follow_up",
+      "_insert_address"
+    ]
+  },
+  {
     "module": "repositories.assessed_repository",
     "class": "AssessedRepository",
     "methods": [
@@ -307,8 +318,14 @@
       "customer_order_count",
       "invoice_for_customer",
       "delivery_schedule",
-      "record_first_attempt_delivery",
+      "time_from_database",
+      "register_delivery_attempt",
       "schedule_second_attempt",
+      "register_first_delivery_attempt",
+      "_validate_receipt",
+      "_record_delivered_lines",
+      "_mark_order_after_delivery",
+      "record_first_attempt_delivery",
       "record_second_attempt_outcome",
       "record_failed_delivery_followup",
       "prospect_followups",
@@ -316,7 +333,11 @@
       "register_prospect_customer",
       "close_prospect_followup",
       "record_payment_action",
-      "save_invoice_snapshot"
+      "save_invoice_snapshot",
+      "determine_annual_customer_discounts",
+      "uninvoiced_deliveries",
+      "outstanding_purchase_invoices",
+      "mark_purchase_invoice_paid"
     ]
   },
   {
@@ -345,6 +366,7 @@
       "find_product",
       "count_previous_orders",
       "get_customer_discount_percentage",
+      "find_annual_percentage",
       "list_customer_ids",
       "save_annual_discounts",
       "sum_purchases"
@@ -359,6 +381,25 @@
       "pack",
       "pending_shipments",
       "schedule"
+    ]
+  },
+  {
+    "module": "repositories.distribution_repository",
+    "class": "DistributionRepository",
+    "methods": [
+      "__init__",
+      "list_orders_with_bins",
+      "packing_label",
+      "list_order_lines",
+      "list_orders_to_schedule",
+      "list_couriers",
+      "create_courier",
+      "update_courier_region",
+      "set_courier_availability",
+      "schedule_delivery",
+      "reschedule_failed_delivery",
+      "pack_order",
+      "release_order"
     ]
   },
   {
@@ -433,7 +474,8 @@
     "class": "PurchaseOrderRepository",
     "methods": [
       "__init__",
-      "create"
+      "create",
+      "list_recorded"
     ]
   },
   {
@@ -450,6 +492,7 @@
     "class": "RobotOrderRepository",
     "methods": [
       "__init__",
+      "orders_ready_for_dispatch",
       "robot_for_aisle",
       "next_suborder",
       "suborder_lines",
@@ -521,6 +564,19 @@
     ]
   },
   {
+    "module": "services.acquisition_service",
+    "class": "AcquisitionService",
+    "methods": [
+      "__init__",
+      "due_follow_ups",
+      "register_prospect",
+      "validate_prospect",
+      "complete_follow_up",
+      "_required_text",
+      "_optional_text"
+    ]
+  },
+  {
     "module": "services.customer_service",
     "class": "CustomerService",
     "methods": [
@@ -550,6 +606,24 @@
       "_discount",
       "_find_customer",
       "_price_order_lines"
+    ]
+  },
+  {
+    "module": "services.distribution_service",
+    "class": "DistributionService",
+    "methods": [
+      "__init__",
+      "orders_with_bins",
+      "pack_order",
+      "release_order",
+      "orders_to_schedule",
+      "couriers",
+      "create_courier",
+      "update_courier_region",
+      "set_courier_availability",
+      "schedule_delivery",
+      "reschedule_failed_delivery",
+      "_positive_integer"
     ]
   },
   {
@@ -587,6 +661,16 @@
     ]
   },
   {
+    "module": "services.order_status_report_service",
+    "class": "OrderStatusReportService",
+    "methods": [
+      "__init__",
+      "report",
+      "_group",
+      "_parse_date"
+    ]
+  },
+  {
     "module": "services.picking_bin_service",
     "class": "PickingBinService",
     "methods": [
@@ -614,7 +698,8 @@
     "class": "PurchaseOrderService",
     "methods": [
       "__init__",
-      "record_order"
+      "record_order",
+      "recorded_orders"
     ]
   },
   {
@@ -623,7 +708,8 @@
     "methods": [
       "__init__",
       "overview",
-      "record_confirmed"
+      "record_confirmed",
+      "recorded_orders"
     ]
   },
   {

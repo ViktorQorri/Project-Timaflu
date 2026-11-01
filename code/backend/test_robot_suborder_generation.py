@@ -48,7 +48,7 @@ class SplitCursor:
 
     def fetchone(self):
         if self.last == "order":
-            return {"bestelling_id": 30}
+            return {"bestelling_id": 30, "status_naam": "nieuw"}
         if self.last == "assigned":
             return {"assigned_count": self.assigned_count}
         if self.last == "product":
@@ -98,6 +98,10 @@ class RobotSplitTests(TestCase):
                             for command, _ in connection.cursor_instance.commands))
         self.assertEqual(sum("INSERT INTO Deelorder (" in sql
                              for sql, _ in connection.cursor_instance.commands), 2)
+        self.assertTrue(any(
+            "UPDATE Bestelling SET status_naam = 'wordt verzameld'" in sql
+            for sql, _ in connection.cursor_instance.commands
+        ))
 
     def test_idempotency_prevents_duplicate_generation(self):
         connection = SplitConnection(assigned_count=1)

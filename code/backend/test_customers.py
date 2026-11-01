@@ -83,13 +83,12 @@ class CustomerOverviewTests(TestCase):
         db = Connection([[CUSTOMER_ROW]])
         self.assertEqual(service(db).overview("  Markt ", 2026), [CUSTOMER_ROW])
         query, params = db.cur.commands[0]
-        self.assertEqual(params, (2026, 2026, "%Markt%", "%Markt%", "%Markt%"))
+        self.assertEqual(params, (2026, 2027, "%Markt%", "%Markt%", "%Markt%"))
         self.assertIn("JOIN Adres AS af ON af.adres_id = k.afleveradres_id", query)
         self.assertIn("JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id", query)
         self.assertIn("WHERE YEAR(f.betaald_op) = %s", query)
         self.assertIn("SUM(f.totaal_bedrag)", query)
-        self.assertIn("COUNT(f.totaal_bedrag)", query)
-        self.assertNotIn("SUM(lr.aantal_geleverd", query)
+        self.assertIn("COUNT(f.totaal_bedrag) AS known_amount_count", query)
         self.assertIn("LEFT JOIN Klantkorting", query)
 
     def test_missing_paid_invoice_total_is_not_shown_as_zero(self):
@@ -226,6 +225,12 @@ class CustomerPageTests(TestCase):
         with patch("routes.sales.get_connection", return_value=Connection([[]])):
             response = self.client.get("/customers?q=Onbekend")
         self.assertIn("Geen klanten gevonden", response.get_data(as_text=True))
+
+    def test_page_marks_missing_historical_totals_as_unknown(self):
+        unknown_total = {**CUSTOMER_ROW, "jaaromzet": None}
+        with patch("routes.sales.get_connection", return_value=Connection([[unknown_total]])):
+            response = self.client.get("/customers")
+        self.assertIn("Niet berekend", response.get_data(as_text=True))
 
     def test_valid_new_customer_redirects_to_overview(self):
         db = Connection([[CUSTOMER_ROW]])

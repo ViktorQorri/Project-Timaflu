@@ -44,6 +44,13 @@ def invoices():
                 "sender_address": row.get("afzenderadres"),
                 "lines": line_items,
                 "snapshot_complete": all(value is not None for value in snapshots.values()),
+                "extra_delivery_costs": (
+                    row["totaal_bedrag"] -
+                    (row["bedrag_na_eenmalige_korting"] - row["klantenkorting"])
+                    if all(row[key] is not None for key in (
+                        "totaal_bedrag", "bedrag_na_eenmalige_korting", "klantenkorting"
+                    )) else None
+                ),
                 "action": invoice.checkPaymentArrears(date.today()),
                 "extra_cost_ex": row.get("extra_bezorgkosten_excl_btw") or 0,
                 "extra_cost_vat": row.get("extra_bezorgkosten_btw") or 0,
@@ -52,7 +59,44 @@ def invoices():
                 **snapshots,
             }
             rows.append(doc)
-    return render_template("invoices.html",invoices=rows,customer_id=customer_id)
+    repository = AssessedRepository(get_connection())
+    purchase_invoices = repository.outstanding_purchase_invoices()
+    uninvoiced_deliveries = repository.uninvoiced_deliveries()
+    return render_template(
+        "invoices.html", invoices=rows, customer_id=customer_id,
+        purchase_invoices=purchase_invoices,
+        uninvoiced_deliveries=uninvoiced_deliveries,
+        today=date.today().isoformat()
+    )
+
+
+@administration.post("/invoices/annual-discounts")
+def determine_annual_discounts():
+    """Fix next calendar year's annual customer discounts on December 31."""
+    from flask import redirect, url_for, flash
+    from domain.errors import DomainError
+
+    if request.form.get("discounts_confirmed") != "yes":
+        raise DomainError("Bevestig de jaarlijkse berekening van de klantkortingen.")
+    count = AssessedRepository(get_connection()).determine_annual_customer_discounts()
+    flash(f"Klantkortingen voor {date.today().year + 1} vastgesteld voor {count} klanten.", "success")
+    return redirect(url_for("administration.invoices"))
+
+
+@administration.post("/purchase-invoices/<int:invoice_id>/paid")
+def pay_purchase_invoice(invoice_id):
+    """Record a supplier invoice as paid after the employee confirms payment."""
+    from flask import flash, redirect, url_for
+    from domain.errors import DomainError
+
+    if request.form.get("payment_confirmed") != "yes":
+        raise DomainError("Bevestig dat de inkoopfactuur daadwerkelijk is betaald.")
+    AssessedRepository(get_connection()).mark_purchase_invoice_paid(
+        invoice_id, date.today()
+    )
+    flash(f"Betaling van inkoopfactuur {invoice_id} geregistreerd.", "success")
+    return redirect(url_for("administration.invoices"))
+
 
 @administration.post("/invoices/actions")
 def invoice_action():

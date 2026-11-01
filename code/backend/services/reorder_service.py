@@ -1,4 +1,4 @@
-"""Compose shortage and supplier lookup without inventing order automation."""
+"""Compose shortage and supplier lookup without automating supplier contact."""
 
 from domain.errors import DomainError
 
@@ -15,20 +15,25 @@ class ReorderService:
         offers = []
         if product_id is not None:
             try:
-                ident = int(product_id)
+                product_id = int(product_id)
             except (TypeError, ValueError):
                 raise DomainError("Kies een geldig product.")
-            selected = next((row for row in shortages if row["product_id"] == ident), None)
+            selected = next(
+                (row for row in shortages if row["product_id"] == product_id),
+                None,
+            )
             if selected is None:
                 raise DomainError("Het product staat niet onder de minimumvoorraad.")
             offers = [
-                offer for offer in self.supplier_service.offers_for_product(
+                offer
+                for offer in self.supplier_service.offers_for_product(
                     selected["productnaam"]
-                ) if offer["product_id"] == ident
+                )
+                if offer["product_id"] == product_id
             ]
         return {"shortages": shortages, "selected": selected, "offers": offers}
 
-    def record_confirmed(self, product_id, supplier_id, quantity, confirmed):
+    def record_confirmed(self, product_id, supplier_id, quantity, confirmed, cheaper_unavailable=None):
         if confirmed != "yes":
             raise DomainError("Bevestig eerst dat je de fabrikant hebt gesproken.")
         overview = self.overview(product_id)
@@ -36,7 +41,24 @@ class ReorderService:
             chosen_supplier = int(supplier_id)
         except (TypeError, ValueError):
             raise DomainError("Kies een bestaande leverancier.")
-        if not any(int(offer["leverancier_id"]) == chosen_supplier for offer in overview["offers"]):
+        chosen = next(
+            (offer for offer in overview["offers"]
+             if int(offer["leverancier_id"]) == chosen_supplier),
+            None,
+        )
+        if chosen is None:
             raise DomainError("De leverancier levert het gekozen product niet.")
-        # The repository rechecks the supplier-product relation before the write.
-        return self.purchase_order_service.record_order(supplier_id, product_id, quantity)
+        lowest_price = min(
+            offer["inkoopprijs"] for offer in overview["offers"]
+        )
+        if (chosen["inkoopprijs"] > lowest_price
+                and cheaper_unavailable != "yes"):
+            raise DomainError(
+                "Kies de goedkoopste leverancier of bevestig dat alle goedkopere fabrikanten niet kunnen leveren."
+            )
+        return self.purchase_order_service.record_order(
+            supplier_id, product_id, quantity, confirmed
+        )
+
+    def recorded_orders(self):
+        return self.purchase_order_service.recorded_orders()

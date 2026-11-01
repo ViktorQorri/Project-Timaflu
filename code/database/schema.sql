@@ -190,6 +190,8 @@ CREATE TABLE LeveranciersAanbod (
 CREATE TABLE Inkoopbestelling (
     inkoopbestelling_id INT AUTO_INCREMENT PRIMARY KEY,
     leverancier_id INT NOT NULL,
+    besteld_op DATETIME NULL,
+    status_naam VARCHAR(30) NULL,
 
     FOREIGN KEY (leverancier_id)
         REFERENCES Leverancier(leverancier_id)
@@ -243,7 +245,8 @@ CREATE TABLE Bestelling (
     gewenste_leverdatum DATE NOT NULL,
     dagdeel ENUM('ochtend', 'middag') NOT NULL,
     spoed BOOLEAN NOT NULL DEFAULT FALSE,
-    status_naam VARCHAR(40),
+    status_naam VARCHAR(40) NOT NULL DEFAULT 'nieuw',
+    aantal_verhuisdozen INT NOT NULL DEFAULT 0,
     eenmalige_korting_toegepast BOOLEAN
         NOT NULL DEFAULT FALSE,
     extra_bezorgkosten DECIMAL(10,2)
@@ -263,7 +266,8 @@ CREATE TABLE Bestelling (
     FOREIGN KEY (status_naam)
         REFERENCES OrderStatus(naam),
 
-    CHECK (extra_bezorgkosten >= 0)
+    CHECK (extra_bezorgkosten >= 0),
+    CHECK (aantal_verhuisdozen >= 0)
 );
 
 
@@ -400,6 +404,8 @@ CREATE TABLE Verzamelbak (
 CREATE TABLE Koerier (
     koerier_id INT AUTO_INCREMENT PRIMARY KEY,
     naam VARCHAR(100) NOT NULL,
+    regio VARCHAR(100) NULL,
+    extern BOOLEAN NOT NULL DEFAULT FALSE,
     beschikbaar BOOLEAN NOT NULL DEFAULT FALSE
 );
 
@@ -565,9 +571,11 @@ CREATE TABLE Inkoopfactuur (
 
 INSERT INTO OrderStatus (naam)
 VALUES
+    ('nieuw'),
     ('wordt verzameld'),
-    ('verstuurd'),
     ('backorder'),
+    ('ingepakt'),
+    ('verstuurd'),
     ('afgeleverd'),
-    ('niet afgeleverd');
-
+    ('niet afgeleverd'),
+    ('gefactureerd');

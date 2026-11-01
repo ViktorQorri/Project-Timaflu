@@ -27,6 +27,7 @@ EXAMPLES = {
     ("_issue_customer", 7): ["2", "1"],
     ("_issue_customer", 8): ["2", "2", "1"],
     ("_issue_customer", 9): ["2"],
+    ("_issue_customer", 10): ["1", "2"],
     ("issued_invoice", 0): ["2"],
     ("issued_invoice", 1): ["2"],
     ("issued_invoice", 2): ["2"],

@@ -34,7 +34,7 @@ def form_data(**changes):
         "ingredient_quantity": ["500 mg", "", ""],
         "supplier_id": "1",
         "purchase_price": "18.75",
-        "director_approved": "yes",
+        "management_approved": "yes",
     }
     data.update(changes)
     return data

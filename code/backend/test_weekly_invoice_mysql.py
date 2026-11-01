@@ -85,7 +85,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
             page=client.get("/invoices/weekly?week_start=2026-10-19")
             self.assertEqual(page.status_code, 200, page.data[:400])
             self.assertIn(b"TESTGEGEVENS",page.data)
-            response=client.post("/invoices/weekly", data={"week_start":"2026-10-19"})
+            response=client.post("/invoices/weekly", data={"week_start":"2026-10-19","invoice_approved":"yes"})
             self.assertEqual(response.status_code,302,response.data[:300])
             invoice_id = self.fetchone(
                 "SELECT factuur_id FROM Factuur WHERE week_start=%s", (week,)
@@ -106,7 +106,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
             self.assertIn(b"TESTGEGEVENS",page.data)
             self.assertIn(b"TEST: Factuurstraat 12",page.data)
 
-            again=client.post("/invoices/weekly",data={"week_start":"2026-10-19"})
+            again=client.post("/invoices/weekly",data={"week_start":"2026-10-19","invoice_approved":"yes"})
             self.assertEqual(again.status_code,302)
         self.assertEqual(
             self.fetchone("SELECT COUNT(*) AS n FROM Factuur WHERE week_start=%s",(week,))["n"],1
@@ -251,7 +251,7 @@ class WeeklyInvoiceMySqlTests(unittest.TestCase):
     def test_missing_sender_address_and_incomplete_week_block_issuance(self):
         with self.app.test_client() as client:
             self.app.config["TIMAFLU_ADDRESS"]=""
-            response=client.post("/invoices/weekly",data={"week_start":"2026-10-19"})
+            response=client.post("/invoices/weekly",data={"week_start":"2026-10-19","invoice_approved":"yes"})
             self.assertEqual(response.status_code,400)
             self.assertIn("werkelijke Timaflu-afzenderadres".encode(),response.data)
         self.assertEqual(self.fetchone("SELECT COUNT(*) AS n FROM Factuur")["n"],0)
