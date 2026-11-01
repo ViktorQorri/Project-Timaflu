@@ -35,28 +35,6 @@ class OrderStatus:
         self.name = None
 
 
-class ProductActiveIngredient:
-    def __init__(self):
-        self.ingredientName = None
-        self.quantity = None
-
-
-class Supplier:
-    def __init__(self):
-        self.name = None
-        self.contactPerson = None
-        self.phoneNumber = None
-        self.website = None
-
-    def updateDetails(self):
-        pass
-
-
-class SupplierOffer:
-    def __init__(self):
-        self.purchasePrice = None
-
-
 class PurchaseOrder:
     def __init__(self):
         pass

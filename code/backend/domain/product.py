@@ -31,6 +31,7 @@ class Product:
     minimum_stock: int
     active_ingredients: list[ProductActiveIngredient] = field(default_factory=list)
     in_assortment: bool = True
+    internal_reorder_eligible: bool = True
     supplier_offers: list["SupplierOffer"] = field(default_factory=list)
 
     def checkStock(self, physical_stock, reserved_stock=0, requested_quantity=1):
@@ -50,6 +51,13 @@ class Product:
         before = len(self.supplier_offers)
         self.supplier_offers = [offer for offer in self.supplier_offers if offer.supplier_id != supplier_id]
         return before - len(self.supplier_offers)
+
+    def removeFromInternalReorderList(self):
+        """Exclude this product from internal purchasing, not from customer sales.
+
+        Persistent changes are made by SupplierRepository, not this domain object.
+        """
+        self.internal_reorder_eligible = False
 
     def removeFromAssortment(self):
         """Mark this domain instance inactive without erasing historical database rows."""
