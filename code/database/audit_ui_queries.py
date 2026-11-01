@@ -23,7 +23,7 @@ from repositories.weekly_invoice_repository import WeeklyInvoiceRepository
 
 ROOT = Path(__file__).resolve().parents[2]
 DATABASE = "timaflu_casus_test_94"
-OUT = ROOT / "Documentation/Architecture/query-output-per-screen.md"
+OUT = ROOT / "deliverables/query-output-per-screen.md"
 SCREENS = [
     ("/", "Home"),
     ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
@@ -51,7 +51,7 @@ SCREENS = [
     ("/invoices?customer_id=1", "Openstaande facturen"),
     ("/invoices/outstanding", "Openstaande klantfacturen en betalingsherinneringen"),
     ("/invoices/1/reminders/1", "Eerste betalingsherinnering, echte factuur en vast referentiemoment"),
-    ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
+    ("/invoices/weekly?week_start=2026-10-26", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
 ]
@@ -68,7 +68,7 @@ class RecorderCursor:
 
     def execute(self, sql, params=()):
         self.cursor.execute(sql, params)
-        self.entry = {"sql": "`n".join(line.rstrip() for line in sql.strip().splitlines()), "params": list(params or []),
+        self.entry = {"sql": "\n".join(line.rstrip() for line in sql.strip().splitlines()), "params": list(params or []),
                       "results": [], "row_count": 0}
         self.output.append(self.entry)
 
@@ -240,6 +240,7 @@ def main():
                     ]
             finally:
                 conn.close()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(report),encoding="utf-8")
     print(f"Screen audit: {len(SCREENS)} screens, {count} actual queries, failures: {failures}")
     if failures:
