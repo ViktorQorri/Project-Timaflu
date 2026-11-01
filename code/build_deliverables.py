@@ -25,24 +25,19 @@ ARCHIVES = {
     "timaflu-database-en-queries.zip": (
         ("code/database/",),
         (
-            "Documentation/Architecture/eer-mysql-verified.drawio",
             "Documentation/Architecture/eer-mysql-verified.svg",
             "Documentation/Architecture/eer-mysql-schema.json",
             "Documentation/Architecture/query-output-per-screen.md",
-            "Documentation/Architecture/query-results-assessed.md",
         ),
     ),
     "timaflu-ontwerpen.zip": (
         (
             "Documentation/Architecture/screens/",
             "Documentation/Architecture/uml/",
-            "Documentation/Architecture/design-evidence/",
         ),
         (
             "Documentation/Architecture/class-diagram-backend.puml",
             "Documentation/Architecture/class-diagram-backend.svg",
-            "Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md",
-            "Documentation/Architecture/test-plan.md",
             "Documentation/brightspace/Product-description.md",
             "Documentation/brightspace/Current-processes.md",
             "Documentation/brightspace/Desired-process.md",

@@ -49,15 +49,16 @@ We create all diagrams in [draw.io](https://www.drawio.com/) (diagrams.net).
 
 Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
 
-## Actuele casuscontrole en opleverstukken
+## Casus en oplevering
 
-De [actuele casus- en ketencontrole](Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md)
-beschrijft de werkende processen, de controles en de nog externe afhankelijkheden.
-De verifieerbare [MySQL-queryuitvoer per scherm](Documentation/Architecture/query-output-per-screen.md)
-en het [testplan](Documentation/Architecture/test-plan.md) vormen het bijbehorende bewijs.
-De definitieve EER is [eer-mysql-verified.drawio](Documentation/Architecture/eer-mysql-verified.drawio)
-en het backendklassendiagram is [class-diagram-backend.puml](Documentation/Architecture/class-diagram-backend.puml).
-Het oude `eer.mwb` is geen actuele EER-bron.
+De oorspronkelijke casus in `Documentation/brightspace/` is leidend.
+De verplichte EER blijft beschikbaar als
+[SVG](Documentation/Architecture/eer-mysql-verified.svg) en het bewerkbare
+MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
+verwijderd. De verplichte query-output per scherm staat in
+[query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md).
+ZIP-bestanden voor de school worden uitsluitend bij inlevering lokaal gegenereerd
+met `python code/build_deliverables.py --output-dir deliverables`.
 
 ## Documentation
 
@@ -65,8 +66,6 @@ Het oude `eer.mwb` is geen actuele EER-bron.
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
-| Casuscontrole en implementatiebewijs | [Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md](Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md) |
-| Testplan | [Documentation/Architecture/test-plan.md](Documentation/Architecture/test-plan.md) |
 | Databasequeries en echte output | [Documentation/Architecture/query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md) |
 | Schermontwerpen en traceability | [Documentation/Architecture/screens/README.md](Documentation/Architecture/screens/README.md) |
 | API-specificatie | [Documentation/Architecture/api-specification.md](Documentation/Architecture/api-specification.md) |

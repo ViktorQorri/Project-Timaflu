@@ -248,7 +248,7 @@ The endpoints that are built, with their requests, responses and errors, are in 
 - Changes that touch several tables (for example saving an order with its order lines and updating stock) run in one transaction, so the data is never half written.
 - Stock is only changed through the services, so the answer to "is this medicine in stock" is always the same one.
 - The EER in the repository must always match the working database.
-- The database is created from SQL scripts kept in the repository (`schema.sql` first, then `seed.sql`), so anyone can rebuild it.
+- The database is created from SQL scripts kept in the repository (`schema.sql` met afzonderlijke voorbeelddata waar nodig), so anyone can rebuild it.
 
 ## Users and screens
 
