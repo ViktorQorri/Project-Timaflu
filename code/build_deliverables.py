@@ -94,6 +94,24 @@ def validate_query_report(document: bytes):
     outputs = re.findall(r"^Resultaat: \d+ rij\(en\)", report, re.M)
     if not queries or len(queries) != len(outputs):
         raise RuntimeError("Een of meer queries in het document missen hun database-output.")
+    designs = sorted((ROOT / "Documentation/Architecture/screens").glob("AD??_*.html"))
+    images = ROOT / "deliverables/query-screens"
+    design_titles = re.findall(r"(?m)^### (AD\d{2}): ", report)
+    if len(designs) != 28 or len(design_titles) != 28:
+        raise RuntimeError("Het querydocument moet alle 28 ontwerpschermen bevatten.")
+    if len(set(design_titles)) != 28:
+        raise RuntimeError("Een ontwerpscherm staat dubbel of ontbreekt.")
+    generated_pdf = ROOT / "deliverables/query-output-per-screen.pdf"
+    if not generated_pdf.is_file() or generated_pdf.stat().st_size < 30000:
+        raise RuntimeError("Het complete, printbare querybewijs in PDF ontbreekt.")
+    for design in designs:
+        image = images / (design.stem + ".png")
+        link = f"query-screens/{design.stem}.png"
+        if not image.is_file() or image.stat().st_size < 5000 or link not in report:
+            raise RuntimeError(f"Ontbrekende screenshot of documentkoppeling: {link}")
+    if report.count("De databasewijziging is binnen een testtransactie gecontroleerd") != 37:
+        raise RuntimeError("Het document moet 37 gecontroleerde formulieracties bevatten.")
+
 
 
 def build(output_dir: Path):
@@ -134,8 +152,26 @@ def build(output_dir: Path):
                     info, generated_query_report, compress_type=ZIP_DEFLATED,
                     compresslevel=9,
                 )
+                # Screenshots are part of this same standalone database
+                # submission so image links work after extracting the ZIP.
+                pdf = ROOT / "deliverables/query-output-per-screen.pdf"
+                pdf_info = ZipInfo("Documentation/Architecture/query-output-per-screen.pdf",
+                                   date_time=(1980, 1, 1, 0, 0, 0))
+                pdf_info.compress_type = ZIP_DEFLATED
+                pdf_info.external_attr = 0o644 << 16
+                zipped.writestr(pdf_info, pdf.read_bytes(),
+                                compress_type=ZIP_DEFLATED, compresslevel=9)
+                for screenshot in sorted((ROOT / "deliverables/query-screens").glob("AD??_*.png")):
+                    relative = "Documentation/Architecture/query-screens/" + screenshot.name
+                    image_info = ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
+                    image_info.compress_type = ZIP_DEFLATED
+                    image_info.external_attr = 0o644 << 16
+                    zipped.writestr(image_info, screenshot.read_bytes(),
+                                    compress_type=ZIP_DEFLATED, compresslevel=9)
         resulting[filename] = (
-            source_paths + [QUERY_ARCHIVE_PATH]
+            source_paths + [QUERY_ARCHIVE_PATH, "Documentation/Architecture/query-output-per-screen.pdf"] +
+            ["Documentation/Architecture/query-screens/" + x.name
+             for x in sorted((ROOT / "deliverables/query-screens").glob("AD??_*.png"))]
             if generated_query_report is not None else source_paths
         )
     return resulting

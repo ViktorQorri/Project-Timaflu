@@ -63,8 +63,11 @@ Open http://127.0.0.1:5000. The homepage is static; database errors are shown wh
 
 De school vraagt aparte ZIP-bestanden voor Python-backend en HTML/CSS-website,
 plus het actuele EER, de databasequeries en de ontwerpproducten. Genereer
-eerst het queryrapport met `python code/database/audit_ui_queries.py` tegen een
+eerst alle schermontwerpen, queryresultaten en gecontroleerde mutaties met `python code/database/build_query_proof.py` tegen een
 geïsoleerde lokale MySQL-testdatabase, zoals in de broncode beveiligd.
+Voor de 28 screenshots is een geïnstalleerde Chrome-browser en
+de ontwikkeltool Playwright (python -m pip install playwright markdown) vereist.
+De website zelf gebruikt geen JavaScript of Playwright. Het document wordt naast Markdown ook als PDF gegenereerd.
 Het rapport komt in de genegeerde map `deliverables/` en blijft buiten Git.
 Maak daarna de ZIP-bestanden vanuit de repositoryhoofdmap met:
 

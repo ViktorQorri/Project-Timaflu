@@ -23,7 +23,7 @@ from repositories.weekly_invoice_repository import WeeklyInvoiceRepository
 
 ROOT = Path(__file__).resolve().parents[2]
 DATABASE = "timaflu_casus_test_94"
-OUT = ROOT / "deliverables/query-output-per-screen.md"
+OUT = ROOT / "deliverables/_query_get_evidence.md"
 SCREENS = [
     ("/", "Home"),
     ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
@@ -46,16 +46,16 @@ SCREENS = [
     ("/reorder", "Inkoop bij minimumvoorraad"),
     ("/stock/minimums", "Minimumvoorraad per medicijn instellen"),
     ("/deliveries/1/label", "Adreslabel voor een werkelijk verpakte order"),
-    ("/order-picking", "Orderpicking (statisch scherm)"),
+    ("/order-picking", "Orderpicking en geregistreerde bakken"),
     ("/deliveries?day=2026-10-22", "Distributierooster"),
     ("/invoices?customer_id=1", "Openstaande facturen"),
     ("/invoices/outstanding", "Openstaande klantfacturen en betalingsherinneringen"),
     ("/invoices/1/reminders/1", "Eerste betalingsherinnering, echte factuur en vast referentiemoment"),
-    ("/invoices/weekly?week_start=2026-10-26", "Weekfacturen"),
+    ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
 ]
-MODULES = ["routes.purchasing","routes.sales",
+MODULES = ["routes.purchasing","routes.sales","routes.order_picking",
            "routes.distribution","routes.administration",
            "routes.weekly_invoices","routes.acquisition","routes.api"]
 
@@ -145,6 +145,109 @@ def main():
         WeeklyInvoiceRepository(cnx).issue_week(
             date(2026,10,19),sender,date(2026,10,31)
         )
+        # A second fictitious pharmacy has a signed delivery that has NOT yet
+        # been invoiced. This makes the weekly invoice overview nonempty while
+        # keeping the already-issued historical invoice available for inspection.
+        with cnx.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO Adres (adres) VALUES (%s)",
+                ("TEST: Factuuradres tweede apotheek, Breda",),
+            )
+            invoice_address = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO Adres (adres) VALUES (%s)",
+                ("TEST: Afleveradres tweede apotheek, Breda",),
+            )
+            delivery_address = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO Klant
+                    (bedrijfsnaam, contactpersoon, telefoonnummer,
+                     afleveradres_id, betaaladres_id)
+                   VALUES (%s,%s,%s,%s,%s)""",
+                ("TEST Tweede apotheek B.V.", "TEST tweede contact",
+                 "0612345679", delivery_address, invoice_address),
+            )
+            customer2 = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO Klantkorting
+                    (klant_id, kalenderjaar, percentage)
+                   VALUES (%s,2026,5.00)""", (customer2,),
+            )
+            cursor.execute(
+                """INSERT INTO Bestelling
+                    (klant_id, afleveradres_id, betaaladres_id, besteld_op,
+                     gewenste_leverdatum, dagdeel, spoed, status_naam)
+                   VALUES (%s,%s,%s,%s,%s,'ochtend',FALSE,'afgeleverd')""",
+                (customer2, delivery_address, invoice_address,
+                 "2026-10-20 09:00:00", "2026-10-22"),
+            )
+            order2 = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO Bestelregel
+                    (bestelling_id, product_id, aantal, prijs_per_eenheid)
+                   VALUES (%s,1,2,100.00)""", (order2,),
+            )
+            cursor.execute(
+                "INSERT INTO Levering (bestelling_id) VALUES (%s)", (order2,),
+            )
+            delivery2 = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO Leveringregel
+                    (levering_id, product_id, aantal_geleverd)
+                   VALUES (%s,1,2)""", (delivery2,),
+            )
+            cursor.execute(
+                """INSERT INTO Leverpoging
+                    (levering_id, pogingnummer, rit_id, geplande_tijd,
+                     resultaat, ontvangst_getekend)
+                   VALUES (%s,1,1,'13:00:00','afgeleverd',TRUE)""",
+                (delivery2,),
+            )
+
+            # Robot/orderpicking pages are database-backed: their repository
+            # functions must be intercepted like every other employee screen.
+            cursor.execute(
+                """INSERT INTO Inkoopfactuur
+                    (leverancier_id, factuurdatum, bedrag)
+                   VALUES (1,'2026-10-20',155.00)"""
+            )
+            cursor.execute("INSERT INTO Robot (robot_id, gang) VALUES (1, 'A')")
+            for status in ("wordt verzameld", "nieuw"):
+                cursor.execute(
+                    """INSERT INTO Bestelling
+                        (klant_id, afleveradres_id, betaaladres_id, besteld_op,
+                         gewenste_leverdatum, dagdeel, spoed, status_naam)
+                       VALUES (1,2,1,'2026-10-31 08:00:00',
+                               '2026-11-03','ochtend',FALSE,%s)""",
+                    (status,),
+                )
+                order_id = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Bestelregel
+                        (bestelling_id, product_id, aantal, prijs_per_eenheid)
+                       VALUES (%s,1,1,100.00)""", (order_id,),
+                )
+                cursor.execute(
+                    """INSERT INTO Voorraadreservering
+                        (bestelling_id, product_id, aantal)
+                       VALUES (%s,1,1)""", (order_id,),
+                )
+                if status == "wordt verzameld":
+                    cursor.execute(
+                        """INSERT INTO Deelorder
+                            (bestelling_id, robot_id, afgerond)
+                           VALUES (%s,1,FALSE)""", (order_id,),
+                    )
+                    suborder_id = cursor.lastrowid
+                    cursor.execute(
+                        """INSERT INTO Deelorderregel
+                            (deelorder_id, product_id, aantal)
+                           VALUES (%s,1,1)""", (suborder_id,),
+                    )
+                    cursor.execute(
+                        """INSERT INTO Verzamelbak (unieke_code, deelorder_id)
+                           VALUES ('TEST-BAK-A',%s)""", (suborder_id,),
+                    )
         # Fictional historical delivery is packed, so its real label can be
         # inspected without inventing a successful live robot operation.
         with cnx.cursor() as cursor:
