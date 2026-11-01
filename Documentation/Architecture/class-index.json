@@ -351,6 +351,17 @@
     ]
   },
   {
+    "module": "repositories.distribution_preparation_repository",
+    "class": "DistributionPreparationRepository",
+    "methods": [
+      "__init__",
+      "ready_to_pack",
+      "pack",
+      "pending_shipments",
+      "schedule"
+    ]
+  },
+  {
     "module": "repositories.health_repository",
     "class": "HealthRepository",
     "methods": [
@@ -371,16 +382,6 @@
       "offers",
       "set_price",
       "remove_offer"
-    ]
-  },
-  {
-    "module": "repositories.order_repository",
-    "class": "OrderRepository",
-    "methods": [
-      "__init__",
-      "is_customer_blocked",
-      "available_stock",
-      "save_order"
     ]
   },
   {
@@ -439,6 +440,15 @@
     ]
   },
   {
+    "module": "repositories.sales_case_repository",
+    "class": "SalesCaseRepository",
+    "methods": [
+      "__init__",
+      "customers",
+      "order_statuses"
+    ]
+  },
+  {
     "module": "repositories.sales_stock_repository",
     "class": "SalesStockRepository",
     "methods": [
@@ -467,6 +477,17 @@
       "list_all",
       "get_by_id",
       "_to_supplier"
+    ]
+  },
+  {
+    "module": "repositories.telephone_order_repository",
+    "class": "TelephoneOrderRepository",
+    "methods": [
+      "__init__",
+      "form_options",
+      "validate",
+      "quote",
+      "approve"
     ]
   },
   {
@@ -536,17 +557,6 @@
       "_positive_id",
       "_validate",
       "remove_offer"
-    ]
-  },
-  {
-    "module": "services.order_service",
-    "class": "OrderService",
-    "methods": [
-      "__init__",
-      "prepare",
-      "quote_snapshot",
-      "place",
-      "_delivery_date"
     ]
   },
   {

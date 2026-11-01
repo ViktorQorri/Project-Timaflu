@@ -97,8 +97,11 @@ SELECT COUNT(*) FROM Bestelling WHERE klant_id=1;
 
 -- AssessedRepository.invoice_for_customer
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
+                       f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
+                       f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw,
+                       f.extra_bezorgkosten_incl_btw,
        f.bedrag_excl_btw,
        f.btw_bedrag,
        f.bedrag_incl_btw,
@@ -185,7 +188,13 @@ SELECT b.bestelling_id, r.ritdatum FROM Bestelling b
                        FOR UPDATE;
 UPDATE Bestelling SET gewenste_leverdatum='2026-11-02', dagdeel='ochtend',
                        extra_bezorgkosten=10.00, toelichting_extra_bezorgkosten='Klant tweemaal afwezig'
-                       WHERE bestelling_id=1;
+                       WHERE bestelling_id=1
+                         AND extra_bezorgkosten_factuur_id IS NULL;
+-- After confirmed repeated absence, move already packed, unbilled lines
+-- to a new shipment for the newly agreed delivery date (no duplicate quantity).
+INSERT INTO Levering(bestelling_id) VALUES(1);
+UPDATE Leveringregel SET levering_id=4
+WHERE levering_id=1 AND factuur_id IS NULL;
 
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)
@@ -244,7 +253,9 @@ SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE 
 -- Query 2 (illustrative input, not a claimed database result)
 INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) VALUES(1,1,'2026-10-30');
 -- Query 3 (illustrative input, not a claimed database result)
-SELECT 1 FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+-- Hetzelfde SELECT wordt ook gebruikt voor volgnummer=2, om dubbele herinneringen te voorkomen.
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=2;
 -- Query 4 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
 -- Query 5 (illustrative input, not a claimed database result)
@@ -507,7 +518,8 @@ SELECT DISTINCT b.klant_id
                 FROM Leveringregel lr
                 JOIN Levering l ON l.levering_id=lr.levering_id
                 JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
-                WHERE lr.factuur_id IS NULL
+                WHERE (lr.factuur_id IS NULL OR
+                       (b.extra_bezorgkosten > 0 AND b.extra_bezorgkosten_factuur_id IS NULL))
                   AND EXISTS (
                     SELECT 1 FROM Leverpoging lp
                     JOIN Rit r ON r.rit_id=lp.rit_id
@@ -531,7 +543,10 @@ SELECT factuur_id FROM Factuur
 SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
                            b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
-                           (SELECT kd.percentage FROM Klantkorting kd
+                           (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
+                            FROM Bestelregel AS ordered
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat,
+                           (SELECT kd.percentage FROM Klantkorting AS kd
                             WHERE kd.klant_id=b.klant_id
                               AND kd.kalenderjaar=YEAR(b.besteld_op)
                            ) AS customer_discount_percentage
@@ -553,19 +568,48 @@ SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                     FOR UPDATE;
 
 -- WeeklyInvoiceRepository._issue_customer example 4
+SELECT b.bestelling_id, b.extra_bezorgkosten,
+                           b.toelichting_extra_bezorgkosten
+                    FROM Bestelling b
+                    WHERE b.klant_id=1 AND b.extra_bezorgkosten > 0
+                      AND b.extra_bezorgkosten_factuur_id IS NULL
+                      AND EXISTS (
+                        SELECT 1 FROM Levering l
+                        JOIN Leverpoging lp ON lp.levering_id=l.levering_id
+                        JOIN Rit r ON r.rit_id=lp.rit_id
+                        WHERE l.bestelling_id=b.bestelling_id
+                          AND lp.resultaat='afgeleverd'
+                          AND lp.ontvangst_getekend=TRUE
+                          AND r.ritdatum BETWEEN '2026-10-19' AND '2026-10-25'
+                      )
+                    ORDER BY b.bestelling_id FOR UPDATE;
+
+-- WeeklyInvoiceRepository._issue_customer example 5
 SELECT bestelling_id FROM Bestelling WHERE klant_id=1
                     ORDER BY besteld_op,bestelling_id LIMIT 1;
 
--- WeeklyInvoiceRepository._issue_customer example 5
+-- WeeklyInvoiceRepository._issue_customer example 6
 INSERT INTO Factuur
                     (klant_id,factuurdatum,week_start,afzenderadres,factuuradres)
                     VALUES (1,'2026-10-31','2026-10-19','Voorbeeldadres alleen voor test','Testapotheekstraat 1');
 
--- WeeklyInvoiceRepository._issue_customer example 6
+-- WeeklyInvoiceRepository._issue_customer example 7
+UPDATE Factuur
+                           SET extra_bezorgkosten_excl_btw=10.00,
+                               extra_bezorgkosten_btw=0.90,
+                               extra_bezorgkosten_incl_btw=10.90,
+                               totaal_bedrag=100.00
+                           WHERE factuur_id=2;
+
+-- WeeklyInvoiceRepository._issue_customer example 8
+UPDATE Bestelling SET extra_bezorgkosten_factuur_id=2
+                               WHERE bestelling_id=1 AND extra_bezorgkosten_factuur_id IS NULL;
+
+-- WeeklyInvoiceRepository._issue_customer example 9
 UPDATE Leveringregel SET factuur_id=2
                         WHERE levering_id=2 AND product_id=1 AND factuur_id IS NULL;
 
--- WeeklyInvoiceRepository._issue_customer example 7
+-- WeeklyInvoiceRepository._issue_customer example 10
 UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE
                             WHERE bestelling_id=2 AND eenmalige_korting_toegepast=FALSE;
@@ -587,7 +631,34 @@ SELECT lr.aantal_geleverd AS quantity,
                                   AND br.product_id=lr.product_id
                 WHERE lr.factuur_id=2
                 ORDER BY b.bestelling_id, lr.product_id;
+
+-- WeeklyInvoiceRepository.issued_invoice example 3
+SELECT bestelling_id, extra_bezorgkosten,
+                          toelichting_extra_bezorgkosten
+                   FROM Bestelling WHERE extra_bezorgkosten_factuur_id=2
+                   ORDER BY bestelling_id;
 -- END GENERATED WEEKLY INVOICE QUERIES
+
+-- Ronde 4: actuele klantgegevens voor GET /customers, exact SalesCaseRepository.customers.
+-- Voorbeeld invoer: naamdeel 'Apotheek'.
+SELECT k.klant_id, k.bedrijfsnaam, k.telefoonnummer, k.contactpersoon,
+       delivery.adres AS afleveradres, billing.adres AS factuuradres
+FROM Klant AS k
+JOIN Adres AS delivery ON delivery.adres_id=k.afleveradres_id
+JOIN Adres AS billing ON billing.adres_id=k.betaaladres_id
+WHERE ('Apotheek' = '' OR k.bedrijfsnaam LIKE '%Apotheek%')
+ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC;
+
+-- Ronde 4: werkelijke bestelstatus voor GET /orders/status.
+-- Voorbeeld: alle klanten zonder filter.
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum,
+       b.dagdeel, b.spoed, b.status_naam,
+       k.klant_id, k.bedrijfsnaam, address.adres AS afleveradres
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id=b.klant_id
+JOIN Adres AS address ON address.adres_id=b.afleveradres_id
+WHERE (NULL IS NULL OR b.klant_id = NULL)
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
 
 -- =========================================
 -- Manage customers (issue #8, AD07), /customers
@@ -664,77 +735,3 @@ WHERE klant_id = 1;
 -- Retain all related historical records.
 SELECT klant_id FROM Klant WHERE klant_id = 1 AND actief = TRUE FOR UPDATE;
 UPDATE Klant SET actief = FALSE WHERE klant_id = 1;
-
--- Order discount calculation on the new order screen, /orders/new (issue #10, SD01).
--- Same SELECTs as DiscountRepository with example parameters.
--- Customer and product choices for the form.
-SELECT klant_id, bedrijfsnaam
-FROM Klant
-WHERE actief = TRUE
-ORDER BY bedrijfsnaam ASC;
-SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
-FROM Product
-WHERE in_assortiment = TRUE
-ORDER BY productnaam ASC;
--- The chosen customer and the catalog price of each order line.
-SELECT klant_id, bedrijfsnaam
-FROM Klant
-WHERE klant_id = 1 AND actief = TRUE;
-SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
-FROM Product
-WHERE product_id = 1 AND in_assortiment = TRUE;
--- SD01 countPreviousOrders(customer): 0 means first order, 10% one-time discount.
-SELECT COUNT(*) AS aantal_bestellingen
-FROM Bestelling
-WHERE klant_id = 1;
--- Paid invoice amounts from the previous calendar year, with completeness check.
-SELECT COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet,
-       COUNT(*) AS betaalde_facturen,
-       COUNT(f.totaal_bedrag) AS facturen_met_bedrag
-FROM Factuur AS f
-WHERE f.klant_id = 1 AND YEAR(f.betaald_op) = 2025;
-
--- SD01: read the already fixed discount for the order year; not previous-year revenue.
-SELECT percentage FROM Klantkorting WHERE klant_id = 1 AND kalenderjaar = 2026;
--- AD28: customer IDs processed on 31 December.
-SELECT klant_id FROM Klant ORDER BY klant_id;
--- AD28: insert each next-year percentage once (transactional in DiscountRepository).
-SELECT percentage FROM Klantkorting WHERE klant_id = 1 AND kalenderjaar = 2027 FOR UPDATE;
-INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
-VALUES (1, 2027, 5.00);
-
--- Enter a telephone order, /orders/new (issues #9 and #10, AD05 Enter order).
--- Same queries as OrderRepository with example parameters.
--- A customer whose unpaid invoice is with the debt collection agency cannot order.
-SELECT COUNT(*) AS aantal_facturen
-FROM Factuur
-WHERE klant_id = 1 AND betaald_op IS NULL AND incasso_ingeschakeld = TRUE;
--- Available stock of one product: physical stock minus reservations.
-SELECT GREATEST(
-    COALESCE((SELECT SUM(aantal) FROM Magazijnlocatie WHERE product_id = 1), 0)
-    - COALESCE((SELECT SUM(aantal) FROM Voorraadreservering WHERE product_id = 1), 0),
-    0) AS beschikbaar;
--- Saving the order, run as one transaction. Lock the customer and read its addresses.
-SELECT klant_id, afleveradres_id, betaaladres_id, actief
-FROM Klant
-WHERE klant_id = 1
-FOR UPDATE;
--- First order: no earlier orders (same query as countPreviousOrders above).
-SELECT COUNT(*) AS aantal_bestellingen
-FROM Bestelling
-WHERE klant_id = 1;
--- Per product, in product order: lock it, read the price, then count the available stock again.
-SELECT product_id, prijs_per_grootverpakking
-FROM Product
-WHERE product_id = 1
-FOR UPDATE;
-INSERT INTO Bestelling (klant_id, afleveradres_id, betaaladres_id, besteld_op,
-                        gewenste_leverdatum, dagdeel, spoed, status_naam,
-                        eenmalige_korting_toegepast)
-VALUES (1, 1, 2, NOW(), '2026-11-02', 'ochtend', FALSE, 'wordt verzameld', TRUE);
-INSERT INTO Bestelregel (bestelling_id, product_id, aantal, prijs_per_eenheid,
-                         afnemen_bij_tekort)
-VALUES (15, 1, 20, 45.00, NULL);
--- Only for lines with enough stock; a short line is saved with afnemen_bij_tekort = TRUE.
-INSERT INTO Voorraadreservering (bestelling_id, product_id, aantal)
-VALUES (15, 1, 20);

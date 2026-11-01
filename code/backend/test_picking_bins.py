@@ -147,6 +147,10 @@ class PickingBinPageTests(TestCase):
     def setUp(self):
         self.app = create_app()
         self.app.testing = True
+        preparation = patch("routes.order_picking.DistributionPreparationRepository")
+        self.preparation = preparation.start()
+        self.preparation.return_value.ready_to_pack.return_value = []
+        self.addCleanup(preparation.stop)
 
     def test_page_lists_bins_and_empty_state(self):
         with self.app.test_client() as client:

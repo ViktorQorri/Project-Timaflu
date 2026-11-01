@@ -31,9 +31,11 @@ class DiscountRepository:
     def find_customer(self, customer_id):
         """Return one customer, or None when the id is unknown."""
         return self._fetchone("""
-            SELECT klant_id, bedrijfsnaam
-            FROM Klant
-            WHERE klant_id = %s AND actief = TRUE
+            SELECT k.klant_id, k.bedrijfsnaam, k.eenmalige_korting_toegezegd,
+                   a.adres AS klantadres
+            FROM Klant AS k
+            JOIN Adres AS a ON a.adres_id = k.betaaladres_id
+            WHERE k.klant_id = %s AND k.actief = TRUE
         """, (customer_id,))
 
     def list_products(self):

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Klantakkoord telefonische bestelling{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Verkoop</span>
+  <h1>Bespreek de definitieve bestelling met de klant</h1>
+  <p>Controleer de aantallen, de niet-leverbare medicijnen en de berekende totaalprijs. Sluit dit gesprek af zonder de bestelling vast te leggen als de klant niet akkoord gaat. Herbereken bij iedere wijziging.</p>
+</section>
+<section class="stock-dashboard">
+  <h2>{{ quote.customer.bedrijfsnaam }}</h2>
+  <p>Afleveradres: {{ quote.customer.afleveradres }}</p>
+  <p>Factuuradres: {{ quote.customer.factuuradres }}</p>
+  <p>Leverdatum: {{ quote.day }}. Dagdeel: {{ quote.slot }}{% if quote.urgent %}. Spoed: vandaag, maximaal drie uur na orderplaatsing; bevestig vooraf de koeriersbeschikbaarheid{% endif %}.</p>
+  <div class="stock-dashboard__table-wrap" tabindex="0" role="region" aria-label="Bestelregels">
+    <table class="stock-dashboard__table">
+      <thead><tr><th>Medicijn</th><th>Aantal</th><th>Beschikbaar</th><th>Prijs per stuk</th><th>Regeltotaal excl. btw</th><th>Afspraak</th></tr></thead>
+      <tbody>
+      {% for line in quote.lines %}
+      <tr>
+        <th scope="row">{{ line.productnaam }}</th><td>{{ line.quantity }}</td><td>{{ line.available }}</td>
+        <td>€ {{ line.unit_price }}</td><td>€ {{ line.line_total }}</td>
+        <td>{% if line.skipped %}Vervalt op verzoek klant{% elif line.backorder %}Backorder, later afnemen{% else %}Direct gereserveerd na akkoord{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <dl class="invoice-totals">
+    <dt>Bestelbedrag excl. btw (alleen behouden regels)</dt><dd>€ {{ quote.subtotal_ex_vat }}</dd>
+    <dt>Orderbedrag incl. 9% btw</dt><dd>€ {{ quote.gross }}</dd>
+    <dt>Bestellingskorting</dt><dd>€ {{ quote.discount.order_discount }}</dd>
+    <dt>Eenmalige eersteorderkorting</dt><dd>€ {{ quote.discount.first_order_discount }}</dd>
+    <dt>Klantenkorting</dt><dd>€ {{ quote.discount.customer_discount }}</dd>
+    <dt><strong>Afgesproken ordertotaal</strong></dt><dd><strong>€ {{ quote.discount.total }}</strong></dd>
+  </dl>
+  <p>De factuur wordt per week opgesteld uit daadwerkelijk afgeleverde producten. Bij een wijziging van voorraad of prijs moet de bestelling opnieuw worden besproken.</p>
+  <form method="post" action="{{ url_for('sales.confirm_telephone_order') }}" class="stacked-form">
+    <input type="hidden" name="quote_token" value="{{ quote_token }}">
+    <label><input type="checkbox" name="customer_approved" value="yes" required> De klant heeft telefonisch ingestemd met dit definitieve orderbedrag en de keuzes bij tekorten.</label>
+    <button type="submit">Na klantakkoord bestelling en reserveringen vastleggen</button>
+  </form>
+  <p><a class="button button--secondary" href="{{ url_for('sales.new_telephone_order') }}">Aanpassen of afzien van deze bestelling</a></p>
+</section>
+{% endblock %}

@@ -1,25 +1,24 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
+from uuid import uuid4
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from flask import current_app, session
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
-from itsdangerous import BadSignature, URLSafeSerializer
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from db import get_connection
-from services.order_service import PARTS_OF_DAY, OrderService
-from services.discount_service import DiscountService
-from repositories.order_repository import OrderRepository
-from repositories.discount_repository import DiscountRepository
 from domain.errors import DomainError, ValidationError
-from domain.business import Order
-from repositories.assessed_repository import AssessedRepository
+from domain.business import Order, euro
+from repositories.discount_repository import DiscountRepository
 from repositories.customer_repository import CustomerRepository
 from repositories.sales_stock_repository import SalesStockRepository
+from repositories.sales_case_repository import SalesCaseRepository
+from repositories.telephone_order_repository import TelephoneOrderRepository
 from services.customer_service import CustomerService
 from services.sales_stock_service import SalesStockService
 
 sales = Blueprint("sales", __name__)
-
-# AD05 starts with three provisional order rows, with no artificial maximum.
-ORDER_LINE_ROWS = 3
 
 
 def customer_service():
@@ -87,6 +86,21 @@ def deactivate_customer(customer_id):
     flash(f"Klant {customer_id} is gedeactiveerd.", "success")
     return redirect(url_for("sales.customers"))
 
+@sales.get("/orders/status")
+def order_status():
+    raw = request.args.get("customer_id", "").strip()
+    if raw:
+        try:
+            customer_id = int(raw)
+        except ValueError as exc:
+            raise DomainError("Voer een geldig klantnummer in.") from exc
+        if customer_id < 1:
+            raise DomainError("Klantnummer moet positief zijn.")
+    else:
+        customer_id = None
+    rows = SalesCaseRepository(get_connection()).order_statuses(customer_id)
+    return render_template("order_status.html", orders=rows, customer_id=raw)
+
 
 @sales.get("/orders")
 def orders():
@@ -97,93 +111,114 @@ def orders():
     return render_template("orders.html", query=query, quantity=quantity, products=products)
 
 
-@sales.get("/orders/new")
-def new_order():
-    """Enter a telephone order (AD05): stock per line, discounts and total (SD01)."""
-    service = _order_service()
-    form = _order_form(request.args)
-    calculation, error, status = None, None, 200
-    # Adding or removing a row only shows the form again; "Totaal berekenen" calculates the total.
-    if not form["edit_lines"] and (form["customer_id"] or any(product_id for product_id, _ in form["lines"])):
-        try:
-            calculation = service.prepare(form["customer_id"], form["lines"], form["backorders"])
-        except DomainError as domain_error:
-            error, status = str(domain_error), domain_error.status_code
-    return _render_order(service, form, calculation, error), status
-
-
-@sales.post("/orders/new")
-def place_order():
-    """Save the order the customer agreed to, with its lines and reservations.
-
-    A rejected order shows the page again with the message and the input kept.
-    """
-    service = _order_service()
-    form = _order_form(request.form)
+@sales.post("/orders/calculate-discount")
+def calculate_order_discount():
     try:
-        if not form["quote"]:
-            raise DomainError(
-                "Bereken eerst het totaal en vraag de klant akkoord voordat je de order opslaat."
-            )
-        try:
-            approved_quote = _quote_serializer().loads(form["quote"])
-        except BadSignature as error:
-            raise DomainError("De berekende order is ongeldig. Bereken de order opnieuw.") from error
-        saved = service.place(
-            form["customer_id"], form["lines"], form["backorders"],
-            form["delivery_date"], form["part_of_day"], form["urgent"],
-            expected_quote=approved_quote,
-        )
-    except DomainError as domain_error:
-        try:
-            calculation = service.prepare(form["customer_id"], form["lines"], form["backorders"])
-        except DomainError:
-            calculation = None
-        return _render_order(service, form, calculation, str(domain_error)), domain_error.status_code
-    message = (f"Order {saved['order_id']} is opgeslagen. Levering op "
-               f"{saved['delivery_date']:%d-%m-%Y} in de {saved['part_of_day']}.")
-    if saved["backorders"]:
-        message += " Status: backorder. Regels zonder voorraad staan als backorder."
-    else:
-        message += " Status: wordt verzameld."
-    flash(message, "success")
-    return redirect(url_for("sales.new_order"))
-
-
-def _quote_serializer():
-    return URLSafeSerializer(current_app.secret_key, salt="timaflu-approved-order-quote")
-
-
-def _order_service():
-    connection = get_connection()
-    return OrderService(OrderRepository(connection), DiscountService(DiscountRepository(connection)))
-
-
-def _order_form(values):
-    lines = list(zip(values.getlist("product_id"), values.getlist("quantity")))
-    remove_line = values.get("remove_line", type=int)
-    if remove_line is not None and 0 <= remove_line < len(lines):
-        del lines[remove_line]
-    return {
-        "customer_id": values.get("customer_id", "", type=str).strip(),
-        "lines": lines,
-        "backorders": values.getlist("backorder"),
-        "delivery_date": values.get("delivery_date", "", type=str),
-        "part_of_day": values.get("part_of_day", "", type=str),
-        "urgent": values.get("urgent") == "1",
-        "quote": values.get("quote", "", type=str),
-        "add_line": values.get("add_line") == "1",
-        "edit_lines": values.get("add_line") == "1" or remove_line is not None,
-    }
-
-
-def _render_order(service, form, calculation, error):
-    line_rows = max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"])
-    quote_token = (_quote_serializer().dumps(service.quote_snapshot(calculation))
-                   if calculation is not None else "")
+        customer_id=int(request.form["customer_id"])
+        subtotal=request.form["subtotal"]
+    except (TypeError,ValueError,KeyError) as exc:
+        raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from exc
+    if customer_id<=0:
+        raise DomainError("Klantnummer moet positief zijn.")
+    repository = DiscountRepository(get_connection())
+    customer = repository.find_customer(customer_id)
+    if customer is None:
+        raise DomainError("Deze klant bestaat niet of is niet actief.")
+    first_order = repository.count_previous_orders(customer_id) == 0
+    year = date.today().year
+    rate = repository.get_customer_discount_percentage(customer_id, year)
+    if rate is None:
+        if not first_order:
+            raise DomainError(f"De klantenkorting voor {year} is niet vastgelegd.")
+        rate = Decimal("5")
+    try:
+        subtotal_ex = euro(subtotal)
+        vat = euro(subtotal_ex * Decimal("0.09"))
+        gross = subtotal_ex + vat
+        result = Order(
+            gross, 0, first_order, customerDiscountPercentage=rate
+        ).calculateTotalAmount()
+    except (ValueError, InvalidOperation) as exc:
+        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
     return render_template(
-        "order_new.html", form=form, calculation=calculation, error=error,
-        quote_token=quote_token, line_rows=line_rows,
-        parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(),
-        **service.discount_service.form_options(),
+        "discount.html", customer=customer,
+        subtotal_ex= subtotal_ex, vat=vat, gross=gross,
+        discount_year=year, customer_discount_percentage=rate,
+        first_order=first_order, discount=result
     )
+
+
+def _approval_serializer():
+    return URLSafeTimedSerializer(current_app.secret_key, salt="timaflu-telefonisch-orderakkoord")
+
+
+@sales.get("/orders/new")
+def new_telephone_order():
+    customers, products = TelephoneOrderRepository(get_connection()).form_options()
+    entered = request.args.getlist("product_id")
+    line_rows = max(6, len(entered) + (request.args.get("add_line") == "1"))
+    return render_template(
+        "telephone_order.html", customers=customers, products=products,
+        today=date.today().isoformat(), line_rows=line_rows,
+        entered={
+            "customer_id": request.args.get("customer_id", ""),
+            "day": request.args.get("day", ""),
+            "slot": request.args.get("slot", "ochtend"),
+            "urgent": request.args.get("urgent") == "yes",
+            "products": entered,
+            "quantities": request.args.getlist("quantity"),
+            "shortages": request.args.getlist("shortage"),
+        },
+    )
+
+
+@sales.post("/orders/quote")
+def preview_telephone_order():
+    """Show exactly the order amount to be approved verbally by the customer."""
+    try:
+        wanted = [
+            {"product_id": pid, "quantity": qty, "shortage": choice}
+            for pid, qty, choice in zip(
+                request.form.getlist("product_id"), request.form.getlist("quantity"),
+                request.form.getlist("shortage"), strict=True)
+            if pid.strip() or qty.strip()
+        ]
+        day = date.fromisoformat(request.form["day"])
+    except (ValueError, KeyError) as exc:
+        raise DomainError("Vul een geldige leverdag en complete bestelregels in.") from exc
+    urgent = request.form.get("urgent") == "yes"
+    customer_id = request.form.get("customer_id")
+    slot = request.form.get("slot")
+    quote = TelephoneOrderRepository(get_connection()).quote(
+        customer_id, wanted, day, slot, urgent
+    )
+    nonce = uuid4().hex
+    session["telephone_quote_nonce"] = nonce
+    payload = {
+        "nonce": nonce, "customer_id": quote["customer_id"],
+        "wanted": wanted, "day": day.isoformat(), "slot": slot,
+        "urgent": urgent, "fingerprint": quote["fingerprint"]
+    }
+    return render_template("telephone_order_quote.html", quote=quote,
+                           quote_token=_approval_serializer().dumps(payload))
+
+
+@sales.post("/orders/confirm")
+def confirm_telephone_order():
+    """No recorded order or reservation without a confirmed and unchanged quote."""
+    if request.form.get("customer_approved") != "yes":
+        raise DomainError("Leg eerst het definitieve akkoord van de klant vast.")
+    try:
+        payload = _approval_serializer().loads(request.form["quote_token"], max_age=900)
+        day = date.fromisoformat(payload["day"])
+    except (SignatureExpired, BadSignature, KeyError, ValueError, TypeError) as exc:
+        raise DomainError("De prijsbevestiging is verlopen of ongeldig. Bereken de order opnieuw.") from exc
+    if not payload["nonce"] or session.get("telephone_quote_nonce") != payload["nonce"]:
+        raise DomainError("Deze prijsbevestiging is al gebruikt of hoort niet bij dit gesprek.")
+    result = TelephoneOrderRepository(get_connection()).approve(
+        payload["customer_id"], payload["wanted"], day, payload["slot"],
+        payload["urgent"], payload["fingerprint"]
+    )
+    session.pop("telephone_quote_nonce", None)
+    flash("Bestelling na akkoord vastgelegd en beschikbare voorraad voor robots gereserveerd.", "success")
+    return redirect(url_for("sales.order_status", customer_id=payload["customer_id"]))

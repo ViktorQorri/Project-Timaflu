@@ -266,6 +266,20 @@ class OrderDiscountTests(TestCase):
             else:
                 product["minimale_bestelhoeveelheid"] = original
 
+    def test_telephone_order_accepts_thirteen_distinct_lines_without_arbitrary_limit(self):
+        from datetime import timedelta
+        from repositories.telephone_order_repository import TelephoneOrderRepository
+
+        requested = [
+            {"product_id": index, "quantity": 1, "shortage": "skip"}
+            for index in range(1, 14)
+        ]
+        customer, validated = TelephoneOrderRepository.validate(
+            7, requested, date.today() + timedelta(days=1), "ochtend", False
+        )
+        self.assertEqual(customer, 7)
+        self.assertEqual(len(validated), 13)
+
     def test_invalid_input_rejected(self):
         cases = {
             "no lines": ("7", [("", "")]),

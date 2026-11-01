@@ -106,6 +106,12 @@
         "type": "varchar(255)",
         "nullable": true,
         "key": ""
+      },
+      {
+        "name": "extra_bezorgkosten_factuur_id",
+        "type": "int",
+        "nullable": true,
+        "key": "MUL"
       }
     ],
     "Bestelregel": [
@@ -262,6 +268,24 @@
         "key": ""
       },
       {
+        "name": "extra_bezorgkosten_excl_btw",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "extra_bezorgkosten_btw",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
+        "name": "extra_bezorgkosten_incl_btw",
+        "type": "decimal(10,2)",
+        "nullable": false,
+        "key": ""
+      },
+      {
         "name": "bedrag_excl_btw",
         "type": "decimal(10,2)",
         "nullable": true,
@@ -405,6 +429,12 @@
         "name": "contactpersoon",
         "type": "varchar(100)",
         "nullable": true,
+        "key": ""
+      },
+      {
+        "name": "actief",
+        "type": "tinyint(1)",
+        "nullable": false,
         "key": ""
       },
       {
@@ -884,6 +914,13 @@
       "target": "OrderStatus",
       "target_column": "naam",
       "constraint": "Bestelling_ibfk_4"
+    },
+    {
+      "table": "Bestelling",
+      "column": "extra_bezorgkosten_factuur_id",
+      "target": "Factuur",
+      "target_column": "factuur_id",
+      "constraint": "fk_bestelling_bezorgkosten_factuur"
     },
     {
       "table": "Bestelregel",

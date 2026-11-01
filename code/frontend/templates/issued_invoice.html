@@ -10,6 +10,7 @@
   <p>{% if invoice.afzenderadres %}{{invoice.afzenderadres}}{% else %}Afzenderadres niet vastgelegd (historische factuur).{% endif %}</p></div>
   <div><strong>{{invoice.bedrijfsnaam}}</strong><p>{{invoice.adres}}</p></div>
 </div>
+<div class="stock-dashboard__table-wrap" role="region" aria-label="Factuurregels" tabindex="0">
 <table class="stock-dashboard__table">
 <caption>Daadwerkelijk geleverde producten</caption>
 <thead><tr><th>Bestelling</th><th>Aantal</th><th>Prijs per eenheid</th><th>Regeltotaal</th></tr></thead>
@@ -18,6 +19,7 @@
 <tr><td>{{line.order_id}}</td><td>{{line.quantity}}</td><td>€ {{line.unit_price}}</td><td>€ {{line.line_total}}</td></tr>
 {% else %}<tr><td colspan="4">Geen geleverde factuurregels</td></tr>{% endfor %}
 </tbody></table>
+</div>
 <dl class="invoice-totals">
 {% for label,value in [
 ('Totaal excl. btw',amounts.total_ex_vat),
@@ -32,7 +34,19 @@
 ] %}
 <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
 {% endfor %}
+{% if invoice.extra_bezorgkosten_incl_btw %}
+  <dt>Afgesproken extra bezorgkosten, excl. btw</dt><dd>€ {{ invoice.extra_bezorgkosten_excl_btw }}</dd>
+  <dt>Btw over extra bezorgkosten</dt><dd>€ {{ invoice.extra_bezorgkosten_btw }}</dd>
+  <dt>Extra bezorgkosten incl. btw</dt><dd>€ {{ invoice.extra_bezorgkosten_incl_btw }}</dd>
+{% endif %}
+  <dt><strong>Definitief te betalen</strong></dt>
+  <dd><strong>€ {{ invoice.totaal_bedrag if invoice.totaal_bedrag is not none else 'Niet vastgelegd' }}</strong></dd>
 </dl>
+{% for charge in invoice.delivery_charges %}
+  <p>Extra bezorgkosten bij bestelling #{{ charge.bestelling_id }}:
+  {{ charge.toelichting_extra_bezorgkosten or 'Opnieuw aanbieden op afgesproken datum' }}
+  (afgesproken totaal € {{ charge.extra_bezorgkosten }})</p>
+{% endfor %}
 {% if not complete or not invoice.afzenderadres %}
 <p class="flash flash-warning">Deze historische factuur mist een oorspronkelijke snapshot of het afzenderadres. Vul geen fictieve waarden in.</p>
 {% endif %}

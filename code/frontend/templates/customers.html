@@ -3,7 +3,7 @@
 {% block title %}Klanten{% endblock %}
 
 {% block content %}
-  <section class="stock-dashboard" aria-labelledby="customers-title">
+<section class="stock-dashboard" aria-labelledby="customers-title">
     <header class="stock-dashboard__intro">
       <div>
         <p class="stock-dashboard__eyebrow">Verkoop</p>
@@ -56,6 +56,7 @@
                 </td>
                 <td>
                   <div class="customer-row-actions">
+                    <a class="customer-link" href="{{ url_for('sales.order_status', customer_id=customer.klant_id) }}">Bestellingen</a>
                     <a class="customer-link" href="{{ url_for('sales.edit_customer', customer_id=customer.klant_id) }}">Bewerken<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
                     <a class="customer-link customer-link--danger" href="{{ url_for('sales.confirm_deactivate_customer', customer_id=customer.klant_id) }}">Deactiveren<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
                   </div>
