@@ -83,7 +83,7 @@ WHERE b.bestelling_id = 1;
 
 -- Order lines with reserved stock for the same screen, GET /orders/1/status
 -- Same SELECT as OrderStatusNotificationRepository.find_order_lines() with example order 1.
--- For an order with status 'backorder', the backorder quantity is aantal - gereserveerd.
+-- Reserved quantity is factual stock allocation, not an inferred backorder quantity.
 SELECT p.product_id, p.artikelnummer, p.productnaam, br.aantal,
        COALESCE(vr.aantal, 0) AS gereserveerd
 FROM Bestelregel AS br
