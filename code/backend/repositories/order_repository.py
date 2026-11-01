@@ -37,7 +37,7 @@ class OrderRepository:
             cur.execute(AVAILABLE_QUERY, (product_id, product_id))
             return int(cur.fetchone()["beschikbaar"])
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None, expected_one_time_discount=None):
         """Save the order, its lines and the reservations in one transaction.
 
         The customer and every product are locked first and the stock is counted again,
@@ -59,7 +59,7 @@ class OrderRepository:
         try:
             with conn.cursor(dictionary=True) as cur:
                 cur.execute(
-                    """SELECT klant_id, afleveradres_id, betaaladres_id
+                    """SELECT klant_id, afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd
                        FROM Klant
                        WHERE klant_id = %s
                        FOR UPDATE""",
@@ -80,6 +80,9 @@ class OrderRepository:
                 first_order = int(cur.fetchone()["aantal_bestellingen"]) == 0
                 if expected_first_order is not None and first_order != expected_first_order:
                     raise ConflictError("Er is inmiddels een andere bestelling geplaatst. Bereken de korting opnieuw.")
+                one_time_discount = first_order and bool(customer.get("eenmalige_korting_toegezegd"))
+                if expected_one_time_discount is not None and expected_one_time_discount != one_time_discount:
+                    raise ConflictError("De toegezegde acquisitiekorting is gewijzigd. Bereken opnieuw.")
 
                 priced = []
                 # Lock in product order, so two orders with the same products cannot deadlock.
@@ -113,7 +116,7 @@ class OrderRepository:
                                                eenmalige_korting_toegepast)
                        VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s)""",
                     (customer_id, customer["afleveradres_id"], customer["betaaladres_id"], delivery_date,
-                     part_of_day, urgent, "backorder" if backorders else None, first_order),
+                     part_of_day, urgent, "backorder" if backorders else None, one_time_discount),
                 )
                 order_id = cur.lastrowid
                 for line in priced:

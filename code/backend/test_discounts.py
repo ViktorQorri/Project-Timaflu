@@ -209,4 +209,5 @@ class OrderDiscountTests(TestCase):
         self.assertIn("YEAR(f.betaald_op) = %s", query)
         self.assertEqual(params, (7, 2025))
         self.assertEqual(repository.find_product(1), PRODUCTS[1])
+        self.assertIn("in_assortiment = TRUE", connection.c.statements[-1][0])
         self.assertEqual(connection.commits, 0)

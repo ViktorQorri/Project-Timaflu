@@ -600,6 +600,7 @@ FROM Klant
 ORDER BY bedrijfsnaam ASC;
 SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
 FROM Product
+WHERE in_assortiment = TRUE
 ORDER BY productnaam ASC;
 -- The chosen customer and the catalog price of each order line.
 SELECT klant_id, bedrijfsnaam, eenmalige_korting_toegezegd
@@ -607,7 +608,7 @@ FROM Klant
 WHERE klant_id = 1;
 SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
 FROM Product
-WHERE product_id = 1;
+WHERE product_id = 1 AND in_assortiment = TRUE;
 -- SD01 countPreviousOrders(customer): 0 means first order, 10% one-time discount.
 SELECT COUNT(*) AS aantal_bestellingen
 FROM Bestelling
@@ -631,7 +632,7 @@ SELECT GREATEST(
     - COALESCE((SELECT SUM(aantal) FROM Voorraadreservering WHERE product_id = 1), 0),
     0) AS beschikbaar;
 -- Saving the order, run as one transaction. Lock the customer and read its addresses.
-SELECT klant_id, afleveradres_id, betaaladres_id
+SELECT klant_id, afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd
 FROM Klant
 WHERE klant_id = 1
 FOR UPDATE;

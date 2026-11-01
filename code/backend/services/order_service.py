@@ -73,6 +73,7 @@ class OrderService:
               "quantity": line["quantity"], "backorder": line["backorder"],
               "expected_price": line["prijs_per_grootverpakking"]} for line in calculation["lines"]],
             delivery_date, part_of_day, bool(urgent), calculation["first_order"],
+            calculation["one_time_discount"],
         )
         return {**saved, "delivery_date": delivery_date, "part_of_day": part_of_day,
                 "total_amount": calculation["total_amount"]}

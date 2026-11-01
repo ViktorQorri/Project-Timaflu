@@ -36,6 +36,7 @@ class DiscountRepository:
         return self._fetchall("""
             SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
+            WHERE in_assortiment = TRUE
             ORDER BY productnaam ASC
         """)
 
@@ -44,7 +45,7 @@ class DiscountRepository:
         return self._fetchone("""
             SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
-            WHERE product_id = %s
+            WHERE product_id = %s AND in_assortiment = TRUE
         """, (product_id,))
 
     def count_previous_orders(self, customer_id):

@@ -53,9 +53,10 @@ class FakeOrderRepository:
     def available_stock(self, product_id):
         return self.stock[product_id]
 
-    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None):
+    def save_order(self, customer_id, lines, delivery_date, part_of_day, urgent, expected_first_order=None, expected_one_time_discount=None):
         self.saved.append((customer_id, lines, delivery_date, part_of_day, urgent))
         self.expected_first_order = expected_first_order
+        self.expected_one_time_discount = expected_one_time_discount
         return {"order_id": 15, "first_order": False,
                 "backorders": [line["product_id"] for line in lines if line["backorder"]]}
 
@@ -151,7 +152,7 @@ class Cursor:
 
 class Connection:
     def __init__(self, stock=None, previous_orders=0, blocked=False,
-                 customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4}):
+                 customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4, "eenmalige_korting_toegezegd": True}):
         self.cur = Cursor(stock or {1: 50, 2: 50}, previous_orders, blocked, customer)
         self.commits = 0
         self.rollbacks = 0
@@ -203,6 +204,22 @@ class OrderRepositoryTests(TestCase):
         with self.assertRaises(ConflictError):
             OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2), "ochtend",
                                            False, expected_first_order=True)
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
+    def test_unpromised_discount_is_not_recorded(self):
+        db = Connection(customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4,
+                                  "eenmalige_korting_toegezegd": False})
+        saved = OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                               "ochtend", False, True, False)
+        self.assertTrue(saved["first_order"])
+        self.assertEqual(inserts(db, "Bestelling")[0][-1], False)
+
+    def test_promise_change_rejects_stale_total(self):
+        db = Connection(customer={"klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4,
+                                  "eenmalige_korting_toegezegd": False})
+        with self.assertRaises(ConflictError):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                           "ochtend", False, True, True)
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
 
     def test_changed_catalogue_price_rejects_stale_total(self):
