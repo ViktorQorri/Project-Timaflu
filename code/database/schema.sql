@@ -494,6 +494,15 @@ CREATE TABLE Factuur (
     bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
     klantenkorting DECIMAL(10,2) NULL,
     totaal_bedrag DECIMAL(10,2) NULL,
+    -- Preserve historical invoice snapshots; prevent contradictory VAT totals.
+    CONSTRAINT ck_factuur_btw_totaal CHECK (
+        bedrag_excl_btw IS NULL OR btw_bedrag IS NULL
+        OR bedrag_incl_btw IS NULL
+        OR bedrag_incl_btw = bedrag_excl_btw + btw_bedrag
+    ),
+    CONSTRAINT ck_factuur_bezorgkosten_totaal CHECK (
+        extra_bezorgkosten_incl_btw = extra_bezorgkosten_excl_btw + extra_bezorgkosten_btw
+    ),
     CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
