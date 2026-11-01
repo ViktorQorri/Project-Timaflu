@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches:
+      - main
       - feature/five-required-backend-scenarios
   workflow_dispatch:
 
@@ -73,6 +74,15 @@ jobs:
         run: python code/database/audit_ui_queries.py
       - name: Validate final EER against actual MySQL information_schema
         run: python code/database/generate_eer.py --database timaflu_casus_test_94 --check
+      - name: Build verifiable school submission archives
+        run: python code/build_deliverables.py --output-dir deliverables
+      - name: Upload backend, frontend, database and design ZIPs
+        uses: actions/upload-artifact@v4
+        with:
+          name: timaflu-school-deliverables
+          path: deliverables/*.zip
+          if-no-files-found: error
+          retention-days: 30
       - name: Save reproducible MySQL evidence
         uses: actions/upload-artifact@v4
         with:

@@ -37,7 +37,7 @@ class FailedDeliveryCaseTests(TestCase):
         tomorrow = (date.today() + timedelta(days=1)).isoformat()
         cases = [
             ("invalid", "ochtend", "2.00", "Twee pogingen"),
-            (date.today().isoformat(), "ochtend", "2.00", "Twee pogingen"),
+            ((date.today() - timedelta(days=1)).isoformat(), "ochtend", "2.00", "Twee pogingen"),
             (tomorrow, "avond", "2.00", "Twee pogingen"),
             (tomorrow, "middag", "-2.00", "Twee pogingen"),
             (tomorrow, "middag", "NaN", "Twee pogingen"),
@@ -62,6 +62,18 @@ class FailedDeliveryCaseTests(TestCase):
         self.assertEqual(repo.calls, [
             (2, new_day, "middag", Decimal("4.50"), "Koerier trof niemand")
         ])
+
+    def test_followup_may_be_today_after_yesterdays_failed_route(self):
+        # Original case: sales and the pharmacy agree when to offer again.
+        # After two visits yesterday, a new delivery today is not forbidden.
+        repo = RecordingRepository()
+        current_day = date.today()
+        result = DistributionService(repo).reschedule_failed_delivery(
+            2, current_day.isoformat(), "ochtend", "0",
+            "Beide bezorgpogingen waren gisteren", "yes"
+        )
+        self.assertEqual(result, current_day)
+        self.assertEqual(repo.calls[0][1], current_day)
 
     def test_invoice_adds_extra_delivery_cost_without_order_discount_on_fee(self):
         issued = Invoice(1, "101", date(2026, 11, 1)).createWeeklyInvoice(
