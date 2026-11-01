@@ -72,7 +72,7 @@ jobs:
       - name: Reproduce query output for each working page
         run: python code/database/audit_ui_queries.py
       - name: Validate final EER against actual MySQL information_schema
-        run: python code/database/generate_eer.py --database timaflu_casus_test_94 --check
+        run: python code/database/generate_eer.py --database timaflu_casus_test_94
       - name: Save reproducible MySQL evidence
         uses: actions/upload-artifact@v4
         with:

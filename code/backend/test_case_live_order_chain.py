@@ -176,3 +176,14 @@ class RealOrderChainTests(unittest.TestCase):
                     delivery_cost_vat_percent="9")
             self.assertEqual(again, [])
             self.assertEqual(client.get(f"/invoices/issued/{issued[0]}").status_code, 200)
+
+    def test_deactivated_customer_cannot_approve_new_order(self):
+        with self.db.cursor() as cursor:
+            cursor.execute("UPDATE Klant SET actief=FALSE WHERE klant_id=1")
+        self.db.commit()
+        with self.app.test_client() as client:
+            page = client.get("/orders/new")
+            self.assertEqual(page.status_code, 200)
+            self.assertNotIn(b"TEST Apotheek", page.data)
+            self.assertEqual(self.quote(client, 2).status_code, 400)
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Bestelling"), 0)

@@ -12,7 +12,7 @@ class AssessedRepository:
             c.execute("""SELECT k.klant_id, k.bedrijfsnaam,
                                 k.eenmalige_korting_toegezegd, a.adres AS klantadres FROM Klant k
                          JOIN Adres a ON a.adres_id=k.betaaladres_id
-                         WHERE k.klant_id=%s""", (customer_id,))
+                         WHERE k.klant_id=%s AND k.actief=TRUE""", (customer_id,))
             customer = c.fetchone()
             if not customer:
                 raise DomainError("Unknown customer")

@@ -20,7 +20,7 @@ class TelephoneOrderRepository:
 
     def form_options(self):
         with self.db.cursor(dictionary=True) as c:
-            c.execute("""SELECT klant_id, bedrijfsnaam FROM Klant ORDER BY bedrijfsnaam, klant_id""")
+            c.execute("""SELECT klant_id, bedrijfsnaam FROM Klant WHERE actief=TRUE ORDER BY bedrijfsnaam, klant_id""")
             customers = c.fetchall()
             c.execute("""SELECT product_id, productnaam, artikelnummer, minimale_bestelhoeveelheid,
                                 prijs_per_grootverpakking
@@ -59,7 +59,7 @@ class TelephoneOrderRepository:
         customer_id, wanted = self.validate(customer_id, wanted, day, slot, urgent)
         with self.db.cursor(dictionary=True) as c:
             c.execute(
-                "SELECT klant_id FROM Klant WHERE klant_id=%s" +
+                "SELECT klant_id FROM Klant WHERE klant_id=%s AND actief=TRUE" +
                 (" FOR UPDATE" if for_update else ""), (customer_id,)
             )
             if c.fetchone() is None:

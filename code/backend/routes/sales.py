@@ -2,46 +2,114 @@ from datetime import date
 from decimal import InvalidOperation
 from uuid import uuid4
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from flask import Blueprint, render_template, request, current_app, session, redirect, url_for, flash
+from flask import current_app, session
+
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+
 from db import get_connection
-from repositories.sales_stock_repository import SalesStockRepository
+from domain.errors import DomainError, ValidationError
+from domain.business import Order
 from repositories.assessed_repository import AssessedRepository
+from repositories.customer_repository import CustomerRepository
+from repositories.sales_stock_repository import SalesStockRepository
 from repositories.sales_case_repository import SalesCaseRepository
 from repositories.telephone_order_repository import TelephoneOrderRepository
+from services.customer_service import CustomerService
 from services.sales_stock_service import SalesStockService
-from domain.business import Order
-from domain.errors import DomainError
 
-sales=Blueprint("sales",__name__)
+sales = Blueprint("sales", __name__)
+
+
+def customer_service():
+    return CustomerService(CustomerRepository(get_connection()))
+
+
+def render_customers(form=None, errors=(), status=200):
+    """Render the customer overview with the form for a new customer."""
+    search = request.args.get("q", "", type=str).strip()
+    year = date.today().year
+    rows = customer_service().overview(search, year)
+    return render_template(
+        "customers.html", customers=rows, search=search, year=year,
+        form=form or {}, errors=errors,
+    ), status
+
 
 @sales.get("/customers")
 def customers():
-    query=request.args.get("q","",type=str).strip()
-    rows=SalesCaseRepository(get_connection()).customers(query)
-    return render_template("customers.html", customers=rows, query=query)
+    """Show the customers page."""
+    return render_customers()
 
+
+@sales.post("/customers")
+def create_customer():
+    """Save a new customer, or show the form again with the validation errors."""
+    try:
+        customer_id = customer_service().create(request.form)
+    except ValidationError as error:
+        return render_customers(request.form, error.messages, 400)
+    flash(f"Klant {customer_id} is aangemaakt.", "success")
+    return redirect(url_for("sales.customers"))
+
+
+@sales.get("/customers/<int:customer_id>/edit")
+def edit_customer(customer_id):
+    """Show the form with the current data of one customer."""
+    customer = customer_service().get(customer_id)
+    return render_template("customer_edit.html", customer_id=customer_id, form=customer, errors=())
+
+
+@sales.post("/customers/<int:customer_id>/edit")
+def update_customer(customer_id):
+    """Save the changed customer data, or show the form again with the validation errors."""
+    try:
+        customer_service().update(customer_id, request.form)
+    except ValidationError as error:
+        return render_template(
+            "customer_edit.html", customer_id=customer_id, form=request.form, errors=error.messages,
+        ), 400
+    flash(f"De gegevens van klant {customer_id} zijn opgeslagen.", "success")
+    return redirect(url_for("sales.customers"))
+
+
+@sales.get("/customers/<int:customer_id>/deactivate")
+def confirm_deactivate_customer(customer_id):
+    """Confirm the AD07 deactivation action."""
+    return render_template("customer_deactivate.html", customer=customer_service().get(customer_id))
+
+
+@sales.post("/customers/<int:customer_id>/deactivate")
+def deactivate_customer(customer_id):
+    """Deactivate a customer while retaining all linked business records."""
+    customer_service().deactivate(customer_id)
+    flash(f"Klant {customer_id} is gedeactiveerd.", "success")
+    return redirect(url_for("sales.customers"))
 
 @sales.get("/orders/status")
 def order_status():
-    raw=request.args.get("customer_id","").strip()
+    raw = request.args.get("customer_id", "").strip()
     if raw:
         try:
-            customer_id=int(raw)
+            customer_id = int(raw)
         except ValueError as exc:
             raise DomainError("Voer een geldig klantnummer in.") from exc
-        if customer_id<1:
+        if customer_id < 1:
             raise DomainError("Klantnummer moet positief zijn.")
     else:
-        customer_id=None
-    rows=SalesCaseRepository(get_connection()).order_statuses(customer_id)
+        customer_id = None
+    rows = SalesCaseRepository(get_connection()).order_statuses(customer_id)
     return render_template("order_status.html", orders=rows, customer_id=raw)
+
 
 @sales.get("/orders")
 def orders():
-    query=request.args.get("q","",type=str).strip()
-    quantity=request.args.get("quantity","1",type=str)
-    products=SalesStockService(SalesStockRepository(get_connection())).check(query,quantity) if query else []
-    return render_template("orders.html",query=query,quantity=quantity,products=products)
+    """Show the orders page."""
+    query = request.args.get("q", "", type=str).strip()
+    quantity = request.args.get("quantity", "1", type=str)
+    products = SalesStockService(SalesStockRepository(get_connection())).check(query, quantity) if query else []
+    return render_template("orders.html", query=query, quantity=quantity, products=products)
+
 
 @sales.post("/orders/calculate-discount")
 def calculate_order_discount():
