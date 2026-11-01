@@ -285,6 +285,51 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
             self.assertIn(b'value="2"', response.data)
             self.assertIn(b'name="customer_id"', response.data)
 
+    def test_rush_delivery_plan_enforces_three_hour_deadline(self):
+        from datetime import datetime, time
+        from repositories.distribution_preparation_repository import (
+            DistributionPreparationRepository,
+        )
+
+        day = date.today()
+        with self.db.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO Koerier (naam, beschikbaar) VALUES ('Spoedkoerier test', TRUE)"
+            )
+            courier = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO Bestelling
+                   (klant_id, afleveradres_id, betaaladres_id, besteld_op,
+                    gewenste_leverdatum, dagdeel, spoed, status_naam)
+                   VALUES (1, 1, 1, %s, %s, 'ochtend', TRUE, 'wordt verzameld')""",
+                (datetime.combine(day, time(8, 0)), day),
+            )
+            order_id = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO Levering (bestelling_id) VALUES (%s)", (order_id,)
+            )
+            delivery_id = cursor.lastrowid
+        self.db.commit()
+
+        repository = DistributionPreparationRepository(self.db)
+        for invalid_time in (time(7, 59), time(11, 1)):
+            with self.subTest(invalid_time=invalid_time):
+                with self.assertRaisesRegex(DomainError, "uiterlijk drie uur"):
+                    repository.schedule(delivery_id, courier, day, invalid_time)
+                self.assertEqual(
+                    self.rows("SELECT COUNT(*) AS n FROM Leverpoging")[0]["n"], 0
+                )
+        repository.schedule(delivery_id, courier, day, time(10, 0))
+        self.assertEqual(
+            self.rows("SELECT COUNT(*) AS n FROM Leverpoging")[0]["n"], 1
+        )
+        self.assertEqual(
+            self.rows(
+                "SELECT status_naam FROM Bestelling WHERE bestelling_id=%s",
+                (order_id,),
+            )[0]["status_naam"], "verstuurd"
+        )
+
     def test_missing_existing_rate_is_not_silently_recalculated(self):
         with self.db.cursor() as cursor:
             cursor.execute("""

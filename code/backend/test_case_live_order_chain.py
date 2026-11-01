@@ -58,8 +58,7 @@ class RealOrderChainTests(unittest.TestCase):
             return row[0]
 
     def quote(self,client,n,shortage="skip",slot="ochtend"):
-        data={"customer_id":"1","day":date.today().isoformat(),"slot":slot,
-              "urgent":"yes",
+        data={"customer_id":"1","day":(date.today()+timedelta(days=1)).isoformat(),"slot":slot,
               "product_id":["1","","","","",""],"quantity":[str(n),"","","","",""],
               "shortage":[shortage]+["skip"]*5}
         return client.post("/orders/quote",data=data)
@@ -70,7 +69,7 @@ class RealOrderChainTests(unittest.TestCase):
         return match.group(1).decode()
 
     def test_signed_delivery_releases_reserved_stock_and_invoices_once(self):
-        day=date.today()
+        day=date.today()+timedelta(days=1)
         with self.app.test_client() as client:
             self.assertEqual(client.get("/orders/new").status_code,200)
             preview=self.quote(client,3)
@@ -125,7 +124,7 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"backorder")
 
     def test_two_failed_visits_can_be_rescheduled_and_charge_billed_once(self):
-        first = date.today()
+        first = date.today()+timedelta(days=1)
         retry = first + timedelta(days=1)
         with self.app.test_client() as client:
             quote = self.quote(client, 3)

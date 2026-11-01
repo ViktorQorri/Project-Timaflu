@@ -3,7 +3,7 @@
 Leveringregels zijn pas factureerbaar nadat een echte ondertekende aflevering
 in Leverpoging is vastgelegd. De registratie is per order/product idempotent.
 """
-from datetime import date, time
+from datetime import date, datetime, time, timedelta
 from domain.errors import ConflictError, DomainError, NotFoundError
 
 
@@ -95,7 +95,8 @@ class DistributionPreparationRepository:
             raise DomainError("Kies een geldig levermoment en een beschikbare koerier.")
         try:
             with self.db.cursor(dictionary=True) as c:
-                c.execute("""SELECT b.bestelling_id,b.gewenste_leverdatum,b.dagdeel,b.spoed
+                c.execute("""SELECT b.bestelling_id,b.gewenste_leverdatum,b.dagdeel,
+                                    b.spoed,b.besteld_op,b.status_naam
                              FROM Levering l JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
                              WHERE l.levering_id=%s FOR UPDATE""", (delivery_id,))
                 order = c.fetchone()
@@ -103,6 +104,17 @@ class DistributionPreparationRepository:
                     raise NotFoundError("Te plannen levering niet gevonden.")
                 if scheduled_date != order["gewenste_leverdatum"]:
                     raise ConflictError("Plan op de met de klant afgesproken datum.")
+                # Current-processes.md (Bestellingen): first delivery of a rush
+                # order must be within three hours of its actual placement.
+                # A newly negotiated delivery after two failed visits is separate.
+                if order["spoed"] and order["status_naam"] != "niet afgeleverd":
+                    scheduled_at = datetime.combine(scheduled_date, planned_time)
+                    ordered_at = order["besteld_op"]
+                    if not (ordered_at <= scheduled_at <= ordered_at + timedelta(hours=3)):
+                        raise DomainError(
+                            "Plan een spoedlevering vanaf de orderplaatsing en uiterlijk "
+                            "drie uur daarna. Controleer de afgesproken koeriersrit."
+                        )
                 if ((planned_time.hour < 12) != (order["dagdeel"] == "ochtend")):
                     raise DomainError("Leveringstijd en gekozen dagdeel komen niet overeen.")
                 c.execute("SELECT beschikbaar FROM Koerier WHERE koerier_id=%s FOR UPDATE",
