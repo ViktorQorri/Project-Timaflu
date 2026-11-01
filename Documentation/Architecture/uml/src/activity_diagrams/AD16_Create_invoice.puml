@@ -16,7 +16,9 @@ if (Uninvoiced delivered\norders available?) then ([yes])
     :Check and approve invoice;
     |System|
     :Save invoice;
-    :Send invoice to customer;
+    |Administration Employee|
+    :Send saved invoice to the customer\noutside the application;
+    |System|
     :Set orders to "invoiced";
   repeat while (Another customer with\nuninvoiced delivered orders?) is ([yes])
   ->[no];

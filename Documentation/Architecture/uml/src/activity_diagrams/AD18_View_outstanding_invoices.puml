@@ -22,7 +22,11 @@ if (Open 3 weeks or more?) then ([yes])
   endif
 else ([no])
   if (Open 1 week or more?) then ([yes])
-    :Send payment reminder;
+    :Prepare the due first or second reminder;
+    :Print and send reminder manually;
+    :Confirm it was actually sent;
+    |System|
+    :Record the reminder as sent;
     stop
   else ([no])
     :No action;

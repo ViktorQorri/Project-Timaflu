@@ -2,28 +2,25 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
+
 |Courier|
 start
-:Select order in trip overview;
-if (Customer present?) then ([yes])
+:Select an assigned delivery;
+if (Customer present on first visit?) then ([yes])
+  |Customer|
+  :Sign for receipt;
+  |Courier|
+  :Confirm signed receipt;
+  |System|
+  :Record confirmation of signed receipt\nand delivery time;
+  :Update order status if all required\nproducts were delivered;
+  stop
 else ([no])
-  :Execute AD UC15 Look up\ncustomer phone number;
-  :Call customer;
-  if (Customer can still receive?) then ([yes])
-  else ([no])
-    :Register failed delivery;
-    |System|
-    :Set status to "not delivered";
-    :Notify sales\nand register extra costs;
-    stop
-  endif
+  |Courier|
+  :Look up customer phone number\nand contact the customer;
+  :Execute AD27 Handle failed delivery:\nplan second attempt later today;
+  |System|
+  :Record actual outcomes and follow-up\nwithout inventing a signature;
+  stop
 endif
-|Customer|
-:Sign digitally for receipt;
-|Courier|
-:Confirm delivery;
-|System|
-:Save signature and time;
-:Update order status;
-stop
 @enduml

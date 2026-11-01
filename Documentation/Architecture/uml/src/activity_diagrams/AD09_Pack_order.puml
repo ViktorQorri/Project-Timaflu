@@ -2,23 +2,27 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
+
 |Distribution Employee|
 start
-:Select complete order;
+:Select order with completed robot sub-orders;
 |System|
-:Show related collection bins\nand order lines;
+:Show related collection bins and order lines;
 |Distribution Employee|
-:Pack medicines into boxes;
-:Enter number of boxes and confirm;
+:Pack collected medicines into boxes;
+:Enter actual number of boxes and confirm;
 |System|
-:Print address label\n(customer name, address, phone number);
+:Record box count and packing status;
+:Make printable address label available;
+|Distribution Employee|
+:Print and attach address label;
 if (Rush order?) then ([yes])
-  :Print extra "Rush" label;
+  :Apply rush indication to package;
 else ([no])
 endif
-:Update order status;
-:Assign trip;
-|Distribution Employee|
-:Attach labels and set boxes ready;
+:Confirm order is ready for distribution;
+|System|
+:Release the packed order for dispatch;
+:Make it available for separate courier scheduling;
 stop
 @enduml
