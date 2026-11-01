@@ -18,8 +18,10 @@ def render():
         raise RuntimeError(f"Expected 28 approved screen designs, found {len(designs)}")
     TARGET.mkdir(parents=True,exist_ok=True)
     with sync_playwright() as client:
-        browser=client.chromium.launch(executable_path=str(BROWSER),headless=True,
-                    args=["--allow-file-access-from-files"])
+        launch_options = {"headless": True, "args": ["--allow-file-access-from-files"]}
+        if BROWSER.is_file():
+            launch_options["executable_path"] = str(BROWSER)
+        browser=client.chromium.launch(**launch_options)
         try:
             page=browser.new_page(viewport={"width":1440,"height":920},device_scale_factor=1)
             for design in designs:

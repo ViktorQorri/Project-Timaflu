@@ -39,8 +39,8 @@ UPDATED_PRODUCT={
     "price_per_bulk_package":"101.00",
     "ingredient_name":["Teststof"], "ingredient_quantity":["50 mg"]
 }
-COMPLETE_ROBOT=step("/api/robots/1/complete",json_data={
-    "aisle":"A","suborder_id":1,"collected":[{"product_id":1,"quantity":1}]
+COMPLETE_ROBOT=step("/api/robots/2/complete",json_data={
+    "aisle":"B","suborder_id":1,"collected":[{"product_id":3,"quantity":3}]
 })
 FIRST_ABSENT=step("/deliveries/first-attempt",data={
     "day":"2026-10-22","delivery_id":"3","outcome":"niet aanwezig","second_time":"15:00"
@@ -94,7 +94,7 @@ ACTIONS=[
           "customer_id":"1","day":"2026-11-04","slot":"ochtend","urgent":"no",
           "product_id":["1"],"quantity":["1"],"shortage":["skip"]
       })
-  ],verify="SELECT bestelling_id,status_naam FROM Bestelling WHERE bestelling_id>7"),
+  ],verify="SELECT bestelling_id,status_naam FROM Bestelling WHERE bestelling_id>9"),
   dict(ad="AD07",name="Nieuwe klant registreren",steps=[step("/customers",{
       "bedrijfsnaam":"TEST nieuwe apotheek","contactpersoon":"TEST klantcontact",
       "telefoonnummer":"0612345670","afleveradres":"TEST: Afleveradres nieuw",
@@ -107,7 +107,7 @@ ACTIONS=[
       "factuuradres":"TEST: Factuurstraat 12, Breda"
   })],verify="SELECT klant_id,bedrijfsnaam FROM Klant WHERE klant_id=1 AND bedrijfsnaam='TEST Apotheek bijgewerkt B.V.'"),
   dict(ad="AD10",name="Verzamelbak bij robotdeelorder registreren",steps=[step("/api/picking-bins",json_data={
-      "bin_code":"TEST-BAK-NIEUW","sub_order_id":1,"aisle":"A"
+      "bin_code":"TEST-BAK-NIEUW","sub_order_id":1,"aisle":"B"
   })],verify="SELECT unieke_code,deelorder_id FROM Verzamelbak WHERE unieke_code='TEST-BAK-NIEUW'"),
   dict(ad="AD11",name="Robotdeelorder afronden",steps=[COMPLETE_ROBOT],
       verify="SELECT deelorder_id,afgerond FROM Deelorder WHERE deelorder_id=1 AND afgerond=1"),
@@ -130,7 +130,7 @@ ACTIONS=[
   ],verify="SELECT bestelling_id,gewenste_leverdatum,extra_bezorgkosten FROM Bestelling WHERE bestelling_id=3 AND gewenste_leverdatum='2026-11-05'"),
   dict(ad="AD16",name="Weekfacturen uitgeven na bevestiging",steps=[step("/invoices/weekly",{
       "week_start":"2026-10-19","invoice_approved":"yes"
-  })],verify="SELECT klant_id,week_start FROM Factuur WHERE klant_id=2 AND week_start='2026-10-19'"),
+  })],verify="SELECT f.klant_id,f.week_start FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id WHERE k.bedrijfsnaam='TEST Tweede apotheek B.V.' AND f.week_start='2026-10-19'"),
   dict(ad="AD18",name="Herinnering als verzonden registreren",steps=[step("/invoices/1/reminders/1/sent",{
       "sent_confirmed":"yes"
   },today="2026-11-08")],verify="SELECT factuur_id FROM Factuur WHERE factuur_id=1"),
@@ -150,10 +150,10 @@ ACTIONS=[
       "outcome":"convert","delivery_address":"TEST: Levering nieuwe klant",
       "invoice_address":"TEST: Factuur nieuwe klant","phone_number":"0611111122"
   })],verify="SELECT potentiele_klant_id,klant_id FROM PotentieleKlant WHERE potentiele_klant_id=2 AND klant_id IS NOT NULL"),
-  dict(ad="AD22",name="Robotdeelorders genereren",steps=[step("/api/orders/7/suborders",json_data={})],
-      verify="SELECT deelorder_id,bestelling_id FROM Deelorder WHERE bestelling_id=7"),
-  dict(ad="AD23",name="Order vanuit orderpicking naar robots",steps=[step("/order-picking/orders/7/dispatch",{})],
-      verify="SELECT deelorder_id,bestelling_id FROM Deelorder WHERE bestelling_id=7"),
+  dict(ad="AD22",name="Robotdeelorders genereren",steps=[step("/api/orders/5/suborders",json_data={})],
+      verify="SELECT deelorder_id,bestelling_id FROM Deelorder WHERE bestelling_id=5"),
+  dict(ad="AD23",name="Order vanuit orderpicking naar robots",steps=[step("/order-picking/orders/5/dispatch",{})],
+      verify="SELECT deelorder_id,bestelling_id FROM Deelorder WHERE bestelling_id=5"),
   dict(ad="AD24",name="Nieuw medicijn na directiegoedkeuring",steps=[step("/products/new",PRODUCT)],
       verify="SELECT product_id,productnaam FROM Product WHERE artikelnummer='TEST-NEW-003'"),
   dict(ad="AD24",name="Bestaand medicijn wijzigen",steps=[step("/products/1/edit",UPDATED_PRODUCT)],

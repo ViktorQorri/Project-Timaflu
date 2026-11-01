@@ -56,9 +56,9 @@ De verplichte EER blijft beschikbaar als
 [SVG](Documentation/Architecture/eer-mysql-verified.svg) en het bewerkbare
 MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
 verwijderd. De verplichte query-output per scherm wordt uit een geïsoleerde
-MySQL-testdatabase gegenereerd met `python code/database/build_query_proof.py`
+MySQL-testdatabase gegenereerd met `python scripts/oplevering/build_query_proof.py`
 naar `deliverables/query-output-per-screen.md`. Dit bestand staat niet in Git.
-`python code/build_deliverables.py --output-dir deliverables` neemt het rapport
+`python scripts/build_deliverables.py --output-dir deliverables` neemt het rapport
 vervolgens samen met 28 screenshots en een leesbare PDF op in het database-ZIP-bestand voor de school.
 
 ## Documentation

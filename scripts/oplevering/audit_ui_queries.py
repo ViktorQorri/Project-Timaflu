@@ -15,7 +15,7 @@ from unittest.mock import patch
 import sys
 from urllib.parse import urlsplit
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "code" / "backend"))
 
 import mysql.connector
 from app import create_app
@@ -211,43 +211,9 @@ def main():
                     (leverancier_id, factuurdatum, bedrag)
                    VALUES (1,'2026-10-20',155.00)"""
             )
-            cursor.execute("INSERT INTO Robot (robot_id, gang) VALUES (1, 'A')")
-            for status in ("wordt verzameld", "nieuw"):
-                cursor.execute(
-                    """INSERT INTO Bestelling
-                        (klant_id, afleveradres_id, betaaladres_id, besteld_op,
-                         gewenste_leverdatum, dagdeel, spoed, status_naam)
-                       VALUES (1,2,1,'2026-10-31 08:00:00',
-                               '2026-11-03','ochtend',FALSE,%s)""",
-                    (status,),
-                )
-                order_id = cursor.lastrowid
-                cursor.execute(
-                    """INSERT INTO Bestelregel
-                        (bestelling_id, product_id, aantal, prijs_per_eenheid)
-                       VALUES (%s,1,1,100.00)""", (order_id,),
-                )
-                cursor.execute(
-                    """INSERT INTO Voorraadreservering
-                        (bestelling_id, product_id, aantal)
-                       VALUES (%s,1,1)""", (order_id,),
-                )
-                if status == "wordt verzameld":
-                    cursor.execute(
-                        """INSERT INTO Deelorder
-                            (bestelling_id, robot_id, afgerond)
-                           VALUES (%s,1,FALSE)""", (order_id,),
-                    )
-                    suborder_id = cursor.lastrowid
-                    cursor.execute(
-                        """INSERT INTO Deelorderregel
-                            (deelorder_id, product_id, aantal)
-                           VALUES (%s,1,1)""", (suborder_id,),
-                    )
-                    cursor.execute(
-                        """INSERT INTO Verzamelbak (unieke_code, deelorder_id)
-                           VALUES ('TEST-BAK-A',%s)""", (suborder_id,),
-                    )
+        # Robot orders, bins, stock and couriers are supplied exclusively by
+        # weekly_invoicing_fixture.sql, the common frontend seed dataset.
+        cnx.commit()
         # Fictional historical delivery is packed, so its real label can be
         # inspected without inventing a successful live robot operation.
         with cnx.cursor() as cursor:

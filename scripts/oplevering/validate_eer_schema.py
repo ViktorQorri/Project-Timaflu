@@ -1,6 +1,6 @@
 """Validate that the editable Workbench EER matches the SQL schema and purchasing code.
 
-Run with: python code/database/validate_eer_schema.py
+Run with: python scripts/oplevering/validate_eer_schema.py
 No database connection is required; this inspection is read-only.
 """
 from __future__ import annotations

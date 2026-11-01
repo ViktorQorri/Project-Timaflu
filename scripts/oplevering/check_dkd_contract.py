@@ -2,7 +2,7 @@
 
 Unlike the generated backend class diagram, this verification uses the approved
 DKD as an independent source. No database, credentials or fixtures are needed.
-Run: python code/database/check_dkd_contract.py
+Run: python scripts/oplevering/check_dkd_contract.py
 """
 from __future__ import annotations
 

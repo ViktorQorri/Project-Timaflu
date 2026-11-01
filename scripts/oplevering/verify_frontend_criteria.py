@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 from werkzeug.serving import make_server
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "code/database"))
+sys.path.insert(0, str(ROOT / "scripts/oplevering"))
 sys.path.insert(0, str(ROOT / "code/backend"))
 from app import create_app
 from audit_ui_queries import SCREENS

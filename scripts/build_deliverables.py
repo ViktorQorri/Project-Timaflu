@@ -13,7 +13,7 @@ from pathlib import Path
 import subprocess
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
-from database.validate_eer_schema import validate as validate_eer_schema
+from oplevering.validate_eer_schema import validate as validate_eer_schema
 
 ROOT = Path(__file__).resolve().parents[1]
 QUERY_REPORT = ROOT / "deliverables/query-output-per-screen.md"
@@ -69,7 +69,7 @@ def included(path, folders, fixed):
 def validate_query_report(document: bytes):
     """Reject stale, failed or incomplete screen evidence at packaging time."""
     report = document.decode("utf-8").replace("\r\n", "\n")
-    tree = ast.parse((ROOT / "code/database/audit_ui_queries.py").read_text(encoding="utf-8"))
+    tree = ast.parse((ROOT / "scripts/oplevering/audit_ui_queries.py").read_text(encoding="utf-8"))
     screen_values = None
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(
@@ -130,7 +130,7 @@ def build(output_dir: Path):
                 raise RuntimeError(
                     "MySQL-queryrapport ontbreekt. Genereer eerst "
                     "deliverables/query-output-per-screen.md met "
-                    "python code/database/audit_ui_queries.py op een geïsoleerde testdatabase."
+                    "python scripts/oplevering/build_query_proof.py op een geïsoleerde testdatabase."
                 )
             generated_query_report = QUERY_REPORT.read_bytes()
             validate_query_report(generated_query_report)

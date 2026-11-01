@@ -48,8 +48,10 @@ def render():
     doc='<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Timaflu | Schermen en MySQL-querybewijs</title><style>'+STYLE+'</style></head><body>'+body+'</body></html>'
     HTML.write_text(doc,encoding="utf8")
     with sync_playwright() as pw:
-        browser=pw.chromium.launch(executable_path=str(BROWSER),headless=True,
-                                    args=["--allow-file-access-from-files"])
+        launch_options = {"headless": True, "args": ["--allow-file-access-from-files"]}
+        if BROWSER.is_file():
+            launch_options["executable_path"] = str(BROWSER)
+        browser=pw.chromium.launch(**launch_options)
         try:
             page=browser.new_page(viewport={"width":1440,"height":900})
             page.goto(HTML.as_uri(),wait_until="load",timeout=120000)

@@ -7,6 +7,7 @@ on:
       - 'code/frontend/**'
       - 'code/backend/**'
       - 'code/database/**'
+      - 'scripts/**'
       - 'Documentation/Architecture/test-data/**'
       - 'eer.mwb'
       - '.github/workflows/frontend-criteria.yml'
@@ -42,16 +43,18 @@ jobs:
       - name: Installeer backend en afzonderlijke browser-testtools
         run: |
           python -m pip install -r code/backend/requirements.txt
-          python -m pip install playwright==1.56.0
+          python -m pip install playwright==1.56.0 markdown==3.11.2
           python -m playwright install --with-deps chromium
       - name: Controleer SQL, EER en inkoopqueries
-        run: python code/database/validate_eer_schema.py
+        run: python scripts/oplevering/validate_eer_schema.py
       - name: Bouw fictieve MySQL-data en toets alle paginaqueries
-        run: python code/database/audit_ui_queries.py
+        run: python scripts/oplevering/audit_ui_queries.py
       - name: Controleer 29 echte schermen op 4 breedtes
-        run: python code/database/verify_frontend_criteria.py
+        run: python scripts/oplevering/verify_frontend_criteria.py
       - name: Controleer orderpicking, distributie, inkoop en acquisitie
-        run: python code/database/verify_frontend_workflows.py
+        run: python scripts/oplevering/verify_frontend_workflows.py
+      - name: Genereer volledig MySQL-querybewijs en schermontwerpen
+        run: python scripts/oplevering/build_query_proof.py
       - name: Controleer opleverarchieven
-        run: python code/build_deliverables.py --output-dir deliverables
+        run: python scripts/build_deliverables.py --output-dir deliverables
 # Einde: frontendcriteria zonder JavaScript in de website zelf.
