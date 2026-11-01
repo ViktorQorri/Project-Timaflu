@@ -153,12 +153,44 @@ UPDATE Bestelling AS b
       AND EXISTS (
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
-            AND br.afnemen_bij_tekort IS NOT FALSE
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
       )
       AND NOT EXISTS (
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
-            AND br.afnemen_bij_tekort IS NOT FALSE
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
             AND br.aantal <> COALESCE((
                 SELECT SUM(lr.aantal_geleverd)
                 FROM Levering AS previous
@@ -210,12 +242,44 @@ UPDATE Bestelling AS b
       AND EXISTS (
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
-            AND br.afnemen_bij_tekort IS NOT FALSE
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
       )
       AND NOT EXISTS (
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
-            AND br.afnemen_bij_tekort IS NOT FALSE
+            AND (
+                br.afnemen_bij_tekort IS NOT FALSE
+                OR EXISTS (
+                    SELECT 1 FROM Voorraadreservering AS vr
+                    WHERE vr.bestelling_id = br.bestelling_id AND vr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Deelorder AS d
+                    JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                    WHERE d.bestelling_id = br.bestelling_id AND dr.product_id = br.product_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM Levering AS historic
+                    JOIN Leveringregel AS hl ON hl.levering_id = historic.levering_id
+                    WHERE historic.bestelling_id = br.bestelling_id AND hl.product_id = br.product_id
+                )
+            )
             AND br.aantal <> COALESCE((
                 SELECT SUM(lr.aantal_geleverd)
                 FROM Levering AS previous

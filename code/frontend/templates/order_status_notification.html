@@ -45,6 +45,13 @@
     </p>
   {% endif %}
 
+  {% if legacy_false_lines %}
+    <p role="alert">Controle historische tekortkeuze: voor {{ legacy_false_lines|length }}
+    orderregel{{ 's' if legacy_false_lines|length != 1 else '' }} staat niet afnemen
+    bij tekort geregistreerd terwijl er wel verwerking heeft plaatsgevonden.
+    Deze regels tellen mee voor de leveringscontrole; controleer de klantafspraak.</p>
+  {% endif %}
+
   {% if shortage_lines %}
     <section aria-labelledby="shortage-agreements-title">
       <h2 id="shortage-agreements-title">Geregistreerde backorderafspraken</h2>
@@ -90,9 +97,11 @@
             <td class="stock-dashboard__number">{{ line.aantal_afgeleverd }}</td>
             <td>
               {% if line.afnemen_bij_tekort is none %}
-                Niet geregistreerd
+                Geen tekortafspraak vastgelegd
               {% elif line.afnemen_bij_tekort %}
                 Ja, bij tekort afnemen
+              {% elif line.legacy_false_with_activity %}
+                Historische tekortkeuze controleren (wel verwerking geregistreerd)
               {% else %}
                 Nee, bij tekort niet afnemen
               {% endif %}

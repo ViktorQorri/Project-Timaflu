@@ -83,7 +83,14 @@ class OrderStatusNotificationService:
                 progress = "Deels afgeleverd, geen vervolgstap geregistreerd"
             else:
                 progress = "Geen reservering of verdere verwerking geregistreerd"
-            detailed_lines.append({**line, "proces_label": progress})
+            legacy_false_with_activity = (
+                line["afnemen_bij_tekort"] == 0
+                and any(line[field] > 0 for field in progress_fields)
+            )
+            detailed_lines.append({
+                **line, "proces_label": progress,
+                "legacy_false_with_activity": legacy_false_with_activity,
+            })
 
         shortage_lines = [
             line for line in detailed_lines if line["afnemen_bij_tekort"] == 1
@@ -92,10 +99,14 @@ class OrderStatusNotificationService:
             line for line in shortage_lines
             if line["aantal_afgeleverd"] < line["aantal"]
         ]
-        # A cancelled shortage (FALSE / 0) is not due for delivery. NULL
-        # means there was no recorded shortage choice and the line remains due.
+        # Historical telephone orders used FALSE for in-stock order lines.
+        # A FALSE line with recorded reservation/picking/shipping is still due.
+        legacy_false_lines = [
+            line for line in detailed_lines if line["legacy_false_with_activity"]
+        ]
         due_lines = [
-            line for line in detailed_lines if line["afnemen_bij_tekort"] != 0
+            line for line in detailed_lines
+            if line["afnemen_bij_tekort"] != 0 or line["legacy_false_with_activity"]
         ]
         delivery_status_conflict = (
             order.get("status_naam") == "afgeleverd"
@@ -114,4 +125,5 @@ class OrderStatusNotificationService:
             "shortage_lines": shortage_lines,
             "undelivered_shortages": undelivered_shortages,
             "delivery_status_conflict": delivery_status_conflict,
+            "legacy_false_lines": legacy_false_lines,
         }

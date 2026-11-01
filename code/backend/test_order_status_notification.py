@@ -66,11 +66,11 @@ class OrderStatusNotificationTests(TestCase):
              "aantal_afgeleverd": 2, "gereserveerd": 0,
              "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
             {"artikelnummer": "T-2", "productnaam": "Ibuprofen", "aantal": 5,
-             "prijs_per_eenheid": Decimal("12.00"), "afnemen_bij_tekort": 0,
+             "prijs_per_eenheid": Decimal("12.00"), "afnemen_bij_tekort": None,
              "aantal_afgeleverd": 0, "gereserveerd": 5,
              "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
             {"artikelnummer": "T-3", "productnaam": "Vitamine C", "aantal": 3,
-             "prijs_per_eenheid": Decimal("3.99"), "afnemen_bij_tekort": None,
+             "prijs_per_eenheid": Decimal("3.99"), "afnemen_bij_tekort": 0,
              "aantal_afgeleverd": 0, "gereserveerd": 0,
              "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
         ]
@@ -244,8 +244,8 @@ class OrderStatusNotificationTests(TestCase):
         order = {**self.order, "status_naam": "afgeleverd"}
         lines = [
             {**self.lines[0], "aantal_afgeleverd": 10},
-            self.lines[1],  # Customer declined this shortage; no delivery due.
-            {**self.lines[2], "aantal_afgeleverd": 3},
+            {**self.lines[1], "aantal_afgeleverd": 5},
+            self.lines[2],  # Explicitly declined shortage; no delivery due.
         ]
         result = self.service(Connection(order, lines)).status_overview(12)
         self.assertFalse(result["delivery_status_conflict"])
@@ -255,6 +255,21 @@ class OrderStatusNotificationTests(TestCase):
             with patch("routes.sales.get_connection", return_value=Connection(order, lines)):
                 page = client.get("/orders/12/status").get_data(as_text=True)
         self.assertNotIn("Controleer deze orderstatus", page)
+
+    def test_legacy_false_stock_line_is_not_treated_as_refused_shortage(self):
+        order = {**self.order, "status_naam": "afgeleverd"}
+        old_stock = {**self.lines[1], "afnemen_bij_tekort": 0}
+        rows = [{**self.lines[0], "aantal_afgeleverd": 10}, old_stock, self.lines[2]]
+        result = self.service(Connection(order, rows)).status_overview(12)
+        self.assertTrue(result["delivery_status_conflict"])
+        self.assertEqual([x["artikelnummer"] for x in result["legacy_false_lines"]], ["T-2"])
+        app = create_app()
+        app.testing = True
+        with app.test_client() as client:
+            with patch("routes.sales.get_connection", return_value=Connection(order, rows)):
+                page = client.get("/orders/12/status").get_data(as_text=True)
+        self.assertIn("Controle historische tekortkeuze", page)
+        self.assertIn("Historische tekortkeuze controleren", page)
 
     def test_delivery_status_update_sql_is_mirrored_in_query_document(self):
         from repositories.assessed_repository import MARK_ORDER_DELIVERED_IF_COMPLETE
@@ -303,7 +318,7 @@ class OrderStatusNotificationTests(TestCase):
             "31-10-2026, ochtend", "Geregistreerde backorderafspraken",
             "Paracetamol (T-1): Deels afgeleverd", "Ibuprofen", "Vitamine C",
             "Ja, bij tekort afnemen", "Nee, bij tekort niet afnemen",
-            "Niet geregistreerd", "Bevestigd afgeleverd", "Geregistreerde voortgang",
+            "Geen tekortafspraak vastgelegd", "Bevestigd afgeleverd", "Geregistreerde voortgang",
             "Prijs per eenheid", "€ 5,20", "€ 3,99",
             "Voorraad voor deze bestelling gereserveerd",
             "order-status-notification.css",
@@ -360,7 +375,7 @@ class OrderStatusMySQLIntegrationTests(TestCase):
             "host": "127.0.0.1",
             "port": int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
             "user": os.getenv("TIMAFLU_TEST_MYSQL_USER", "root"),
-            "password": os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"],
+            "password": os.getenv("TIMAFLU_TEST_MYSQL_PASSWORD", ""),
         }
         name = "timaflu_pr97_" + uuid.uuid4().hex[:12]
         admin = mysql.connector.connect(**options)
@@ -543,7 +558,7 @@ class FullOrderDeliveryStatusMySQLTests(TestCase):
             "host": "127.0.0.1",
             "port": int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
             "user": os.getenv("TIMAFLU_TEST_MYSQL_USER", "root"),
-            "password": os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"],
+            "password": os.getenv("TIMAFLU_TEST_MYSQL_PASSWORD", ""),
         }
         schema_name = "timaflu_pr97_complete_" + uuid.uuid4().hex[:10]
         admin = mysql.connector.connect(**options)
@@ -580,7 +595,7 @@ class FullOrderDeliveryStatusMySQLTests(TestCase):
                 order_id = cursor.lastrowid
                 products = {}
                 for article, ordered, accepted in (
-                    ("ITEM-A", 4, None),
+                    ("ITEM-A", 4, False),  # Historic in-stock row with shipment.
                     ("ITEM-B", 3, True),
                     ("DECLINED", 2, False),
                 ):

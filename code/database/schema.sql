@@ -277,6 +277,8 @@ CREATE TABLE Bestelregel (
     product_id INT NOT NULL,
     aantal INT NOT NULL,
     prijs_per_eenheid DECIMAL(10,2) NOT NULL,
+    -- NULL: geen tekortafspraak; TRUE: tekort toch afnemen; FALSE: geweigerd.
+    -- Oudere bestellingen kunnen FALSE ook voor voorraadproducten bevatten.
     afnemen_bij_tekort BOOLEAN,
 
     PRIMARY KEY (bestelling_id, product_id),
