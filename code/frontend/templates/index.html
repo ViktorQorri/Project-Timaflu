@@ -10,11 +10,6 @@
         <h1 id="home-title">Overzicht van je werkprocessen</h1>
         <p class="home-lead">Beheer verkoop, inkoop, orderpicking, distributie, facturatie en acquisitie vanuit één plek.</p>
       </div>
-      <p class="home-database{% if database_ok %} home-database--ok{% else %} home-database--error{% endif %}"
-         role="status">
-        <span class="home-database__indicator" aria-hidden="true"></span>
-        {% if database_ok %}Database verbonden{% else %}Database niet bereikbaar{% endif %}
-      </p>
     </header>
 
     <nav class="home-workflows" aria-label="Werkprocessen">
@@ -100,11 +95,6 @@
             <span><strong>Facturen</strong><small>Weekfacturen en betalingen verwerken</small></span>
             <span class="home-link__arrow" aria-hidden="true">&gt;</span>
           </a>
-          <a class="home-link" href="{{ url_for('reports.index') }}">
-            <span class="home-link__number" aria-hidden="true">12</span>
-            <span><strong>Rapportages</strong><small>Orderstatus en verkoopresultaten bekijken</small></span>
-            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
-          </a>
         </div>
       </section>
 
@@ -112,7 +102,7 @@
         <h2 id="workflow-acquisition">Acquisitie</h2>
         <div class="home-links">
           <a class="home-link" href="{{ url_for('acquisition.index') }}">
-            <span class="home-link__number" aria-hidden="true">13</span>
+            <span class="home-link__number" aria-hidden="true">12</span>
             <span><strong>Potentiële klanten</strong><small>Bezoeken registreren en opvolging afronden</small></span>
             <span class="home-link__arrow" aria-hidden="true">&gt;</span>
           </a>

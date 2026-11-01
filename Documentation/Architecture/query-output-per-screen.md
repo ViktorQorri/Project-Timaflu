@@ -7,26 +7,12 @@ Schermen zonder dynamische databasegegevens zijn expliciet als statisch vermeld.
 De robotinterface /api/robots/<id>/next is geen medewerkersscherm:
 deze API wordt afzonderlijk op gang-/robotvalidatie getest.
 
-## Home en databasecontrole
+## Home
 
 Scherm: /
 HTTP-status: 200
 
-### Query 1
-```sql
-SELECT 1
-```
-Parameters: ```json
-[]
-```
-Resultaat: 1 rij(en) (maximaal 15 getoond)
-```json
-[
-  [
-    1
-  ]
-]
-```
+*Geen SQL-query: statisch scherm.*
 
 ## Klanten zoeken: centrale klantgegevens
 
@@ -59,32 +45,6 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ## Klantgegevens en adressen bewerken (AD07)
 
 Scherm: /customers/1/edit
-HTTP-status: 200
-
-### Query 1
-```sql
-SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer, af.adres AS afleveradres, ba.adres AS factuuradres FROM Klant AS k JOIN Adres AS af ON af.adres_id = k.afleveradres_id JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id WHERE k.klant_id = %s AND k.actief = TRUE
-```
-Parameters: ```json
-[1]
-```
-Resultaat: 1 rij(en) (maximaal 15 getoond)
-```json
-[
-  {
-    "klant_id": 1,
-    "bedrijfsnaam": "TEST Apotheek B.V.",
-    "contactpersoon": "TEST medewerker",
-    "telefoonnummer": "0612345678",
-    "afleveradres": "TEST: Afleverstraat 8, Breda",
-    "factuuradres": "TEST: Factuurstraat 12, Breda"
-  }
-]
-```
-
-## Klant deactiveren, historie bewaren (AD07)
-
-Scherm: /customers/1/deactivate
 HTTP-status: 200
 
 ### Query 1
@@ -1153,84 +1113,5 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "adres": "TEST: Prospectlaan 3",
     "laatste_bezoek": "2026-09-15"
   }
-]
-```
-
-## Orderstatusoverzicht
-
-Scherm: /reports
-HTTP-status: 200
-
-### Query 1
-```sql
-SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam, COUNT(r.product_id) AS aantal_regels FROM Bestelling AS b JOIN Klant AS k ON k.klant_id = b.klant_id LEFT JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id WHERE (%s IS NULL OR b.besteld_op >= %s) AND (%s IS NULL OR b.besteld_op < %s + INTERVAL 1 DAY) GROUP BY b.bestelling_id, k.bedrijfsnaam, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam ORDER BY b.besteld_op DESC, b.bestelling_id DESC
-```
-Parameters: ```json
-[null, null, null, null]
-```
-Resultaat: 4 rij(en) (maximaal 15 getoond)
-```json
-[
-  {
-    "bestelling_id": 4,
-    "bedrijfsnaam": "TEST Apotheek B.V.",
-    "besteld_op": "2026-10-29 09:00:00",
-    "gewenste_leverdatum": "2026-10-30",
-    "dagdeel": "ochtend",
-    "spoed": 0,
-    "status_naam": "afgeleverd",
-    "aantal_regels": 1
-  },
-  {
-    "bestelling_id": 3,
-    "bedrijfsnaam": "TEST Apotheek B.V.",
-    "besteld_op": "2026-10-21 09:00:00",
-    "gewenste_leverdatum": "2026-10-22",
-    "dagdeel": "ochtend",
-    "spoed": 0,
-    "status_naam": "verstuurd",
-    "aantal_regels": 1
-  },
-  {
-    "bestelling_id": 2,
-    "bedrijfsnaam": "TEST Apotheek B.V.",
-    "besteld_op": "2026-10-20 09:00:00",
-    "gewenste_leverdatum": "2026-10-22",
-    "dagdeel": "middag",
-    "spoed": 0,
-    "status_naam": "gefactureerd",
-    "aantal_regels": 1
-  },
-  {
-    "bestelling_id": 1,
-    "bedrijfsnaam": "TEST Apotheek B.V.",
-    "besteld_op": "2026-10-19 09:00:00",
-    "gewenste_leverdatum": "2026-10-22",
-    "dagdeel": "ochtend",
-    "spoed": 0,
-    "status_naam": "gefactureerd",
-    "aantal_regels": 1
-  }
-]
-```
-
-## Database API gezondheid
-
-Scherm: /api/health
-HTTP-status: 200
-
-### Query 1
-```sql
-SELECT 1
-```
-Parameters: ```json
-[]
-```
-Resultaat: 1 rij(en) (maximaal 15 getoond)
-```json
-[
-  [
-    1
-  ]
 ]
 ```

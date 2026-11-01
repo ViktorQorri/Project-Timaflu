@@ -57,7 +57,7 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    flask --app app run --debug
    ```
 
-Open http://127.0.0.1:5000. The home page says "Database verbonden" when the database connection is available. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
+Open http://127.0.0.1:5000. The homepage is static; database errors are shown when a data-dependent process is used.
 
 ## Opleverbestanden maken
 
