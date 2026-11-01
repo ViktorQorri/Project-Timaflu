@@ -112,7 +112,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             admin.close()
 
     def test_all_valid_recorded_statuses_are_displayed_without_reclassification(self):
-        rows = OrderStatusReportRepository(self.connection).list_orders()
+        rows = OrderStatusReportRepository(self.connection).list_orders(None, None)
         self.assertEqual(len(rows), len(self.saved_statuses))
         self.assertEqual(
             [row["bestelling_id"] for row in rows], list(reversed(self.order_ids))
@@ -141,11 +141,11 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
                 "Apotheek casus", "12-11-2026", "middag", "Spoed",
             ):
                 self.assertIn(label, html)
-            self.assertEqual(html.count("<tr>"), len(self.saved_statuses) + 1)
+            self.assertEqual(html.count('<th scope="row">'), len(self.saved_statuses))
             self.assertNotIn("Openstaande orders", html)
             self.assertNotIn('name="order"', html)
-            self.assertNotIn('name="from"', html)
-            self.assertNotIn('name="to"', html)
+            self.assertIn('name="from"', html)
+            self.assertIn('name="to"', html)
             self.assertNotIn('href="/reports/', html)
 
     def test_report_only_reads_existing_orders_and_does_not_mutate_them(self):
@@ -154,7 +154,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             cur.execute("SELECT COUNT(*) FROM Bestelling")
             count_before = cur.fetchone()[0]
         for _ in range(2):
-            self.assertEqual(len(repo.list_orders()), count_before)
+            self.assertEqual(len(repo.list_orders(None, None)), count_before)
         with self.connection.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM Bestelling")
             self.assertEqual(cur.fetchone()[0], count_before)

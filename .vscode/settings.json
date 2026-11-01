@@ -5,5 +5,4 @@
   "plantuml.exportFormat": "svg",
   "plantuml.exportSubFolder": false,
   "plantuml.exportIncludeFolderHeirarchy": true,
-  "github.copilot.chat.localIndex.enabled": true,
 }

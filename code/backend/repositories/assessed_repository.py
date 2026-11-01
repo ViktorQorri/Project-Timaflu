@@ -328,10 +328,10 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 if attempt["resultaat"] is not None:
                     raise DomainError("Eerste bezorgpoging is al verwerkt.")
                 cursor.execute(
-                    "SELECT COUNT(*) AS lines FROM Leveringregel WHERE levering_id=%s",
+                    "SELECT COUNT(*) AS delivered_count FROM Leveringregel WHERE levering_id=%s",
                     (delivery_id,),
                 )
-                if not cursor.fetchone()["lines"]:
+                if not cursor.fetchone()["delivered_count"]:
                     raise DomainError("Er zijn geen ingepakte medicijnen om af te leveren.")
                 cursor.execute(
                     """UPDATE Leverpoging SET resultaat='afgeleverd',
