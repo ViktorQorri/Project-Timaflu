@@ -149,16 +149,14 @@ class CasusPr123Tests(TestCase):
         )
         self.assertEqual((customer_id, lines[0]["quantity"]), (1, 1))
 
-    def test_home_shows_database_unavailable_without_crashing(self):
-        from mysql.connector import Error as DatabaseError
-        app = create_app()
-        app.testing = True
-        with app.test_client() as client, patch(
-            "routes.home.get_connection", side_effect=DatabaseError("unavailable")
-        ):
-            response = client.get("/")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Database niet bereikbaar", response.data)
+    def test_home_navigation_is_available_without_database(self):
+        # Home no longer makes a database call; all process links remain usable.
+        app=create_app()
+        app.testing=True
+        with app.test_client() as client, patch("db.get_connection",side_effect=RuntimeError("offline")):
+            response=client.get("/")
+        self.assertEqual(response.status_code,200)
+        self.assertIn(b"Overzicht van je werkprocessen",response.data)
 
     def test_frontend_has_no_client_side_javascript(self):
         path = Path(__file__).resolve().parents[1] / "frontend"

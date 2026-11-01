@@ -57,11 +57,10 @@ class DesignSystemTests(TestCase):
         app = create_app()
         app.config.update(TESTING=True)
         with ExitStack() as stack:
-            for name in ("home", "order_picking", "distribution", "acquisition",
-                         "sales", "administration", "reports"):
+            for name in ("order_picking", "distribution", "acquisition",
+                         "sales", "administration"):
                 stack.enter_context(patch(f"routes.{name}.get_connection", return_value=object()))
 
-            stack.enter_context(patch("routes.home.HealthService"))
             customer_service=stack.enter_context(patch("routes.sales.customer_service"))
             customer_service.return_value.overview.return_value=[]
 
@@ -84,12 +83,9 @@ class DesignSystemTests(TestCase):
             admin.return_value.outstanding_purchase_invoices.return_value=[]
             admin.return_value.uninvoiced_deliveries.return_value=[]
 
-            report=stack.enter_context(patch("routes.reports.OrderStatusReportRepository"))
-            report.return_value.list_orders.return_value=[]
-
             with app.test_client() as client:
                 for route in ("/", "/customers", "/orders", "/order-picking",
-                              "/deliveries", "/invoices", "/acquisition", "/reports"):
+                              "/deliveries", "/invoices", "/acquisition"):
                     response=client.get(route)
                     self.assertEqual(response.status_code,200,route)
                     self.assertIn(b"ui-system.css",response.data,route)

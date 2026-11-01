@@ -9,6 +9,8 @@ import zipfile
 from app import create_app
 from domain.errors import DomainError
 from repositories.assessed_repository import AssessedRepository
+from repositories.acquisition_repository import AcquisitionRepository
+from test_acquisition import FakeConnection as AcquisitionFakeConnection
 from test_case_courier_prospects import Connection as DeliveryConnection
 
 
@@ -67,23 +69,33 @@ class CaseDB:
 
 class CaseConformityTests(TestCase):
     def test_decline_closes_followup_after_one_month(self):
-        db = CaseDB()
-        AssessedRepository(db).close_prospect_followup(1, date(2026, 9, 30))
+        # Current AD21 implementation is AcquisitionRepository, not the old assessed stub.
+        db = AcquisitionFakeConnection(rows=[
+            {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek"},
+            {"is_due": 1}, None,
+        ])
+        self.assertIsNone(AcquisitionRepository(db).complete_follow_up(1, "no_interest"))
         self.assertEqual(db.commits, 1)
-        self.assertTrue(any("SET opvolging_afgesloten=TRUE" in q for q,_ in db.statements))
+        self.assertTrue(any("opvolging_afgesloten = TRUE" in sql
+                            for sql,_ in db.cursor_instance.statements))
 
     def test_early_decline_is_rejected(self):
-        db = CaseDB(visited=date(2026, 10, 1))
+        db = AcquisitionFakeConnection(rows=[
+            {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek"},
+            {"is_due": 0},
+        ])
         with self.assertRaises(DomainError):
-            AssessedRepository(db).close_prospect_followup(1, date(2026, 9, 30))
-        self.assertEqual(db.commits, 0)
-        self.assertEqual(db.rollbacks, 1)
+            AcquisitionRepository(db).complete_follow_up(1, "no_interest")
+        self.assertEqual((db.commits, db.rollbacks), (0,1))
 
     def test_decline_does_not_run_for_existing_order(self):
-        db = CaseDB(customer_id=2, orders=1)
+        db = AcquisitionFakeConnection(rows=[
+            {"klant_id": 2, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek"},
+            {"is_due": 1}, {"bestelling_id": 9},
+        ])
         with self.assertRaises(DomainError):
-            AssessedRepository(db).close_prospect_followup(1, date(2026, 9, 30))
-        self.assertEqual(db.commits, 0)
+            AcquisitionRepository(db).complete_follow_up(1, "no_interest")
+        self.assertEqual((db.commits, db.rollbacks), (0,1))
 
     def test_prospect_conversion_persists_incentive_and_ends_acquisition(self):
         db = CaseDB()

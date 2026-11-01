@@ -184,21 +184,20 @@ class CustomerWriteTests(TestCase):
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
         self.assertEqual(len(db.cur.commands), 1)
 
-    def test_deactivate_customer_preserves_history(self):
-        db = Connection([{"klant_id": 1}])
-        service(db).deactivate(1)
-        commands = [query for query, _ in db.cur.commands]
-        self.assertEqual(len(commands), 2)
-        self.assertIn("FOR UPDATE", commands[0])
-        self.assertEqual(commands[1], "UPDATE Klant SET actief = FALSE WHERE klant_id = %s")
-        self.assertFalse(any(query.startswith("DELETE") for query in commands))
-        self.assertEqual((db.commits, db.rollbacks), (1, 0))
+    def test_updating_customer_does_not_delete_historical_records(self):
+        db = Connection([CURRENT])
+        service(db).update(1, VALID_FORM)
+        commands=[sql for sql,_ in db.cur.commands]
+        self.assertTrue(any("UPDATE Klant" in sql for sql in commands))
+        self.assertFalse(any(sql.lstrip().startswith("DELETE") for sql in commands))
+        self.assertEqual(db.commits, 1)
 
-    def test_deactivate_unknown_customer(self):
-        db = Connection([None])
+    def test_update_of_missing_customer_does_not_write(self):
+        db=Connection([None])
         with self.assertRaises(NotFoundError):
-            service(db).deactivate(99)
-        self.assertEqual(db.rollbacks, 1)
+            service(db).update(99,VALID_FORM)
+        self.assertEqual(db.commits,0)
+        self.assertEqual(db.rollbacks,1)
 
     def test_acquisition_discount_is_only_granted_if_checked(self):
         customer = CustomerService(None).validate({**VALID_FORM, "eenmalige_korting_toegezegd": "on"})
@@ -273,17 +272,9 @@ class CustomerPageTests(TestCase):
         with patch("routes.sales.get_connection", return_value=Connection([None])):
             self.assertEqual(self.client.get("/customers/99/edit").status_code, 404)
 
-    def test_deactivate_asks_for_confirmation_first(self):
-        with patch("routes.sales.get_connection", return_value=Connection([CUSTOMER_ROW])):
-            response = self.client.get("/customers/1/deactivate")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Klant deactiveren?", response.get_data(as_text=True))
+    def test_out_of_scope_deactivation_page_is_not_exposed(self):
+        # AD07 specifies customer data maintenance; no separate deactivate workflow.
+        self.assertEqual(self.client.get("/customers/1/deactivate").status_code,404)
 
-    def test_deactivate_preserves_history_and_redirects(self):
-        db = Connection([{"klant_id": 1}, [CUSTOMER_ROW]])
-        with patch("routes.sales.get_connection", return_value=db):
-            response = self.client.post("/customers/1/deactivate")
-            self.assertEqual(response.status_code, 302)
-            page = self.client.get("/customers").get_data(as_text=True)
-        self.assertIn("gedeactiveerd", page)
-        self.assertEqual(db.commits, 1)
+    def test_out_of_scope_deactivation_post_is_not_exposed(self):
+        self.assertEqual(self.client.post("/customers/1/deactivate").status_code,404)

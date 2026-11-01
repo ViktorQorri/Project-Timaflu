@@ -62,3 +62,7 @@ De belangrijkste beslismomenten hebben daarnaast afzonderlijke zichtbare schermt
 - Documentation/brightspace/Current-processes.md
 - Documentation/brightspace/Desired-process.md
 - De 28 PlantUML activity diagrams in ../uml/src/activity_diagrams/.
+
+De volledige koppeling van casuseis naar usecase, activity diagram, scherm, database, backend en test staat in [traceability.csv](../traceability.csv).
+
+De koppeling van casuseis naar usecase, activity diagram, scherm, database, backend en test staat in [traceability.csv](../traceability.csv).

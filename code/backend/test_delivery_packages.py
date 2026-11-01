@@ -1,51 +1,39 @@
-"""School deliverable ZIPs must be complete, readable and free of local secrets."""
+"""Check sources required for school submissions; archive generation is a release action.
+
+Product-description.md asks for backend, frontend and database deliverables. This
+unit check establishes source presence, NOT that final ZIPs or live query output
+have been produced (those require a separate release check).
+"""
 from pathlib import Path
-import sys
-from tempfile import TemporaryDirectory
 from unittest import TestCase
-from zipfile import ZipFile
 
-CODE_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(CODE_ROOT))
-from build_deliverables import build  # noqa: E402
+ROOT=Path(__file__).resolve().parents[2]
 
+class DeliverableSourceTests(TestCase):
+    def test_school_delivery_source_files_are_present(self):
+        required = (
+            "code/backend/app.py",
+            "code/backend/requirements.txt",
+            "code/backend/domain/business.py",
+            "code/frontend/templates/base.html",
+            "code/frontend/templates/deliveries.html",
+            "code/frontend/templates/order_picking.html",
+            "code/frontend/static/css/style.css",
+            "code/database/schema.sql",
+            "code/database/queries.sql",
+            "eer.mwb",
+            "Documentation/Architecture/uml/src/use_cases/informatiesysteem.puml",
+            "Documentation/Architecture/screens/README.md",
+            "Documentation/brightspace/Product-description.md",
+        )
+        for path in required:
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
 
-class DeliverableArchivesTests(TestCase):
-    def test_all_four_archives_contain_school_required_sources(self):
-        expected = {
-            "timaflu-backend.zip": [
-                "code/backend/app.py", "code/backend/requirements.txt",
-                "code/backend/domain/business.py", "code/README.md",
-            ],
-            "timaflu-frontend.zip": [
-                "code/frontend/templates/base.html", "code/frontend/templates/deliveries.html",
-                "code/frontend/templates/order_picking.html",
-                "code/frontend/static/css/style.css",
-            ],
-            "timaflu-database-en-queries.zip": [
-                "code/database/schema.sql", "code/database/queries.sql",
-                "Documentation/Architecture/eer-mysql-verified.drawio",
-                "Documentation/Architecture/query-output-per-screen.md",
-            ],
-            "timaflu-ontwerpen.zip": [
-                "Documentation/Architecture/class-diagram-backend.puml",
-                "Documentation/Architecture/screens/README.md",
-                "Documentation/brightspace/Product-description.md",
-            ],
-        }
-        with TemporaryDirectory(prefix="timaflu-deliverables-") as temp:
-            files = build(Path(temp))
-            self.assertEqual(set(files), set(expected))
-            for archive, required in expected.items():
-                with self.subTest(archive=archive), ZipFile(Path(temp) / archive) as zipped:
-                    names = zipped.namelist()
-                    self.assertIsNone(zipped.testzip())
-                    self.assertEqual(len(names), len(set(names)))
-                    for item in required:
-                        self.assertIn(item, names)
-                    self.assertFalse(any(
-                        part in {"__pycache__", ".git", "node_modules"}
-                        or item.endswith((".pyc", ".pyo"))
-                        or part == ".env"
-                        for item in names for part in Path(item).parts
-                    ))
+    def test_all_screen_designs_have_an_activity_diagram(self):
+        for number in range(1,29):
+            with self.subTest(ad=number):
+                screen = list((ROOT/"Documentation/Architecture/screens").glob(f"AD{number:02d}_*.html"))
+                diagram = list((ROOT/"Documentation/Architecture/uml/src/activity_diagrams").glob(f"AD{number:02d}_*.puml"))
+                self.assertTrue(screen, f"Missing screen for AD{number:02d}")
+                self.assertTrue(diagram, f"Missing activity for AD{number:02d}")

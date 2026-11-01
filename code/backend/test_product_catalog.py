@@ -283,7 +283,7 @@ class ProductRepositoryTests(TestCase):
                "productnaam": "Paracetamol", "prijs_per_grootverpakking": Decimal("24.50"),
                "verpakkingssoort": "box", "aantal_detailverpakkingen": 20,
                "korte_omschrijving": None, "lange_omschrijving": None,
-               "minimale_bestelhoeveelheid": 5, "minimumvoorraad": 40, "in_assortiment": 1}
+               "minimale_bestelhoeveelheid": 5, "minimumvoorraad": 40, "in_assortiment": 1, "intern_bestelbaar": 1}
         ingredient = {"product_id": 1, "stofnaam": "paracetamol", "hoeveelheid": "500 mg"}
         connection = RecordingConnection(results=[[row], [ingredient]])
         products = ProductRepository(connection).list_in_assortment()

@@ -337,7 +337,7 @@ class OrderStatusNotificationTests(TestCase):
             self.assertEqual(response.status_code, 200)
             page = response.get_data(as_text=True)
             for expected in ("/orders/12/status", "Apotheek De Linde", "Voorraad controleren",
-                             "Korting berekenen", "Orderstatus opzoeken"):
+                             "Complete telefonische bestelling opnemen", "Orderstatus opzoeken"):
                 self.assertIn(expected, page)
             with patch("routes.sales.get_connection", return_value=Connection()):
                 self.assertIn("Geen order gevonden.", client.get("/orders?order=Onbekend").get_data(as_text=True))

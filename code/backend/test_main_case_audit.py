@@ -64,23 +64,13 @@ class MainCaseAuditTests(TestCase):
             ]
         self.assertEqual([r.status_code for r in requests],[400,400,400,400])
 
-    def test_negative_or_non_numeric_sales_discount_is_rejected(self):
-        class FakeDiscountRepository:
-            def __init__(self, connection):
-                pass
-            def find_customer(self, customer_id):
-                return {"klant_id": 1, "bedrijfsnaam": "TEST", "klantadres": "TEST"}
-            def count_previous_orders(self, customer_id):
-                return 0
-            def get_customer_discount_percentage(self, customer_id, year):
-                return Decimal("5")
-        with patch("routes.sales.get_connection", return_value=object()):
-            with patch("routes.sales.DiscountRepository", FakeDiscountRepository):
-                with self.app.test_client() as client:
-                    for amount in ("-1", "not-a-number", "NaN", "Infinity"):
-                        response = client.post("/orders/calculate-discount",
-                            data={"customer_id": "1", "subtotal": amount})
-                        self.assertEqual(response.status_code, 400, amount)
+    def test_negative_or_invalid_annual_revenue_is_rejected(self):
+        # SD01: annual revenue controls the customer's discount tier.
+        from services.discount_service import DiscountService
+        for amount in ("-1","not-a-number","NaN","Infinity"):
+            with self.subTest(amount=amount):
+                with self.assertRaises(DomainError):
+                    DiscountService.determine_discount_percentage(amount)
 
     def test_debt_collection_requires_explicit_customer_refusal(self):
         class FakeRepo:

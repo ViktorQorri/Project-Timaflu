@@ -76,7 +76,7 @@ class SnapshotCursor:
     def __exit__(self,*a): return False
     def execute(self,sql,args): self.sql.append(sql); self.params.append(args)
     def fetchone(self):
-        return {"factuur_id":9,"totaal_bedrag":self.existing}
+        return {"factuur_id":9,"bedrag_excl_btw":self.existing}
 
 class SnapshotDB:
     def __init__(self,existing=None):
@@ -175,16 +175,19 @@ class HistoricalInvoiceTests(TestCase):
         AssessedRepository(db).save_invoice_snapshot(9,doc)
         self.assertEqual(db.commits,1)
         self.assertEqual(db.rollbacks,0)
-        self.assertEqual(len(db.c.params[-1]),10)
-        self.assertEqual(db.c.params[-1][-1],9)
-        self.assertEqual(db.c.params[-1][-2],Decimal("37.28"))
+        # Only the five independent monetary facts are persisted in 3NF;
+        # derived amounts (including the total) live in FactuurOverzicht.
+        self.assertEqual(db.c.params[-1], (
+            Decimal("40.00"), Decimal("3.60"), Decimal("0.00"),
+            Decimal("4.36"), Decimal("1.96"), 9,
+        ))
         existing=SnapshotDB(existing=Decimal("37.28"))
         with self.assertRaises(DomainError):
             AssessedRepository(existing).save_invoice_snapshot(9,doc)
         self.assertEqual(existing.commits,0)
         self.assertEqual(existing.rollbacks,1)
 
-    def test_invoice_eer_contains_all_nullable_snapshot_columns(self):
+    def test_invoice_eer_matches_normalized_base_fields_and_derived_view(self):
         repo=Path(__file__).resolve().parents[2]
         with zipfile.ZipFile(repo/"eer.mwb") as z:
             self.assertIsNone(z.testzip())
@@ -193,11 +196,15 @@ class HistoricalInvoiceTests(TestCase):
         invoice=next(n for n in tables if n.find("./value[@key='name']").text=="factuur")
         cols={n.find("./value[@key='name']").text:n for n in invoice.iter("value")
               if n.get("struct-name")=="db.mysql.Column"}
-        for name in ("bedrag_excl_btw","btw_bedrag","bedrag_incl_btw","bestellingskorting",
-                     "bedrag_na_bestellingskorting","eenmalige_korting",
-                     "bedrag_na_eenmalige_korting","klantenkorting","totaal_bedrag"):
+        for name in ("bedrag_excl_btw","btw_bedrag","bestellingskorting",
+                     "eenmalige_korting","klantenkorting"):
             self.assertIn(name,cols)
             self.assertEqual(cols[name].find("./value[@key='isNotNull']").text,"0")
-            self.assertEqual(
-                cols[name].find("./link[@key='simpleType']").text,
-                "com.mysql.rdbms.mysql.datatype.decimal")
+        for name in ("bedrag_incl_btw","bedrag_na_bestellingskorting",
+                     "bedrag_na_eenmalige_korting","totaal_bedrag"):
+            self.assertNotIn(name,cols)
+        schema=(repo/"code/database/schema.sql").read_text(encoding="utf-8-sig")
+        self.assertIn("CREATE VIEW FactuurOverzicht",schema)
+        for name in ("AS bedrag_incl_btw","AS bedrag_na_bestellingskorting",
+                     "AS bedrag_na_eenmalige_korting","AS totaal_bedrag"):
+            self.assertIn(name,schema)

@@ -1,8 +1,4 @@
-"""MySQL 8.4 integration tests for the read-only PR95 status overview.
-
-These tests use only a uniquely named disposable schema on local MySQL.
-The customer-facing AD06 search/detail/backorder flow belongs to PR97.
-"""
+"""MySQL integration tests for AD06 current order-status overview.\n\nOnly a disposable named MySQL schema is used with explicit opt-in.\n"""
 import os
 import unittest
 from datetime import datetime
@@ -12,7 +8,7 @@ from uuid import uuid4
 import mysql.connector
 
 from app import create_app
-from repositories.order_status_report_repository import OrderStatusReportRepository
+from repositories.sales_case_repository import SalesCaseRepository
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -112,7 +108,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             admin.close()
 
     def test_all_valid_recorded_statuses_are_displayed_without_reclassification(self):
-        rows = OrderStatusReportRepository(self.connection).list_orders(None, None)
+        rows = SalesCaseRepository(self.connection).order_statuses()
         self.assertEqual(len(rows), len(self.saved_statuses))
         self.assertEqual(
             [row["bestelling_id"] for row in rows], list(reversed(self.order_ids))
@@ -132,20 +128,18 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             DB_USER="root", DB_PASSWORD=self.options["password"],
         )
         with app.test_client() as client:
-            response = client.get("/reports")
+            response = client.get("/orders/status")
             self.assertEqual(response.status_code, 200)
             html = response.get_data(as_text=True)
             for label in (
                 "Wordt verzameld", "Verstuurd", "Backorder", "Afgeleverd",
                 "Niet afgeleverd",
-                "Apotheek casus", "12-11-2026", "middag", "Spoed",
+                "Apotheek casus", "2026-11-12", "Middag", "Ja",
             ):
                 self.assertIn(label, html)
             self.assertEqual(html.count('<th scope="row">'), len(self.saved_statuses))
-            self.assertIn("Openstaande orders", html)
-            self.assertNotIn('name="order"', html)
-            self.assertIn('name="from"', html)
-            self.assertIn('name="to"', html)
+            self.assertIn("Orders en hun vastgelegde status", html)
+            self.assertIn('name="customer_id"', html)
             self.assertNotIn('href="/reports/', html)
 
     def test_report_only_reads_existing_orders_and_does_not_mutate_them(self):
