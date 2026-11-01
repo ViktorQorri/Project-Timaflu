@@ -3,9 +3,13 @@
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
+import os
 import re
-from unittest import TestCase
+import uuid
+from unittest import TestCase, skipUnless
 from unittest.mock import patch
+
+import mysql.connector
 
 from app import create_app
 from domain.errors import DomainError, NotFoundError
@@ -277,3 +281,143 @@ class OrderStatusNotificationTests(TestCase):
             with patch("routes.sales.get_connection", side_effect=AssertionError("No DB needed")):
                 response = client.get("/orders")
             self.assertEqual(response.status_code, 200)
+
+
+@skipUnless(
+    os.getenv("TIMAFLU_TEST_ALLOW_RESET") == "isolated"
+    and os.getenv("TIMAFLU_TEST_MYSQL_HOST") == "127.0.0.1",
+    "Requires an explicitly isolated MySQL service.",
+)
+class OrderStatusMySQLIntegrationTests(TestCase):
+    def test_real_mysql_backorders_exclude_confirmed_deliveries(self):
+        """AD05/AD06: accepted shortages remain until a delivery is confirmed.
+
+        A planned delivery does not count. Multiple attempts for one delivery
+        are counted once. No production database is opened or modified.
+        """
+        options = {
+            "host": "127.0.0.1",
+            "port": int(os.environ["TIMAFLU_TEST_MYSQL_PORT"]),
+            "user": os.getenv("TIMAFLU_TEST_MYSQL_USER", "root"),
+            "password": os.environ["TIMAFLU_TEST_MYSQL_PASSWORD"],
+        }
+        name = "timaflu_pr97_" + uuid.uuid4().hex[:12]
+        admin = mysql.connector.connect(**options)
+        connection = None
+        try:
+            with admin.cursor() as cursor:
+                cursor.execute(f"CREATE DATABASE `{name}`")
+            admin.commit()
+            connection = mysql.connector.connect(database=name, **options)
+            schema = (Path(__file__).parents[1] / "database" / "schema.sql").read_text(
+                encoding="utf-8"
+            )
+            sql = "\n".join(
+                line for line in schema.splitlines()
+                if not line.lstrip().startswith("--")
+            )
+            with connection.cursor() as cursor:
+                for statement in sql.split(";"):
+                    if statement.strip():
+                        cursor.execute(statement)
+
+                cursor.execute("INSERT INTO Adres (adres) VALUES ('TEST adres')")
+                address_id = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Klant (bedrijfsnaam, afleveradres_id, betaaladres_id)
+                       VALUES ('TEST apotheek', %s, %s)""",
+                    (address_id, address_id),
+                )
+                customer_id = cursor.lastrowid
+                cursor.execute(
+                    """INSERT INTO Bestelling (klant_id, afleveradres_id, betaaladres_id,
+                       besteld_op, gewenste_leverdatum, dagdeel, status_naam)
+                       VALUES (%s, %s, %s, '2026-10-28', '2026-10-31',
+                               'ochtend', 'backorder')""",
+                    (customer_id, address_id, address_id),
+                )
+                order_id = cursor.lastrowid
+                products = {}
+                for article, quantity, choice in (
+                    ("T-1", 10, 1), ("T-2", 10, 1), ("T-3", 5, None)
+                ):
+                    cursor.execute(
+                        """INSERT INTO Product (artikelnummer, bestelcode, productnaam,
+                           prijs_per_grootverpakking, aantal_detailverpakkingen,
+                           minimale_bestelhoeveelheid, minimumvoorraad)
+                           VALUES (%s, %s, %s, 10, 1, 1, 0)""",
+                        (article, article + "-CODE", article),
+                    )
+                    product_id = cursor.lastrowid
+                    products[article] = product_id
+                    cursor.execute(
+                        """INSERT INTO Bestelregel (bestelling_id, product_id, aantal,
+                           prijs_per_eenheid, afnemen_bij_tekort)
+                           VALUES (%s, %s, %s, 10, %s)""",
+                        (order_id, product_id, quantity, choice),
+                    )
+                cursor.execute(
+                    "INSERT INTO Koerier (naam, beschikbaar) VALUES ('TEST koerier', TRUE)"
+                )
+                courier_id = cursor.lastrowid
+                cursor.execute(
+                    "INSERT INTO Rit (koerier_id, ritdatum) VALUES (%s, '2026-10-31')",
+                    (courier_id,),
+                )
+                trip_id = cursor.lastrowid
+
+                def delivery(article, count, outcomes):
+                    cursor.execute(
+                        "INSERT INTO Levering (bestelling_id) VALUES (%s)", (order_id,)
+                    )
+                    delivery_id = cursor.lastrowid
+                    cursor.execute(
+                        """INSERT INTO Leveringregel (levering_id, product_id,
+                           aantal_geleverd) VALUES (%s, %s, %s)""",
+                        (delivery_id, products[article], count),
+                    )
+                    for number, outcome in enumerate(outcomes, start=1):
+                        cursor.execute(
+                            """INSERT INTO Leverpoging (levering_id, pogingnummer,
+                               rit_id, geplande_tijd, resultaat, ontvangst_getekend)
+                               VALUES (%s, %s, %s, '10:00:00', %s, %s)""",
+                            (delivery_id, number, trip_id, outcome,
+                             outcome == "afgeleverd"),
+                        )
+
+                delivery("T-1", 10, ["niet aanwezig", "afgeleverd"])
+                delivery("T-2", 4, ["afgeleverd"])
+                delivery("T-2", 6, [None])
+            connection.commit()
+
+            service = OrderStatusNotificationService(
+                OrderStatusNotificationRepository(connection)
+            )
+            result = service.status_overview(order_id)
+            lines = {line["artikelnummer"]: line for line in result["lines"]}
+            self.assertEqual(lines["T-1"]["aantal_afgeleverd"], 10)
+            self.assertEqual(lines["T-2"]["aantal_afgeleverd"], 4)
+            self.assertEqual(lines["T-3"]["aantal_afgeleverd"], 0)
+            self.assertEqual(
+                [line["artikelnummer"] for line in result["backorder_lines"]],
+                ["T-2"],
+            )
+            app = create_app()
+            app.testing = True
+            with app.test_client() as client:
+                with patch("routes.sales.get_connection", return_value=connection):
+                    page = client.get(f"/orders/{order_id}/status")
+            self.assertEqual(page.status_code, 200)
+            html = page.get_data(as_text=True)
+            self.assertIn("<li>T-2 (T-2)</li>", html)
+            self.assertNotIn("<li>T-1 (T-1)</li>", html)
+            self.assertIn("Aflevering bevestigd, orderstatus controleren", html)
+        finally:
+            if connection is not None:
+                connection.close()
+            try:
+                with admin.cursor() as cursor:
+                    cursor.execute(f"DROP DATABASE IF EXISTS `{name}`")
+                admin.commit()
+            finally:
+                admin.close()

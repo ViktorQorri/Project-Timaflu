@@ -51,3 +51,45 @@ class ActiveIngredientFormTests(TestCase):
         self.assertEqual(response.data.count(b'name="ingredient_name"'), 4)
         self.assertIn(b'value="Stof C"', response.data)
         self.assertFalse(service.saved)
+
+    def test_untrusted_row_counter_does_not_expand_form(self):
+        app = create_app()
+        app.config.update(TESTING=True)
+        service = FakeProductService()
+        with patch("routes.purchasing.product_service", return_value=service):
+            with app.test_client() as client:
+                response = client.post("/products/new", data={
+                    "form_action": "add_ingredient",
+                    "ingredient_rows": "1000000000",
+                    "ingredient_name": ["Stof A", ""],
+                    "ingredient_quantity": ["20 mg", ""],
+                })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.count(b'name="ingredient_name"'), 3)
+        self.assertFalse(service.saved)
+
+    def test_more_than_sixty_four_active_ingredients_can_be_entered(self):
+        app = create_app()
+        app.config.update(TESTING=True)
+        service = FakeProductService()
+        with patch("routes.purchasing.product_service", return_value=service):
+            with app.test_client() as client:
+                response = client.post("/products/new", data={
+                    "form_action": "add_ingredient",
+                    "ingredient_name": [f"Stof {i}" for i in range(65)],
+                    "ingredient_quantity": ["1 mg"] * 65,
+                })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.count(b'name="ingredient_name"'), 66)
+        self.assertFalse(service.saved)
+
+    def test_ingredient_may_be_entered_in_second_row(self):
+        app = create_app()
+        app.config.update(TESTING=True)
+        service = FakeProductService()
+        with patch("routes.purchasing.product_service", return_value=service):
+            with app.test_client() as client:
+                response = client.get("/products/new")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b'name="ingredient_name" value="" maxlength="100" required', response.data)
+        self.assertNotIn(b'name="ingredient_quantity" value="" maxlength="50" placeholder="500 mg" required', response.data)
