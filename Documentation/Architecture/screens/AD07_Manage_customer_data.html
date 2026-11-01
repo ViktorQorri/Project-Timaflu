@@ -30,7 +30,7 @@
 <div class="screen-field"><label for="field-7-2">Telefoonnummer</label><input id="field-7-2" type="tel" placeholder="Telefoonnummer" disabled></div>
 <div class="screen-field"><label for="field-7-3">Afleveradres</label><input id="field-7-3" type="text" placeholder="Afleveradres" disabled></div>
 <div class="screen-field"><label for="field-7-4">Factuuradres</label><input id="field-7-4" type="text" placeholder="Factuuradres" disabled></div>
-<div class="screen-field"><label for="field-7-5">Eenmalige acquisitiekorting van 10%</label><input id="field-7-5" type="checkbox" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant toevoegen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Wijzigingen opslaan</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant deactiveren</button></div>
+<div class="screen-field"><label for="field-7-5">Acquisitieaanbod toegezegd (geen extra dubbele korting)</label><input id="field-7-5" type="checkbox" disabled></div></div><div class="screen-actions"><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Klant toevoegen</button><button type="button" disabled title="Alleen ontwerpschets, geen werkende actie">Wijzigingen opslaan</button></div>
 <p class="screen-note">Deze statische schets is niet de werkende applicatie.
 Proceslogica en gegevensuitwisseling horen bij Flask/Jinja en de backend.</p>
 </section>
@@ -54,7 +54,7 @@ Geen voorbeeldgegevens. De werkende applicatie laadt deze informatie uit de data
 <section class="scenario-panel" aria-labelledby="scenario-heading">
 <span class="overline">Herleidbaarheid naar casus en proces</span>
 <h2 id="scenario-heading">Ondersteunde procesuitkomsten</h2>
-<div class="scenario-grid"><article class="scenario"><h3>Nieuwe klant</h3><p>Registreer de gegevens, en vink de eenmalige 10%-korting alleen aan wanneer die uit acquisitie is toegezegd.</p></article><article class="scenario"><h3>Bestaande klant</h3><p>Wijzig de bestaande gegevens of kies voor deactiveren.</p></article><article class="scenario"><h3>Validatie</h3><p>Toon een bevestiging bij geldige gegevens en een foutmelding bij ongeldige gegevens.</p></article></div>
+<div class="scenario-grid"><article class="scenario"><h3>Nieuwe klant</h3><p>Registreer de gegevens, en leg een afzonderlijk acquisitieaanbod alleen vast als dit werkelijk is toegezegd.</p></article><article class="scenario"><h3>Bestaande klant</h3><p>Wijzig contactgegevens of aflever- en factuuradres zonder historische bestellingen te verwijderen.</p></article><article class="scenario"><h3>Validatie</h3><p>Toon een bevestiging bij geldige gegevens en een foutmelding bij ongeldige gegevens.</p></article></div>
 <ul class="case-notes"><li>De casus beschrijft een klantaccount, niet een nieuw portaal met gebruikersnamen of wachtwoorden.</li></ul>
 </section>
 </main>

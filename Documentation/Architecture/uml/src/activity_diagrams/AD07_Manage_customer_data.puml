@@ -6,26 +6,24 @@ skinparam ActivityDiamondFontSize 11
 start
 :Open customer overview;
 |System|
-:Show list of customers;
+:Show central customer and address information;
 |Sales Employee|
-:Choose customer action;
 if (Add customer?) then ([yes])
-  :Enter new customer data;
-  if (One-time acquisition discount?) then ([yes])
-    :Tick one-time 10% discount;
+  :Enter company, contact, delivery and invoice address;
+  if (Acquisition offer explicitly agreed?) then ([yes])
+    :Record agreed first-order incentive;
   else ([no])
   endif
 else ([no])
   :Select customer and edit data;
 endif
 |System|
-:Validate data;
+:Validate supplied information;
 if (Data valid?) then ([yes])
-  :Save changes;
+  :Save central customer and address data;
   :Show confirmation;
-  stop
 else ([no])
-  :Show error message;
-  stop
+  :Show validation error without changes;
 endif
+stop
 @enduml
