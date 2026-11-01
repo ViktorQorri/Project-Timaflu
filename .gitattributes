@@ -2,5 +2,4 @@
 Documentation/Architecture/eer-mysql-verified.svg text eol=lf
 Documentation/Architecture/class-diagram-backend.puml text eol=lf
 Documentation/Architecture/class-diagram-backend.svg text eol=lf
-Documentation/Architecture/query-output-per-screen.md text eol=lf
 code/database/queries.sql text eol=lf

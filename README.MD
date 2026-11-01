@@ -45,34 +45,16 @@ Activity diagrams, usecase-diagrammen, DKD en sequence diagrams hebben PlantUML-
 in `Documentation/Architecture/uml/src/` en overeenkomstige exports in `uml/export/`.
 Behoud bij wijzigingen de afstemming tussen diagrammen, MySQL en Python.
 
-## Casus en oplevering
+## Casus en databronnen
 
-De oorspronkelijke casus in `Documentation/brightspace/` is leidend.
-De verplichte EER blijft beschikbaar als
-[SVG](Documentation/Architecture/eer-mysql-verified.svg) en het bewerkbare
-MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
-verwijderd. De actuele MySQL-queryuitvoer per scherm staat in
-[query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md).
-Dit rapport is op een geÃ¯soleerde MySQL 8.4-database gemeten. Bij wijzigingen aan
-schermen of queries moet opnieuw worden gemeten met
-`python code/database/audit_ui_queries.py`; dat produceert een bijgewerkt
-`deliverables/query-output-per-screen.md`.
-Met `python code/build_deliverables.py --output-dir deliverables` zijn de vier
-schoolarchieven ook uit een schone checkout te maken. Een opnieuw gemeten
-lokaal rapport krijgt voorrang op het ingecheckte bewijs.
-
+De oorspronkelijke casus in `Documentation/brightspace/` is leidend. De definitieve EER is beschikbaar als [SVG](Documentation/Architecture/eer-mysql-verified.svg) en als bewerkbaar MySQL Workbench-model (`eer.mwb`). De SQL-queryvoorbeelden staan in `code/database/queries.sql`.
 
 ## Documentation
 
 | Document | Location |
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
-| Projectaanpak en taakverdeling | [Documentation/Projectbeheer/projectaanpak.md](Documentation/Projectbeheer/projectaanpak.md) |
-| Controle schoolcriteria | [Documentation/Projectbeheer/beoordelingscontrole.md](Documentation/Projectbeheer/beoordelingscontrole.md) |
-| Reflectiewerkblad | [Documentation/Projectbeheer/reflectie-werkblad.md](Documentation/Projectbeheer/reflectie-werkblad.md) |
-| Notulen ter verificatie | [Documentation/Meetings/notulen-2026-10-30-ter-verificatie.md](Documentation/Meetings/notulen-2026-10-30-ter-verificatie.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
-| Databasequeries en echte output | [Queryrapport](Documentation/Architecture/query-output-per-screen.md), opgenomen in `timaflu-database-en-queries.zip` |
 | Schermontwerpen en traceability | [Documentation/Architecture/screens/README.md](Documentation/Architecture/screens/README.md) |
 | API-specificatie | [Documentation/Architecture/api-specification.md](Documentation/Architecture/api-specification.md) |
 | Domain class diagram (PlantUML), sources and multiplicities | [DKD (PlantUML)](Documentation/Architecture/uml/src/domain/dkd-timaflu.puml) |

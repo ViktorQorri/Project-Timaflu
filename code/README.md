@@ -59,33 +59,6 @@ Requirements: Python 3.10 or newer and a local MySQL server.
 
 Open http://127.0.0.1:5000. The homepage is static; database errors are shown when a data-dependent process is used.
 
-## Opleverbestanden maken
-
-De school vraagt aparte ZIP-bestanden voor Python-backend en HTML/CSS-website,
-plus het actuele EER, de databasequeries en de ontwerpproducten. Het reeds
-geverifieerde queryrapport in
-`Documentation/Architecture/query-output-per-screen.md` maakt het mogelijk
-om ook vanuit een schone checkout de archieven te bouwen. Als er
-schermen of queries zijn veranderd, genereer dan **eerst** een nieuw rapport
-op een geïsoleerde, wegwerpbare MySQL-testdatabase met
-`python code/database/audit_ui_queries.py`. Dit nieuwe rapport wordt in
-`deliverables/` geplaatst en krijgt voorrang bij het inpakken.
-Maak daarna de ZIP-bestanden vanuit de repositoryhoofdmap met:
-
-```powershell
-python code/build_deliverables.py --output-dir deliverables
-```
-
-Dit levert `timaflu-backend.zip`, `timaflu-frontend.zip`,
-`timaflu-database-en-queries.zip` en `timaflu-ontwerpen.zip`.
-Het websitearchief bevat de Jinja/HTML-templates en CSS; voor dynamische
-schermen blijft de Python-backend nodig. De databasebestanden zijn
-MySQL-scripts en documentatie, geen automatisch gepubliceerde online database.
-
-De ZIP-bestanden worden niet opgeslagen in Git. Maak deze lokaal wanneer
-de schooloplevering plaatsvindt. Alleen Git-tracked bronbestanden en het geverifieerde queryrapport
-worden opgenomen; lokale wachtwoorden en overige tijdelijke gegevens niet.
-
 ## Adding a screen
 
 Every screen follows the same path through the layers, as in the home page:
