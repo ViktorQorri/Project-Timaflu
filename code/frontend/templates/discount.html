@@ -1,19 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Kortingsberekening{% endblock %}
 {% block content %}
-<h1>Bestelling: kortingsberekening voor {{customer.bedrijfsnaam}}</h1>
-<p>Betaalde jaaromzet vorig kalenderjaar: € {{annual_revenue}}</p>
-<p>Eerste bestelling: {{'ja' if first_order else 'nee'}}. De eenmalige korting en klantenkorting worden na de bestellingskorting toegepast.</p>
-<dl>
-<dt>Subtotaal excl. btw</dt><dd>€ {{discount.total_ex_vat}}</dd>
-<dt>9% btw</dt><dd>€ {{discount.vat_9_percent}}</dd>
-<dt>Totaal incl. btw</dt><dd>€ {{discount.total_incl_vat}}</dd>
-<dt>Bestellingskorting</dt><dd>€ {{discount.order_discount}}</dd>
-<dt>Totaal na bestellingskorting</dt><dd>€ {{discount.total_after_order_discount}}</dd>
-<dt>Eenmalige korting</dt><dd>€ {{discount.first_order_discount}}</dd>
-<dt>Totaal na eenmalige korting</dt><dd>€ {{discount.total_after_first_order_discount}}</dd>
-<dt>Klantenkorting</dt><dd>€ {{discount.customer_discount}}</dd>
-<dt>Te betalen incl. btw</dt><dd><strong>€ {{discount.total}}</strong></dd>
-</dl>
-<a href="{{url_for('sales.orders')}}">Terug naar verkoop</a>
+<section class="discount-result-page" aria-labelledby="discount-result-title">
+  <div class="discount-result-page__summary">
+    <p class="stock-dashboard__eyebrow">Verkoop · Kortingsberekening</p>
+    <h1 id="discount-result-title">Totaal voor {{ customer.bedrijfsnaam }}</h1>
+    <p>Betaalde jaaromzet vorig kalenderjaar: € {{ annual_revenue }}</p>
+    <p>
+      {% if first_order %}Eerste bestelling.{% else %}Bestaande klant.{% endif %}
+      De eenmalige korting en klantenkorting worden na de bestellingskorting toegepast.
+    </p>
+    <dl>
+      <div><dt>Subtotaal excl. btw</dt><dd>€ {{ discount.total_ex_vat }}</dd></div>
+      <div><dt>9% btw</dt><dd>€ {{ discount.vat_9_percent }}</dd></div>
+      <div><dt>Totaal incl. btw</dt><dd>€ {{ discount.total_incl_vat }}</dd></div>
+      <div><dt>Bestellingskorting</dt><dd>€ {{ discount.order_discount }}</dd></div>
+      <div><dt>Totaal na bestellingskorting</dt><dd>€ {{ discount.total_after_order_discount }}</dd></div>
+      <div><dt>Eenmalige korting</dt><dd>€ {{ discount.first_order_discount }}</dd></div>
+      <div><dt>Totaal na eenmalige korting</dt><dd>€ {{ discount.total_after_first_order_discount }}</dd></div>
+      <div><dt>Klantenkorting</dt><dd>€ {{ discount.customer_discount }}</dd></div>
+      <div class="discount-result-page__total"><dt>Te betalen incl. btw</dt><dd>€ {{ discount.total }}</dd></div>
+    </dl>
+    <p><a class="button button--primary" href="{{ url_for('sales.orders') }}">Terug naar verkoop</a></p>
+  </div>
+</section>
 {% endblock %}

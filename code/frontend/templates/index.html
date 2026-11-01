@@ -1,7 +1,123 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Start{% endblock %}
 
 {% block content %}
-  <h1>Timaflu</h1>
+  <section class="home-page" aria-labelledby="home-title">
+    <header class="home-hero">
+      <div>
+        <p class="home-eyebrow">Timaflu medewerkersportaal</p>
+        <h1 id="home-title">Overzicht van je werkprocessen</h1>
+        <p class="home-lead">Beheer verkoop, inkoop, orderpicking, distributie, facturatie en acquisitie vanuit één plek.</p>
+      </div>
+      <p class="home-database{% if database_ok %} home-database--ok{% else %} home-database--error{% endif %}"
+         role="status">
+        <span class="home-database__indicator" aria-hidden="true"></span>
+        {% if database_ok %}Database verbonden{% else %}Database niet bereikbaar{% endif %}
+      </p>
+    </header>
+
+    <nav class="home-workflows" aria-label="Werkprocessen">
+      <section class="home-workflow" aria-labelledby="workflow-sales">
+        <h2 id="workflow-sales">Verkoop</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('sales.customers') }}">
+            <span class="home-link__number" aria-hidden="true">01</span>
+            <span><strong>Klanten</strong><small>Gegevens en klantkorting beheren</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('sales.new_order') }}">
+            <span class="home-link__number" aria-hidden="true">02</span>
+            <span><strong>Order invoeren</strong><small>Bestelling en levermoment vastleggen</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('sales.orders') }}">
+            <span class="home-link__number" aria-hidden="true">03</span>
+            <span><strong>Voorraad controleren</strong><small>Beschikbaarheid en orderstatus opzoeken</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="home-workflow" aria-labelledby="workflow-purchasing">
+        <h2 id="workflow-purchasing">Inkoop</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('purchasing.products') }}">
+            <span class="home-link__number" aria-hidden="true">04</span>
+            <span><strong>Productcatalogus</strong><small>Producten in het assortiment beheren</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('purchasing.stock') }}">
+            <span class="home-link__number" aria-hidden="true">05</span>
+            <span><strong>Voorraadtekorten</strong><small>Producten onder minimumvoorraad bekijken</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('purchasing.suppliers') }}">
+            <span class="home-link__number" aria-hidden="true">06</span>
+            <span><strong>Leveranciers</strong><small>Prijzen vergelijken en inkopen vastleggen</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('purchasing.manufacturers') }}">
+            <span class="home-link__number" aria-hidden="true">07</span>
+            <span><strong>Fabrikanten</strong><small>Leveranciersgegevens en aanbod beheren</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('purchasing.reorder') }}">
+            <span class="home-link__number" aria-hidden="true">08</span>
+            <span><strong>Bijbestellen</strong><small>Tekorten en inkoopbestellingen opvolgen</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="home-workflow" aria-labelledby="workflow-warehouse">
+        <h2 id="workflow-warehouse">Orderpicking</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('order_picking.index') }}">
+            <span class="home-link__number" aria-hidden="true">09</span>
+            <span><strong>Orders en verzamelbakken</strong><small>Orderpicking en robotverwerking volgen</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="home-workflow" aria-labelledby="workflow-delivery">
+        <h2 id="workflow-delivery">Distributie</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('distribution.deliveries') }}">
+            <span class="home-link__number" aria-hidden="true">10</span>
+            <span><strong>Leveringen</strong><small>Koeriers, bezorgritten en pogingen beheren</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="home-workflow" aria-labelledby="workflow-administration">
+        <h2 id="workflow-administration">Administratie</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('administration.invoices') }}">
+            <span class="home-link__number" aria-hidden="true">11</span>
+            <span><strong>Facturen</strong><small>Weekfacturen en betalingen verwerken</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+          <a class="home-link" href="{{ url_for('reports.index') }}">
+            <span class="home-link__number" aria-hidden="true">12</span>
+            <span><strong>Rapportages</strong><small>Orderstatus en verkoopresultaten bekijken</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="home-workflow" aria-labelledby="workflow-acquisition">
+        <h2 id="workflow-acquisition">Acquisitie</h2>
+        <div class="home-links">
+          <a class="home-link" href="{{ url_for('acquisition.index') }}">
+            <span class="home-link__number" aria-hidden="true">13</span>
+            <span><strong>Potentiële klanten</strong><small>Bezoeken registreren en opvolging afronden</small></span>
+            <span class="home-link__arrow" aria-hidden="true">&gt;</span>
+          </a>
+        </div>
+      </section>
+    </nav>
+  </section>
 {% endblock %}

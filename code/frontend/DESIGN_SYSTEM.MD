@@ -1,6 +1,6 @@
 # Timaflu Design System
 
-Dit document beschrijft het visuele systeem en de interfacepatronen van het Timaflu-medewerkersportaal. Het is gebaseerd op de huidige implementatie in `src/App.tsx` en `src/index.css`.
+Dit document beschrijft het visuele systeem en de interfacepatronen van het Timaflu-medewerkersportaal. De website wordt door Flask gerenderd met Jinja-templates en CSS in `code/frontend/templates/` en `code/frontend/static/css/`.
 
 ## 1. Ontwerpprincipes
 
@@ -9,7 +9,7 @@ Het portaal moet:
 - betrouwbaar en professioneel aanvoelen;
 - medische informatie rustig en overzichtelijk presenteren;
 - belangrijke statussen direct herkenbaar maken;
-- medewerkers alleen functies tonen die bij hun rol horen;
+- de zes bedrijfsprocessen herkenbaar en consistent presenteren;
 - ook bij veel operationele informatie scanbaar blijven;
 - goed werken op desktop, tablet en mobiel.
 
@@ -21,22 +21,22 @@ De visuele stijl combineert een donkerblauwe basis met helder blauw voor interac
 
 | Token | Waarde | Gebruik |
 |---|---:|---|
-| `--navy` | `#123653` | Primaire tekst, footer en donkere vlakken |
-| `--blue` | `#0f70b7` | Primaire acties, links, actieve navigatie en iconen |
-| `--sky` | `#eaf5fb` | Lichte merkachtergronden en icoonvlakken |
-| `--muted` | `#6d8292` | Secundaire tekst |
-| `--line` | `#dce8ef` | Borders en scheidingslijnen |
-| `--bg` | `#f5f8fa` | Algemene pagina-achtergrond |
-| Wit | `#ffffff` | Kaarten, tabellen en invoervelden |
+| `--color-navy` | `#123653` | Primaire tekst, footer en donkere vlakken |
+| `--color-primary` | `#0f70b7` | Primaire acties, links, actieve navigatie en iconen |
+| `--color-primary-light` | `#eaf5fb` | Lichte merkachtergronden en icoonvlakken |
+| `--color-text-muted` | `#718696` | Secundaire tekst |
+| `--color-line` | `#dce8ef` | Borders en scheidingslijnen |
+| `--color-bg` | `#f5f8fa` | Algemene pagina-achtergrond |
+| `--color-surface` | `#ffffff` | Kaarten, tabellen en invoervelden |
 
 ### Statuskleuren
 
-| Status | Tekst | Achtergrond | Voorbeelden |
+| Status | Tokens | Tekst / achtergrond | Voorbeelden |
 |---|---:|---:|---|
-| In behandeling | `#0e70b8` | `#e5f2fb` | Wordt verzameld, onderweg, openstaand |
-| Positief | `#267e55` | `#e3f5eb` | Afgeleverd, betaald, actief, op voorraad |
-| Waarschuwing | `#ae6a18` | `#fff1dc` | Backorder, bijna op, vervallen |
-| Kritiek | `#bd4646` | `#fde7e6` | Onder minimum, foutmelding |
+| In behandeling | `--color-info` / `--color-info-bg` | `#0e70b8` / `#e5f2fb` | Wordt verzameld, onderweg, openstaand |
+| Positief | `--color-success` / `--color-success-bg` | `#267e55` / `#e3f5eb` | Afgeleverd, betaald, actief, op voorraad |
+| Waarschuwing | `--color-warning` / `--color-warning-bg` | `#ae6a18` / `#fff1dc` | Backorder, bijna op, vervallen |
+| Kritiek | `--color-danger` / `--color-danger-bg` | `#bd4646` / `#fde7e6` | Onder minimum, foutmelding |
 
 Gebruik statuskleuren alleen voor betekenisvolle feedback. Gebruik nooit alleen kleur: toon altijd ook een tekstlabel.
 
@@ -47,7 +47,7 @@ Gebruik statuskleuren alleen voor betekenisvolle feedback. Gebruik nooit alleen 
 - **Manrope** — koppen, merknaam en belangrijke cijfers.
 - **DM Sans** — lopende tekst, navigatie, formulieren en tabellen.
 
-De fonts worden geladen via Google Fonts in `src/index.css`.
+De fonts worden via Google Fonts geladen in `templates/base.html`.
 
 ### Typografische hiërarchie
 
@@ -90,11 +90,10 @@ De interface gebruikt voornamelijk veelvouden van 4 px.
 
 ### Navigatie
 
-- Hoogte desktop: 78 px.
-- Logo links, navigatie gecentreerd en gebruikersprofiel rechts.
-- Actieve pagina krijgt blauwe tekst en een blauwe onderlijn.
-- Alleen pagina's waarvoor de huidige rol rechten heeft worden getoond.
-- Op mobiel wordt de hoofdnavigatie vervangen door een menuknop.
+- Navigatie staat op desktop naast het logo en mag op smallere schermen naar een tweede rij lopen.
+- De actieve pagina krijgt blauwe tekst en een lichtblauwe achtergrond.
+- Alle werkprocessen zijn beschikbaar; de huidige applicatie kent nog geen gebruikersrollen.
+- Op mobiel blijft de navigatie zonder JavaScript horizontaal scrollbaar.
 
 ### Contentbreedte
 
@@ -112,13 +111,7 @@ De interface gebruikt voornamelijk veelvouden van 4 px.
 
 ### Merklogo
 
-Het Timaflu-logo bestaat uit:
-
-- een blauw, afgerond vlak;
-- een wit capsule-icoon;
-- de woordmerkcombinatie `tima` + blauw `flu`.
-
-Op donkere achtergronden wordt het icoonvlak wit met een blauw icoon.
+De huidige header gebruikt het woordmerk `tima` in navy en `flu` in blauw. Voeg geen los pictogram toe zolang er geen goedgekeurd logo-asset is.
 
 ### Primaire knop
 
@@ -134,7 +127,6 @@ Voorbeelden:
 
 - `Nieuwe order`
 - `Factuur maken`
-- `Inloggen`
 - `Rapport exporteren`
 
 ### Kaarten en panelen
@@ -149,9 +141,9 @@ Voorbeelden:
 
 Een snelkoppeling bevat:
 
-1. een lichtblauw icoonvlak;
+1. een lichtblauw volgnummer-vlak;
 2. een korte titel;
-3. een blauwe pijl rechtsonder.
+3. een korte omschrijving en een blauwe navigatie-indicator.
 
 Bij hover beweegt de kaart maximaal 3 px omhoog.
 
@@ -178,7 +170,7 @@ Positieve trends zijn groen. Aandachtspunten zijn oranje of rood.
 - Rijen hebben subtiele horizontale lijnen.
 - De primaire identificatie, zoals ordernummer, staat vet.
 - Status staat in een statuslabel.
-- Bewerkbare rollen zien een rijmenu; alleen-lezenrollen niet.
+- Acties staan duidelijk bij de bijbehorende rij of sectie.
 - Op mobiel mag de tabel horizontaal scrollen.
 
 ### Formuliervelden
@@ -191,16 +183,9 @@ Positieve trends zijn groen. Aandachtspunten zijn oranje of rood.
 - Placeholdertekst is lichter dan ingevoerde tekst.
 - Foutmeldingen staan in een lichtrood vlak onder de velden.
 
-### Inlogscherm
+### Formulierfeedback
 
-Het inlogscherm bestaat op desktop uit twee vlakken:
-
-- links: merkverhaal, donkere gradient en vertrouwenstekst;
-- rechts: inlogformulier en informatie over demo-accounts.
-
-Op mobiel staan deze vlakken onder elkaar.
-
-Voor het huidige prototype zijn inlognaam en wachtwoord beide gelijk aan de functienaam. Deze gegevens worden niet opgeslagen.
+Formulieren tonen invoervelden en labels in een duidelijke leesvolgorde. Validatie- en serverfouten verschijnen als tekst in een foutvlak; succesmeldingen zijn zichtbaar na het opslaan.
 
 ## 7. Iconen
 
@@ -223,30 +208,9 @@ Beschikbare concepten zijn onder andere:
 - telefoon;
 - menu.
 
-## 8. Rollen en zichtbaarheid
+## 8. Toegang
 
-De interface past navigatie, snelkoppelingen, dashboardinformatie en bewerkacties aan de ingelogde rol aan.
-
-| Rol | Zichtbare onderdelen | Bewerkrechten |
-|---|---|---|
-| Verkoopmedewerker | Home, klanten, orders, voorraad | Klanten en orders |
-| Magazijnmedewerker | Home, orders, voorraad | Orders en voorraad |
-| Inkoopmedewerker | Home, voorraad, rapportages | Voorraad |
-| Administratiemedewerker | Home, orders, facturen, rapportages | Facturen |
-| Koerier | Home, klanten, leveringen | Leveringen |
-| Accountmanager | Home, klanten, orders | Klanten |
-| Directie | Alle onderdelen | Alleen lezen |
-| Admin | Alle onderdelen | Volledig beheer |
-
-Toegangsbeperkingen moeten visueel consequent zijn:
-
-- verberg pagina's zonder toegang uit de navigatie;
-- verberg niet-toegestane snelkoppelingen;
-- verberg primaire bewerkknoppen bij alleen-lezenrechten;
-- verberg rijmenu's wanneer een gebruiker niet mag bewerken;
-- toon geen dashboardgegevens die buiten de rol vallen.
-
-> De huidige versie is een frontendprototype. Voor productie moeten dezelfde rechten ook in de backend worden afgedwongen.
+De huidige schoolapplicatie heeft geen inlog- of rollenbeheer. De navigatie is daarom voor alle gebruikers gelijk. Voeg geen visuele rolbeperkingen toe zonder eerst echte autorisatie in de backend te implementeren.
 
 ## 9. Responsive gedrag
 
@@ -265,7 +229,7 @@ Toegangsbeperkingen moeten visueel consequent zijn:
 
 ### Mobiel — tot circa 760 px
 
-- Navigatie wordt een menuknop.
+- Navigatie blijft zonder JavaScript volledig bereikbaar en kan horizontaal scrollen.
 - Hero en loginvlakken staan onder elkaar.
 - Dashboard gebruikt één kolom.
 - Pagina-padding wordt 20–24 px.
@@ -292,7 +256,8 @@ Toegangsbeperkingen moeten visueel consequent zijn:
 
 De kern van het designsysteem staat in:
 
-- `src/index.css` — kleuren, typografie, layouts, componentstijlen en responsive gedrag;
-- `src/App.tsx` — iconen, componentstructuur, pagina-inhoud en rolrechten.
+- `templates/base.html` — documentstructuur, navigatie en gedeelde schermbasis;
+- `static/css/style.css` — gedeelde tokens, typografie, formulieren, navigatie en responsive basis;
+- `static/css/operations.css` en de overige `static/css/*.css` bestanden — componenten en schermspecifieke patronen.
 
 Nieuwe schermen moeten bestaande tokens en componentpatronen hergebruiken voordat er nieuwe varianten worden toegevoegd.

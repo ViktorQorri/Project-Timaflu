@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Inkoopprijzen{% endblock %}
 {% block content %}
-<section class="stock-dashboard">
+<section class="stock-dashboard manufacturer-page">
   <h1>Inkoopprijzen van {{ manufacturer.naam }}</h1>
   {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
-  <form method="post">
+  <form method="post" class="manufacturer-prices__form">
     <label for="product_id">Product</label>
     <select name="product_id" id="product_id" required>
     {% for item in products %}<option value="{{ item.product_id }}">{{ item.productnaam }} ({{ item.artikelnummer }})</option>{% endfor %}

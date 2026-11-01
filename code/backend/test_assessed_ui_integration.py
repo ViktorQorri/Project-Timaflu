@@ -17,4 +17,4 @@ class AssessedScreenTests(TestCase):
         with app.test_client() as client:
             response = client.get("/reports")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Reports", response.data)
+        self.assertIn(b"Rapportages", response.data)

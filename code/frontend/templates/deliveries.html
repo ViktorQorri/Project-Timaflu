@@ -1,29 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Bezorgrooster{% endblock %}
 {% block content %}
-  <section class="stock-dashboard" aria-labelledby="distribution-title">
-    <div class="stock-dashboard__intro">
+  <section class="stock-dashboard delivery-page" aria-labelledby="distribution-title">
+    <header class="stock-dashboard__intro delivery-page__intro">
       <div>
-        <p class="stock-dashboard__eyebrow">Distributiehoek</p>
+        <p class="delivery-page__eyebrow">Distributie</p>
         <h1 id="distribution-title">Leveringen en verzamelbakken</h1>
+        <p class="delivery-page__subtitle">Plan bezorgritten, beheer koeriers en registreer afleverpogingen.</p>
       </div>
-    </div>
+    </header>
 
-    <section aria-labelledby="couriers-title">
+    <section class="delivery-page__panel" aria-labelledby="couriers-title">
       <div class="stock-dashboard__intro">
         <div>
           <h2 id="couriers-title">Koeriers</h2>
           <p class="stock-dashboard__subtitle">Beheer koeriers en hun actuele beschikbaarheid.</p>
         </div>
       </div>
-      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="supplier-lookup">
-        <label for="courier-name">Naam koerier</label>
-        <input id="courier-name" name="name" maxlength="100" required>
+      <form method="post" action="{{ url_for('distribution.create_courier') }}" class="delivery-page__courier-form">
+        <label for="courier-name">Naam koerier
+          <input id="courier-name" name="name" maxlength="100" required>
+        </label>
         <button type="submit">Koerier toevoegen</button>
       </form>
       {% if couriers %}
         <div class="stock-dashboard__table-wrap">
-          <table class="stock-dashboard__table">
+          <table class="stock-dashboard__table delivery-page__courier-table">
             <thead>
               <tr><th scope="col">Koerier</th><th scope="col">Beschikbaarheid</th><th scope="col">Actie</th></tr>
             </thead>
@@ -50,7 +52,7 @@
       {% endif %}
     </section>
 
-    <section aria-labelledby="unscheduled-title">
+    <section class="delivery-page__panel" aria-labelledby="unscheduled-title">
       <div class="stock-dashboard__intro">
         <div>
           <h2 id="unscheduled-title">Orders inplannen</h2>
@@ -58,7 +60,7 @@
         </div>
       </div>
       {% for order in unscheduled_orders %}
-        <section class="stock-dashboard__table-wrap" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
+        <article class="delivery-page__order-card" aria-labelledby="schedule-order-{{ order.bestelling_id }}">
           <h3 id="schedule-order-{{ order.bestelling_id }}">
             Bestelling {{ order.bestelling_id }} — {{ order.bedrijfsnaam }}
           </h3>
@@ -66,33 +68,36 @@
           <p>Afgesproken: {{ order.gewenste_leverdatum }} · {{ order.dagdeel }}</p>
           {% if order.spoed %}<p class="stock-dashboard__shortage">Spoedbestelling</p>{% endif %}
           {% if couriers|selectattr("beschikbaar")|list %}
-            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="supplier-lookup">
+            <form method="post" action="{{ url_for('distribution.schedule_delivery') }}" class="delivery-page__schedule-form">
               <input type="hidden" name="order_id" value="{{ order.bestelling_id }}">
-              <label for="courier-{{ order.bestelling_id }}">Koerier</label>
-              <select id="courier-{{ order.bestelling_id }}" name="courier_id" required>
-                <option value="">Kies een beschikbare koerier</option>
-                {% for courier in couriers if courier.beschikbaar %}
-                  <option value="{{ courier.koerier_id }}">{{ courier.naam }}</option>
-                {% endfor %}
-              </select>
-              <label for="delivery-time-{{ order.bestelling_id }}">Bezorgtijd</label>
-              <input id="delivery-time-{{ order.bestelling_id }}" type="time" name="time" required>
+              <label for="courier-{{ order.bestelling_id }}">Koerier
+                <select id="courier-{{ order.bestelling_id }}" name="courier_id" required>
+                  <option value="">Kies een beschikbare koerier</option>
+                  {% for courier in couriers if courier.beschikbaar %}
+                    <option value="{{ courier.koerier_id }}">{{ courier.naam }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label for="delivery-time-{{ order.bestelling_id }}">Bezorgtijd
+                <input id="delivery-time-{{ order.bestelling_id }}" type="time" name="time" required>
+              </label>
               <button type="submit">Rit inplannen</button>
             </form>
           {% else %}
             <p class="stock-dashboard__empty" role="status">Maak eerst een koerier beschikbaar.</p>
           {% endif %}
-        </section>
+        </article>
       {% else %}
         <p class="stock-dashboard__empty" role="status">Er zijn geen vrijgegeven orders zonder rit.</p>
       {% endfor %}
     </section>
 
-    <section aria-labelledby="schedule-title">
+    <section class="delivery-page__panel" aria-labelledby="schedule-title">
       <h2 id="schedule-title">Bezorgrooster</h2>
-      <form method="get" class="supplier-lookup">
-        <label for="delivery-day">Datum</label>
-        <input id="delivery-day" type="date" name="day" value="{{ day.isoformat() }}" required>
+      <form method="get" class="delivery-page__date-form">
+        <label for="delivery-day">Datum
+          <input id="delivery-day" type="date" name="day" value="{{ day.isoformat() }}" required>
+        </label>
         <button type="submit">Bekijken</button>
       </form>
 
@@ -155,7 +160,7 @@
       </div>
     </section>
 
-    <section aria-labelledby="orders-title">
+    <section class="delivery-page__panel" aria-labelledby="orders-title">
       <div class="stock-dashboard__intro">
         <div>
           <h2 id="orders-title">Orders en verzamelbakken</h2>

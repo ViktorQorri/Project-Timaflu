@@ -18,11 +18,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status-report.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/sales-reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/operations.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Direct naar de inhoud</a>
   <header class="site-header">
-    <a class="site-name" href="{{ url_for('home.index') }}">Timaflu</a>
-    <nav>
+    <a class="site-name" href="{{ url_for('home.index') }}">tima<span>flu</span></a>
+    <nav aria-label="Hoofdnavigatie">
       <ul>
         {% for endpoint, label in [
           ('home.index', 'Home'),
@@ -45,7 +47,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="main-content">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
         <p class="flash flash-{{ category }}">{{ message }}</p>
