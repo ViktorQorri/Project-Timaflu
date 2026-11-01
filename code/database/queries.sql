@@ -735,3 +735,12 @@ WHERE klant_id = 1;
 -- Retain all related historical records.
 SELECT klant_id FROM Klant WHERE klant_id = 1 AND actief = TRUE FOR UPDATE;
 UPDATE Klant SET actief = FALSE WHERE klant_id = 1;
+
+
+-- Order status overview for GET /reports (case: status visible to employees).
+-- Same query and columns as OrderStatusReportRepository.list_orders().
+SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
+       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id = b.klant_id
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;

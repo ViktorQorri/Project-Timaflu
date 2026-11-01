@@ -78,6 +78,13 @@ class DesignSystemTests(TestCase):
             customers = stack.enter_context(patch("routes.sales.SalesCaseRepository"))
             customers.return_value.customers.return_value = []
             customers.return_value.order_statuses.return_value = []
+            # Only the order status overview is changed by PR95. Keep smoke tests
+            # independent from a live DB; the real MySQL integration suite tests it.
+            stack.enter_context(patch("routes.reports.get_connection", return_value=object()))
+            report_repository = stack.enter_context(
+                patch("routes.reports.OrderStatusReportRepository")
+            )
+            report_repository.return_value.list_orders.return_value = []
             with app.test_client() as client:
                 for route in ("/", "/customers", "/orders/status", "/order-picking", "/deliveries",
                               "/invoices", "/acquisition", "/reports"):
