@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 import sys
+from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 
@@ -25,6 +26,8 @@ OUT = ROOT / "Documentation/Architecture/query-output-per-screen.md"
 SCREENS = [
     ("/", "Home en databasecontrole"),
     ("/customers?q=TEST", "Klanten zoeken: centrale klantgegevens"),
+    ("/customers/1/edit", "Klantgegevens en adressen bewerken (AD07)"),
+    ("/customers/1/deactivate", "Klant deactiveren, historie bewaren (AD07)"),
     ("/orders?q=Testmedicijn&quantity=1", "Telefonische verkoop en beschikbaarheid"),
     ("/orders/new", "Telefonische orderinvoer met actuele klant- en productgegevens"),
     ("/orders/status", "Bestellingen en echte orderstatus"),
@@ -36,6 +39,13 @@ SCREENS = [
     ("/products/1/remove", "Product verwijderen"),
     ("/stock", "Minimumvoorraad"),
     ("/suppliers?product=Testmedicijn", "Goedkoopste leverancier"),
+    ("/manufacturers", "Fabrikanten en contactgegevens"),
+    ("/manufacturers/new", "Fabrikant toevoegen"),
+    ("/manufacturers/1/edit", "Fabrikant bewerken"),
+    ("/manufacturers/1/prices", "Inkoopprijzen van fabrikant beheren"),
+    ("/reorder", "Inkoop bij minimumvoorraad"),
+    ("/stock/minimums", "Minimumvoorraad per medicijn instellen"),
+    ("/deliveries/1/label", "Adreslabel voor een werkelijk verpakte order"),
     ("/order-picking", "Orderpicking (statisch scherm)"),
     ("/deliveries?day=2026-10-22", "Distributierooster"),
     ("/invoices?customer_id=1", "Openstaande facturen"),
@@ -135,21 +145,53 @@ def main():
         WeeklyInvoiceRepository(cnx).issue_week(
             date(2026,10,19),sender,date(2026,10,31)
         )
+        # Fictional historical delivery is packed, so its real label can be
+        # inspected without inventing a successful live robot operation.
+        with cnx.cursor() as cursor:
+            cursor.execute(
+                "UPDATE Bestelling SET aantal_verhuisdozen=1 WHERE bestelling_id=1"
+            )
+        cnx.commit()
     finally:
         cnx.close()
 
     app = create_app()
+    # Prove that every employee-facing GET route is represented in this
+    # executable query-output deliverable. The robot API is not a screen.
+    adapter = app.url_map.bind("localhost")
+    audited_endpoints = {
+        adapter.match(urlsplit(url).path, method="GET")[0]
+        for url, _ in SCREENS
+    }
+    untested = sorted(
+        rule.endpoint for rule in app.url_map.iter_rules()
+        if "GET" in rule.methods and rule.endpoint not in {
+            "static", "api.next_robot_order"
+        } and rule.endpoint not in audited_endpoints
+    )
+    if untested:
+        raise SystemExit("Employee-facing GET screens lacking MySQL evidence: "
+                         + ", ".join(untested))
     app.config.update(TESTING=True,SECRET_KEY="testkey",
                       DB_HOST=options["host"],DB_PORT=options["port"],
                       DB_NAME=DATABASE,DB_USER=options["user"],
                       DB_PASSWORD=options["password"],TIMAFLU_ADDRESS=sender)
+    version_connection = mysql.connector.connect(**options)
+    try:
+        with version_connection.cursor() as cursor:
+            cursor.execute("SELECT VERSION()")
+            mysql_version = cursor.fetchone()[0]
+    finally:
+        version_connection.close()
     report = [
         "# Werkelijke MySQL-query-output per scherm",
         "",
-        "Uitgevoerd op geïsoleerde MySQL 8.4.13 met fictieve fixturegegevens.",
+        f"Uitgevoerd op geïsoleerde MySQL {mysql_version} met fictieve fixturegegevens.",
         "Elke query hieronder is tijdens het echte GET-verzoek van de Flask-app",
         "onderschept en de getoonde rijen zijn afkomstig van MySQL, niet verzonnen.",
         "Schermen zonder dynamische databasegegevens zijn expliciet als statisch vermeld.",
+        "De robotinterface /api/robots/<id>/next is geen medewerkersscherm:",
+        "deze API wordt afzonderlijk op gang-/robotvalidatie getest.",
         "",
     ]
     count = 0
