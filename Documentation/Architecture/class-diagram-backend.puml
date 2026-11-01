@@ -194,6 +194,8 @@ package "repositories" {
     +record_visit()
     +register_prospect_customer()
     +close_prospect_followup()
+    +unpaid_invoice_overview()
+    +reminder_document()
     +record_payment_action()
     +save_invoice_snapshot()
     +determine_annual_customer_discounts()

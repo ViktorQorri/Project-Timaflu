@@ -39,6 +39,7 @@ SCREENS = [
     ("/order-picking", "Orderpicking (statisch scherm)"),
     ("/deliveries?day=2026-10-22", "Distributierooster"),
     ("/invoices?customer_id=1", "Openstaande facturen"),
+    ("/invoices/outstanding", "Openstaande klantfacturen en betalingsherinneringen"),
     ("/invoices/weekly?week_start=2026-10-19", "Weekfacturen"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),

@@ -6,6 +6,7 @@
     <p class="invoice-page__eyebrow">Administratie</p>
     <h1 id="invoice-page-title">Facturen beheren</h1>
     <p class="invoice-page__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
+    <p><a href="{{ url_for('administration.outstanding_invoices') }}">Overzicht openstaande klantfacturen en herinneringen</a></p>
   </header>
 
   {% if today is defined and today and today[5:] == '-12-31' %}
@@ -119,12 +120,14 @@
           <input type="hidden" name="customer_id" value="{{ customer_id }}">
           <label for="invoice-action-{{ f.invoice_number }}">Actie
             <select id="invoice-action-{{ f.invoice_number }}" name="action">
-              <option value="reminder1">Eerste herinnering</option>
-              <option value="reminder2">Tweede herinnering</option>
               <option value="payment_plan_accepted">Betalingsregeling geaccepteerd</option>
               <option value="payment_plan_rejected">Betalingsregeling geweigerd — incasso</option>
               {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
             </select>
+          </label>
+          <label>
+            <input type="checkbox" name="offer_refused_confirmed" value="yes">
+            Alleen bij incasso: ik bevestig dat de klant de aangeboden standaard betalingsregeling heeft geweigerd.
           </label>
           <label for="received-amount-{{ f.invoice_number }}">Ontvangen bedrag (alleen bij volledige betaling)
             <input id="received-amount-{{ f.invoice_number }}" type="number" min="0" step="0.01" name="received_amount">
