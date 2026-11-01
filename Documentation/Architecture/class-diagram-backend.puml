@@ -182,6 +182,7 @@ package "repositories" {
     +delivery_schedule()
     +time_from_database()
     +register_delivery_attempt()
+    +schedule_second_attempt()
     +register_first_delivery_attempt()
     +_validate_receipt()
     +_record_delivered_lines()

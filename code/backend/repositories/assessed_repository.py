@@ -220,6 +220,17 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
             self.db.rollback()
             raise
 
+    def schedule_second_attempt(self, delivery_id, planned_time, delivery_day):
+        """Plan the return visit after the failed first attempt (AD12).
+
+        Uses the same validated state transition as the delivery screen:
+        first attempt is recorded as absent and the pending second visit is
+        scheduled later on the original day without inventing a result.
+        """
+        return self.register_first_delivery_attempt(
+            delivery_id, delivery_day, False, False, planned_time
+        )
+
     def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered,
                                         receipt_signed=False, second_time=None):
         """Schedule the return trip immediately when the first delivery failed."""
