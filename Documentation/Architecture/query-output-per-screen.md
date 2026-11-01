@@ -4,8 +4,7 @@ Uitgevoerd op geïsoleerde MySQL 8.4.13 met fictieve fixturegegevens.
 Elke query hieronder is tijdens het echte GET-verzoek van de Flask-app
 onderschept en de getoonde rijen zijn afkomstig van MySQL, niet verzonnen.
 Schermen zonder dynamische databasegegevens zijn expliciet als statisch vermeld.
-De robotinterface /api/robots/<id>/next is geen medewerkersscherm:
-deze API wordt afzonderlijk op gang-/robotvalidatie getest.
+De robotinterface /api/robots/<id>/next is geen medewerkersscherm en valt buiten dit query-overzicht.
 
 ## Home
 

@@ -1,6 +1,6 @@
 # Timaflu
 
-School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes. We are working on it in a group of 6.
+School project: an information system for Timaflu, a wholesaler of medicines that supplies pharmacies. The system supports employees in Timaflu's business processes.
 
 ## Scope
 
@@ -37,17 +37,13 @@ All products must be traceable to each other: the same entities and naming in di
 ## Software architecture
 
 The frontend (HTML and CSS only) is rendered by a Python backend (Flask) that reads and writes a MySQL database. The robots use a JSON API on the same backend. See [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) for the full description and the diagram.
-## Diagrams with draw.io
 
-We create all diagrams in [draw.io](https://www.drawio.com/) (diagrams.net).
+## Bewerkbare diagrammen
 
-- Save the source files as `.drawio` in the repository so everyone can edit them.
-- Also export each diagram as `.png` or `.svg` with the same file name, so it can be viewed directly in documents and on GitHub.
-- Use clear file names, for example `activity-sales.drawio` and `activity-sales.png`.
-- When making changes, always update both the `.drawio` file and the export so they do not drift apart.
-- Use the same names in diagrams as in the other products (traceability).
-
-Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
+- De architectuur is uitgewerkt in `Documentation/Architecture/architecture.drawio` en geëxporteerd naar SVG.
+- Activity diagrams, use cases en sequence diagrams hebben PlantUML-bronnen onder `Documentation/Architecture/uml/src/` en leesbare exports onder `uml/export/`.
+- Het MySQL Workbench-EER staat in `eer.mwb`; de geverifieerde SVG-export staat in `Documentation/Architecture/eer-mysql-verified.svg`.
+- Bewerk de diagrammen met de daarvoor bedoelde editor. Houd de bronbestanden, exports en SQL-schema consistent. De tijdelijke generatoren zijn verwijderd.
 
 ## Casus en oplevering
 
@@ -57,7 +53,7 @@ De verplichte EER blijft beschikbaar als
 MySQL Workbench-model als `eer.mwb`. Het aanvullende draw.io-exportmodel is
 verwijderd. De verplichte query-output per scherm staat in
 [query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md).
-ZIP-bestanden voor de school worden uitsluitend bij inlevering lokaal gegenereerd
+ZIP-bestanden voor de school worden bij inlevering lokaal samengesteld
 met `python code/build_deliverables.py --output-dir deliverables`.
 
 ## Documentation
@@ -82,6 +78,6 @@ met `python code/build_deliverables.py --output-dir deliverables`.
 - Code and files: this repository, one branch per ticket, changes via pull request
 - Every pull request is reviewed by at least 1 other group member before it is merged
 - Communication: WhatsApp for short and urgent messages, Discord for substantive discussion
-- Decisions: at least 4 of the 6 votes
+- Decisions: as specified in the current collaboration agreements
 
 See the [collaboration agreements](Documentation/Conflict-prevention/collaboration-agreements.md) for the full agreements.

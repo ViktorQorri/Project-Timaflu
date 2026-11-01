@@ -26,7 +26,7 @@ ARCHIVES = {
         ("code/database/",),
         (
             "Documentation/Architecture/eer-mysql-verified.svg",
-            "Documentation/Architecture/eer-mysql-schema.json",
+            "eer.mwb",
             "Documentation/Architecture/query-output-per-screen.md",
         ),
     ),

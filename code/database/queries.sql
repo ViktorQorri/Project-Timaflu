@@ -1021,7 +1021,7 @@ LEFT JOIN Voorraadreservering AS vr
 WHERE br.bestelling_id = 15
 ORDER BY p.productnaam ASC;
 
--- BEGIN GENERATED WEEKLY INVOICE QUERIES
+-- WEEKLY INVOICE QUERIES
 -- WeeklyInvoiceRepository.eligible_customers example 1
 SELECT DISTINCT b.klant_id
                 FROM Leveringregel lr
@@ -1163,7 +1163,7 @@ SELECT bestelling_id, extra_bezorgkosten,
                           toelichting_extra_bezorgkosten
                    FROM Bestelling WHERE extra_bezorgkosten_factuur_id=2
                    ORDER BY bestelling_id;
--- END GENERATED WEEKLY INVOICE QUERIES
+-- END WEEKLY INVOICE QUERIES
 
 -- PR #97: zoeken op ordernummer of klantnaam, GET /orders?order=...
 -- Dezelfde SELECT als OrderStatusNotificationRepository.search_orders().
