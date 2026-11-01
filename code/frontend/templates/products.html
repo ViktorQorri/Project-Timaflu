@@ -38,6 +38,12 @@
                   {% if product.short_description %}
                     <span class="catalog__description">{{ product.short_description }}</span>
                   {% endif %}
+                  {% if product.long_description %}
+                    <details>
+                      <summary>Lange omschrijving</summary>
+                      <p>{{ product.long_description }}</p>
+                    </details>
+                  {% endif %}
                 </th>
                 <td>{{ product.article_number }}</td>
                 <td>{{ product.order_code }}</td>
