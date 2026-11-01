@@ -81,8 +81,9 @@ LEFT JOIN (
 ) AS o ON o.klant_id = k.klant_id
 LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id
                             AND kk.kalenderjaar = 2026
-WHERE k.bedrijfsnaam LIKE '%Apotheek%' OR k.contactpersoon LIKE '%Apotheek%'
-   OR k.telefoonnummer LIKE '%Apotheek%'
+WHERE k.actief = TRUE
+  AND (k.bedrijfsnaam LIKE '%Apotheek%' OR k.contactpersoon LIKE '%Apotheek%'
+   OR k.telefoonnummer LIKE '%Apotheek%')
 ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC;
 
 -- One customer for the edit and delete screens, GET /customers/1/edit and /customers/1/delete
@@ -92,7 +93,7 @@ SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
 FROM Klant AS k
 JOIN Adres AS af ON af.adres_id = k.afleveradres_id
 JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
-WHERE k.klant_id = 1;
+WHERE k.klant_id = 1 AND k.actief = TRUE;
 
 -- Create a customer, POST /customers
 -- Same statements as CustomerRepository.create(), in one transaction.
@@ -100,8 +101,8 @@ WHERE k.klant_id = 1;
 INSERT INTO Adres (adres) VALUES ('Markt 1, 4811 AA Breda');
 INSERT INTO Adres (adres) VALUES ('Postbus 10, 4800 AA Breda');
 INSERT INTO Klant (bedrijfsnaam, telefoonnummer, contactpersoon,
-                   afleveradres_id, betaaladres_id)
-VALUES ('Apotheek De Markt', '076 123 45 67', 'J. Jansen', 101, 102);
+                   afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd)
+VALUES ('Apotheek De Markt', '076 123 45 67', 'J. Jansen', 101, 102, TRUE);
 
 -- Edit a customer, POST /customers/1/edit
 -- Same statements as CustomerRepository.update(), in one transaction.
@@ -113,7 +114,7 @@ SELECT k.afleveradres_id, af.adres AS afleveradres,
 FROM Klant AS k
 JOIN Adres AS af ON af.adres_id = k.afleveradres_id
 JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
-WHERE k.klant_id = 1
+WHERE k.klant_id = 1 AND k.actief = TRUE
 FOR UPDATE;
 INSERT INTO Adres (adres) VALUES ('Markt 2, 4811 AA Breda');
 UPDATE Klant
@@ -121,12 +122,7 @@ SET bedrijfsnaam = 'Apotheek De Markt', telefoonnummer = '076 123 45 67', contac
     afleveradres_id = 103, betaaladres_id = 102
 WHERE klant_id = 1;
 
--- Delete a customer, POST /customers/1/delete
--- Same statements as CustomerRepository.delete(), in one transaction.
--- The DELETE statements only run when all three counts are 0.
-SELECT klant_id FROM Klant WHERE klant_id = 1 FOR UPDATE;
-SELECT (SELECT COUNT(*) FROM Bestelling WHERE klant_id = 1) AS bestellingen,
-       (SELECT COUNT(*) FROM Factuur WHERE klant_id = 1) AS facturen,
-       (SELECT COUNT(*) FROM PotentieleKlant WHERE klant_id = 1) AS acquisities;
-DELETE FROM Klantkorting WHERE klant_id = 1;
-DELETE FROM Klant WHERE klant_id = 1;
+-- Deactivate a customer, POST /customers/1/deactivate (AD07)
+-- Retain all related historical records.
+SELECT klant_id FROM Klant WHERE klant_id = 1 AND actief = TRUE FOR UPDATE;
+UPDATE Klant SET actief = FALSE WHERE klant_id = 1;

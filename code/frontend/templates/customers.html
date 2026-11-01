@@ -57,7 +57,7 @@
                 <td>
                   <div class="customer-row-actions">
                     <a class="customer-link" href="{{ url_for('sales.edit_customer', customer_id=customer.klant_id) }}">Bewerken<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
-                    <a class="customer-link customer-link--danger" href="{{ url_for('sales.confirm_delete_customer', customer_id=customer.klant_id) }}">Verwijderen<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
+                    <a class="customer-link customer-link--danger" href="{{ url_for('sales.confirm_deactivate_customer', customer_id=customer.klant_id) }}">Deactiveren<span class="customer-visually-hidden"> {{ customer.bedrijfsnaam }}</span></a>
                   </div>
                 </td>
               </tr>

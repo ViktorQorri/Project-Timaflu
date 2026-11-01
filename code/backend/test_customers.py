@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from app import create_app
-from domain.errors import ConflictError, NotFoundError, ValidationError
+from domain.errors import NotFoundError, ValidationError
 from repositories.customer_repository import CustomerRepository
 from services.customer_service import CustomerService
 
@@ -108,19 +108,17 @@ class CustomerValidationTests(TestCase):
     def test_required_fields_are_reported_together(self):
         with self.assertRaises(ValidationError) as caught:
             CustomerService(None).validate({})
-        self.assertEqual(len(caught.exception.messages), 4)
+        self.assertEqual(len(caught.exception.messages), 3)
         self.assertIn("Bedrijfsnaam is verplicht.", caught.exception.messages)
-        self.assertIn("Telefoonnummer is verplicht.", caught.exception.messages)
         self.assertIn("Afleveradres is verplicht.", caught.exception.messages)
         self.assertIn("Factuuradres is verplicht.", caught.exception.messages)
 
-    def test_invalid_phone_numbers_are_rejected(self):
-        for phone in ("abc-defg-hij", "12345", "076 123 45 67 ext 3"):
-            with self.subTest(phone=phone), self.assertRaises(ValidationError):
-                CustomerService(None).validate({**VALID_FORM, "telefoonnummer": phone})
-        for phone in ("+31 76 123 4567", "(076) 123-45-67", "0612345678"):
-            with self.subTest(phone=phone):
-                CustomerService(None).validate({**VALID_FORM, "telefoonnummer": phone})
+    def test_phone_number_can_be_omitted(self):
+        self.assertIsNone(CustomerService(None).validate({**VALID_FORM, "telefoonnummer": ""})["telefoonnummer"])
+
+    def test_phone_number_has_no_unsupported_format_restrictions(self):
+        customer = CustomerService(None).validate({**VALID_FORM, "telefoonnummer": "076 1234567 toestel 3"})
+        self.assertEqual(customer["telefoonnummer"], "076 1234567 toestel 3")
 
     def test_values_longer_than_the_schema_allows_are_rejected(self):
         with self.assertRaises(ValidationError) as caught:
@@ -146,7 +144,7 @@ class CustomerWriteTests(TestCase):
         self.assertEqual(commands[0][1], ("Markt 1, 4811 AA Breda",))
         self.assertEqual(commands[1][1], ("Postbus 10, 4800 AA Breda",))
         self.assertIn("INSERT INTO Klant", commands[2][0])
-        self.assertEqual(commands[2][1], ("Apotheek De Markt", "076 123 45 67", "J. Jansen", 101, 102))
+        self.assertEqual(commands[2][1], ("Apotheek De Markt", "076 123 45 67", "J. Jansen", 101, 102, False))
         self.assertEqual((db.commits, db.rollbacks), (1, 0))
 
     def test_update_with_unchanged_addresses_keeps_address_rows(self):
@@ -175,27 +173,26 @@ class CustomerWriteTests(TestCase):
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
         self.assertEqual(len(db.cur.commands), 1)
 
-    def test_delete_customer_without_history(self):
-        db = Connection([{"klant_id": 1}, {"bestellingen": 0, "facturen": 0, "acquisities": 0}])
-        service(db).delete(1)
+    def test_deactivate_customer_preserves_history(self):
+        db = Connection([{"klant_id": 1}])
+        service(db).deactivate(1)
         commands = [query for query, _ in db.cur.commands]
+        self.assertEqual(len(commands), 2)
         self.assertIn("FOR UPDATE", commands[0])
-        self.assertEqual(commands[2], "DELETE FROM Klantkorting WHERE klant_id = %s")
-        self.assertEqual(commands[3], "DELETE FROM Klant WHERE klant_id = %s")
+        self.assertEqual(commands[1], "UPDATE Klant SET actief = FALSE WHERE klant_id = %s")
+        self.assertFalse(any(query.startswith("DELETE") for query in commands))
         self.assertEqual((db.commits, db.rollbacks), (1, 0))
 
-    def test_customer_with_orders_or_invoices_is_not_deleted(self):
-        db = Connection([{"klant_id": 1}, {"bestellingen": 2, "facturen": 1, "acquisities": 0}])
-        with self.assertRaises(ConflictError):
-            service(db).delete(1)
-        self.assertFalse(any(query.startswith("DELETE") for query, _ in db.cur.commands))
-        self.assertEqual((db.commits, db.rollbacks), (0, 1))
-
-    def test_delete_unknown_customer(self):
+    def test_deactivate_unknown_customer(self):
         db = Connection([None])
         with self.assertRaises(NotFoundError):
-            service(db).delete(99)
+            service(db).deactivate(99)
         self.assertEqual(db.rollbacks, 1)
+
+    def test_acquisition_discount_is_only_granted_if_checked(self):
+        customer = CustomerService(None).validate({**VALID_FORM, "eenmalige_korting_toegezegd": "on"})
+        self.assertTrue(customer["eenmalige_korting_toegezegd"])
+        self.assertFalse(CustomerService(None).validate(VALID_FORM)["eenmalige_korting_toegezegd"])
 
 
 class CustomerPageTests(TestCase):
@@ -231,11 +228,11 @@ class CustomerPageTests(TestCase):
     def test_invalid_new_customer_shows_errors_and_keeps_input(self):
         db = Connection([[]])
         with patch("routes.sales.get_connection", return_value=db):
-            response = self.client.post("/customers", data={**VALID_FORM, "telefoonnummer": ""})
+            response = self.client.post("/customers", data={**VALID_FORM, "afleveradres": ""})
         self.assertEqual(response.status_code, 400)
         page = response.get_data(as_text=True)
-        self.assertIn("Telefoonnummer is verplicht.", page)
-        self.assertIn('value="Markt 1, 4811 AA Breda"', page)
+        self.assertIn("Afleveradres is verplicht.", page)
+        self.assertIn('value="Postbus 10, 4800 AA Breda"', page)
         self.assertEqual(db.commits, 0)
 
     def test_edit_form_is_filled_and_saves(self):
@@ -259,17 +256,17 @@ class CustomerPageTests(TestCase):
         with patch("routes.sales.get_connection", return_value=Connection([None])):
             self.assertEqual(self.client.get("/customers/99/edit").status_code, 404)
 
-    def test_delete_asks_for_confirmation_first(self):
+    def test_deactivate_asks_for_confirmation_first(self):
         with patch("routes.sales.get_connection", return_value=Connection([CUSTOMER_ROW])):
-            response = self.client.get("/customers/1/delete")
+            response = self.client.get("/customers/1/deactivate")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Klant verwijderen?", response.get_data(as_text=True))
+        self.assertIn("Klant deactiveren?", response.get_data(as_text=True))
 
-    def test_delete_conflict_is_explained_on_overview(self):
-        db = Connection([{"klant_id": 1}, {"bestellingen": 1, "facturen": 0, "acquisities": 0}, [CUSTOMER_ROW]])
+    def test_deactivate_preserves_history_and_redirects(self):
+        db = Connection([{"klant_id": 1}, [CUSTOMER_ROW]])
         with patch("routes.sales.get_connection", return_value=db):
-            response = self.client.post("/customers/1/delete")
+            response = self.client.post("/customers/1/deactivate")
             self.assertEqual(response.status_code, 302)
             page = self.client.get("/customers").get_data(as_text=True)
-        self.assertIn("kan daarom niet worden verwijderd", page)
-        self.assertEqual(db.commits, 0)
+        self.assertIn("gedeactiveerd", page)
+        self.assertEqual(db.commits, 1)

@@ -10,8 +10,8 @@
       <input id="contactpersoon" name="contactpersoon" value="{{ form.get('contactpersoon') or '' }}" maxlength="100">
     </div>
     <div class="customer-form__field">
-      <label for="telefoonnummer">Telefoonnummer</label>
-      <input id="telefoonnummer" name="telefoonnummer" type="tel" value="{{ form.get('telefoonnummer') or '' }}" maxlength="25" placeholder="bijv. 076 123 45 67" required>
+      <label for="telefoonnummer">Telefoonnummer <span class="customer-form__optional">(optioneel)</span></label>
+      <input id="telefoonnummer" name="telefoonnummer" type="tel" value="{{ form.get('telefoonnummer') or '' }}" maxlength="25" placeholder="bijv. 076 123 45 67">
     </div>
     <div class="customer-form__field customer-form__field--wide">
       <label for="afleveradres">Afleveradres</label>
@@ -21,6 +21,11 @@
       <label for="factuuradres">Factuuradres</label>
       <input id="factuuradres" name="factuuradres" value="{{ form.get('factuuradres') or '' }}" maxlength="255" placeholder="Straat en huisnummer, postcode en plaats" required>
     </div>
+    {% if customer_id is not defined %}
+    <div class="customer-form__field customer-form__field--wide">
+      <label><input type="checkbox" name="eenmalige_korting_toegezegd" {% if form.get('eenmalige_korting_toegezegd') == 'on' %}checked{% endif %}> Eenmalige 10% acquisitiekorting toegekend</label>
+    </div>
+    {% endif %}
   </div>
 
   {% if errors %}
