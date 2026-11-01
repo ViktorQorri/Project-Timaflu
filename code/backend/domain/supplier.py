@@ -10,3 +10,7 @@ class Supplier:
     contact_person: str | None
     phone_number: str | None
     website: str | None
+
+    def updateDetails(self):
+        """DKD method; editing supplier data is handled by the repository."""
+        pass

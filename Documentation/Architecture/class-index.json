@@ -130,28 +130,6 @@
   },
   {
     "module": "domain.case_stubs",
-    "class": "ProductActiveIngredient",
-    "methods": [
-      "__init__"
-    ]
-  },
-  {
-    "module": "domain.case_stubs",
-    "class": "Supplier",
-    "methods": [
-      "__init__",
-      "updateDetails"
-    ]
-  },
-  {
-    "module": "domain.case_stubs",
-    "class": "SupplierOffer",
-    "methods": [
-      "__init__"
-    ]
-  },
-  {
-    "module": "domain.case_stubs",
     "class": "PurchaseOrder",
     "methods": [
       "__init__",
@@ -285,6 +263,7 @@
       "checkMinimumStock",
       "findSuppliersByPrice",
       "removeSupplier",
+      "removeFromInternalReorderList",
       "removeFromAssortment"
     ]
   },
@@ -296,7 +275,9 @@
   {
     "module": "domain.supplier",
     "class": "Supplier",
-    "methods": []
+    "methods": [
+      "updateDetails"
+    ]
   },
   {
     "module": "repositories.acquisition_repository",
