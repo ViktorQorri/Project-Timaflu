@@ -19,7 +19,7 @@
       <h2 id="orders-to-pick-title">Orders klaar voor orderpicking</h2>
       {% if orders %}
         <div class="stock-dashboard__table-wrap">
-          <table class="stock-dashboard__table">
+          <table class="stock-dashboard__table picking-bins__table">
             <caption>Nieuwe orders met gereserveerde voorraad, nog niet verdeeld over robots</caption>
             <thead>
               <tr>
@@ -34,12 +34,12 @@
             <tbody>
               {% for order in orders %}
                 <tr>
-                  <th scope="row">{{ order.bestelling_id }}</th>
-                  <td>{{ order.bedrijfsnaam }}</td>
-                  <td>{{ order.gewenste_leverdatum }}</td>
-                  <td>{{ order.dagdeel }}</td>
-                  <td>{% if order.spoed %}Ja{% else %}Nee{% endif %}</td>
-                  <td>
+                  <th scope="row" data-label="Order">{{ order.bestelling_id }}</th>
+                  <td data-label="Klant">{{ order.bedrijfsnaam }}</td>
+                  <td data-label="Leverdatum">{{ order.gewenste_leverdatum }}</td>
+                  <td data-label="Dagdeel">{{ order.dagdeel }}</td>
+                  <td data-label="Spoed">{% if order.spoed %}Ja{% else %}Nee{% endif %}</td>
+                  <td data-label="Actie">
                     <form method="post" action="{{ url_for('order_picking.dispatch_order', order_id=order.bestelling_id) }}">
                       <button type="submit">Verdeel over robots</button>
                     </form>
@@ -60,7 +60,7 @@
 
       {% if bins %}
         <div class="stock-dashboard__table-wrap">
-          <table class="stock-dashboard__table">
+          <table class="stock-dashboard__table picking-bins__table">
             <caption>Geregistreerde verzamelbakken per order</caption>
             <thead>
               <tr>
@@ -75,12 +75,12 @@
             <tbody>
               {% for bin in bins %}
                 <tr>
-                  <th scope="row">{{ bin.unieke_code }}</th>
-                  <td class="stock-dashboard__number">{{ bin.bestelling_id }}</td>
-                  <td class="stock-dashboard__number">{{ bin.deelorder_id }}</td>
-                  <td>{% if bin.gang %}Gang {{ bin.gang }}{% else %}Onbekend{% endif %}</td>
-                  <td class="stock-dashboard__number">{{ bin.robot_id }}</td>
-                  <td>
+                  <th scope="row" data-label="Bakcode">{{ bin.unieke_code }}</th>
+                  <td data-label="Order" class="stock-dashboard__number">{{ bin.bestelling_id }}</td>
+                  <td data-label="Deelorder" class="stock-dashboard__number">{{ bin.deelorder_id }}</td>
+                  <td data-label="Locatie">{% if bin.gang %}Gang {{ bin.gang }}{% else %}Onbekend{% endif %}</td>
+                  <td data-label="Robot" class="stock-dashboard__number">{{ bin.robot_id }}</td>
+                  <td data-label="Status">
                     <span class="picking-bins__status{% if bin.afgerond %} picking-bins__status--done{% endif %}">{{ bin.status }}</span>
                   </td>
                 </tr>
@@ -97,19 +97,9 @@
     </section>
 
     <section class="stock-dashboard__section" aria-labelledby="package-title">
-      <h2 id="package-title">Verzamelde orders verpakken</h2>
-      <p class="stock-dashboard__subtitle">De huidige robotdeelorders moeten allemaal gereed zijn. Registreer na het werkelijk verpakken de producten voor bezorging.</p>
-      {% for order in ready_orders %}
-      <article class="stock-dashboard__panel">
-        <h3>Order #{{ order.bestelling_id }} · {{ order.bedrijfsnaam }}</h3>
-        <p>Verzameld: {{ order.collected }}. Eerder verpakt: {{ order.prepared }}.</p>
-        <form method="post" action="{{ url_for('order_picking.pack', order_id=order.bestelling_id) }}">
-          <button type="submit">Verpakking bevestigen en levering aanmaken</button>
-        </form>
-      </article>
-      {% else %}
-        <p class="stock-dashboard__empty" role="status">Geen afgeronde deelorders die nog verpakt moeten worden.</p>
-      {% endfor %}
+      <h2 id="package-title">Verpakking en distributie</h2>
+      <p class="stock-dashboard__subtitle">Na het afronden van robotdeelorders worden de verzamelbakken op het distributiescherm gecontroleerd. Daar registreer je het verpakken en geef je de levering vrij.</p>
+      <a class="button button--secondary" href="{{ url_for('distribution.deliveries') }}">Naar distributie</a>
     </section>
   </section>
 {% endblock %}
