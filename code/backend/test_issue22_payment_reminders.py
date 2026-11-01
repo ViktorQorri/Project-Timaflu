@@ -90,6 +90,58 @@ class ReminderCaseTests(TestCase):
         self.assertEqual(repo.reminder_document(
             7, 2, date(2026, 10, 16))["eerste_herinnering"], first)
 
+    def test_first_and_second_reminders_only_in_their_case_weeks(self):
+        repo = AssessedRepository(ReadDB([unpaid_invoice()]))
+        with self.assertRaisesRegex(DomainError, "voorbij"):
+            repo.reminder_document(7, 1, date(2026, 10, 15))
+        repo = AssessedRepository(ReadDB([
+            unpaid_invoice(eerste_herinnering=date(2026, 10, 9))
+        ]))
+        with self.assertRaisesRegex(DomainError, "voorbij"):
+            repo.reminder_document(7, 2, date(2026, 10, 22))
+
+    def test_commit_revalidates_collection_and_payment_plan_after_preview(self):
+        class TransactionCursor:
+            def __init__(self, invoice):
+                self.invoice = invoice
+                self.statements = []
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def execute(self, statement, parameters):
+                self.statements.append(statement)
+            def fetchone(self):
+                return self.invoice
+
+        class TransactionDB:
+            def __init__(self, invoice):
+                self.cursor_instance = TransactionCursor(invoice)
+                self.rollbacks = 0
+                self.commits = 0
+            def cursor(self, dictionary=False):
+                return self.cursor_instance
+            def rollback(self):
+                self.rollbacks += 1
+            def commit(self):
+                self.commits += 1
+
+        cases = [
+            unpaid_invoice(incasso_ingeschakeld=True),
+            unpaid_invoice(betalingsregeling_geaccepteerd=True),
+        ]
+        for row in cases:
+            with self.subTest(row=row):
+                db = TransactionDB(row)
+                with self.assertRaisesRegex(DomainError, "incasso of een betalingsregeling"):
+                    AssessedRepository(db).record_payment_action(7, "reminder1", TODAY)
+                self.assertEqual(db.rollbacks, 1)
+                self.assertEqual(db.commits, 0)
+                self.assertFalse(any(
+                    "INSERT INTO Betalingsherinnering" in sql
+                    for sql in db.cursor_instance.statements
+                ))
+
     def test_paid_duplicate_unknown_and_unreliable_invoices_blocked(self):
         cases = [
             (unpaid_invoice(betaald_op=TODAY), DomainError),

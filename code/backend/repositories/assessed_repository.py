@@ -639,8 +639,13 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
         invoice["ontvangeradres"] = invoice["factuuradres"] or invoice["huidig_factuuradres"]
         if not invoice["ontvangeradres"]:
             raise DomainError("Het factuuradres is niet bekend.")
-        if (today - invoice["factuurdatum"]).days < sequence * 7:
+        elapsed_days = (today - invoice["factuurdatum"]).days
+        if elapsed_days < sequence * 7:
             raise DomainError("Deze herinnering is nog niet aan de beurt.")
+        if elapsed_days >= (sequence + 1) * 7:
+            raise DomainError(
+                "Deze herinneringsweek is voorbij; volg de volgende casusstap."
+            )
         if sequence == 1:
             if invoice["eerste_herinnering"] is not None:
                 raise ConflictError("De eerste herinnering is al verzonden.")
@@ -659,7 +664,8 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
         with self.db.cursor(dictionary=True) as cursor:
             try:
                 cursor.execute(
-                    "SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op "
+                    "SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op, "
+                    "f.incasso_ingeschakeld,f.betalingsregeling_geaccepteerd "
                     "FROM Factuur f WHERE f.factuur_id=%s FOR UPDATE", (invoice_id,))
                 invoice=cursor.fetchone()
                 if not invoice:
@@ -667,10 +673,18 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 if action in ("reminder1", "reminder2"):
                     if invoice["betaald_op"]:
                         raise DomainError("Paid invoices need no reminder")
+                    if (invoice.get("incasso_ingeschakeld")
+                            or invoice.get("betalingsregeling_geaccepteerd")):
+                        raise DomainError(
+                            "Geen herinnering tijdens incasso of een betalingsregeling."
+                        )
                     sequence=1 if action=="reminder1" else 2
                     min_days=sequence*7
-                    if (today-invoice["factuurdatum"]).days<min_days:
-                        raise DomainError("Reminder is not due")
+                    elapsed_days=(today-invoice["factuurdatum"]).days
+                    if elapsed_days<min_days or elapsed_days>=min_days+7:
+                        raise DomainError(
+                            "Herinnering niet toegestaan buiten de betreffende onbetaalde week."
+                        )
                     cursor.execute(
                         "SELECT verstuurd_op FROM Betalingsherinnering "
                         "WHERE factuur_id=%s AND volgnummer=%s", (invoice_id, sequence))

@@ -168,6 +168,11 @@ class PaymentReminderMySqlTests(unittest.TestCase):
         with self.app.test_client() as client:
             self.assertEqual(client.get("/invoices/3/reminders/1").status_code, 400)
             self.assertEqual(client.get("/invoices/5/reminders/1").status_code, 400)
+            # After three unpaid weeks the case requires customer contact,
+            # not a late first or second reminder.
+            late = client.get("/invoices/4/reminders/1")
+            self.assertEqual(late.status_code, 400)
+            self.assertIn(b"herinneringsweek", late.data)
             self.assertEqual(client.get("/invoices/1/reminders/2").status_code, 400)
             self.assertEqual(client.get("/invoices/99/reminders/1").status_code, 404)
             self.assertEqual(client.get("/invoices/1/reminders/3").status_code, 400)
