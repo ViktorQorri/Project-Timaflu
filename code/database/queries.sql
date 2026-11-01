@@ -747,32 +747,3 @@ SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
 FROM Bestelling AS b
 JOIN Klant AS k ON k.klant_id = b.klant_id
 ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
-
-
--- AD06 search by exact order number or partial customer name: GET /reports?order=Apotheek.
--- Same SELECT as OrderStatusReportRepository.search_orders().
--- Example: nonnumeric term 'Apotheek', so order ID is NULL.
-SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
-       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
-FROM Bestelling AS b
-JOIN Klant AS k ON k.klant_id = b.klant_id
-WHERE (b.bestelling_id = NULL OR k.bedrijfsnaam LIKE '%Apotheek%' ESCAPE '!')
-ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
-
--- AD06 select one order: GET /reports/1.
--- Same SELECT as OrderStatusReportRepository.find_order().
-SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
-       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
-FROM Bestelling AS b
-JOIN Klant AS k ON k.klant_id = b.klant_id
-WHERE b.bestelling_id = 1;
-
--- AD06 order lines and recorded shortage acceptance: GET /reports/1.
--- Same SELECT as OrderStatusReportRepository.list_order_lines().
--- afnemen_bij_tekort is the customer's choice, not a counted backlog.
-SELECT br.product_id, p.artikelnummer, p.productnaam,
-       br.aantal, br.prijs_per_eenheid, br.afnemen_bij_tekort
-FROM Bestelregel AS br
-JOIN Product AS p ON p.product_id = br.product_id
-WHERE br.bestelling_id = 1
-ORDER BY p.productnaam ASC, p.product_id ASC;

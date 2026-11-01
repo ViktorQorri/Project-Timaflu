@@ -250,14 +250,11 @@
 <text x="30" y="1762" font-family="monospace" font-size="11">offers()</text>
 <text x="30" y="1780" font-family="monospace" font-size="11">set_price()</text>
 <text x="30" y="1798" font-family="monospace" font-size="11">remove_offer()</text>
-<rect x="460" y="1554" width="416" height="136" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="1554" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="460" y="1554" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="468" y="1573" font-family="Arial" font-size="12" font-weight="bold">repositories.order_status_report_repository.OrderStatusReportRepository</text>
 <text x="470" y="1600" font-family="monospace" font-size="11">__init__()</text>
 <text x="470" y="1618" font-family="monospace" font-size="11">list_orders()</text>
-<text x="470" y="1636" font-family="monospace" font-size="11">search_orders()</text>
-<text x="470" y="1654" font-family="monospace" font-size="11">find_order()</text>
-<text x="470" y="1672" font-family="monospace" font-size="11">list_order_lines()</text>
 <rect x="900" y="1320" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="1320" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="1339" font-family="Arial" font-size="12" font-weight="bold">repositories.picking_bin_repository.PickingBinRepository</text>
@@ -283,12 +280,12 @@
 <text x="28" y="1867" font-family="Arial" font-size="12" font-weight="bold">repositories.purchase_order_repository.PurchaseOrderRepository</text>
 <text x="30" y="1894" font-family="monospace" font-size="11">__init__()</text>
 <text x="30" y="1912" font-family="monospace" font-size="11">create()</text>
-<rect x="460" y="1722" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="460" y="1722" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="468" y="1741" font-family="Arial" font-size="12" font-weight="bold">repositories.reservation_repository.ReservationRepository</text>
-<text x="470" y="1768" font-family="monospace" font-size="11">__init__()</text>
-<text x="470" y="1786" font-family="monospace" font-size="11">reserve_existing_line()</text>
-<text x="470" y="1804" font-family="monospace" font-size="11">release_existing_line()</text>
+<rect x="460" y="1668" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="1668" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="468" y="1687" font-family="Arial" font-size="12" font-weight="bold">repositories.reservation_repository.ReservationRepository</text>
+<text x="470" y="1714" font-family="monospace" font-size="11">__init__()</text>
+<text x="470" y="1732" font-family="monospace" font-size="11">reserve_existing_line()</text>
+<text x="470" y="1750" font-family="monospace" font-size="11">release_existing_line()</text>
 <rect x="900" y="1452" width="416" height="154" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="1452" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="1471" font-family="Arial" font-size="12" font-weight="bold">repositories.robot_order_repository.RobotOrderRepository</text>
@@ -309,13 +306,13 @@
 <text x="28" y="1981" font-family="Arial" font-size="12" font-weight="bold">repositories.sales_stock_repository.SalesStockRepository</text>
 <text x="30" y="2008" font-family="monospace" font-size="11">__init__()</text>
 <text x="30" y="2026" font-family="monospace" font-size="11">find_products()</text>
-<rect x="460" y="1854" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="460" y="1854" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="468" y="1873" font-family="Arial" font-size="12" font-weight="bold">repositories.stock_repository.StockRepository</text>
-<text x="470" y="1900" font-family="monospace" font-size="11">__init__()</text>
-<text x="470" y="1918" font-family="monospace" font-size="11">list_stock_below_minimum()</text>
-<text x="470" y="1936" font-family="monospace" font-size="11">list_all_minimums()</text>
-<text x="470" y="1954" font-family="monospace" font-size="11">set_minimum()</text>
+<rect x="460" y="1800" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="1800" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="468" y="1819" font-family="Arial" font-size="12" font-weight="bold">repositories.stock_repository.StockRepository</text>
+<text x="470" y="1846" font-family="monospace" font-size="11">__init__()</text>
+<text x="470" y="1864" font-family="monospace" font-size="11">list_stock_below_minimum()</text>
+<text x="470" y="1882" font-family="monospace" font-size="11">list_all_minimums()</text>
+<text x="470" y="1900" font-family="monospace" font-size="11">set_minimum()</text>
 <rect x="900" y="1638" width="416" height="172" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="1638" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="1657" font-family="Arial" font-size="12" font-weight="bold">repositories.supplier_repository.SupplierRepository</text>
@@ -343,16 +340,16 @@
 <text x="30" y="2176" font-family="monospace" font-size="11">issue_week()</text>
 <text x="30" y="2194" font-family="monospace" font-size="11">_issue_customer()</text>
 <text x="30" y="2212" font-family="monospace" font-size="11">issued_invoice()</text>
-<rect x="460" y="2004" width="416" height="172" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="460" y="2004" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="468" y="2023" font-family="Arial" font-size="12" font-weight="bold">services.customer_service.CustomerService</text>
-<text x="470" y="2050" font-family="monospace" font-size="11">__init__()</text>
-<text x="470" y="2068" font-family="monospace" font-size="11">overview()</text>
-<text x="470" y="2086" font-family="monospace" font-size="11">get()</text>
-<text x="470" y="2104" font-family="monospace" font-size="11">create()</text>
-<text x="470" y="2122" font-family="monospace" font-size="11">update()</text>
-<text x="470" y="2140" font-family="monospace" font-size="11">deactivate()</text>
-<text x="470" y="2158" font-family="monospace" font-size="11">validate()</text>
+<rect x="460" y="1950" width="416" height="172" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="1950" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="468" y="1969" font-family="Arial" font-size="12" font-weight="bold">services.customer_service.CustomerService</text>
+<text x="470" y="1996" font-family="monospace" font-size="11">__init__()</text>
+<text x="470" y="2014" font-family="monospace" font-size="11">overview()</text>
+<text x="470" y="2032" font-family="monospace" font-size="11">get()</text>
+<text x="470" y="2050" font-family="monospace" font-size="11">create()</text>
+<text x="470" y="2068" font-family="monospace" font-size="11">update()</text>
+<text x="470" y="2086" font-family="monospace" font-size="11">deactivate()</text>
+<text x="470" y="2104" font-family="monospace" font-size="11">validate()</text>
 <rect x="900" y="1842" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="1842" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="1861" font-family="Arial" font-size="12" font-weight="bold">services.health_service.HealthService</text>
@@ -378,17 +375,17 @@
 <text x="30" y="2308" font-family="monospace" font-size="11">__init__()</text>
 <text x="30" y="2326" font-family="monospace" font-size="11">bins()</text>
 <text x="30" y="2344" font-family="monospace" font-size="11">register()</text>
-<rect x="460" y="2208" width="416" height="190" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="460" y="2208" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="468" y="2227" font-family="Arial" font-size="12" font-weight="bold">services.product_service.ProductService</text>
-<text x="470" y="2254" font-family="monospace" font-size="11">__init__()</text>
-<text x="470" y="2272" font-family="monospace" font-size="11">catalog()</text>
-<text x="470" y="2290" font-family="monospace" font-size="11">suppliers()</text>
-<text x="470" y="2308" font-family="monospace" font-size="11">get_product()</text>
-<text x="470" y="2326" font-family="monospace" font-size="11">add_product()</text>
-<text x="470" y="2344" font-family="monospace" font-size="11">update_product()</text>
-<text x="470" y="2362" font-family="monospace" font-size="11">remove_from_assortment()</text>
-<text x="470" y="2380" font-family="monospace" font-size="11">_check_codes_are_free()</text>
+<rect x="460" y="2154" width="416" height="190" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="2154" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="468" y="2173" font-family="Arial" font-size="12" font-weight="bold">services.product_service.ProductService</text>
+<text x="470" y="2200" font-family="monospace" font-size="11">__init__()</text>
+<text x="470" y="2218" font-family="monospace" font-size="11">catalog()</text>
+<text x="470" y="2236" font-family="monospace" font-size="11">suppliers()</text>
+<text x="470" y="2254" font-family="monospace" font-size="11">get_product()</text>
+<text x="470" y="2272" font-family="monospace" font-size="11">add_product()</text>
+<text x="470" y="2290" font-family="monospace" font-size="11">update_product()</text>
+<text x="470" y="2308" font-family="monospace" font-size="11">remove_from_assortment()</text>
+<text x="470" y="2326" font-family="monospace" font-size="11">_check_codes_are_free()</text>
 <rect x="900" y="1956" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="1956" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="1975" font-family="Arial" font-size="12" font-weight="bold">services.purchase_order_service.PurchaseOrderService</text>
@@ -407,15 +404,15 @@
 <text x="30" y="2458" font-family="monospace" font-size="11">_ids()</text>
 <text x="30" y="2476" font-family="monospace" font-size="11">reserve_confirmed_line()</text>
 <text x="30" y="2494" font-family="monospace" font-size="11">release_line()</text>
-<rect x="460" y="2430" width="416" height="154" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="460" y="2430" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="468" y="2449" font-family="Arial" font-size="12" font-weight="bold">services.robot_order_service.RobotOrderService</text>
-<text x="470" y="2476" font-family="monospace" font-size="11">__init__()</text>
-<text x="470" y="2494" font-family="monospace" font-size="11">_id()</text>
-<text x="470" y="2512" font-family="monospace" font-size="11">_validate_robot()</text>
-<text x="470" y="2530" font-family="monospace" font-size="11">next_order()</text>
-<text x="470" y="2548" font-family="monospace" font-size="11">complete()</text>
-<text x="470" y="2566" font-family="monospace" font-size="11">generate_suborders()</text>
+<rect x="460" y="2376" width="416" height="154" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="460" y="2376" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="468" y="2395" font-family="Arial" font-size="12" font-weight="bold">services.robot_order_service.RobotOrderService</text>
+<text x="470" y="2422" font-family="monospace" font-size="11">__init__()</text>
+<text x="470" y="2440" font-family="monospace" font-size="11">_id()</text>
+<text x="470" y="2458" font-family="monospace" font-size="11">_validate_robot()</text>
+<text x="470" y="2476" font-family="monospace" font-size="11">next_order()</text>
+<text x="470" y="2494" font-family="monospace" font-size="11">complete()</text>
+<text x="470" y="2512" font-family="monospace" font-size="11">generate_suborders()</text>
 <rect x="900" y="2070" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="900" y="2070" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="908" y="2089" font-family="Arial" font-size="12" font-weight="bold">services.sales_stock_service.SalesStockService</text>

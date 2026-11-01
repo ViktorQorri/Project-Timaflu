@@ -41,9 +41,6 @@ SCREENS = [
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
     ("/reports", "Orderstatusoverzicht"),
-    ("/reports?order=TEST%20Apotheek", "Orderstatus zoeken op klantnaam (AD06)"),
-    ("/reports/1", "Orderstatusdetails en bestelregels (AD06)"),
-    ("/reports?order=Onbekende", "Orderstatus zoeken zonder resultaat (AD06)"),
     ("/api/health", "Database API gezondheid"),
 ]
 MODULES = ["routes.home","routes.purchasing","routes.sales",

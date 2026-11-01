@@ -371,10 +371,7 @@
     "class": "OrderStatusReportRepository",
     "methods": [
       "__init__",
-      "list_orders",
-      "search_orders",
-      "find_order",
-      "list_order_lines"
+      "list_orders"
     ]
   },
   {
