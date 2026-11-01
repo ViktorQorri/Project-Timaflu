@@ -54,22 +54,48 @@ class OrderStatusNotificationService:
         lines = self.repository.find_order_lines(order_id)
         has_backorder = order.get("status_naam") == "backorder"
 
-        # AD05 marks accepted shortages per order line. Confirmed deliveries
-        # come from Leveringregel joined to successful Leverpoging records.
-        # Never describe a fully delivered product as an outstanding backorder
-        # merely because its historical shortage choice remains TRUE.
-        accepted_lines = [
-            line for line in lines if line["afnemen_bij_tekort"] == 1
-        ]
-        backorder_lines = (
-            [line for line in accepted_lines
-             if line["aantal_afgeleverd"] < line["aantal"]]
-            if has_backorder else []
+        # An accepted shortage is a recorded customer decision, not proof of
+        # current stock shortage. Delivery, reservation and robot assignments
+        # describe different steps and can overlap; never add their quantities
+        # together to invent a missing-stock amount.
+        progress_fields = (
+            "gereserveerd", "in_open_deelorder", "in_afgeronde_deelorder",
+            "in_open_levering", "aantal_afgeleverd",
         )
+        detailed_lines = []
+        for original in lines:
+            line = dict(original)
+            for field in progress_fields:
+                line[field] = int(line.get(field) or 0)
+            if line["aantal_afgeleverd"] > line["aantal"]:
+                progress = "Afgeleverde hoeveelheid controleren"
+            elif line["aantal_afgeleverd"] == line["aantal"]:
+                progress = "Volledig afgeleverd"
+            elif line["in_open_levering"]:
+                progress = "Levering geregistreerd, ontvangst niet bevestigd"
+            elif line["in_afgeronde_deelorder"]:
+                progress = "Deelorder afgerond, aflevering niet bevestigd"
+            elif line["in_open_deelorder"]:
+                progress = "Deelorder aangemaakt, nog niet afgerond"
+            elif line["gereserveerd"]:
+                progress = "Voorraad voor deze bestelling gereserveerd"
+            elif line["aantal_afgeleverd"]:
+                progress = "Deels afgeleverd, geen vervolgstap geregistreerd"
+            else:
+                progress = "Geen reservering of verdere verwerking geregistreerd"
+            detailed_lines.append({**line, "proces_label": progress})
+
+        shortage_lines = [
+            line for line in detailed_lines if line["afnemen_bij_tekort"] == 1
+        ]
+        undelivered_shortages = [
+            line for line in shortage_lines
+            if line["aantal_afgeleverd"] < line["aantal"]
+        ]
         return {
             "order": order,
-            "lines": lines,
+            "lines": detailed_lines,
             "has_backorder": has_backorder,
-            "accepted_backorder_lines": accepted_lines,
-            "backorder_lines": backorder_lines,
+            "shortage_lines": shortage_lines,
+            "undelivered_shortages": undelivered_shortages,
         }

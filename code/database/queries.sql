@@ -690,13 +690,44 @@ FROM Bestelling AS b
 JOIN Klant AS k ON k.klant_id = b.klant_id
 WHERE b.bestelling_id = 12;
 
--- PR #97: orderregels en klantkeuze bij tekort, GET /orders/12/status.
+-- PR #97: orderregels, tekortkeuzes en feitelijk vastgelegde processtappen.
 -- Dezelfde SELECT als OrderStatusNotificationRepository.find_order_lines().
--- afnemen_bij_tekort is de geregistreerde keuze van de klant, geen actuele hoeveelheid.
--- Alleen een Levering met een succesvolle Leverpoging telt als afgeleverd.
--- EXISTS voorkomt dubbeltelling bij meerdere leverpogingen voor een levering.
+-- Voorraadreservering is een voorraadtoewijzing, geen bewijs van tekort.
+-- Deelorderregels zijn robotopdrachten, Leveringregels registreren levering.
+-- Alleen een levering met een geslaagde Leverpoging telt als afgeleverd.
+-- Open levering en afgeronde deelorder mogen niet worden opgeteld tot
+-- een zelfbedachte actuele backorderhoeveelheid.
 SELECT p.artikelnummer, p.productnaam, br.aantal,
        br.prijs_per_eenheid, br.afnemen_bij_tekort,
+       COALESCE(vr.aantal, 0) AS gereserveerd,
+       COALESCE((
+           SELECT SUM(dr.aantal)
+           FROM Deelorderregel AS dr
+           JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
+           WHERE d.bestelling_id = br.bestelling_id
+             AND dr.product_id = br.product_id
+             AND d.afgerond = FALSE
+       ), 0) AS in_open_deelorder,
+       COALESCE((
+           SELECT SUM(dr.aantal)
+           FROM Deelorderregel AS dr
+           JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
+           WHERE d.bestelling_id = br.bestelling_id
+             AND dr.product_id = br.product_id
+             AND d.afgerond = TRUE
+       ), 0) AS in_afgeronde_deelorder,
+       COALESCE((
+           SELECT SUM(lr.aantal_geleverd)
+           FROM Levering AS lv
+           JOIN Leveringregel AS lr ON lr.levering_id = lv.levering_id
+           WHERE lv.bestelling_id = br.bestelling_id
+             AND lr.product_id = br.product_id
+             AND NOT EXISTS (
+                 SELECT 1 FROM Leverpoging AS lp
+                 WHERE lp.levering_id = lv.levering_id
+                   AND lp.resultaat = 'afgeleverd'
+             )
+       ), 0) AS in_open_levering,
        COALESCE((
            SELECT SUM(lr.aantal_geleverd)
            FROM Levering AS lv
@@ -711,5 +742,8 @@ SELECT p.artikelnummer, p.productnaam, br.aantal,
        ), 0) AS aantal_afgeleverd
 FROM Bestelregel AS br
 JOIN Product AS p ON p.product_id = br.product_id
+LEFT JOIN Voorraadreservering AS vr
+       ON vr.bestelling_id = br.bestelling_id
+      AND vr.product_id = br.product_id
 WHERE br.bestelling_id = 12
 ORDER BY p.productnaam ASC, p.product_id ASC;

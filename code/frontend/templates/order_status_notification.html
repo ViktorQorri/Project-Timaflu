@@ -16,7 +16,7 @@
 
   <dl class="order-status__summary">
     <div class="order-status__card">
-      <dt>Geregistreerde status</dt>
+      <dt>Geregistreerde orderstatus</dt>
       <dd><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></dd>
     </div>
     <div class="order-status__card">
@@ -24,47 +24,51 @@
       <dd>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</dd>
     </div>
     <div class="order-status__card">
-      <dt>Backorder</dt>
+      <dt>Backorderafspraken bij bestelling</dt>
       <dd>
-        {% if backorder_lines %}
-          <span class="order-status__label order-status__label--warning">{{ backorder_lines|length }} geregistreerde backorder{{ 'regels' if backorder_lines|length != 1 else 'regel' }}</span>
-        {% elif has_backorder and accepted_backorder_lines %}
-          <span class="order-status__label order-status__label--warning">Status controleren</span>
+        {% if shortage_lines %}
+          {{ shortage_lines|length }} product{{ 'en' if shortage_lines|length != 1 else '' }}
         {% elif has_backorder %}
-          <span class="order-status__label order-status__label--warning">Producten niet geregistreerd</span>
+          <span class="order-status__label order-status__label--warning">Productregistratie ontbreekt</span>
         {% else %}
-          Niet als backorder geregistreerd
+          Geen vastgelegd
         {% endif %}
       </dd>
     </div>
   </dl>
 
-  {% if backorder_lines %}
-    <section aria-labelledby="backorder-products-title">
-      <h2 id="backorder-products-title">Producten in backorder</h2>
+  {% if shortage_lines %}
+    <section aria-labelledby="shortage-agreements-title">
+      <h2 id="shortage-agreements-title">Geregistreerde backorderafspraken</h2>
+      <p class="stock-dashboard__subtitle">
+        De klant heeft deze producten bij een voorraadtekort geaccepteerd.
+        Dit is een vastgelegde afspraak, geen bewijs dat het medicijn nu nog niet op voorraad is.
+      </p>
       <ul>
-        {% for line in backorder_lines %}
-          <li>{{ line.productnaam }} ({{ line.artikelnummer }})</li>
+        {% for line in shortage_lines %}
+          <li>{{ line.productnaam }} ({{ line.artikelnummer }}): {{ line.proces_label }}</li>
         {% endfor %}
       </ul>
-      <p class="stock-dashboard__subtitle">Deze producten zijn bij tekort geaccepteerd en nog niet volledig als afgeleverd geregistreerd. Het actuele aantal in backorder is niet afzonderlijk vastgelegd.</p>
     </section>
-  {% elif has_backorder and accepted_backorder_lines %}
-    <p role="status">De bestelling heeft nog de status backorder, maar de als backorder aangemerkte producten zijn volgens de geregistreerde leverpogingen volledig afgeleverd. Controleer of de orderstatus nog klopt.</p>
   {% elif has_backorder %}
-    <p role="status">De bestelling staat op backorder, maar er zijn geen afzonderlijke producten als backorder vastgelegd. Geef geen productdetails door zonder de registratie te controleren.</p>
+    <p role="status">De bestelling heeft status backorder, maar er is geen tekortafspraak per product geregistreerd. Controleer de orderregistratie.</p>
   {% endif %}
+
+  {% if has_backorder and shortage_lines and not undelivered_shortages %}
+    <p role="status">Alle producten met een geregistreerde tekortafspraak zijn volledig afgeleverd. De algemene orderstatus staat nog op backorder en moet worden gecontroleerd.</p>
+  {% endif %}
+
   <div class="stock-dashboard__table-wrap">
     <table class="stock-dashboard__table">
-      <caption>Orderregels en geregistreerde keuzes bij voorraadtekort</caption>
+      <caption>Orderregels, klantkeuze bij tekort en vastgelegde procesvoortgang</caption>
       <thead>
         <tr>
           <th scope="col">Medicijn</th>
           <th scope="col">Artikelnummer</th>
           <th scope="col" class="stock-dashboard__number">Besteld</th>
           <th scope="col" class="stock-dashboard__number">Bevestigd afgeleverd</th>
-          <th scope="col" class="stock-dashboard__number">Prijs per eenheid</th>
-          <th scope="col">Backorder per product</th>
+          <th scope="col">Tekortafspraak</th>
+          <th scope="col">Geregistreerde voortgang</th>
         </tr>
       </thead>
       <tbody>
@@ -74,20 +78,16 @@
             <td>{{ line.artikelnummer }}</td>
             <td class="stock-dashboard__number">{{ line.aantal }}</td>
             <td class="stock-dashboard__number">{{ line.aantal_afgeleverd }}</td>
-            <td class="stock-dashboard__number">€ {{ '%.2f'|format(line.prijs_per_eenheid)|replace('.', ',') }}</td>
             <td>
               {% if line.afnemen_bij_tekort is none %}
-                Geen tekortkeuze vastgelegd
-              {% elif line.afnemen_bij_tekort and has_backorder and line.aantal_afgeleverd >= line.aantal %}
-                Aflevering bevestigd, orderstatus controleren
-              {% elif line.afnemen_bij_tekort and has_backorder %}
-                <span class="order-status__label order-status__label--warning">In backorder, aflevering niet compleet</span>
+                Niet geregistreerd
               {% elif line.afnemen_bij_tekort %}
-                Tekortafspraak geregistreerd
+                Ja, bij tekort afnemen
               {% else %}
-                Niet afnemen bij tekort
+                Nee, bij tekort niet afnemen
               {% endif %}
             </td>
+            <td>{{ line.proces_label }}</td>
           </tr>
         {% else %}
           <tr><td colspan="6">Geen orderregels gevonden.</td></tr>
@@ -95,5 +95,10 @@
       </tbody>
     </table>
   </div>
+  <p class="stock-dashboard__subtitle">
+    Een reservering, deelorder of open levering betekent dat verwerking is geregistreerd.
+    Alleen een succesvolle leverpoging bevestigt de aflevering. Het actuele voorraadtekort
+    per product is niet afzonderlijk in dit overzicht geregistreerd.
+  </p>
 </section>
 {% endblock %}

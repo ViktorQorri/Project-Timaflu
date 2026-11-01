@@ -62,13 +62,16 @@ class OrderStatusNotificationTests(TestCase):
         self.lines = [
             {"artikelnummer": "T-1", "productnaam": "Paracetamol", "aantal": 10,
              "prijs_per_eenheid": Decimal("5.20"), "afnemen_bij_tekort": 1,
-             "aantal_afgeleverd": 2},
+             "aantal_afgeleverd": 2, "gereserveerd": 0,
+             "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
             {"artikelnummer": "T-2", "productnaam": "Ibuprofen", "aantal": 5,
              "prijs_per_eenheid": Decimal("12.00"), "afnemen_bij_tekort": 0,
-             "aantal_afgeleverd": 0},
+             "aantal_afgeleverd": 0, "gereserveerd": 5,
+             "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
             {"artikelnummer": "T-3", "productnaam": "Vitamine C", "aantal": 3,
              "prijs_per_eenheid": Decimal("3.99"), "afnemen_bij_tekort": None,
-             "aantal_afgeleverd": 0},
+             "aantal_afgeleverd": 0, "gereserveerd": 0,
+             "in_open_deelorder": 0, "in_afgeronde_deelorder": 0, "in_open_levering": 0},
         ]
 
     def service(self, connection):
@@ -127,95 +130,100 @@ class OrderStatusNotificationTests(TestCase):
                 self.assertEqual(result["order"]["status_tone"], tone)
                 self.assertEqual(result["has_backorder"], value == "backorder")
 
-    def test_shortage_choices_are_not_misrepresented_as_open_quantities(self):
-        result = self.service(Connection(self.order, self.lines)).status_overview("12")
-        self.assertEqual(result["lines"], self.lines)
-        self.assertEqual([x["afnemen_bij_tekort"] for x in result["lines"]], [1, 0, None])
-        self.assertEqual(result["backorder_lines"], [self.lines[0]])
-        self.assertNotIn("message", result)
-        self.assertTrue(result["has_backorder"])
+    def test_shortage_choice_is_historical_not_live_stock(self):
+        result = self.service(Connection(self.order, self.lines)).status_overview(12)
+        self.assertEqual(result["has_backorder"], True)
+        self.assertEqual(len(result["shortage_lines"]), 1)
+        self.assertEqual(len(result["undelivered_shortages"]), 1)
+        self.assertEqual(result["shortage_lines"][0]["artikelnummer"], "T-1")
+        self.assertEqual(result["lines"][0]["proces_label"],
+                         "Deels afgeleverd, geen vervolgstap geregistreerd")
+        self.assertEqual(result["lines"][1]["proces_label"],
+                         "Voorraad voor deze bestelling gereserveerd")
+        self.assertNotIn("backorder_lines", result)
+        self.assertNotIn("resterend_backorderaantal", result["lines"][0])
 
-    def test_multiple_backorder_products_use_recorded_shortage_choices(self):
-        lines = [self.lines[0], {**self.lines[1], "afnemen_bij_tekort": True},
-                 self.lines[2]]
-        result = self.service(Connection(self.order, lines)).status_overview(12)
-        self.assertEqual([line["artikelnummer"] for line in result["backorder_lines"]],
+    def test_process_steps_are_separate_from_shortage_choice(self):
+        examples = (
+            ("gereserveerd", 4, "Voorraad voor deze bestelling gereserveerd"),
+            ("in_open_deelorder", 4, "Deelorder aangemaakt, nog niet afgerond"),
+            ("in_afgeronde_deelorder", 4, "Deelorder afgerond, aflevering niet bevestigd"),
+            ("in_open_levering", 4, "Levering geregistreerd, ontvangst niet bevestigd"),
+            ("aantal_afgeleverd", 10, "Volledig afgeleverd"),
+            ("aantal_afgeleverd", 11, "Afgeleverde hoeveelheid controleren"),
+        )
+        for field, quantity, expected in examples:
+            row = {**self.lines[0], "aantal_afgeleverd": 0, field: quantity}
+            result = self.service(Connection(self.order, [row])).status_overview(12)
+            with self.subTest(field=field):
+                self.assertEqual(result["lines"][0]["proces_label"], expected)
+                self.assertEqual(len(result["shortage_lines"]), 1)
+
+    def test_advanced_processing_wins_over_prior_reservation(self):
+        row = {**self.lines[0], "gereserveerd": 10, "in_open_deelorder": 10,
+               "in_afgeronde_deelorder": 10, "in_open_levering": 10}
+        result = self.service(Connection(self.order, [row])).status_overview(12)
+        self.assertEqual(result["lines"][0]["proces_label"],
+                         "Levering geregistreerd, ontvangst niet bevestigd")
+
+    def test_multiple_shortage_agreements_and_current_order_status(self):
+        rows = [self.lines[0], {**self.lines[1], "afnemen_bij_tekort": True},
+                self.lines[2]]
+        result = self.service(Connection(self.order, rows)).status_overview(12)
+        self.assertEqual([x["artikelnummer"] for x in result["shortage_lines"]],
                          ["T-1", "T-2"])
         app = create_app()
         app.testing = True
         with app.test_client() as client:
-            with patch("routes.sales.get_connection", return_value=Connection(self.order, lines)):
+            with patch("routes.sales.get_connection", return_value=Connection(self.order, rows)):
                 page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("2 geregistreerde backorderregels", page)
-        self.assertIn("<li>Paracetamol (T-1)</li>", page)
-        self.assertIn("<li>Ibuprofen (T-2)</li>", page)
-        self.assertNotIn("<li>Vitamine C (T-3)</li>", page)
+        self.assertIn("2 producten", page)
+        self.assertIn("Geregistreerde backorderafspraken", page)
+        self.assertIn("Paracetamol (T-1): Deels afgeleverd", page)
+        self.assertIn("Ibuprofen (T-2): Voorraad voor deze bestelling gereserveerd", page)
+        self.assertNotIn("Vitamine C (T-3):", page)
+        self.assertNotIn("producten in backorder", page.lower())
 
-    def test_fully_delivered_line_not_shown_as_outstanding(self):
-        lines = [{**self.lines[0], "aantal_afgeleverd": 10},
-                 {**self.lines[1], "afnemen_bij_tekort": True,
-                  "aantal_afgeleverd": 2},
-                 self.lines[2]]
-        result = self.service(Connection(self.order, lines)).status_overview(12)
-        self.assertEqual([line["artikelnummer"] for line in result["backorder_lines"]],
-                         ["T-2"])
-        self.assertEqual(len(result["accepted_backorder_lines"]), 2)
+    def test_delivered_shortage_remains_history_not_current_backorder(self):
+        row = {**self.lines[0], "aantal_afgeleverd": 10, "in_open_levering": 0}
+        result = self.service(Connection(self.order, [row])).status_overview(12)
+        self.assertEqual(result["shortage_lines"][0]["proces_label"], "Volledig afgeleverd")
+        self.assertEqual(result["undelivered_shortages"], [])
         app = create_app()
         app.testing = True
         with app.test_client() as client:
-            with patch("routes.sales.get_connection",
-                       return_value=Connection(self.order, lines)):
+            with patch("routes.sales.get_connection", return_value=Connection(self.order, [row])):
                 page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("<li>Ibuprofen (T-2)</li>", page)
-        self.assertNotIn("<li>Paracetamol (T-1)</li>", page)
-        self.assertIn("Aflevering bevestigd, orderstatus controleren", page)
+        self.assertIn("Paracetamol (T-1): Volledig afgeleverd", page)
+        self.assertIn("algemene orderstatus staat nog op backorder", page)
 
-    def test_all_accepted_lines_delivered_does_not_invent_backorder(self):
-        lines = [{**self.lines[0], "aantal_afgeleverd": 10},
-                 self.lines[1], self.lines[2]]
-        result = self.service(Connection(self.order, lines)).status_overview(12)
-        self.assertTrue(result["has_backorder"])
-        self.assertEqual(result["backorder_lines"], [])
-        self.assertEqual(len(result["accepted_backorder_lines"]), 1)
-        app = create_app()
-        app.testing = True
-        with app.test_client() as client:
-            with patch("routes.sales.get_connection",
-                       return_value=Connection(self.order, lines)):
-                page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("Status controleren", page)
-        self.assertIn("volledig afgeleverd", page)
-        self.assertNotIn("<li>Paracetamol (T-1)</li>", page)
-
-    def test_historical_shortage_is_not_presented_as_current_backorder(self):
-        delivered_order = {**self.order, "status_naam": "afgeleverd"}
-        result = self.service(Connection(delivered_order, self.lines)).status_overview(12)
+    def test_shortage_agreement_visible_when_order_no_longer_backorder(self):
+        order = {**self.order, "status_naam": "verstuurd"}
+        result = self.service(Connection(order, self.lines)).status_overview(12)
         self.assertFalse(result["has_backorder"])
-        self.assertEqual(result["backorder_lines"], [])
+        self.assertEqual(len(result["shortage_lines"]), 1)
         app = create_app()
         app.testing = True
         with app.test_client() as client:
-            with patch("routes.sales.get_connection",
-                       return_value=Connection(delivered_order, self.lines)):
+            with patch("routes.sales.get_connection", return_value=Connection(order, self.lines)):
                 page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("Tekortafspraak geregistreerd", page)
-        self.assertNotIn("Producten in backorder", page)
-        self.assertNotIn('>In backorder</span>', page)
+        self.assertIn("Geregistreerde backorderafspraken", page)
+        self.assertNotIn("algemene orderstatus staat nog op backorder", page)
+        self.assertIn("Dit is een vastgelegde afspraak", page)
 
-    def test_order_backorder_without_marked_lines_reports_missing_registration(self):
-        lines = [{**line, "afnemen_bij_tekort": None} for line in self.lines]
-        result = self.service(Connection(self.order, lines)).status_overview(12)
+    def test_backorder_order_without_shortage_lines_is_not_assigned_to_products(self):
+        rows = [{**row, "afnemen_bij_tekort": None} for row in self.lines]
+        result = self.service(Connection(self.order, rows)).status_overview(12)
         self.assertTrue(result["has_backorder"])
-        self.assertEqual(result["backorder_lines"], [])
+        self.assertEqual(result["shortage_lines"], [])
         app = create_app()
         app.testing = True
         with app.test_client() as client:
-            with patch("routes.sales.get_connection",
-                       return_value=Connection(self.order, lines)):
+            with patch("routes.sales.get_connection", return_value=Connection(self.order, rows)):
                 page = client.get("/orders/12/status").get_data(as_text=True)
-        self.assertIn("Producten niet geregistreerd", page)
-        self.assertIn("geen afzonderlijke producten als backorder vastgelegd", page)
-        self.assertNotIn("<li>Paracetamol", page)
+        self.assertIn("Productregistratie ontbreekt", page)
+        self.assertIn("geen tekortafspraak per product geregistreerd", page)
+        self.assertNotIn("Paracetamol (T-1):", page)
 
     def test_all_queries_read_only_and_documented_sql_matches(self):
         conn = Connection(self.order, self.lines, [self.order])
@@ -244,20 +252,21 @@ class OrderStatusNotificationTests(TestCase):
         with app.test_client() as client:
             with patch("routes.sales.get_connection", return_value=Connection(self.order, self.lines)):
                 response = client.get("/orders/12/status")
-            self.assertEqual(response.status_code, 200)
-            page = response.get_data(as_text=True)
-            for expected in ("Order 12", "1 geregistreerde backorderregel",
-                             "31-10-2026, ochtend", "Producten in backorder",
-                             "<li>Paracetamol (T-1)</li>", "In backorder",
-                             "Ibuprofen", "Vitamine C", "€ 5,20", "€ 3,99",
-                             "Backorder per product", "Geen tekortkeuze vastgelegd",
-                             "Niet afnemen bij tekort"):
-                self.assertIn(expected, page)
-            self.assertNotIn("<li>Ibuprofen (T-2)</li>", page)
-            self.assertNotIn("Backorder: 6", page)
-            self.assertNotIn("Bericht voor de klant", page)
-            self.assertNotIn("Afgeleverd op", page)
-            self.assertIn("order-status-notification.css", page)
+        self.assertEqual(response.status_code, 200)
+        page = response.get_data(as_text=True)
+        for expected in (
+            "Order 12", "Backorderafspraken bij bestelling", "1 product",
+            "31-10-2026, ochtend", "Geregistreerde backorderafspraken",
+            "Paracetamol (T-1): Deels afgeleverd", "Ibuprofen", "Vitamine C",
+            "Ja, bij tekort afnemen", "Nee, bij tekort niet afnemen",
+            "Niet geregistreerd", "Bevestigd afgeleverd", "Geregistreerde voortgang",
+            "Voorraad voor deze bestelling gereserveerd",
+            "order-status-notification.css",
+        ):
+            self.assertIn(expected, page)
+        self.assertNotIn("Backorder: 6", page)
+        self.assertNotIn("Bericht voor de klant", page)
+        self.assertNotIn("In backorder, aflevering niet compleet", page)
 
     def test_search_page_reuses_main_sales_and_handles_empty_results(self):
         app = create_app()
@@ -339,7 +348,13 @@ class OrderStatusMySQLIntegrationTests(TestCase):
                 order_id = cursor.lastrowid
                 products = {}
                 for article, quantity, choice in (
-                    ("T-1", 10, 1), ("T-2", 10, 1), ("T-3", 5, None)
+                    ("T-1", 10, 1),  # Delivered after two delivery attempts.
+                    ("T-2", 10, 1),  # Partly delivered; remaining in open delivery.
+                    ("T-3", 5, None),  # Allocated stock, no shortage choice.
+                    ("T-4", 8, 1),  # Reserved, no delivery yet.
+                    ("T-5", 8, 1),  # Robot assignment still open.
+                    ("T-6", 8, 1),  # Completed robot assignment.
+                    ("T-7", 8, 1),  # Shortage agreement, no further records.
                 ):
                     cursor.execute(
                         """INSERT INTO Product (artikelnummer, bestelcode, productnaam,
@@ -355,6 +370,29 @@ class OrderStatusMySQLIntegrationTests(TestCase):
                            prijs_per_eenheid, afnemen_bij_tekort)
                            VALUES (%s, %s, %s, 10, %s)""",
                         (order_id, product_id, quantity, choice),
+                    )
+                for article in ("T-3", "T-4"):
+                    cursor.execute(
+                        """INSERT INTO Voorraadreservering
+                           (bestelling_id, product_id, aantal) VALUES (%s, %s, %s)""",
+                        (order_id, products[article], 5 if article == "T-3" else 8),
+                    )
+                cursor.execute(
+                    "INSERT INTO Robot (robot_id, gang) VALUES (1, 'A'), (2, 'B')"
+                )
+                for article, robot_id, completed in (
+                    ("T-5", 1, False), ("T-6", 2, True)
+                ):
+                    cursor.execute(
+                        """INSERT INTO Deelorder (bestelling_id, robot_id, afgerond)
+                           VALUES (%s, %s, %s)""",
+                        (order_id, robot_id, completed),
+                    )
+                    suborder_id = cursor.lastrowid
+                    cursor.execute(
+                        """INSERT INTO Deelorderregel (deelorder_id, product_id, aantal)
+                           VALUES (%s, %s, 8)""",
+                        (suborder_id, products[article]),
                     )
                 cursor.execute(
                     "INSERT INTO Koerier (naam, beschikbaar) VALUES ('TEST koerier', TRUE)"
@@ -397,11 +435,30 @@ class OrderStatusMySQLIntegrationTests(TestCase):
             lines = {line["artikelnummer"]: line for line in result["lines"]}
             self.assertEqual(lines["T-1"]["aantal_afgeleverd"], 10)
             self.assertEqual(lines["T-2"]["aantal_afgeleverd"], 4)
-            self.assertEqual(lines["T-3"]["aantal_afgeleverd"], 0)
+            self.assertEqual(lines["T-2"]["in_open_levering"], 6)
+            self.assertEqual(lines["T-3"]["gereserveerd"], 5)
+            self.assertEqual(lines["T-4"]["gereserveerd"], 8)
+            self.assertEqual(lines["T-5"]["in_open_deelorder"], 8)
+            self.assertEqual(lines["T-6"]["in_afgeronde_deelorder"], 8)
             self.assertEqual(
-                [line["artikelnummer"] for line in result["backorder_lines"]],
-                ["T-2"],
+                [line["artikelnummer"] for line in result["shortage_lines"]],
+                ["T-1", "T-2", "T-4", "T-5", "T-6", "T-7"],
             )
+            self.assertEqual(
+                [line["artikelnummer"] for line in result["undelivered_shortages"]],
+                ["T-2", "T-4", "T-5", "T-6", "T-7"],
+            )
+            for article, expected in (
+                ("T-1", "Volledig afgeleverd"),
+                ("T-2", "Levering geregistreerd, ontvangst niet bevestigd"),
+                ("T-3", "Voorraad voor deze bestelling gereserveerd"),
+                ("T-4", "Voorraad voor deze bestelling gereserveerd"),
+                ("T-5", "Deelorder aangemaakt, nog niet afgerond"),
+                ("T-6", "Deelorder afgerond, aflevering niet bevestigd"),
+                ("T-7", "Geen reservering of verdere verwerking geregistreerd"),
+            ):
+                with self.subTest(article=article):
+                    self.assertEqual(lines[article]["proces_label"], expected)
             app = create_app()
             app.testing = True
             with app.test_client() as client:
@@ -409,9 +466,9 @@ class OrderStatusMySQLIntegrationTests(TestCase):
                     page = client.get(f"/orders/{order_id}/status")
             self.assertEqual(page.status_code, 200)
             html = page.get_data(as_text=True)
-            self.assertIn("<li>T-2 (T-2)</li>", html)
-            self.assertNotIn("<li>T-1 (T-1)</li>", html)
-            self.assertIn("Aflevering bevestigd, orderstatus controleren", html)
+            self.assertIn("T-2 (T-2): Levering geregistreerd", html)
+            self.assertIn("T-1 (T-1): Volledig afgeleverd", html)
+            self.assertNotIn("In backorder, aflevering niet compleet", html)
         finally:
             if connection is not None:
                 connection.close()
