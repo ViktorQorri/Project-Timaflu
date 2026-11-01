@@ -140,18 +140,13 @@ def product_form_data():
     data = {key: request.form.get(key, "") for key in PRODUCT_FIELDS}
     data["ingredient_name"] = request.form.getlist("ingredient_name")
     data["ingredient_quantity"] = request.form.getlist("ingredient_quantity")
-    data["ingredient_rows"] = request.form.get("ingredient_rows", "2")
     return data
 
 
 def added_ingredient_row(data):
-    """Preserve submitted fields and add one empty ingredient pair without JS."""
-    try:
-        previous = int(data["ingredient_rows"])
-    except (ValueError, TypeError):
-        previous = 2
-    previous = max(previous, len(data["ingredient_name"]), len(data["ingredient_quantity"]), 2)
-    data["ingredient_rows"] = min(previous + 1, 64)
+    """Preserve submitted values and add one pair without an arbitrary ingredient limit."""
+    data["ingredient_name"].append("")
+    data["ingredient_quantity"].append("")
     return data
 
 

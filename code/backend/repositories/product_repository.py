@@ -1,5 +1,8 @@
 """The product catalog: products, their active ingredients and the first supplier offer."""
 
+from mysql.connector.errors import IntegrityError
+
+from domain.errors import ConflictError
 from domain.product import Product, ProductActiveIngredient
 
 PRODUCT_COLUMNS = """
@@ -141,6 +144,11 @@ class ProductRepository:
                 )
             self.connection.commit()
             return product_id
+        except IntegrityError as error:
+            self.connection.rollback()
+            if error.errno == 1062:
+                raise ConflictError("Artikelnummer, bestelcode of werkzame stof is dubbel.") from error
+            raise
         except Exception:
             self.connection.rollback()
             raise
@@ -185,6 +193,11 @@ class ProductRepository:
                 self._insert_ingredients(cursor, product.product_id, product.active_ingredients)
             self.connection.commit()
             return True
+        except IntegrityError as error:
+            self.connection.rollback()
+            if error.errno == 1062:
+                raise ConflictError("Artikelnummer, bestelcode of werkzame stof is dubbel.") from error
+            raise
         except Exception:
             self.connection.rollback()
             raise

@@ -39,7 +39,7 @@
                   </form>
                 </td>
                 <td>
-                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>`n                  <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>`n                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>
+                  <a href="{{ url_for('purchasing.manufacturer_offer_remove', supplier_id=offer.leverancier_id, product_id=offer.product_id) }}">Fabrikantkoppeling verwijderen</a>
                   <a href="{{ url_for('purchasing.remove_product', product_id=offer.product_id) }}">Medicijn uit assortiment verwijderen</a>
                   <form method="post" action="{{ url_for('purchasing.remove_offer') }}">
                     <input type="hidden" name="product_id" value="{{ offer.product_id }}">
