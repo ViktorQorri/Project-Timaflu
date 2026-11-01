@@ -193,11 +193,18 @@ package "repositories" {
     +deactivate()
     +_insert_address()
   }
-  class "repositories.health_repository.HealthRepository" as C38 {
+  class "repositories.distribution_preparation_repository.DistributionPreparationRepository" as C38 {
+    +__init__()
+    +ready_to_pack()
+    +pack()
+    +pending_shipments()
+    +schedule()
+  }
+  class "repositories.health_repository.HealthRepository" as C39 {
     +__init__()
     +ping()
   }
-  class "repositories.manufacturer_repository.ManufacturerRepository" as C39 {
+  class "repositories.manufacturer_repository.ManufacturerRepository" as C40 {
     +__init__()
     +all()
     +get()
@@ -208,18 +215,18 @@ package "repositories" {
     +set_price()
     +remove_offer()
   }
-  class "repositories.order_status_notification_repository.OrderStatusNotificationRepository" as C40 {
+  class "repositories.order_status_notification_repository.OrderStatusNotificationRepository" as C41 {
     +__init__()
     +search_orders()
     +find_order()
     +find_order_lines()
   }
-  class "repositories.picking_bin_repository.PickingBinRepository" as C41 {
+  class "repositories.picking_bin_repository.PickingBinRepository" as C42 {
     +__init__()
     +list_bins()
     +register()
   }
-  class "repositories.product_repository.ProductRepository" as C42 {
+  class "repositories.product_repository.ProductRepository" as C43 {
     +__init__()
     +list_in_assortment()
     +get_by_id()
@@ -232,16 +239,16 @@ package "repositories" {
     +_to_product()
     +_to_ingredient()
   }
-  class "repositories.purchase_order_repository.PurchaseOrderRepository" as C43 {
+  class "repositories.purchase_order_repository.PurchaseOrderRepository" as C44 {
     +__init__()
     +create()
   }
-  class "repositories.reservation_repository.ReservationRepository" as C44 {
+  class "repositories.reservation_repository.ReservationRepository" as C45 {
     +__init__()
     +reserve_existing_line()
     +release_existing_line()
   }
-  class "repositories.robot_order_repository.RobotOrderRepository" as C45 {
+  class "repositories.robot_order_repository.RobotOrderRepository" as C46 {
     +__init__()
     +robot_for_aisle()
     +next_suborder()
@@ -249,17 +256,22 @@ package "repositories" {
     +complete()
     +generate()
   }
-  class "repositories.sales_stock_repository.SalesStockRepository" as C46 {
+  class "repositories.sales_case_repository.SalesCaseRepository" as C47 {
+    +__init__()
+    +customers()
+    +order_statuses()
+  }
+  class "repositories.sales_stock_repository.SalesStockRepository" as C48 {
     +__init__()
     +find_products()
   }
-  class "repositories.stock_repository.StockRepository" as C47 {
+  class "repositories.stock_repository.StockRepository" as C49 {
     +__init__()
     +list_stock_below_minimum()
     +list_all_minimums()
     +set_minimum()
   }
-  class "repositories.supplier_repository.SupplierRepository" as C48 {
+  class "repositories.supplier_repository.SupplierRepository" as C50 {
     +__init__()
     +find_offers()
     +remove_offer()
@@ -268,7 +280,14 @@ package "repositories" {
     +get_by_id()
     +_to_supplier()
   }
-  class "repositories.weekly_invoice_repository.WeeklyInvoiceRepository" as C49 {
+  class "repositories.telephone_order_repository.TelephoneOrderRepository" as C51 {
+    +__init__()
+    +form_options()
+    +validate()
+    +quote()
+    +approve()
+  }
+  class "repositories.weekly_invoice_repository.WeeklyInvoiceRepository" as C52 {
     +__init__()
     +validate_week()
     +eligible_customers()
@@ -278,7 +297,7 @@ package "repositories" {
   }
 }
 package "services" {
-  class "services.customer_service.CustomerService" as C50 {
+  class "services.customer_service.CustomerService" as C53 {
     +__init__()
     +overview()
     +get()
@@ -287,11 +306,11 @@ package "services" {
     +deactivate()
     +validate()
   }
-  class "services.health_service.HealthService" as C51 {
+  class "services.health_service.HealthService" as C54 {
     +__init__()
     +database_is_reachable()
   }
-  class "services.manufacturer_service.ManufacturerService" as C52 {
+  class "services.manufacturer_service.ManufacturerService" as C55 {
     +__init__()
     +list_manufacturers()
     +manufacturer()
@@ -304,17 +323,17 @@ package "services" {
     +_validate()
     +remove_offer()
   }
-  class "services.order_status_notification_service.OrderStatusNotificationService" as C53 {
+  class "services.order_status_notification_service.OrderStatusNotificationService" as C56 {
     +__init__()
     +search()
     +status_overview()
   }
-  class "services.picking_bin_service.PickingBinService" as C54 {
+  class "services.picking_bin_service.PickingBinService" as C57 {
     +__init__()
     +bins()
     +register()
   }
-  class "services.product_service.ProductService" as C55 {
+  class "services.product_service.ProductService" as C58 {
     +__init__()
     +catalog()
     +suppliers()
@@ -324,22 +343,22 @@ package "services" {
     +remove_from_assortment()
     +_check_codes_are_free()
   }
-  class "services.purchase_order_service.PurchaseOrderService" as C56 {
+  class "services.purchase_order_service.PurchaseOrderService" as C59 {
     +__init__()
     +record_order()
   }
-  class "services.reorder_service.ReorderService" as C57 {
+  class "services.reorder_service.ReorderService" as C60 {
     +__init__()
     +overview()
     +record_confirmed()
   }
-  class "services.reservation_service.ReservationService" as C58 {
+  class "services.reservation_service.ReservationService" as C61 {
     +__init__()
     +_ids()
     +reserve_confirmed_line()
     +release_line()
   }
-  class "services.robot_order_service.RobotOrderService" as C59 {
+  class "services.robot_order_service.RobotOrderService" as C62 {
     +__init__()
     +_id()
     +_validate_robot()
@@ -347,22 +366,22 @@ package "services" {
     +complete()
     +generate_suborders()
   }
-  class "services.sales_stock_service.SalesStockService" as C60 {
+  class "services.sales_stock_service.SalesStockService" as C63 {
     +__init__()
     +check()
   }
-  class "services.stock_service.StockService" as C61 {
+  class "services.stock_service.StockService" as C64 {
     +__init__()
     +shortages()
     +minimums()
     +set_minimum()
   }
-  class "services.supplier_service.SupplierService" as C62 {
+  class "services.supplier_service.SupplierService" as C65 {
     +__init__()
     +offers_for_product()
   }
 }
-C49 ..> C2 : gebruikt
-C49 ..> C36 : gebruikt
+C52 ..> C2 : gebruikt
+C52 ..> C36 : gebruikt
 C2 ..> C1 : gebruikt
 @enduml

@@ -26,9 +26,9 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ]
 ```
 
-## Klanten
+## Klanten zoeken: centrale klantgegevens
 
-Scherm: /customers
+Scherm: /customers?q=TEST
 HTTP-status: 200
 
 ### Query 1
@@ -36,7 +36,7 @@ HTTP-status: 200
 SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer, af.adres AS afleveradres, ba.adres AS factuuradres, CASE WHEN o.betaalde_facturen IS NULL THEN 0 WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL ELSE o.jaaromzet END AS jaaromzet, kk.percentage AS kortingspercentage FROM Klant AS k JOIN Adres AS af ON af.adres_id = k.afleveradres_id JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id LEFT JOIN ( SELECT f.klant_id, COUNT(*) AS betaalde_facturen, COUNT(f.totaal_bedrag) AS bekende_bedragen, SUM(f.totaal_bedrag) AS jaaromzet FROM Factuur AS f WHERE YEAR(f.betaald_op) = %s GROUP BY f.klant_id ) AS o ON o.klant_id = k.klant_id LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id AND kk.kalenderjaar = %s WHERE k.actief = TRUE AND (k.bedrijfsnaam LIKE %s OR k.contactpersoon LIKE %s OR k.telefoonnummer LIKE %s) ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC
 ```
 Parameters: ```json
-[2026, 2026, "%%", "%%", "%%"]
+[2026, 2026, "%TEST%", "%TEST%", "%TEST%"]
 ```
 Resultaat: 1 rij(en) (maximaal 15 getoond)
 ```json
@@ -80,7 +80,118 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ]
 ```
 
-## Orderstatus opzoeken (AD06)
+## Telefonische orderinvoer met actuele klant- en productgegevens
+
+Scherm: /orders/new
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT klant_id, bedrijfsnaam FROM Klant WHERE actief=TRUE ORDER BY bedrijfsnaam, klant_id
+```
+Parameters: ```json
+[]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V."
+  }
+]
+```
+
+### Query 2
+```sql
+SELECT product_id, productnaam, artikelnummer, minimale_bestelhoeveelheid, prijs_per_grootverpakking FROM Product WHERE in_assortiment=TRUE ORDER BY productnaam
+```
+Parameters: ```json
+[]
+```
+Resultaat: 2 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "product_id": 1,
+    "productnaam": "Testmedicijn",
+    "artikelnummer": "TEST-001",
+    "minimale_bestelhoeveelheid": 1,
+    "prijs_per_grootverpakking": "100.00"
+  },
+  {
+    "product_id": 2,
+    "productnaam": "Testtekortproduct",
+    "artikelnummer": "TEST-002",
+    "minimale_bestelhoeveelheid": 1,
+    "prijs_per_grootverpakking": "15.00"
+  }
+]
+```
+
+## Bestellingen en echte orderstatus
+
+Scherm: /orders/status
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam, k.klant_id, k.bedrijfsnaam, address.adres AS afleveradres FROM Bestelling AS b JOIN Klant AS k ON k.klant_id=b.klant_id JOIN Adres AS address ON address.adres_id=b.afleveradres_id WHERE (%s IS NULL OR b.klant_id = %s) ORDER BY b.besteld_op DESC, b.bestelling_id DESC
+```
+Parameters: ```json
+[null, null]
+```
+Resultaat: 4 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "bestelling_id": 4,
+    "besteld_op": "2026-10-29 09:00:00",
+    "gewenste_leverdatum": "2026-10-30",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 3,
+    "besteld_op": "2026-10-21 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "verstuurd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 2,
+    "besteld_op": "2026-10-20 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "middag",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 1,
+    "besteld_op": "2026-10-19 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  }
+]
+```
+
+## Orderstatus zoeken op nummer (AD06)
 
 Scherm: /orders?order=1
 HTTP-status: 200
@@ -106,7 +217,7 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ]
 ```
 
-## Geselecteerde orderstatus en tekortafspraken (AD06)
+## Orderregels en geregistreerde tekortafspraken (AD06)
 
 Scherm: /orders/1/status
 HTTP-status: 200
@@ -461,6 +572,35 @@ Resultaat: 3 rij(en) (maximaal 15 getoond)
 ]
 ```
 
+### Query 2
+```sql
+SELECT l.levering_id, b.bestelling_id, b.gewenste_leverdatum, b.dagdeel, b.spoed, k.bedrijfsnaam, a.adres FROM Levering l JOIN Bestelling b ON b.bestelling_id=l.bestelling_id JOIN Klant k ON k.klant_id=b.klant_id JOIN Adres a ON a.adres_id=b.afleveradres_id WHERE NOT EXISTS (SELECT 1 FROM Leverpoging lp WHERE lp.levering_id=l.levering_id) ORDER BY b.spoed DESC, b.gewenste_leverdatum, l.levering_id
+```
+Parameters: ```json
+[]
+```
+Resultaat: 0 rij(en) (maximaal 15 getoond)
+```json
+[]
+```
+
+### Query 3
+```sql
+SELECT koerier_id,naam FROM Koerier WHERE beschikbaar=TRUE ORDER BY naam
+```
+Parameters: ```json
+[]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "koerier_id": 1,
+    "naam": "TEST koerier"
+  }
+]
+```
+
 ## Openstaande facturen
 
 Scherm: /invoices?customer_id=1
@@ -468,7 +608,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start, f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld, f.bedrag_excl_btw, f.btw_bedrag, f.bedrag_incl_btw, f.bestellingskorting, f.bedrag_na_bestellingskorting, f.eenmalige_korting, f.bedrag_na_eenmalige_korting, f.klantenkorting, f.totaal_bedrag, k.bedrijfsnaam, a.adres FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id JOIN Adres a ON a.adres_id=k.betaaladres_id WHERE f.klant_id=%s AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start, f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld, f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw, f.extra_bezorgkosten_incl_btw, f.bedrag_excl_btw, f.btw_bedrag, f.bedrag_incl_btw, f.bestellingskorting, f.bedrag_na_bestellingskorting, f.eenmalige_korting, f.bedrag_na_eenmalige_korting, f.klantenkorting, f.totaal_bedrag, k.bedrijfsnaam, a.adres FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id JOIN Adres a ON a.adres_id=k.betaaladres_id WHERE f.klant_id=%s AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC
 ```
 Parameters: ```json
 [1]
@@ -485,6 +625,9 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "factuuradres": "TEST: Factuurstraat 12, Breda",
     "betalingsregeling_geaccepteerd": null,
     "incasso_ingeschakeld": 0,
+    "extra_bezorgkosten_excl_btw": "0.00",
+    "extra_bezorgkosten_btw": "0.00",
+    "extra_bezorgkosten_incl_btw": "0.00",
     "bedrag_excl_btw": "700.00",
     "btw_bedrag": "63.00",
     "bedrag_incl_btw": "763.00",
@@ -538,7 +681,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT DISTINCT b.klant_id FROM Leveringregel lr JOIN Levering l ON l.levering_id=lr.levering_id JOIN Bestelling b ON b.bestelling_id=l.bestelling_id WHERE lr.factuur_id IS NULL AND EXISTS ( SELECT 1 FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id WHERE lp.levering_id=l.levering_id AND lp.resultaat='afgeleverd' AND lp.ontvangst_getekend=TRUE AND r.ritdatum BETWEEN %s AND %s ) ORDER BY b.klant_id
+SELECT DISTINCT b.klant_id FROM Leveringregel lr JOIN Levering l ON l.levering_id=lr.levering_id JOIN Bestelling b ON b.bestelling_id=l.bestelling_id WHERE (lr.factuur_id IS NULL OR (b.extra_bezorgkosten > 0 AND b.extra_bezorgkosten_factuur_id IS NULL)) AND EXISTS ( SELECT 1 FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id WHERE lp.levering_id=l.levering_id AND lp.resultaat='afgeleverd' AND lp.ontvangst_getekend=TRUE AND r.ritdatum BETWEEN %s AND %s ) ORDER BY b.klant_id
 ```
 Parameters: ```json
 ["2026-10-19", "2026-10-25"]
@@ -573,6 +716,9 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "betaald_op": null,
     "betalingsregeling_geaccepteerd": null,
     "incasso_ingeschakeld": 0,
+    "extra_bezorgkosten_excl_btw": "0.00",
+    "extra_bezorgkosten_btw": "0.00",
+    "extra_bezorgkosten_incl_btw": "0.00",
     "bedrag_excl_btw": "700.00",
     "btw_bedrag": "63.00",
     "bedrag_incl_btw": "763.00",
@@ -595,7 +741,8 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
         "unit_price": "100.00",
         "order_id": 2
       }
-    ]
+    ],
+    "delivery_charges": []
   }
 ]
 ```
@@ -621,6 +768,18 @@ Resultaat: 2 rij(en) (maximaal 15 getoond)
     "order_id": 2
   }
 ]
+```
+
+### Query 3
+```sql
+SELECT bestelling_id, extra_bezorgkosten, toelichting_extra_bezorgkosten FROM Bestelling WHERE extra_bezorgkosten_factuur_id=%s ORDER BY bestelling_id
+```
+Parameters: ```json
+[1]
+```
+Resultaat: 0 rij(en) (maximaal 15 getoond)
+```json
+[]
 ```
 
 ## Acquisitie-opvolging

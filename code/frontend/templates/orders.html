@@ -8,6 +8,7 @@
   <span class="eyebrow">Verkoop</span>
   <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
   <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
+  <p><a class="button button--primary" href="{{ url_for('sales.new_telephone_order') }}">Complete telefonische bestelling opnemen</a></p>
   <form method="get" action="{{ url_for('sales.orders') }}" class="lookup-form">
     <div class="form-field">
       <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
@@ -40,6 +41,7 @@
     {% endif %}
   {% endif %}
   <p class="stock-dashboard__subtitle">Reserveringen worden vastgelegd bij echte bestellingen; dit scherm controleert alleen de voorraad.</p>
+  <p><a class="button button--secondary" href="{{ url_for('sales.order_status') }}">Bestaande bestellingen en hun status bekijken</a></p>
 </section>
 
 <section class="stock-dashboard" aria-labelledby="discount-title">
@@ -77,7 +79,7 @@
                 <td>{{ order.besteld_op.strftime('%d-%m-%Y') }}</td>
                 <td>{{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}</td>
                 <td><span class="order-status__label order-status__label--{{ order.status_tone }}">{{ order.status_label }}</span></td>
-                <td><a class="order-status__link" href="{{ url_for('sales.order_status', order_id=order.bestelling_id) }}">Status bekijken</a></td>
+                <td><a class="order-status__link" href="{{ url_for('sales.order_status_detail', order_id=order.bestelling_id) }}">Status bekijken</a></td>
               </tr>
             {% endfor %}
           </tbody>

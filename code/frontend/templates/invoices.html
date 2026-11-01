@@ -49,6 +49,12 @@
     ] %}
     <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
     {% endfor %}
+    {% if f.extra_cost_gross %}
+    <dt>Afgesproken extra bezorgkosten excl. btw</dt><dd>€ {{ f.extra_cost_ex }}</dd>
+    <dt>Btw over extra bezorgkosten</dt><dd>€ {{ f.extra_cost_vat }}</dd>
+    <dt>Extra bezorgkosten incl. btw</dt><dd>€ {{ f.extra_cost_gross }}</dd>
+    {% endif %}
+    <dt><strong>Definitief te betalen</strong></dt><dd><strong>€ {{ f.final_total }}</strong></dd>
   </dl>
   {% if not f.snapshot_complete %}
   <p class="flash flash-warning" role="status">Een historisch factuurbedrag of een toegepaste korting is niet vastgelegd. Een eerder verzonden bedrag mag niet worden herberekend met aangenomen korting.</p>
@@ -66,6 +72,8 @@
       <option value="payment_plan_rejected">Betalingsregeling geweigerd, incasso</option>
       {% if f.snapshot_complete %}<option value="mark_paid">Volledig betaald</option>{% endif %}
     </select>
+    <label><input type="checkbox" name="offer_refused_confirmed" value="yes">
+      Alleen voor incasso: de betalingsregeling is daadwerkelijk aangeboden en door de klant geweigerd.</label>
     <label for="invoice-amount-{{f.invoice_number}}">Ontvangen bedrag (alleen bij volledig betaald)</label>
     <input id="invoice-amount-{{f.invoice_number}}" type="number" min="0" step="0.01" name="received_amount">
     <button type="submit">Actie registreren</button>

@@ -333,6 +333,17 @@
     ]
   },
   {
+    "module": "repositories.distribution_preparation_repository",
+    "class": "DistributionPreparationRepository",
+    "methods": [
+      "__init__",
+      "ready_to_pack",
+      "pack",
+      "pending_shipments",
+      "schedule"
+    ]
+  },
+  {
     "module": "repositories.health_repository",
     "class": "HealthRepository",
     "methods": [
@@ -421,6 +432,15 @@
     ]
   },
   {
+    "module": "repositories.sales_case_repository",
+    "class": "SalesCaseRepository",
+    "methods": [
+      "__init__",
+      "customers",
+      "order_statuses"
+    ]
+  },
+  {
     "module": "repositories.sales_stock_repository",
     "class": "SalesStockRepository",
     "methods": [
@@ -449,6 +469,17 @@
       "list_all",
       "get_by_id",
       "_to_supplier"
+    ]
+  },
+  {
+    "module": "repositories.telephone_order_repository",
+    "class": "TelephoneOrderRepository",
+    "methods": [
+      "__init__",
+      "form_options",
+      "validate",
+      "quote",
+      "approve"
     ]
   },
   {

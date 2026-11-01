@@ -1,5 +1,7 @@
 # Timaflu, visuele controle van de geïntegreerde casus
 
+> Dit is een historische screenshot- en testrunindex van een eerdere design-integratie. De genoemde 63 browsercontroles en 110 Python-tests zijn geen uitkomst voor de huidige hoofdbranch. Gebruik voor de nieuwste regressiecontrole [het actuele casusrapport](../casus-keten-en-eindcontrole-2026-11-01.md) en de bijbehorende GitHub Actions-run.
+
 De schermen volgen `code/frontend/DESIGN_SYSTEM.MD` op basis van Flask/Jinja, HTML en CSS, zonder JavaScript. De businesslogica en routes voor de vijf verplichte scenario's blijven behouden.
 
 ## Verificatie op Floris test

@@ -126,6 +126,7 @@ PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",
     "number_of_retail_packages", "short_description", "long_description",
     "minimum_order_quantity", "minimum_stock", "supplier_id", "purchase_price",
+    "director_approved",
 )
 
 

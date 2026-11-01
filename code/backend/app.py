@@ -71,7 +71,8 @@ def create_app(config=Config):
             raise click.ClickException("Ongeldige week_start.") from exc
         try:
             ids = WeeklyInvoiceRepository(get_connection()).issue_week(
-                start, app.config["TIMAFLU_ADDRESS"]
+                start, app.config["TIMAFLU_ADDRESS"],
+                delivery_cost_vat_percent=app.config.get("TIMAFLU_DELIVERY_COST_VAT_PERCENT", "")
             )
         except DomainError as exc:
             raise click.ClickException(str(exc)) from exc

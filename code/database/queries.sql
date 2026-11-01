@@ -97,8 +97,11 @@ SELECT COUNT(*) FROM Bestelling WHERE klant_id=1;
 
 -- AssessedRepository.invoice_for_customer
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
+                       f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
+                       f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw,
+                       f.extra_bezorgkosten_incl_btw,
        f.bedrag_excl_btw,
        f.btw_bedrag,
        f.bedrag_incl_btw,
@@ -185,7 +188,13 @@ SELECT b.bestelling_id, r.ritdatum FROM Bestelling b
                        FOR UPDATE;
 UPDATE Bestelling SET gewenste_leverdatum='2026-11-02', dagdeel='ochtend',
                        extra_bezorgkosten=10.00, toelichting_extra_bezorgkosten='Klant tweemaal afwezig'
-                       WHERE bestelling_id=1;
+                       WHERE bestelling_id=1
+                         AND extra_bezorgkosten_factuur_id IS NULL;
+-- After confirmed repeated absence, move already packed, unbilled lines
+-- to a new shipment for the newly agreed delivery date (no duplicate quantity).
+INSERT INTO Levering(bestelling_id) VALUES(1);
+UPDATE Leveringregel SET levering_id=4
+WHERE levering_id=1 AND factuur_id IS NULL;
 
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)
@@ -244,7 +253,9 @@ SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE 
 -- Query 2 (illustrative input, not a claimed database result)
 INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) VALUES(1,1,'2026-10-30');
 -- Query 3 (illustrative input, not a claimed database result)
-SELECT 1 FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+-- Hetzelfde SELECT wordt ook gebruikt voor volgnummer=2, om dubbele herinneringen te voorkomen.
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=2;
 -- Query 4 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
 -- Query 5 (illustrative input, not a claimed database result)
@@ -507,7 +518,8 @@ SELECT DISTINCT b.klant_id
                 FROM Leveringregel lr
                 JOIN Levering l ON l.levering_id=lr.levering_id
                 JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
-                WHERE lr.factuur_id IS NULL
+                WHERE (lr.factuur_id IS NULL OR
+                       (b.extra_bezorgkosten > 0 AND b.extra_bezorgkosten_factuur_id IS NULL))
                   AND EXISTS (
                     SELECT 1 FROM Leverpoging lp
                     JOIN Rit r ON r.rit_id=lp.rit_id
@@ -530,7 +542,10 @@ SELECT factuur_id FROM Factuur
 -- WeeklyInvoiceRepository._issue_customer example 3
 SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            br.prijs_per_eenheid AS unit_price, b.bestelling_id AS order_id,
-                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used
+                           b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
+                           (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
+                            FROM Bestelregel AS ordered
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -549,26 +564,55 @@ SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                     FOR UPDATE;
 
 -- WeeklyInvoiceRepository._issue_customer example 4
+SELECT b.bestelling_id, b.extra_bezorgkosten,
+                           b.toelichting_extra_bezorgkosten
+                    FROM Bestelling b
+                    WHERE b.klant_id=1 AND b.extra_bezorgkosten > 0
+                      AND b.extra_bezorgkosten_factuur_id IS NULL
+                      AND EXISTS (
+                        SELECT 1 FROM Levering l
+                        JOIN Leverpoging lp ON lp.levering_id=l.levering_id
+                        JOIN Rit r ON r.rit_id=lp.rit_id
+                        WHERE l.bestelling_id=b.bestelling_id
+                          AND lp.resultaat='afgeleverd'
+                          AND lp.ontvangst_getekend=TRUE
+                          AND r.ritdatum BETWEEN '2026-10-19' AND '2026-10-25'
+                      )
+                    ORDER BY b.bestelling_id FOR UPDATE;
+
+-- WeeklyInvoiceRepository._issue_customer example 5
 SELECT COUNT(*) AS paid_count,
                            COUNT(totaal_bedrag) AS known_amount_count,
                            COALESCE(SUM(totaal_bedrag),0) AS annual
                     FROM Factuur
                     WHERE klant_id=1 AND betaald_op >= '2025-01-01' AND betaald_op < '2026-01-01';
 
--- WeeklyInvoiceRepository._issue_customer example 5
+-- WeeklyInvoiceRepository._issue_customer example 6
 SELECT bestelling_id FROM Bestelling WHERE klant_id=1
                     ORDER BY besteld_op,bestelling_id LIMIT 1;
 
--- WeeklyInvoiceRepository._issue_customer example 6
+-- WeeklyInvoiceRepository._issue_customer example 7
 INSERT INTO Factuur
                     (klant_id,factuurdatum,week_start,afzenderadres,factuuradres)
                     VALUES (1,'2026-10-31','2026-10-19','Voorbeeldadres alleen voor test','Testapotheekstraat 1');
 
--- WeeklyInvoiceRepository._issue_customer example 7
+-- WeeklyInvoiceRepository._issue_customer example 8
+UPDATE Factuur
+                           SET extra_bezorgkosten_excl_btw=10.00,
+                               extra_bezorgkosten_btw=0.90,
+                               extra_bezorgkosten_incl_btw=10.90,
+                               totaal_bedrag=100.00
+                           WHERE factuur_id=2;
+
+-- WeeklyInvoiceRepository._issue_customer example 9
+UPDATE Bestelling SET extra_bezorgkosten_factuur_id=2
+                               WHERE bestelling_id=1 AND extra_bezorgkosten_factuur_id IS NULL;
+
+-- WeeklyInvoiceRepository._issue_customer example 10
 UPDATE Leveringregel SET factuur_id=2
                         WHERE levering_id=2 AND product_id=1 AND factuur_id IS NULL;
 
--- WeeklyInvoiceRepository._issue_customer example 8
+-- WeeklyInvoiceRepository._issue_customer example 11
 UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE
                             WHERE bestelling_id=2 AND eenmalige_korting_toegepast=FALSE;
@@ -590,7 +634,34 @@ SELECT lr.aantal_geleverd AS quantity,
                                   AND br.product_id=lr.product_id
                 WHERE lr.factuur_id=2
                 ORDER BY b.bestelling_id, lr.product_id;
+
+-- WeeklyInvoiceRepository.issued_invoice example 3
+SELECT bestelling_id, extra_bezorgkosten,
+                          toelichting_extra_bezorgkosten
+                   FROM Bestelling WHERE extra_bezorgkosten_factuur_id=2
+                   ORDER BY bestelling_id;
 -- END GENERATED WEEKLY INVOICE QUERIES
+
+-- Ronde 4: actuele klantgegevens voor GET /customers, exact SalesCaseRepository.customers.
+-- Voorbeeld invoer: naamdeel 'Apotheek'.
+SELECT k.klant_id, k.bedrijfsnaam, k.telefoonnummer, k.contactpersoon,
+       delivery.adres AS afleveradres, billing.adres AS factuuradres
+FROM Klant AS k
+JOIN Adres AS delivery ON delivery.adres_id=k.afleveradres_id
+JOIN Adres AS billing ON billing.adres_id=k.betaaladres_id
+WHERE ('Apotheek' = '' OR k.bedrijfsnaam LIKE '%Apotheek%')
+ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC;
+
+-- Ronde 4: werkelijke bestelstatus voor GET /orders/status.
+-- Voorbeeld: alle klanten zonder filter.
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum,
+       b.dagdeel, b.spoed, b.status_naam,
+       k.klant_id, k.bedrijfsnaam, address.adres AS afleveradres
+FROM Bestelling AS b
+JOIN Klant AS k ON k.klant_id=b.klant_id
+JOIN Adres AS address ON address.adres_id=b.afleveradres_id
+WHERE (NULL IS NULL OR b.klant_id = NULL)
+ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
 
 -- =========================================
 -- Manage customers (issue #8, AD07), /customers

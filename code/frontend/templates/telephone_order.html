@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Telefonische bestelling opnemen{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <span class="eyebrow">Verkoop</span>
+  <h1>Telefonische bestelling opnemen</h1>
+  <p>Neem de bestelling op tijdens het gesprek. Controleer de voorraad en bespreek alle tekorten. Er wordt pas iets opgeslagen na een apart, uitdrukkelijk akkoord van de klant met het definitieve bedrag.</p>
+</section>
+<section class="stock-dashboard">
+<form class="stacked-form" method="post" action="{{ url_for('sales.preview_telephone_order') }}">
+  <div class="form-field">
+    <label for="telephone-customer">Klant</label>
+    <select id="telephone-customer" name="customer_id" required>
+      <option value="">Kies de klant</option>
+      {% for customer in customers %}
+      <option value="{{ customer.klant_id }}">{{ customer.bedrijfsnaam }} (#{{ customer.klant_id }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-field">
+    <label for="telephone-day">Gewenste afleverdatum</label>
+    <input id="telephone-day" type="date" name="day" min="{{ today }}" required>
+  </div>
+  <div class="form-field">
+    <label for="telephone-slot">Dagdeel</label>
+    <select id="telephone-slot" name="slot" required>
+      <option value="ochtend">Ochtend</option>
+      <option value="middag">Middag</option>
+    </select>
+  </div>
+  <label><input type="checkbox" name="urgent" value="yes"> Spoedbestelling, apart beoordelen op koerierbeschikbaarheid</label>
+  <h2>Bestelregels</h2>
+  <p>Gebruik maximaal zes regels. Bij onvoldoende voorraad kies je volgens de afspraak met de klant of het hele medicijn later wordt afgenomen of vervalt. Deze keuze wordt pas bij het volgende scherm definitief bevestigd.</p>
+  {% for i in range(6) %}
+    <fieldset class="page-panel">
+      <legend>Medicijn {{ i + 1 }}</legend>
+      <div class="form-field">
+        <label for="medicine-{{ i }}">Medicijn</label>
+        <select id="medicine-{{ i }}" name="product_id">
+          <option value="">Geen medicijn op deze regel</option>
+          {% for product in products %}
+          <option value="{{ product.product_id }}">{{ product.productnaam }} ({{ product.artikelnummer }}, min. {{ product.minimale_bestelhoeveelheid }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="quantity-{{ i }}">Aantal grootverpakkingen</label>
+        <input id="quantity-{{ i }}" type="number" name="quantity" min="1" step="1">
+      </div>
+      <div class="form-field">
+        <label for="shortage-{{ i }}">Bij onvoldoende voorraad</label>
+        <select id="shortage-{{ i }}" name="shortage">
+          <option value="skip">Klant ziet af van dit medicijn</option>
+          <option value="later">Klant wil dit medicijn later ontvangen (backorder)</option>
+        </select>
+      </div>
+    </fieldset>
+  {% endfor %}
+  <button type="submit">Beschikbaarheid en definitieve prijs controleren</button>
+</form>
+</section>
+{% endblock %}
