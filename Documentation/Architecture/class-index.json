@@ -266,6 +266,13 @@
     "methods": []
   },
   {
+    "module": "domain.errors",
+    "class": "ValidationError",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
     "module": "domain.product",
     "class": "ProductActiveIngredient",
     "methods": []
@@ -313,6 +320,19 @@
     ]
   },
   {
+    "module": "repositories.customer_repository",
+    "class": "CustomerRepository",
+    "methods": [
+      "__init__",
+      "list_customers",
+      "find_customer",
+      "create",
+      "update",
+      "deactivate",
+      "_insert_address"
+    ]
+  },
+  {
     "module": "repositories.health_repository",
     "class": "HealthRepository",
     "methods": [
@@ -333,6 +353,16 @@
       "offers",
       "set_price",
       "remove_offer"
+    ]
+  },
+  {
+    "module": "repositories.order_status_notification_repository",
+    "class": "OrderStatusNotificationRepository",
+    "methods": [
+      "__init__",
+      "search_orders",
+      "find_order",
+      "find_order_lines"
     ]
   },
   {
@@ -434,6 +464,19 @@
     ]
   },
   {
+    "module": "services.customer_service",
+    "class": "CustomerService",
+    "methods": [
+      "__init__",
+      "overview",
+      "get",
+      "create",
+      "update",
+      "deactivate",
+      "validate"
+    ]
+  },
+  {
     "module": "services.health_service",
     "class": "HealthService",
     "methods": [
@@ -456,6 +499,15 @@
       "_positive_id",
       "_validate",
       "remove_offer"
+    ]
+  },
+  {
+    "module": "services.order_status_notification_service",
+    "class": "OrderStatusNotificationService",
+    "methods": [
+      "__init__",
+      "search",
+      "status_overview"
     ]
   },
   {
