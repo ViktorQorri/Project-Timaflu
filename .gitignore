@@ -1,3 +1,9 @@
 __pycache__/
 *.py[cod]
 /deliverables/
+# Local database credentials, production environment files and private keys.
+**/.env
+**/.env.*
+!**/.env.example
+*.key
+*.pem

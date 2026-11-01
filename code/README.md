@@ -82,6 +82,51 @@ De ZIP-bestanden worden niet opgeslagen in Git. Maak deze lokaal wanneer
 de schooloplevering plaatsvindt. Alleen Git-tracked bronbestanden en het lokaal gegenereerde queryrapport
 worden opgenomen; lokale wachtwoorden en overige tijdelijke gegevens niet.
 
+## Online MySQL voor de schooloplevering
+
+Een lokaal SQL-script is geen online database. De provideraccount, de hosting en
+het werkelijk beschikbaar stellen van een MySQL-database blijven aparte stappen;
+deze repository kan geen cloudaccount of hostingtoegang aanmaken.
+
+1. Maak een MySQL 8-database aan bij een hostingprovider met firewall en backup.
+   Gebruik geen echte klant- of patiëntgegevens voor een publieke demo. Controleer
+   zelf of de gekozen studentenhosting daadwerkelijk binnen het budget valt.
+2. Importeer in een **nieuwe lege** database `code/database/schema.sql` en vul
+   representatieve klant-, product-, leverancier-, order-, leverings-, factuur-
+   en acquisitiegegevens in. De bestaande testfixture in
+   `Documentation/Architecture/test-data/weekly_invoicing_fixture.sql`
+   is uitsluitend voor een lege **demo-database** en bevat geen uitgegeven factuur.
+   Maak in zo'n demo een factuur met de bestaande applicatielogica en een
+   expliciet fictief afzenderadres. Voor bestaande databases geldt: eerst backup,
+   dan uitsluitend ontbrekende migraties; overschrijf geen historische bedragen.
+3. Gebruik verschillende databasegebruikers: een beheeraccount, een applicatieaccount
+   met de vereiste CRUD-rechten en een controleaccount met alleen SELECT.
+   Configureer `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+   `DB_REQUIRE_TLS=1` en `DB_SSL_CA` (pad naar een vertrouwd CA-certificaat).
+   De MySQL-connector verifieert zowel het certificaat als de servernaam.
+4. Stel in GitHub onder **Settings > Secrets and variables > Actions** de volgende
+   repository-secrets in: `TIMAFLU_DB_HOST`, `TIMAFLU_DB_PORT`,
+   `TIMAFLU_DB_NAME`, `TIMAFLU_DB_USER`, `TIMAFLU_DB_PASSWORD` en
+   `TIMAFLU_DB_SSL_CA_PEM` (PEM-inhoud van de vertrouwde CA).
+   De GitHub-runner moet via een beveiligde netwerkroute MySQL kunnen bereiken;
+   zet de database niet onbeperkt open naar het gehele internet.
+5. Start handmatig **Actions > Controle online Timaflu-database > Run workflow**.
+   De controle draait buiten de laptop, doet uitsluitend SELECTs en bewaart
+   een JSON-rapport met schema, sleutelrelaties, TLS en aantallen per tabel.
+   Download dit bewijs voor de school. De minimale rijaantallen in de controle
+   zijn praktische demonstratiechecks, geen voorgeschreven schoolnorm.
+
+Alleen lokaal testen (géén online bewijs):
+`python code/database/verify_online_database.py --allow-local`.
+
+Genereer daarnaast het vereiste actuele queryrapport per scherm met
+`python code/database/audit_ui_queries.py` op een geïsoleerde testdatabase
+en maak vervolgens de vier school-ZIP's met
+`python code/build_deliverables.py --output-dir deliverables`.
+
+**Veiligheid:** de huidige Flask-webapp heeft geen medewerkersauthenticatie.
+Publiceer de volledige webapp niet zonder toegangsbeveiliging.
+
 ## Adding a screen
 
 Every screen follows the same path through the layers, as in the home page:

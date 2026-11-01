@@ -15,6 +15,9 @@ class Config:
     DB_NAME = os.getenv("DB_NAME") or "timaflu"
     DB_USER = os.getenv("DB_USER") or "timaflu_app"
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    # Hosted MySQL: require transport encryption and verify the server identity.
+    DB_REQUIRE_TLS = os.getenv("DB_REQUIRE_TLS", "").strip().lower() in ("1", "true", "yes")
+    DB_SSL_CA = os.getenv("DB_SSL_CA", "").strip()
     # The fictional Timaflu case provides no street address. Never invent it.
     TIMAFLU_ADDRESS = os.getenv("TIMAFLU_ADDRESS", "").strip()
     # No VAT rule for exceptional re-delivery costs is specified in the case.
