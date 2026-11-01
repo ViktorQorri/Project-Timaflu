@@ -1,0 +1,27 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Sales Employee|
+start
+:Search product by name or article number;
+|System|
+:Search product;
+if (Product found?) then ([yes])
+  :Calculate available stock as physical stock minus active reservations;
+  :Show physical, reserved and available stock;
+  |Sales Employee|
+  :Enter requested quantity;
+  |System|
+  if (Requested quantity > available stock?) then ([yes])
+    :Report insufficient stock to sales employee;
+    stop
+  else ([no])
+    :Confirm quantity is available;
+    stop
+  endif
+else ([no])
+  :Show product not found;
+  stop
+endif
+@enduml

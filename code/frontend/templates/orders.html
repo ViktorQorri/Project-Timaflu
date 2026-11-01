@@ -1,7 +1,54 @@
 {% extends "base.html" %}
-
-{% block title %}Orders{% endblock %}
-
+{% block title %}Voorraad controleren{% endblock %}
 {% block content %}
-  <h1>Orders</h1>
+<section class="stock-dashboard" aria-labelledby="sales-stock-title">
+  <span class="eyebrow">Verkoop</span>
+  <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
+  <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
+  <p><a class="button button--primary" href="{{ url_for('sales.new_telephone_order') }}">Complete telefonische bestelling opnemen</a></p>
+  <form method="get" action="{{ url_for('sales.orders') }}" class="lookup-form">
+    <div class="form-field">
+      <label for="medicine-query">Naam van het medicijn of artikelnummer</label>
+      <input id="medicine-query" name="q" value="{{ query }}" maxlength="100" required>
+    </div>
+    <div class="form-field">
+      <label for="quantity">Gevraagd aantal</label>
+      <input id="quantity" name="quantity" type="number" min="1" step="1" value="{{ quantity }}" required>
+    </div>
+    <button type="submit">Voorraad controleren</button>
+  </form>
+  {% if query %}
+    {% if products %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <caption>Voorraad in het magazijn min de reserveringen voor bestaande bestellingen</caption>
+          <thead><tr><th scope="col">Medicijn</th><th scope="col">Artikelnummer</th><th scope="col" class="stock-dashboard__number">Voorraad</th><th scope="col" class="stock-dashboard__number">Gereserveerd</th><th scope="col" class="stock-dashboard__number">Beschikbaar</th><th scope="col">Gevraagd aantal leverbaar?</th></tr></thead>
+          <tbody>
+            {% for item in products %}
+              <tr><th scope="row">{{ item.productnaam }}</th><td>{{ item.artikelnummer }}</td><td class="stock-dashboard__number">{{ item.voorraad }}</td><td class="stock-dashboard__number">{{ item.gereserveerd }}</td><td class="stock-dashboard__number">{{ item.beschikbaar }}</td><td>
+                {% if item.voldoende %}<span class="stock-dashboard__available">Voldoende voorraad</span>
+                {% else %}<span class="stock-dashboard__shortage">Onvoldoende voorraad</span>{% endif %}
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p role="status">Geen medicijn gevonden.</p>
+    {% endif %}
+  {% endif %}
+  <p class="stock-dashboard__subtitle">Reserveringen worden vastgelegd bij echte bestellingen; dit scherm controleert alleen de voorraad.</p>
+  <p><a class="button button--secondary" href="{{ url_for('sales.order_status') }}">Bestaande bestellingen en hun status bekijken</a></p>
+</section>
+
+<section class="stock-dashboard" aria-labelledby="discount-title">
+  <h2 id="discount-title">Korting berekenen voor telefonische bestelling</h2>
+  <form method="post" action="{{ url_for('sales.calculate_order_discount') }}">
+    <label for="discount-customer">Klantnummer</label>
+    <input id="discount-customer" name="customer_id" type="number" min="1" required>
+    <label for="discount-subtotal">Bedrag bestelde producten (€)</label>
+    <input id="discount-subtotal" name="subtotal" type="number" min="0" step="0.01" required>
+    <button type="submit">Bereken kortingen</button>
+  </form>
+</section>
 {% endblock %}

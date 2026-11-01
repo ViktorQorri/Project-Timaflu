@@ -1,0 +1,25 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Warehouse Robot|
+start
+:Report sub-order completed\nwith collected quantities;
+|System|
+:Reduce stock by\ncollected quantities;
+if (All products collected?) then ([yes])
+else ([no])
+  :Correct stock and set\nmissing lines to backorder;
+endif
+if (All sub-orders of order completed?) then ([yes])
+  :Update order status;
+else ([no])
+endif
+if (New sub-order for this aisle?) then ([yes])
+  :Send sub-order to robot;
+  stop
+else ([no])
+  :Set robot to waiting;
+  stop
+endif
+@enduml

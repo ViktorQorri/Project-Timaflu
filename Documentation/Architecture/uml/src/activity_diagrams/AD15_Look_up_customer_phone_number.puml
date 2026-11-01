@@ -1,0 +1,12 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Courier|
+start
+:Select order;
+:Choose "call customer";
+|System|
+:Show contact person name\nand phone number;
+stop
+@enduml

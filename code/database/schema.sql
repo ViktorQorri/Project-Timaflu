@@ -20,6 +20,8 @@ CREATE TABLE Klant (
     bedrijfsnaam VARCHAR(100) NOT NULL,
     telefoonnummer VARCHAR(25),
     contactpersoon VARCHAR(100),
+    actief BOOLEAN NOT NULL DEFAULT TRUE,
+    eenmalige_korting_toegezegd BOOLEAN NOT NULL DEFAULT FALSE,
     afleveradres_id INT NOT NULL,
     betaaladres_id INT NOT NULL,
 
@@ -43,6 +45,7 @@ CREATE TABLE PotentieleKlant (
     contactgegevens VARCHAR(255),
     adres_id INT NOT NULL,
     klant_id INT UNIQUE,
+    opvolging_afgesloten BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (adres_id)
         REFERENCES Adres(adres_id),
@@ -84,6 +87,10 @@ CREATE TABLE Product (
     lange_omschrijving TEXT,
     minimale_bestelhoeveelheid INT NOT NULL,
     minimumvoorraad INT NOT NULL,
+    intern_bestelbaar BOOLEAN NOT NULL DEFAULT TRUE,
+-- FALSE = verwijderd uit het assortiment. De rij blijft bestaan,
+    -- omdat bestellingen, leveringen en facturen ernaar verwijzen.
+    in_assortiment BOOLEAN NOT NULL DEFAULT TRUE,
 
     CHECK (prijs_per_grootverpakking >= 0),
     CHECK (aantal_detailverpakkingen > 0),
@@ -242,6 +249,7 @@ CREATE TABLE Bestelling (
     extra_bezorgkosten DECIMAL(10,2)
         NOT NULL DEFAULT 0,
     toelichting_extra_bezorgkosten VARCHAR(255),
+    extra_bezorgkosten_factuur_id INT NULL,
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id),
@@ -288,6 +296,18 @@ CREATE TABLE Bestelregel (
 -- 15. KLANTKORTING
 -- Bron: huidige situatie, kortingsregels.
 -- =========================================
+
+-- Reservation of ordered medicine before robot picking, as shown in AD05 Enter_order.
+-- Kept apart from physical warehouse quantity. Created only after a real sale is recorded.
+CREATE TABLE Voorraadreservering (
+    bestelling_id INT NOT NULL,
+    product_id INT NOT NULL,
+    aantal INT NOT NULL,
+    PRIMARY KEY (bestelling_id, product_id),
+    FOREIGN KEY (bestelling_id, product_id)
+        REFERENCES Bestelregel(bestelling_id, product_id),
+    CHECK (aantal > 0)
+);
 
 CREATE TABLE Klantkorting (
     klant_id INT NOT NULL,
@@ -448,14 +468,35 @@ CREATE TABLE Factuur (
     factuur_id INT AUTO_INCREMENT PRIMARY KEY,
     klant_id INT NOT NULL,
     factuurdatum DATE NOT NULL,
+    week_start DATE NULL,
+    afzenderadres VARCHAR(255) NULL,
+    factuuradres VARCHAR(255) NULL,
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    extra_bezorgkosten_excl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_incl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    bedrag_excl_btw DECIMAL(10,2) NULL,
+    btw_bedrag DECIMAL(10,2) NULL,
+    bedrag_incl_btw DECIMAL(10,2) NULL,
+    bestellingskorting DECIMAL(10,2) NULL,
+    bedrag_na_bestellingskorting DECIMAL(10,2) NULL,
+    eenmalige_korting DECIMAL(10,2) NULL,
+    bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
+    klantenkorting DECIMAL(10,2) NULL,
+    totaal_bedrag DECIMAL(10,2) NULL,
+    CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
 );
 
+
+-- Koppelt iedere afzonderlijk afgesproken bezorgtoeslag aantoonbaar aan één factuur.
+ALTER TABLE Bestelling
+    ADD CONSTRAINT fk_bestelling_bezorgkosten_factuur
+    FOREIGN KEY (extra_bezorgkosten_factuur_id) REFERENCES Factuur(factuur_id);
 
 -- =========================================
 -- 25. LEVERINGREGEL
@@ -505,6 +546,17 @@ CREATE TABLE Betalingsherinnering (
 );
 
 
+-- Inkoopfacturen: expliciet onderdeel van de administratie uit de casus.
+CREATE TABLE Inkoopfactuur (
+    inkoopfactuur_id INT AUTO_INCREMENT PRIMARY KEY,
+    leverancier_id INT NOT NULL,
+    factuurdatum DATE NOT NULL,
+    bedrag DECIMAL(10,2) NOT NULL,
+    betaald_op DATE,
+    FOREIGN KEY (leverancier_id) REFERENCES Leverancier(leverancier_id),
+    CHECK (bedrag >= 0)
+);
+
 -- =========================================
 -- ORDERSTATUSSEN UIT DE CASUS
 -- =========================================
@@ -514,5 +566,6 @@ VALUES
     ('wordt verzameld'),
     ('verstuurd'),
     ('backorder'),
-    ('afgeleverd');
+    ('afgeleverd'),
+    ('niet afgeleverd');
 

@@ -1,5 +1,7 @@
 # Samenwerkingsafspraken
 
+**Versie:** 2.0
+
 ## Overzicht
 
 | Onderwerp | Afspraak |
@@ -195,3 +197,36 @@ Daarbij kijken we naar:
 Wanneer het probleem daarna blijft terugkomen, kan de groep besluiten om werkzaamheden anders te verdelen of extra controle op taken in te bouwen.
 
 Het doel van consequenties is niet om iemand te straffen, maar om ervoor te zorgen dat het project niet wordt vertraagd door het niet nakomen van afspraken.
+
+
+# 6. Aanvullende afspraken versie 2.0
+
+Deze aanvullingen zijn geformuleerd naar aanleiding van de evaluatieperiode tot en met 28 oktober 2026. De evaluatie is vastgelegd in [evaluation-2026-10-28.md](evaluation-2026-10-28.md). Definitieve groepsgoedkeuring wordt in de vergadernotulen vastgelegd; een ingediende PR is niet hetzelfde als een groepsbesluit.
+
+## Beschikbaarheid, afwezigheid en uitval
+
+- Iedereen meldt vooraf of zo snel als redelijkerwijs mogelijk wanneer diegene niet aanwezig is op een afgesproken projectmoment. Bij onverwachte verhindering melden we het zodra dat kan.
+- Als taken hierdoor in gevaar komen, noemen we de betreffende issues en benodigde overdracht.
+- Bij langdurige of definitieve uitval inventariseren we binnen één projectwerkdag openstaande taken, verdelen prioriteiten en verantwoordelijkheden opnieuw en actualiseren we GitHub Projects. Bij impact op de planning wordt de docent geïnformeerd.
+- Privéredenen en persoonlijke omstandigheden worden niet opgenomen in de openbare repository.
+
+## Issues en reviews
+
+- Een issue heeft vóór de start een begrijpelijke opdracht, eigenaar, deadline, prioriteit, afhankelijkheden en controleerbare acceptatiecriteria. De eigenaar toetst het issue aan de casus.
+- Minimaal één ander groepslid controleert iedere pull request inhoudelijk. Mergen mag pas met een geldige expliciete **Approved**-review. De auteur merge niet zijn of haar eigen PR.
+- Reviewopmerkingen worden opgelost of gemotiveerd afgehandeld. Als na de goedkeuring relevante veranderingen plaatsvinden, is een hercontrole nodig.
+- Is de reviewer afwezig, dan wijzen we een vervanger aan. We onderzoeken branch protection om de regel waar mogelijk automatisch af te dwingen.
+- AI-ondersteunde uitwerkingen moeten door een groepslid worden gecontroleerd op juistheid, eisen, casusdekking, traceability, uitzonderingen en eventuele tests; AI-output is geen vervanging voor een inhoudelijke review.
+
+## Urenregistratie en groepsbijdrage
+
+- Ieder groepslid registreert werkelijk bestede tijd met datum, issue/deelproduct en korte toelichting, waar mogelijk onderbouwd met een link naar het resultaat.
+- Wanneer werk later vervalt, blijft daadwerkelijk verrichte tijd geregistreerd met de status **vervallen / niet gebruikt** en een toelichting. Vervallen werk is niet automatisch onjuist geregistreerd werk.
+- Onjuiste of dubbele registraties worden besproken en herleidbaar gecorrigeerd. De groep controleert minstens wekelijks de samenhang tussen tijd, taak en resultaat.
+- We maken aantoonbaar hoe ieder groepslid aan alle vereiste deelproducten heeft meegewerkt.
+
+## Reflectie en verbeteren
+
+- Bij een evaluatie krijgt elk groepslid schriftelijk de gelegenheid om te benoemen wat goed ging, wat minder goed ging en welke afspraak moet veranderen.
+- De groep bespreekt overeenkomsten en verschillen respectvol. Concrete verbeteracties krijgen een eigenaar, deadline en controlemoment.
+- Wijzigingen in de afspraken en de besluiten daarover leggen we vast in notulen of GitHub Projects.

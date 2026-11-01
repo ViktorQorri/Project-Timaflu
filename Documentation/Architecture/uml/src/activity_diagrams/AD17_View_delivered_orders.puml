@@ -1,0 +1,21 @@
+@startuml
+skinparam ArrowThickness 1.6
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Administration Employee|
+start
+:Open delivered orders overview;
+|System|
+if (Delivered, uninvoiced orders?) then ([yes])
+  :Show orders per customer\nwith amount and delivery date;
+  |Administration Employee|
+  :Select order;
+  |System|
+  :Show delivered order lines\nand extra costs;
+  stop
+else ([no])
+  :Show message no orders;
+  stop
+endif
+@enduml

@@ -1,0 +1,31 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Warehouse Robot|
+start
+:Request next sub-order\nfor own warehouse aisle;
+|System|
+:Verify robot and assigned aisle;
+if (Robot and aisle valid?) then ([yes])
+  :Search pending sub-orders\nfor this aisle;
+  if (Sub-order available?) then ([yes])
+    :Assign sub-order to robot;
+    :Send sub-order lines,\nquantities and storage locations;
+    |Warehouse Robot|
+    :Receive assigned sub-order;
+    :Start AD23 Collect sub-order;
+    stop
+  else ([no])
+    :Respond no sub-order available;
+    |Warehouse Robot|
+    :Wait for new sub-order;
+    stop
+  endif
+else ([no])
+  |System|
+  :Reject request and report error;
+  stop
+endif
+@enduml

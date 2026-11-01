@@ -1,0 +1,20 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Distribution Employee|
+start
+:Open collection bin overview;
+|System|
+if (Orders with collection bins?) then ([yes])
+  :Show orders with number of bins\nand whether the order is complete;
+  |Distribution Employee|
+  :Select order or scan bin code;
+  |System|
+  :Show bin codes and order contents;
+  stop
+else ([no])
+  :Show message no bins present;
+  stop
+endif
+@enduml

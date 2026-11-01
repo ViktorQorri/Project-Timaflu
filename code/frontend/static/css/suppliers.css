@@ -1,0 +1,29 @@
+/* Start: Issue #15 - supplier price lookup, using the existing Timaflu design tokens. */
+.supplier-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+.supplier-lookup label { font-weight: 700; }
+.supplier-lookup input {
+  min-width: 220px;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.supplier-lookup button {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 11px 18px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+/* End: Issue #15 supplier lookup. */

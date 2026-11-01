@@ -1,0 +1,74 @@
+/* Start: Issue #26 - responsive shortage dashboard using the shared Timaflu design tokens. */
+.stock-dashboard {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 38px var(--page-padding);
+}
+.stock-dashboard__intro {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stock-dashboard__eyebrow {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.stock-dashboard__subtitle {
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+.stock-dashboard__count {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-weight: 700;
+}
+.stock-dashboard__table-wrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  box-shadow: var(--shadow-card);
+}
+.stock-dashboard__table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+.stock-dashboard__table caption {
+  text-align: left;
+  padding: 16px;
+  color: var(--color-text-muted);
+}
+.stock-dashboard__table th,
+.stock-dashboard__table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-line-light);
+}
+.stock-dashboard__table thead {
+  background: var(--color-primary-light);
+}
+.stock-dashboard__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stock-dashboard__shortage {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 700;
+}
+.stock-dashboard__empty {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 32px;
+}
+/* End: Issue #26 shortage dashboard. */

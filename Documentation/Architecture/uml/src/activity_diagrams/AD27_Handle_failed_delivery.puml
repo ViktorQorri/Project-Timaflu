@@ -1,0 +1,43 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Courier|
+start
+:Customer could not receive delivery\non first visit;
+:Execute AD15 Look up\ncustomer phone number;
+:Call customer;
+if (Delivery still possible now?) then ([yes])
+  :Execute AD12 Register delivery;
+  stop
+else ([no])
+  :Report first failed attempt;
+  |System|
+  :Add second attempt to today's route;
+  |Courier|
+  :Return later the same day;
+  if (Customer present on second visit?) then ([yes])
+    |Customer|
+    :Sign for receipt;
+    |Courier|
+    :Confirm delivered order;
+    |System|
+    :Record signature and delivery time;
+    :Set order status to delivered;
+    stop
+  else ([no])
+    |Courier|
+    :Return undelivered goods\nto distribution area;
+    |System|
+    :Mark second delivery attempt failed;
+    :Notify sales employee;
+    |Sales Employee|
+    :Contact customer and agree\nnew delivery date and time slot;
+    :Enter additional delivery costs\nand explanation;
+    |System|
+    :Save revised delivery appointment\nand costs on order;
+    stop
+  endif
+endif
+@enduml

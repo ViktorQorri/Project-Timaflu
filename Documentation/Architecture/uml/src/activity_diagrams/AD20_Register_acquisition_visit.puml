@@ -1,0 +1,33 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Acquisition Employee|
+start
+:Select prospective pharmacy;
+:Call pharmacy to arrange a visit;
+if (Appointment agreed?) then ([yes])
+  :Visit pharmacy on agreed date;
+  :Introduce Timaflu and explain\npersonal service;
+  :Present product catalogue\nand discount conditions;
+  :Hand over information folder;
+  |Acquisition Employee|
+  :Enter company, contact person,\ncontact details, address and visit date;
+  |System|
+  :Validate prospective customer\nand acquisition visit data;
+  if (Data valid?) then ([yes])
+    :Save prospective customer\nand acquisition visit;
+    :Make visit available in follow-up\noverview after one month;
+    :Show confirmation;
+    stop
+  else ([no])
+    :Show error message;
+    stop
+  endif
+else ([no])
+  |Acquisition Employee|
+  :Do not register a visit;
+  stop
+endif
+@enduml

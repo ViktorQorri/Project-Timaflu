@@ -1,0 +1,37 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+
+|Purchasing Employee|
+start
+:Finish pending product reorders;
+:Review offers for new medicines;
+while (Another supplier offer?) is ([yes])
+  :Evaluate medicine, supplier\nand purchase conditions;
+  if (Suitable to propose?) then ([yes])
+    :Prepare advice for management;
+    |Management|
+    :Review advice;
+    if (Approve new medicine?) then ([yes])
+      |Purchasing Employee|
+      :Enter product details and\nsupplier information;
+      |System|
+      :Validate product and supplier data;
+      if (Data valid?) then ([yes])
+        :Add product to assortment;
+        :Update central product catalogue,\nsales list and internal reorder list;
+      else ([no])
+        :Show validation error;
+      endif
+    else ([no])
+      |Purchasing Employee|
+      :Record rejected offer;
+    endif
+  else ([no])
+    :Record unsuitable offer;
+  endif
+  |Purchasing Employee|
+endwhile ([no])
+stop
+@enduml

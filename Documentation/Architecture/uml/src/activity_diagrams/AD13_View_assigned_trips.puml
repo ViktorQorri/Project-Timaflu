@@ -1,0 +1,21 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Courier|
+start
+:Report as available;
+:Open trip overview;
+|System|
+if (Trips assigned?) then ([yes])
+  :Show trips, rush first,\nwith address and delivery time;
+  |Courier|
+  :Select trip;
+  |System|
+  :Show trip details;
+  stop
+else ([no])
+  :Show message no trips;
+  stop
+endif
+@enduml

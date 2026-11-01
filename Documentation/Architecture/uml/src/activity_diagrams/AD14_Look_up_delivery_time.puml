@@ -1,0 +1,16 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Courier|
+start
+:Select order;
+|System|
+if (Delivery time recorded?) then ([yes])
+  :Show date and part of day;
+  stop
+else ([no])
+  :Show message no delivery time;
+  stop
+endif
+@enduml

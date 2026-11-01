@@ -1,0 +1,35 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Sales Employee|
+start
+:Open customer overview;
+|System|
+:Show list of customers;
+|Sales Employee|
+:Choose customer action;
+if (Add customer?) then ([yes])
+  :Enter new customer data;
+  if (One-time acquisition discount?) then ([yes])
+    :Tick one-time 10% discount;
+  else ([no])
+  endif
+else ([no])
+  if (Edit customer?) then ([yes])
+    :Select customer and edit data;
+  else ([no])
+    :Select customer and choose deactivate;
+  endif
+endif
+|System|
+:Validate data;
+if (Data valid?) then ([yes])
+  :Save changes;
+  :Show confirmation;
+  stop
+else ([no])
+  :Show error message;
+  stop
+endif
+@enduml

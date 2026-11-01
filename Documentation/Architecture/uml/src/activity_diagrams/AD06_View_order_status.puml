@@ -1,0 +1,20 @@
+@startuml
+skinparam conditionStyle diamond
+skinparam ConditionEndStyle diamond
+skinparam ActivityDiamondFontSize 11
+|Sales Employee|
+start
+:Search order by order number or customer name;
+|System|
+if (Order(s) found?) then ([yes])
+  :Show list of orders;
+  |Sales Employee|
+  :Select order;
+  |System|
+  :Show status, order lines,\nbackorders and delivery time;
+  stop
+else ([no])
+  :Show message no order found;
+  stop
+endif
+@enduml
