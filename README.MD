@@ -51,9 +51,13 @@ Work with the draw.io extension in VS Code (`hediet.vscode-drawio`).
 
 ## Actuele casuscontrole en opleverstukken
 
-De actuele verificatie van facturatie, korting, EER, klassendiagram en alle schermqueries staat in [casus-oplevercontrole.md](Documentation/Architecture/casus-oplevercontrole.md). De definitieve EER is [eer-mysql-verified.drawio](Documentation/Architecture/eer-mysql-verified.drawio) en het backendklassendiagram is [class-diagram-backend.puml](Documentation/Architecture/class-diagram-backend.puml); beide zijn tegen de werkende database respectievelijk broncode gecontroleerd. Het oude `eer.mwb` is een verouderde ontwerpsnapshot en niet het actuele schema.
-
-Vijf afzonderlijke controlelagen voor de geïntegreerde hoofdbranch zijn opgenomen in [main-casus-vijf-rondes-20261031.md](Documentation/Architecture/main-casus-vijf-rondes-20261031.md). Niet aangetoonde processtappen worden daar afzonderlijk als open benoemd.
+De [actuele casus- en ketencontrole](Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md)
+beschrijft de werkende processen, de controles en de nog externe afhankelijkheden.
+De verifieerbare [MySQL-queryuitvoer per scherm](Documentation/Architecture/query-output-per-screen.md)
+en het [testplan](Documentation/Architecture/test-plan.md) vormen het bijbehorende bewijs.
+De definitieve EER is [eer-mysql-verified.drawio](Documentation/Architecture/eer-mysql-verified.drawio)
+en het backendklassendiagram is [class-diagram-backend.puml](Documentation/Architecture/class-diagram-backend.puml).
+Het oude `eer.mwb` is geen actuele EER-bron.
 
 ## Documentation
 
@@ -61,7 +65,12 @@ Vijf afzonderlijke controlelagen voor de geïntegreerde hoofdbranch zijn opgenom
 | --- | --- |
 | Collaboration agreements | [Documentation/Conflict-prevention/collaboration-agreements.md](Documentation/Conflict-prevention/collaboration-agreements.md) |
 | Software architecture | [Documentation/Architecture/architecture.md](Documentation/Architecture/architecture.md) |
-| Domain class diagram (PlantUML), sources and multiplicities | [Documentation/Architecture/uml/src/domain/README.md](Documentation/Architecture/uml/src/domain/README.md) |
+| Casuscontrole en implementatiebewijs | [Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md](Documentation/Architecture/casus-keten-en-eindcontrole-2026-11-01.md) |
+| Testplan | [Documentation/Architecture/test-plan.md](Documentation/Architecture/test-plan.md) |
+| Databasequeries en echte output | [Documentation/Architecture/query-output-per-screen.md](Documentation/Architecture/query-output-per-screen.md) |
+| Schermontwerpen en traceability | [Documentation/Architecture/screens/README.md](Documentation/Architecture/screens/README.md) |
+| API-specificatie | [Documentation/Architecture/api-specification.md](Documentation/Architecture/api-specification.md) |
+| Domain class diagram (PlantUML), sources and multiplicities | [DKD (PlantUML)](Documentation/Architecture/uml/src/domain/dkd-timaflu.puml) |
 | Product description | [Documentation/brightspace/Product-description.md](Documentation/brightspace/Product-description.md) |
 | Process description | [Documentation/brightspace/Process-description.md](Documentation/brightspace/Process-description.md) |
 | Current processes | [Documentation/brightspace/Current-processes.md](Documentation/brightspace/Current-processes.md) |

@@ -2,6 +2,8 @@
 
 Refs #41.
 
+> Oudere meetresultaten hieronder zijn historische testmomenten. De actuele code en herhaalde MySQL-controles staan in [casus-keten-en-eindcontrole-2026-11-01.md](casus-keten-en-eindcontrole-2026-11-01.md) en de GitHub Actions-run van de verbeter-PR.
+
 ## Scope
 Unit, integration and acceptance testing for sales, purchasing, robot picking, distribution, weekly invoicing and acquisition. Incoming inventory is outside scope.
 
@@ -95,7 +97,7 @@ Do not treat an HTTP 200, a mock, or a render test as proof of business correctn
 
 Dit zijn regressiecontroles van expliciete bronprocessen, geen extra
 acceptatiecriteria uit userstories. Het actuele resultaat en de gebruikte
-commando's staan in main-casus-vijf-rondes-20261031.md.
+commando's staan in [casus-keten-en-eindcontrole-2026-11-01.md](casus-keten-en-eindcontrole-2026-11-01.md).
 
 | Test | Bron en situatie | Verplicht resultaat |
 | --- | --- | --- |

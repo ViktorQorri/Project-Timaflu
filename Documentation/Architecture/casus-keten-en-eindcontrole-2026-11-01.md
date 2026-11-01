@@ -61,6 +61,24 @@ klantakkoord, beschikbaarheid, reservatie, robotafboeking, verzamelbak,
 verpakken, koeriersplanning, ondertekende aflevering en weekfactuur,
 plus voorraadtekort en herbezorging met kosten.
 
+## Uitvoeren en opleveren
+
+Nieuwe facturen kunnen bewust met het scherm `/invoices/weekly` of
+`flask --app app issue-weekly-invoices --week-start JJJJ-MM-DD` worden
+uitgegeven, uitsluitend voor een volledig afgesloten week. Het commando
+wordt niet automatisch ingepland: voor een productieomgeving is een
+beheerder en gecontroleerde scheduler nodig. De eerder gefactureerde week
+kan niet ongemerkt opnieuw worden gefactureerd. Zonder het echte
+`TIMAFLU_ADDRESS` volgt geen nieuwe factuur.
+
+Er is **geen** door de casus voorgeschreven authenticatie-,
+autorisatie- of generiek auditlogsysteem gebouwd. Huidige order-, lever-
+en betalingsstatussen zijn geen bewijs van wie een handeling uitvoerde.
+Gebruik daarom uitsluitend een afgeschermde lokale/demo-omgeving met
+fictieve gegevens. Bij echte inzet moeten eerst beveiliging, toegang,
+robotidentiteiten en gegevensverwerking expliciet worden overeengekomen.
+Geen verzonnen accounts, wachtwoorden of auditrecords toevoegen.
+
 ## Voor inzet buiten de testomgeving
 
 - Echt bedrijfsafzenderadres `TIMAFLU_ADDRESS`, productionele MySQL en
