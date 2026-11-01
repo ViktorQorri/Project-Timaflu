@@ -23,7 +23,7 @@ else ([no])
     |Courier|
     :Confirm delivered order;
     |System|
-    :Record signature and delivery time;
+    :Record confirmation of signed receipt;
     :Set order status to delivered;
     stop
   else ([no])
@@ -31,7 +31,7 @@ else ([no])
     :Return undelivered goods\nto distribution area;
     |System|
     :Mark second delivery attempt failed;
-    :Notify sales employee;
+    :Make failed delivery visible to sales;
     |Sales Employee|
     :Contact customer and agree\nnew delivery date and time slot;
     :Enter additional delivery costs\nand explanation;

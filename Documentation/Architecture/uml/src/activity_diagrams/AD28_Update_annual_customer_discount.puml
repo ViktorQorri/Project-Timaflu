@@ -3,9 +3,16 @@ skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
 
-|System|
+|Administration Employee|
 start
-:On December 31, start annual\ndiscount determination;
+:Confirm annual discount update\non December 31;
+|System|
+if (Today is December 31?) then ([yes])
+  :Start the approved annual update;
+else ([no])
+  :Reject the update on another date;
+  stop
+endif
 while (Another customer to process?) is ([yes])
   :Calculate customer's annual revenue\nfrom fully paid invoices;
   if (Annual revenue < EUR 10,000?) then ([yes])
