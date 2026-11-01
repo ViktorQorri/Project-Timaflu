@@ -57,7 +57,7 @@ Requirements: Python 3.10 or newer and a local MySQL server.
    flask --app app run --debug
    ```
 
-Open http://127.0.0.1:5000. The home page says "Database verbonden" when the database connection is available. The robots' JSON API answers on http://127.0.0.1:5000/api/health.
+Open http://127.0.0.1:5000. The homepage is static; database errors are shown when a data-dependent process is used.
 
 ## Opleverbestanden maken
 
@@ -75,11 +75,9 @@ Het websitearchief bevat de Jinja/HTML-templates en CSS; voor dynamische
 schermen blijft de Python-backend nodig. De databasebestanden zijn
 MySQL-scripts en documentatie, geen automatisch gepubliceerde online database.
 
-Na een geslaagde GitHub Actions-run zijn dezelfde vier archieven ook te
-downloaden als artifact `timaflu-school-deliverables`. Alleen Git-tracked
-bronbestanden gaan mee: geen lokale `.env`, gebruikerswachtwoorden,
-`__pycache__` of tijdelijke testdatabases. De gegenereerde ZIPs hoeven
-niet in Git te worden gecommit.
+De ZIP-bestanden worden niet opgeslagen in Git. Maak deze lokaal wanneer
+de schooloplevering plaatsvindt. Er worden alleen Git-tracked bronnen opgenomen;
+lokale wachtwoorden en tijdelijke gegevens blijven uitgesloten.
 
 ## Adding a screen
 

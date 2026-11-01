@@ -351,7 +351,6 @@
       "find_customer",
       "create",
       "update",
-      "deactivate",
       "_insert_address"
     ]
   },
@@ -405,14 +404,6 @@
     ]
   },
   {
-    "module": "repositories.health_repository",
-    "class": "HealthRepository",
-    "methods": [
-      "__init__",
-      "ping"
-    ]
-  },
-  {
     "module": "repositories.manufacturer_repository",
     "class": "ManufacturerRepository",
     "methods": [
@@ -435,14 +426,6 @@
       "search_orders",
       "find_order",
       "find_order_lines"
-    ]
-  },
-  {
-    "module": "repositories.order_status_report_repository",
-    "class": "OrderStatusReportRepository",
-    "methods": [
-      "__init__",
-      "list_orders"
     ]
   },
   {
@@ -587,7 +570,6 @@
       "get",
       "create",
       "update",
-      "deactivate",
       "validate"
     ]
   },
@@ -629,14 +611,6 @@
     ]
   },
   {
-    "module": "services.health_service",
-    "class": "HealthService",
-    "methods": [
-      "__init__",
-      "database_is_reachable"
-    ]
-  },
-  {
     "module": "services.manufacturer_service",
     "class": "ManufacturerService",
     "methods": [
@@ -660,16 +634,6 @@
       "__init__",
       "search",
       "status_overview"
-    ]
-  },
-  {
-    "module": "services.order_status_report_service",
-    "class": "OrderStatusReportService",
-    "methods": [
-      "__init__",
-      "report",
-      "_group",
-      "_parse_date"
     ]
   },
   {

@@ -35,10 +35,6 @@ class CustomerService:
         """Validate and save changed data of an existing customer."""
         self.repository.update(customer_id, self.validate(form))
 
-    def deactivate(self, customer_id):
-        """Deactivate a customer while retaining their history."""
-        self.repository.deactivate(customer_id)
-
     def validate(self, form):
         """Return cleaned customer data, or raise ValidationError with every problem found.
 

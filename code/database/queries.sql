@@ -1001,20 +1001,6 @@ WHERE leverancier_id = 1 AND product_id = 1 FOR UPDATE;
 DELETE FROM LeveranciersAanbod WHERE leverancier_id = 1 AND product_id = 1;
 -- The SELECT and DELETE run in one transaction in ManufacturerRepository.remove_offer().
 
--- Issue #27: order status report, GET /reports.
--- Optional date bounds are inclusive; the end date includes the whole day.
-SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
-       b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam,
-       COUNT(r.product_id) AS aantal_regels
-FROM Bestelling AS b
-JOIN Klant AS k ON k.klant_id = b.klant_id
-LEFT JOIN Bestelregel AS r ON r.bestelling_id = b.bestelling_id
-WHERE ('2026-10-01' IS NULL OR b.besteld_op >= '2026-10-01')
-  AND ('2026-10-31' IS NULL OR b.besteld_op < '2026-10-31' + INTERVAL 1 DAY)
-GROUP BY b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
-         b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam
-ORDER BY b.besteld_op DESC, b.bestelling_id DESC;
-
 -- Issue #29: find orders for the sales employee to inform the customer.
 SELECT b.bestelling_id, k.bedrijfsnaam, b.besteld_op,
        b.gewenste_leverdatum, b.dagdeel, b.status_naam
@@ -1047,41 +1033,6 @@ LEFT JOIN Voorraadreservering AS vr
       AND vr.product_id = br.product_id
 WHERE br.bestelling_id = 15
 ORDER BY p.productnaam ASC;
-
--- Issue #30: invoice-based revenue per customer, GET /reports/sales.
--- Invoice snapshots are used as saved; missing totals remain NULL.
-SELECT k.klant_id, k.bedrijfsnaam,
-       COUNT(f.factuur_id) AS aantal_facturen,
-       COUNT(f.totaal_bedrag) AS bekende_facturen,
-       COUNT(f.factuur_id) - COUNT(f.totaal_bedrag) AS onbekende_facturen,
-       SUM(f.totaal_bedrag) AS bekend_factuurbedrag
-FROM Factuur AS f
-JOIN Klant AS k ON k.klant_id = f.klant_id
-WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
-GROUP BY k.klant_id, k.bedrijfsnaam
-ORDER BY bekend_factuurbedrag DESC, k.bedrijfsnaam ASC;
-
--- Issue #30: invoice-based revenue per selected period.
-SELECT DATE_FORMAT(f.factuurdatum, '%Y-%m') AS periode,
-       COUNT(f.factuur_id) AS aantal_facturen,
-       COUNT(f.totaal_bedrag) AS bekende_facturen,
-       COUNT(f.factuur_id) - COUNT(f.totaal_bedrag) AS onbekende_facturen,
-       SUM(f.totaal_bedrag) AS bekend_factuurbedrag
-FROM Factuur AS f
-WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
-GROUP BY periode
-ORDER BY periode ASC;
-
--- Issue #30: top medicines by quantities on invoiced delivered lines.
-SELECT p.product_id, p.artikelnummer, p.productnaam,
-       SUM(lr.aantal_geleverd) AS aantal_verkocht
-FROM Factuur AS f
-JOIN Leveringregel AS lr ON lr.factuur_id = f.factuur_id
-JOIN Product AS p ON p.product_id = lr.product_id
-WHERE f.factuurdatum >= '2026-01-01' AND f.factuurdatum < '2027-01-01'
-GROUP BY p.product_id, p.artikelnummer, p.productnaam
-ORDER BY aantal_verkocht DESC, p.productnaam ASC
-LIMIT 10;
 
 -- BEGIN GENERATED WEEKLY INVOICE QUERIES
 -- WeeklyInvoiceRepository.eligible_customers example 1

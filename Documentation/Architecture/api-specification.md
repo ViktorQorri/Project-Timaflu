@@ -6,11 +6,10 @@ The JSON API that the warehouse robots use. Browsers use the HTML pages instead 
 
 1. [General agreements](#general-agreements)
 2. [Errors](#errors)
-3. [GET /api/health](#get-apihealth)
-4. [POST /api/picking-bins](#post-apipicking-bins)
-5. [GET /api/robots/{robot_id}/next](#get-apirobotsrobot_idnext)
-6. [POST /api/robots/{robot_id}/complete](#post-apirobotsrobot_idcomplete)
-7. [POST /api/orders/{order_id}/suborders](#post-apiordersorder_idsuborders)
+3. [POST /api/picking-bins](#post-apipicking-bins)
+4. [GET /api/robots/{robot_id}/next](#get-apirobotsrobot_idnext)
+5. [POST /api/robots/{robot_id}/complete](#post-apirobotsrobot_idcomplete)
+6. [POST /api/orders/{order_id}/suborders](#post-apiordersorder_idsuborders)
 
 ## General agreements
 
@@ -40,29 +39,6 @@ Every answer with a status of 400 or higher has the same body. The error handler
 ```
 
 `error` is a readable message. Messages for broken business rules are Dutch, because they come from the services. Messages for 404/405 routes, 500 and 503 are English.
-
-## GET /api/health
-
-Tells a robot whether the backend and the database are up. It changes nothing.
-
-**Request:** no body.
-
-**Response 200:**
-
-```json
-{"status": "ok", "database": true}
-```
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `status` | string | Always `"ok"` when the backend answers |
-| `database` | boolean | `true` when the database answered a test query |
-
-**Errors:**
-
-| Status | When |
-| --- | --- |
-| 503 | The database cannot be reached. Body: `{"error": "The database cannot be reached. Try again later."}` |
 
 ## POST /api/picking-bins
 

@@ -48,15 +48,7 @@ Deze voorbeelden zijn referentiegevallen uit de casusregels. Het zijn **geen** b
 5. **Usecase-traceability:** het oorspronkelijke `use_cases/informatiesysteem.puml` miste de acquisitiemedewerker met diens verplichte functies en noemde ten onrechte 'Klantnummer opzoeken' voor de koerier. Deze PR voegt de acquisitie-actor met bezoekregistratie, opvolgoverzicht en opvolging toe, maakt de tweede afleverpoging expliciet en corrigeert de telefoonnummerfunctie. De bestaande UCD bevat nog geen formele `UC05`/`UC16`-nummering. Daarom blijven de sequence-titels bij controleerbare activity diagram-verwijzingen. Gedetailleerde usecase-beschrijvingen vormen een afzonderlijk deelproduct.
 6. **Ontwerp is niet hetzelfde als werkende backend:** een methode in een sequence diagram die in de DKD staat, is niet automatisch in `main` geïmplementeerd. Omdat de casus de interne bestellijst van het verkoopassortiment onderscheidt, voegt deze ontwerp-PR de DKD-methode `Product.removeFromInternalReorderList()` en het bijbehorende attribuut `internalReorderEligible` toe. Dit is een expliciete ontwerpvereiste en **geen claim dat deze methode al in de backend draait**. Backend- en databasetoetsing hoort bij de bijbehorende code-PR's; deze PR verandert geen SQL of applicatiecode.
 
-## Controles
+## Handmatige controle
 
-Vanaf de repository-root:
-
-```powershell
-python -m unittest discover -s Documentation/Architecture/uml/tests -p "test_*.py"
-java -jar <pad-naar-plantuml.jar> -checkonly "Documentation/Architecture/uml/src/sequence_diagrams/*.puml"
-java -jar <pad-naar-plantuml.jar> -tsvg -o ../../export/sequence_diagrams "Documentation/Architecture/uml/src/sequence_diagrams/*.puml"
-git diff --check
-```
-
-De controles toetsen aanwezigheid, SVG/XML, DKD-methoden en de expliciete casusregels, maar vervangen geen inhoudelijke teamreview of een werkende end-to-end backendtest. Het team moet PR #116 beoordelen voordat deze in `main` wordt gemerged; PR #93 is de eerdere, door deze PR vervangen versie.
+Controleer de vijf diagrammen, traceability en gebruikte namen handmatig met
+de oorspronkelijke casus. De bron- en exportdiagrammen blijven bestaan.
