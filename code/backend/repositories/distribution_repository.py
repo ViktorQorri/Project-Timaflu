@@ -10,14 +10,20 @@ ORDERS_WITH_BINS_QUERY = """
     SELECT b.bestelling_id, b.status_naam, b.spoed, b.gewenste_leverdatum,
            b.dagdeel, b.aantal_verhuisdozen, k.bedrijfsnaam,
            af.adres AS afleveradres, d.deelorder_id, d.afgerond,
-           v.unieke_code, r.gang
+           v.unieke_code, r.gang,
+           EXISTS (
+               SELECT 1 FROM Deelorder AS picked
+               JOIN Deelorderregel AS picked_line ON picked_line.deelorder_id = picked.deelorder_id
+               WHERE picked.bestelling_id = b.bestelling_id AND picked.afgerond = TRUE
+                 AND picked_line.aantal > 0
+           ) AS heeft_verzameld
     FROM Bestelling AS b
     JOIN Klant AS k ON k.klant_id = b.klant_id
     JOIN Adres AS af ON af.adres_id = b.afleveradres_id
     JOIN Deelorder AS d ON d.bestelling_id = b.bestelling_id
     LEFT JOIN Verzamelbak AS v ON v.deelorder_id = d.deelorder_id
     LEFT JOIN Robot AS r ON r.robot_id = d.robot_id
-    WHERE b.status_naam NOT IN ('verstuurd', 'afgeleverd')
+    WHERE b.status_naam NOT IN ('verstuurd', 'afgeleverd', 'gefactureerd')
       AND EXISTS (
           SELECT 1 FROM Deelorder AS d2
           JOIN Verzamelbak AS v2 ON v2.deelorder_id = d2.deelorder_id
@@ -120,19 +126,42 @@ class DistributionRepository:
         """Return couriers and their manually managed availability."""
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(
-                """SELECT koerier_id, naam, beschikbaar
+                """SELECT koerier_id, naam, regio, extern, beschikbaar
                    FROM Koerier
                    ORDER BY naam, koerier_id"""
             )
             return cursor.fetchall()
 
-    def create_courier(self, name):
-        """Add a courier as unavailable until staff confirms availability."""
+    def create_courier(self, name, region, external):
+        """Save the actual region and whether the courier is external."""
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
-                    "INSERT INTO Koerier (naam, beschikbaar) VALUES (%s, FALSE)",
-                    (name,),
+                    """INSERT INTO Koerier (naam, regio, extern, beschikbaar)
+                       VALUES (%s, %s, %s, FALSE)""",
+                    (name, region, external),
+                )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def update_courier_region(self, courier_id, region):
+        """Assign an existing in-house courier to the appropriate real region."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT koerier_id, extern FROM Koerier WHERE koerier_id=%s FOR UPDATE",
+                    (courier_id,),
+                )
+                courier = cursor.fetchone()
+                if courier is None:
+                    raise NotFoundError("Koerier niet gevonden.")
+                if courier["extern"]:
+                    raise ConflictError("Een externe spoedkoerier heeft geen vaste regio.")
+                cursor.execute(
+                    "UPDATE Koerier SET regio=%s WHERE koerier_id=%s",
+                    (region, courier_id),
                 )
             self.connection.commit()
         except Exception:
@@ -178,7 +207,7 @@ class DistributionRepository:
                 # region boundaries. Therefore staff must confirm the matching
                 # region for a non-urgent trip, without inventing a location map.
                 if not order.get("spoed") and region_confirmed != "yes":
-                    raise ConflictError("Controleer en bevestig de eigen koeriersregio van het afleveradres.")
+                    raise ConflictError("Bevestig de juiste eigen koeriersregio en dat de reguliere bestelling vóór 17:00 uur wordt opgehaald.")
                 if order.get("spoed"):
                     planned_at = datetime.combine(order["gewenste_leverdatum"], planned_time)
                     ordered_at = order.get("besteld_op")
@@ -212,7 +241,7 @@ class DistributionRepository:
                             or previous["ritdatum"] >= order["gewenste_leverdatum"]):
                         raise ConflictError("Deze bestelling heeft al een actieve levering.")
                 cursor.execute(
-                    """SELECT koerier_id, beschikbaar
+                    """SELECT koerier_id, beschikbaar, regio, extern
                        FROM Koerier
                        WHERE koerier_id = %s
                        FOR UPDATE""",
@@ -223,14 +252,38 @@ class DistributionRepository:
                     raise NotFoundError("Koerier niet gevonden.")
                 if not courier["beschikbaar"]:
                     raise ConflictError("Kies een koerier die als beschikbaar staat geregistreerd.")
-                cursor.execute(
-                    """SELECT rit_id
-                       FROM Rit
-                       WHERE koerier_id = %s AND ritdatum = %s
-                       FOR UPDATE""",
-                    (courier_id, order["gewenste_leverdatum"]),
-                )
-                ride = cursor.fetchone()
+                if not order.get("spoed"):
+                    if courier.get("extern"):
+                        raise ConflictError("Een externe spoedkoerier is alleen voor spoedbestellingen.")
+                    if not courier.get("regio"):
+                        raise ConflictError("Stel eerst de koeriersregio in.")
+                elif courier.get("extern"):
+                    cursor.execute(
+                        """SELECT COUNT(*) AS aantal
+                           FROM Koerier
+                           WHERE beschikbaar = TRUE AND extern = FALSE""",
+                    )
+                    if cursor.fetchone()["aantal"]:
+                        raise ConflictError(
+                            "Een externe spoedkoerier mag pas worden ingezet als geen eigen koerier beschikbaar is."
+                        )
+                # Rush shipments are separate from ordinary regional rounds.
+                # Ordinary deliveries may share only an ordinary courier route.
+                ride = None
+                if not order.get("spoed"):
+                    cursor.execute(
+                        """SELECT r.rit_id FROM Rit AS r
+                           WHERE r.koerier_id = %s AND r.ritdatum = %s
+                             AND NOT EXISTS (
+                                 SELECT 1 FROM Leverpoging AS lp
+                                 JOIN Levering AS l ON l.levering_id = lp.levering_id
+                                 JOIN Bestelling AS b ON b.bestelling_id = l.bestelling_id
+                                 WHERE lp.rit_id = r.rit_id AND b.spoed = TRUE
+                             )
+                           ORDER BY r.rit_id LIMIT 1 FOR UPDATE""",
+                        (courier_id, order["gewenste_leverdatum"]),
+                    )
+                    ride = cursor.fetchone()
                 if ride is None:
                     cursor.execute(
                         "INSERT INTO Rit (koerier_id, ritdatum) VALUES (%s, %s)",
@@ -336,10 +389,10 @@ class DistributionRepository:
                 if order is None:
                     raise NotFoundError("Bestelling niet gevonden.")
                 if order["status_naam"] in {
-                    "backorder",
                     "ingepakt",
                     "verstuurd",
                     "afgeleverd",
+                    "gefactureerd",
                 }:
                     raise ConflictError("Deze bestelling kan niet meer worden verpakt.")
 
@@ -356,6 +409,16 @@ class DistributionRepository:
                         "Verpak de bestelling pas als alle deelorders zijn afgerond."
                     )
 
+                cursor.execute(
+                    """SELECT COUNT(*) AS aantal_verzamelde_regels
+                       FROM Deelorder AS d
+                       JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                       WHERE d.bestelling_id = %s AND d.afgerond = TRUE
+                         AND dr.aantal > 0""",
+                    (order_id,),
+                )
+                if not cursor.fetchone()["aantal_verzamelde_regels"]:
+                    raise ConflictError("Er zijn geen verzamelde medicijnen om te verpakken.")
                 cursor.execute(
                     """SELECT v.unieke_code
                        FROM Verzamelbak AS v

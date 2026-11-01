@@ -31,18 +31,22 @@ def deliveries():
     orders = service.orders_with_bins()
     unscheduled_orders = service.orders_to_schedule()
     couriers = service.couriers()
+    available_internal = any(
+        courier["beschikbaar"] and not courier.get("extern") for courier in couriers
+    )
     schedule = AssessedRepository(connection).delivery_schedule(day)
     second_attempts = {
         row["levering_id"] for row in schedule if row["pogingnummer"] == 2
     }
     for row in schedule:
+        row["geplande_tijd"] = AssessedRepository.time_from_database(
+            row["geplande_tijd"]
+        )
         row["can_register_first_attempt"] = (
             row["pogingnummer"] == 1 and row["resultaat"] is None
         )
         row["can_register_second_attempt"] = (
-            row["pogingnummer"] == 1
-            and row["resultaat"] == "niet aanwezig"
-            and row["levering_id"] not in second_attempts
+            row["pogingnummer"] == 2 and row["resultaat"] is None
         )
         row["can_reschedule"] = (
             row["pogingnummer"] == 2
@@ -57,17 +61,30 @@ def deliveries():
         orders=orders,
         unscheduled_orders=unscheduled_orders,
         couriers=couriers,
+        available_internal=available_internal,
     )
 
 
 @distribution.post("/deliveries/couriers")
 def create_courier():
     service = _service()
-    service.create_courier(request.form.get("name"))
+    service.create_courier(
+        request.form.get("name"),
+        request.form.get("region"),
+        request.form.get("external") == "yes",
+    )
     flash(
         "Koerier toegevoegd. Registreer de koerier als beschikbaar om ritten toe te wijzen.",
         "success",
     )
+    return redirect(url_for("distribution.deliveries"))
+
+
+@distribution.post("/deliveries/couriers/<int:courier_id>/region")
+def update_courier_region(courier_id):
+    """Set a known actual region without inventing geographical boundaries."""
+    _service().update_courier_region(courier_id, request.form.get("region"))
+    flash("Koeriersregio bijgewerkt.", "success")
     return redirect(url_for("distribution.deliveries"))
 
 
@@ -113,8 +130,15 @@ def first_attempt():
     if outcome not in {"afgeleverd", "niet aanwezig"}:
         raise DomainError("Kies een geldige uitkomst voor de eerste bezorgpoging.")
 
+    second_time = None
+    if outcome == "niet aanwezig":
+        try:
+            second_time = time.fromisoformat(request.form.get("second_time", ""))
+        except ValueError as error:
+            raise DomainError("Kies een tijd waarop de koerier later diezelfde dag terugkomt.") from error
     AssessedRepository(get_connection()).register_first_delivery_attempt(
-        delivery_id, day, outcome == "afgeleverd", request.form.get("receipt_signed") == "1"
+        delivery_id, day, outcome == "afgeleverd",
+        request.form.get("receipt_signed") == "1", second_time
     )
     flash("Eerste bezorgpoging geregistreerd.", "success")
     return redirect(url_for("distribution.deliveries", day=day.isoformat()))

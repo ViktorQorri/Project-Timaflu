@@ -61,6 +61,19 @@ def invoices():
     )
 
 
+@administration.post("/invoices/annual-discounts")
+def determine_annual_discounts():
+    """Fix next calendar year's annual customer discounts on December 31."""
+    from flask import redirect, url_for, flash
+    from domain.errors import DomainError
+
+    if request.form.get("discounts_confirmed") != "yes":
+        raise DomainError("Bevestig de jaarlijkse berekening van de klantkortingen.")
+    count = AssessedRepository(get_connection()).determine_annual_customer_discounts()
+    flash(f"Klantkortingen voor {date.today().year + 1} vastgesteld voor {count} klanten.", "success")
+    return redirect(url_for("administration.invoices"))
+
+
 @administration.post("/purchase-invoices/<int:invoice_id>/paid")
 def pay_purchase_invoice(invoice_id):
     """Record a supplier invoice as paid after the employee confirms payment."""

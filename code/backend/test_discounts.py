@@ -40,6 +40,9 @@ class FakeRepository:
     def count_previous_orders(self, customer_id):
         return self.previous_orders
 
+    def find_annual_percentage(self, customer_id, calendar_year):
+        return None
+
     def sum_purchases(self, customer_id, year):
         self.purchase_years.append((customer_id, year))
         return self.revenue

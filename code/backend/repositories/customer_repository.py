@@ -42,7 +42,7 @@ class CustomerRepository:
         """
         pattern = f"%{search}%"
         with self.connection.cursor(dictionary=True) as cursor:
-            cursor.execute(query, (year, year, pattern, pattern, pattern))
+            cursor.execute(query, (year, year + 1, pattern, pattern, pattern))
             return cursor.fetchall()
 
     def find_customer(self, customer_id):

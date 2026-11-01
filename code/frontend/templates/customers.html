@@ -23,7 +23,7 @@
     {% if customers %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table customer-table">
-          <caption>Jaaromzet {{ year }} uit betaalde facturen, klantkorting voor {{ year }}</caption>
+          <caption>Jaaromzet {{ year }} uit betaalde facturen, klantkorting voor {{ discount_year }}</caption>
           <thead>
             <tr>
               <th scope="col">Nr.</th>
@@ -33,7 +33,7 @@
               <th scope="col">Afleveradres</th>
               <th scope="col">Factuuradres</th>
               <th scope="col" class="stock-dashboard__number">Jaaromzet {{ year }}</th>
-              <th scope="col">Klantkorting</th>
+              <th scope="col">Klantkorting {{ discount_year }}</th>
               <th scope="col"><span class="customer-visually-hidden">Acties</span></th>
             </tr>
           </thead>

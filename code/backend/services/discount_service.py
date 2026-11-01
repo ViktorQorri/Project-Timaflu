@@ -74,7 +74,13 @@ class DiscountService:
             discounts.append(self.calculate_one_time_discount(amount))
             amount = discounts[-1]["total_after"]
         annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
-        percentage = self.determine_discount_percentage(annual_revenue)
+        saved_percentage = self.repository.find_annual_percentage(
+            customer["klant_id"], previous_year + 1
+        )
+        percentage = (
+            saved_percentage if saved_percentage is not None
+            else self.determine_discount_percentage(annual_revenue)
+        )
         discounts.append(self.calculate_customer_discount(amount, percentage))
 
         return {

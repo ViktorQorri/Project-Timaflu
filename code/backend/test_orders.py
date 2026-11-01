@@ -40,6 +40,9 @@ class FakeDiscountRepository:
     def sum_purchases(self, customer_id, year):
         return Decimal("12000.00")
 
+    def find_annual_percentage(self, customer_id, year):
+        return None
+
 
 class FakeOrderRepository:
     def __init__(self, stock=None, blocked=False):

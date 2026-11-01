@@ -61,6 +61,15 @@ class DiscountRepository:
         """, (customer_id,))
         return int(row["aantal_bestellingen"])
 
+    def find_annual_percentage(self, customer_id, calendar_year):
+        """The annual rate fixed on December 31 for the next calendar year."""
+        row = self._fetchone(
+            """SELECT percentage FROM Klantkorting
+               WHERE klant_id=%s AND kalenderjaar=%s""",
+            (customer_id, calendar_year),
+        )
+        return row["percentage"] if row else None
+
     def sum_purchases(self, customer_id, year):
         """Return persisted net totals from paid invoices in the selected year."""
         row = self._fetchone("""

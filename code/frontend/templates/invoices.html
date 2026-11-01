@@ -8,6 +8,20 @@
     <p class="invoice-page__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
   </header>
 
+  {% if today[5:] == '-12-31' %}
+    <section class="invoice-create" aria-labelledby="annual-discounts-title">
+      <h2 id="annual-discounts-title">Jaarlijkse klantkortingen</h2>
+      <p>Stel op 31 december de klantkorting voor volgend jaar vast op basis van de
+         volledig betaalde facturen van dit kalenderjaar (5%, 10% of 15%).</p>
+      <form method="post" action="{{ url_for('administration.determine_annual_discounts') }}">
+        <label><input type="checkbox" name="discounts_confirmed" value="yes" required>
+          Ik heb de betaalde jaaromzet gecontroleerd.
+        </label>
+        <button type="submit">Kortingen voor volgend jaar vastleggen</button>
+      </form>
+    </section>
+  {% endif %}
+
   <section aria-labelledby="uninvoiced-deliveries-title">
     <h2 id="uninvoiced-deliveries-title">Afgeleverd en nog niet gefactureerd</h2>
     <p>Controleer de daadwerkelijk geleverde producten voordat je een weekfactuur aanmaakt.

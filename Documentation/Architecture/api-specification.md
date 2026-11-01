@@ -124,7 +124,7 @@ GET /api/robots/1/next?aisle=A
 **Response 200, when a sub-order is available:**
 
 ```json
-{"suborder": {"deelorder_id": 7, "bestelling_id": 3}, "lines": [{"product_id": 4, "productnaam": "Medicijn", "aantal": 2}]}
+{"suborder": {"deelorder_id": 7, "bestelling_id": 3}, "lines": [{"product_id": 4, "productnaam": "Medicijn", "aantal": 2, "magazijnlocaties": "A4, A8"}]}
 ```
 
 When no sub-order is available, `suborder` is `null` and `lines` is an empty array.
@@ -133,21 +133,23 @@ When no sub-order is available, `suborder` is `null` and `lines` is an empty arr
 
 ## POST /api/robots/{robot_id}/complete
 
-Marks an unfinished sub-order complete after at least one picking bin and one sub-order line are recorded.
+Marks an unfinished sub-order complete after a picking bin has been registered. The robot must explicitly report the actual collected quantity for **every** assigned product, including zero when a product could not be collected.
 
 **Request:**
 
 ```json
-{"aisle": "A", "suborder_id": 7}
+{"aisle": "A", "suborder_id": 7, "collected": [{"product_id": 4, "quantity": 1}]}
 ```
 
 **Response 200:**
 
 ```json
-{"deelorder_id": 7, "afgerond": true}
+{"deelorder_id": 7, "afgerond": true, "backorder": true}
 ```
 
-**Errors:** 400 for a non-object body or invalid aisle/identifier; 404 when the robot is not assigned to the aisle or the sub-order does not belong to it; 409 when the sub-order is already complete, has no lines, or has no registered bin.
+**Effects:** Physical stock is reduced only by the confirmed collected quantity. The original ordered amount is kept in `Bestelregel.aantal`. `Deelorderregel.aantal` records the actual collected amount after completion; uncollected zero-quantity lines are omitted because the database allows only positive line quantities. Stock reservations for this completed sub-order are released. If less was collected than assigned, the order is marked as backorder; only collected medicines can be packaged and invoiced.
+
+**Errors:** 400 for a non-object body, invalid aisle/identifier, missing collected quantities, duplicate products or invalid counts; 404 when the robot is not assigned to the aisle or the sub-order does not belong to it; 409 when the sub-order is already complete, has no lines, has no registered bin, or the reported quantities are inconsistent with the assignment or physical stock.
 
 ## POST /api/orders/{order_id}/suborders
 

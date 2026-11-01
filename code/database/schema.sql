@@ -401,6 +401,8 @@ CREATE TABLE Verzamelbak (
 CREATE TABLE Koerier (
     koerier_id INT AUTO_INCREMENT PRIMARY KEY,
     naam VARCHAR(100) NOT NULL,
+    regio VARCHAR(100) NULL,
+    extern BOOLEAN NOT NULL DEFAULT FALSE,
     beschikbaar BOOLEAN NOT NULL DEFAULT FALSE
 );
 
@@ -560,4 +562,5 @@ VALUES
     ('ingepakt'),
     ('verstuurd'),
     ('afgeleverd'),
-    ('niet afgeleverd');
+    ('niet afgeleverd'),
+    ('gefactureerd');

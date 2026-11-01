@@ -83,7 +83,7 @@ class CustomerOverviewTests(TestCase):
         db = Connection([[CUSTOMER_ROW]])
         self.assertEqual(service(db).overview("  Markt ", 2026), [CUSTOMER_ROW])
         query, params = db.cur.commands[0]
-        self.assertEqual(params, (2026, 2026, "%Markt%", "%Markt%", "%Markt%"))
+        self.assertEqual(params, (2026, 2027, "%Markt%", "%Markt%", "%Markt%"))
         self.assertIn("JOIN Adres AS af ON af.adres_id = k.afleveradres_id", query)
         self.assertIn("JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id", query)
         self.assertIn("WHERE YEAR(f.betaald_op) = %s", query)

@@ -28,6 +28,8 @@ class FakeCursor:
         self.statements.append((query, params))
 
     def fetchone(self):
+        if self.statements and "aantal_verzamelde_regels" in self.statements[-1][0]:
+            return {"aantal_verzamelde_regels": 1}
         return self.one_rows.pop(0) if self.one_rows else None
 
     def fetchall(self):
@@ -170,7 +172,10 @@ class DistributionServiceTests(TestCase):
 
 class DeliveryAttemptRepositoryTests(TestCase):
     def test_second_attempt_uses_selected_delivery_date(self):
-        connection = FakeConnection(one_rows=[(7, 1, "niet aanwezig")])
+        connection = FakeConnection(one_rows=[{
+            "rit_id": 7, "pogingnummer": 2, "resultaat": None,
+            "geplande_tijd": time(14, 30),
+        }])
 
         AssessedRepository(connection).register_delivery_attempt(
             5, date(2026, 10, 31), True, time(14, 30), True
@@ -178,16 +183,19 @@ class DeliveryAttemptRepositoryTests(TestCase):
 
         self.assertEqual(connection.commits, 1)
         query, parameters = connection.cursor_instance.statements[0]
-        self.assertIn("r.ritdatum=%s", query)
+        self.assertIn("r.ritdatum = %s", query)
         self.assertEqual(parameters, (5, date(2026, 10, 31)))
-        self.assertEqual(connection.cursor_instance.statements[2][1], (5, 7, time(14, 30), "afgeleverd", True))
-        self.assertIn("INSERT INTO Leveringregel", connection.cursor_instance.statements[3][0])
+        self.assertEqual(connection.cursor_instance.statements[1][1], ("afgeleverd", True, 5))
+        self.assertIn("INSERT INTO Leveringregel", connection.cursor_instance.statements[2][0])
+        self.assertFalse(any("INSERT INTO Leverpoging" in q for q, _ in connection.cursor_instance.statements))
 
     def test_first_successful_attempt_records_delivered_order_lines(self):
-        connection = FakeConnection(one_rows=[(None,)])
+        connection = FakeConnection(one_rows=[{
+            "resultaat": None, "geplande_tijd": time(9, 0), "rit_id": 7,
+        }])
 
         AssessedRepository(connection).register_first_delivery_attempt(
-            5, date(2026, 10, 31), True, True
+            5, date(2026, 10, 31), True, True, None
         )
 
         self.assertEqual(connection.commits, 1)
@@ -201,8 +209,36 @@ class DeliveryAttemptRepositoryTests(TestCase):
             connection.cursor_instance.statements[2][0],
         )
 
+    def test_first_failure_schedules_second_visit_before_outcome_is_known(self):
+        connection = FakeConnection(one_rows=[{
+            "resultaat": None, "geplande_tijd": time(9, 0), "rit_id": 7,
+        }])
+        AssessedRepository(connection).register_first_delivery_attempt(
+            5, date(2026, 10, 31), False, False, time(14, 30)
+        )
+        self.assertEqual(connection.commits, 1)
+        inserted = next((sql, params) for sql, params in connection.cursor_instance.statements
+                        if "INSERT INTO Leverpoging" in sql)
+        self.assertIn("NULL, FALSE", inserted[0])
+        self.assertEqual(inserted[1], (5, 7, time(14, 30)))
+
+    def test_first_failure_cannot_schedule_earlier_second_visit(self):
+        for second_time in (None, time(8, 0), time(9, 0), time(18, 0)):
+            with self.subTest(second_time=second_time):
+                connection = FakeConnection(one_rows=[{
+                    "resultaat": None, "geplande_tijd": time(9, 0), "rit_id": 7,
+                }])
+                with self.assertRaises(DomainError):
+                    AssessedRepository(connection).register_first_delivery_attempt(
+                        5, date(2026, 10, 31), False, False, second_time
+                    )
+                self.assertEqual(connection.rollbacks, 1)
+                self.assertEqual(connection.commits, 0)
+
     def test_first_attempt_cannot_be_recorded_twice(self):
-        connection = FakeConnection(one_rows=[("afgeleverd",)])
+        connection = FakeConnection(one_rows=[{
+            "resultaat": "afgeleverd", "geplande_tijd": time(9, 0), "rit_id": 7,
+        }])
 
         with self.assertRaises(DomainError):
             AssessedRepository(connection).register_first_delivery_attempt(
@@ -306,7 +342,7 @@ class DistributionRouteTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         repository.return_value.register_first_delivery_attempt.assert_called_once_with(
-            5, date(2026, 10, 31), True, True
+            5, date(2026, 10, 31), True, True, None
         )
 
     def test_pack_route_redirects_after_recording_boxes(self):

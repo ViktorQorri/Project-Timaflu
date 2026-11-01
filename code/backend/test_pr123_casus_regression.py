@@ -99,7 +99,7 @@ class CasusPr123Tests(TestCase):
 
     def test_picked_stock_is_decremented_and_reservations_released(self):
         database = FakeConnection()
-        RobotOrderRepository(database).complete(1, 20)
+        RobotOrderRepository(database).complete(1, 20, {7: 3})
         queries = [sql for sql, _ in database.cursor_instance.queries]
         self.assertTrue(any("UPDATE Magazijnlocatie SET aantal = aantal -" in q for q in queries))
         self.assertTrue(any("DELETE FROM Voorraadreservering" in q for q in queries))
@@ -114,7 +114,7 @@ class CasusPr123Tests(TestCase):
             return original()
         database.cursor_instance.fetchall = insufficient_stock
         with self.assertRaises(ConflictError):
-            RobotOrderRepository(database).complete(1, 20)
+            RobotOrderRepository(database).complete(1, 20, {7: 3})
         self.assertEqual(database.committed, 0)
         self.assertEqual(database.rolled_back, 1)
 

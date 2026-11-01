@@ -101,6 +101,13 @@ class InvoiceIssuanceTests(TestCase):
             if "SET factuur_id = %s" in query
         )
         self.assertEqual(update[1], (50, 4, 2))
+        status_update = next(
+            (query, params) for query, params in database.statements
+            if "SET status_naam = 'gefactureerd'" in query
+        )
+        self.assertIn("b.status_naam = 'afgeleverd'", status_update[0])
+        self.assertIn("lr.factuur_id IS NULL", status_update[0])
+        self.assertEqual(status_update[1], (1, 50))
         snapshot = next(
             params
             for query, params in database.statements

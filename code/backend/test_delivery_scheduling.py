@@ -39,8 +39,10 @@ class SchedulingCursor:
             return self.database.existing_delivery
         if "SELECT koerier_id, beschikbaar" in self.query:
             return self.database.courier
-        if "SELECT rit_id" in self.query:
+        if "SELECT r.rit_id FROM Rit AS r" in self.query:
             return self.database.existing_ride
+        if "FROM Koerier" in self.query and "COUNT(*) AS aantal" in self.query:
+            return {"aantal": self.database.available_internal}
         if "SELECT koerier_id FROM Koerier" in self.query:
             return self.database.courier_exists
         return None
@@ -65,9 +67,11 @@ class SchedulingDatabase:
             "gewenste_leverdatum": date(2026, 11, 1),
         }
         self.existing_delivery = existing_delivery
-        self.courier = courier or {"koerier_id": 3, "beschikbaar": True}
+        self.courier = courier or {"koerier_id": 3, "beschikbaar": True,
+                                   "regio": "West", "extern": False}
         self.existing_ride = existing_ride
         self.courier_exists = courier_exists or {"koerier_id": 3}
+        self.available_internal = 1
         self.statements = []
         self.commits = 0
         self.rollbacks = 0
@@ -86,13 +90,13 @@ class DeliverySchedulingTests(TestCase):
     def test_new_courier_starts_unavailable(self):
         database = SchedulingDatabase()
 
-        DistributionRepository(database).create_courier("Koerier A")
+        DistributionRepository(database).create_courier("Koerier A", "West", False)
 
         self.assertEqual(database.commits, 1)
         query, parameters = database.statements[0]
         self.assertIn("INSERT INTO Koerier", query)
         self.assertIn("FALSE", query)
-        self.assertEqual(parameters, ("Koerier A",))
+        self.assertEqual(parameters, ("Koerier A", "West", False))
 
     def test_availability_change_locks_and_updates_courier(self):
         database = SchedulingDatabase()
@@ -153,6 +157,43 @@ class DeliverySchedulingTests(TestCase):
         DistributionRepository(on_time).schedule_delivery(12, 3, time(12, 30))
         self.assertEqual(on_time.commits, 1)
 
+    def test_rush_order_has_separate_courier_trip(self):
+        order = {
+            "status_naam": "verstuurd", "gewenste_leverdatum": date(2026, 11, 1),
+            "spoed": True, "besteld_op": datetime(2026, 11, 1, 10, 0),
+        }
+        database = SchedulingDatabase(order=order, existing_ride={"rit_id": 15})
+        DistributionRepository(database).schedule_delivery(12, 3, time(12, 0))
+        self.assertTrue(any("INSERT INTO Rit" in statement for statement, _ in database.statements))
+        self.assertFalse(any("SELECT r.rit_id FROM Rit" in statement for statement, _ in database.statements))
+        self.assertEqual(database.commits, 1)
+
+    def test_external_courier_is_only_for_rush_when_no_own_courier_is_available(self):
+        urgent = {
+            "status_naam": "verstuurd", "gewenste_leverdatum": date(2026, 11, 1),
+            "spoed": True, "besteld_op": datetime(2026, 11, 1, 10, 0),
+        }
+        external = {"koerier_id": 3, "beschikbaar": True, "regio": None, "extern": True}
+        unavailable = SchedulingDatabase(order=urgent, courier=external)
+        with self.assertRaisesRegex(ConflictError, "eigen koerier"):
+            DistributionRepository(unavailable).schedule_delivery(12, 3, time(12, 0))
+        no_inhouse = SchedulingDatabase(order=urgent, courier=external)
+        no_inhouse.available_internal = 0
+        DistributionRepository(no_inhouse).schedule_delivery(12, 3, time(12, 0))
+        self.assertEqual(no_inhouse.commits, 1)
+
+        normal = SchedulingDatabase(courier=external)
+        with self.assertRaisesRegex(ConflictError, "alleen voor spoed"):
+            DistributionRepository(normal).schedule_delivery(12, 3, time(9, 0), "yes")
+        self.assertEqual(normal.commits, 0)
+
+    def test_regular_courier_requires_stored_region(self):
+        unknown = SchedulingDatabase(courier={
+            "koerier_id": 3, "beschikbaar": True, "regio": None, "extern": False
+        })
+        with self.assertRaisesRegex(ConflictError, "koeriersregio"):
+            DistributionRepository(unknown).schedule_delivery(12, 3, time(9, 0), "yes")
+
     def test_unavailable_courier_cannot_be_scheduled(self):
         database = SchedulingDatabase(courier={"koerier_id": 3, "beschikbaar": False})
 
@@ -210,8 +251,8 @@ class DeliverySchedulingTests(TestCase):
             with patch("routes.distribution._service") as service:
                 response = client.post(
                     "/deliveries/couriers",
-                    data={"name": "  Koerier A  "},
+                    data={"name": "  Koerier A  ", "region": "West"},
                 )
 
         self.assertEqual(response.status_code, 302)
-        service.return_value.create_courier.assert_called_once_with("  Koerier A  ")
+        service.return_value.create_courier.assert_called_once_with("  Koerier A  ", "West", False)

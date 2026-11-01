@@ -1,5 +1,5 @@
 """MySQL queries for the five assessed scenarios, using the existing case tables."""
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from domain.errors import ConflictError, DomainError, NotFoundError
 
 
@@ -71,87 +71,132 @@ class AssessedRepository:
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
                 SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
-                       b.bestelling_id, b.status_naam, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                       b.bestelling_id, b.status_naam, b.spoed,
+                       k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                       ko.koerier_id, ko.naam AS koerier,
                        a.adres, r.ritdatum
                 FROM Leverpoging lp
                 JOIN Rit r ON r.rit_id=lp.rit_id
+                JOIN Koerier ko ON ko.koerier_id=r.koerier_id
                 JOIN Levering l ON l.levering_id=lp.levering_id
                 JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
                 JOIN Klant k ON k.klant_id=b.klant_id
                 JOIN Adres a ON a.adres_id=b.afleveradres_id
-                WHERE r.ritdatum=%s ORDER BY lp.geplande_tijd
+                WHERE r.ritdatum=%s ORDER BY b.spoed DESC, lp.geplande_tijd, lp.levering_id
             """,(day,))
             return c.fetchall()
 
-    def register_delivery_attempt(self, delivery_id, delivery_date, delivered, attempt_time, receipt_signed=False):
+    @staticmethod
+    def time_from_database(value):
+        """MySQL TIME is represented as timedelta by mysql-connector-python."""
+        if isinstance(value, timedelta):
+            seconds = value.total_seconds()
+            if seconds < 0 or seconds >= 86400 or seconds != int(seconds):
+                raise DomainError("Ongeldige geplande bezorgtijd.")
+            hours, remaining = divmod(int(seconds), 3600)
+            minutes, seconds = divmod(remaining, 60)
+            return time(hours, minutes, seconds)
+        return value
+
+    def register_delivery_attempt(self, delivery_id, delivery_date, delivered, attempt_time,
+                                  receipt_signed=False):
+        """Record the result of an already scheduled second visit, not a new visit."""
         self._validate_receipt(delivered, receipt_signed)
-        with self.db.cursor() as c:
-            try:
-                c.execute("""SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
-                             FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
-                             WHERE lp.levering_id=%s AND r.ritdatum=%s
-                             ORDER BY lp.pogingnummer DESC FOR UPDATE""",
-                          (delivery_id, delivery_date))
-                last=c.fetchone()
-                if not last:
-                    raise DomainError("Delivery not scheduled")
-                ride, attempt, previous_result=last
-                if previous_result != "niet aanwezig":
-                    raise DomainError("De eerste poging moet eerst als niet aanwezig geregistreerd zijn.")
-                if attempt >= 2:
-                    raise DomainError("Maximum two attempts")
-                c.execute("UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=%s AND pogingnummer=%s",(delivery_id,attempt))
-                c.execute("""INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
-                             VALUES (%s,2,%s,%s,%s,%s)""",
-                          (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",receipt_signed))
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT lp.rit_id, lp.pogingnummer, lp.resultaat, lp.geplande_tijd
+                       FROM Leverpoging AS lp
+                       JOIN Rit AS r ON r.rit_id = lp.rit_id
+                       WHERE lp.levering_id = %s AND r.ritdatum = %s
+                       ORDER BY lp.pogingnummer DESC LIMIT 1 FOR UPDATE""",
+                    (delivery_id, delivery_date),
+                )
+                attempt = cursor.fetchone()
+                if not attempt or attempt["pogingnummer"] != 2:
+                    raise DomainError("Plan eerst de tweede poging na een mislukte eerste poging.")
+                if attempt["resultaat"] is not None:
+                    raise DomainError("Tweede bezorgpoging is al geregistreerd.")
+                planned_time = self.time_from_database(attempt["geplande_tijd"])
+                if attempt_time is not None and attempt_time != planned_time:
+                    raise DomainError("De bezorgpoging hoort bij een ander gepland tijdstip.")
+                cursor.execute(
+                    """UPDATE Leverpoging
+                       SET resultaat = %s, ontvangst_getekend = %s
+                       WHERE levering_id = %s AND pogingnummer = 2
+                         AND resultaat IS NULL""",
+                    ("afgeleverd" if delivered else "niet aanwezig",
+                     receipt_signed, delivery_id),
+                )
+                if cursor.rowcount != 1:
+                    raise DomainError("De tweede bezorgpoging is al verwerkt.")
                 if delivered:
-                    self._record_delivered_lines(c, delivery_id)
-                    self._mark_order_after_delivery(c, delivery_id)
+                    self._record_delivered_lines(cursor, delivery_id)
+                    self._mark_order_after_delivery(cursor, delivery_id)
                 else:
-                    c.execute(
-                        """UPDATE Bestelling AS b JOIN Levering AS l
-                           ON l.bestelling_id = b.bestelling_id
+                    cursor.execute(
+                        """UPDATE Bestelling AS b
+                           JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
                            SET b.status_naam = 'niet afgeleverd'
                            WHERE l.levering_id = %s""",
                         (delivery_id,),
                     )
-                self.db.commit()
-            except Exception:
-                self.db.rollback()
-                raise
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
 
-    def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered, receipt_signed=False):
+    def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered,
+                                        receipt_signed=False, second_time=None):
+        """Schedule the return trip immediately when the first delivery failed."""
         self._validate_receipt(delivered, receipt_signed)
-        with self.db.cursor() as c:
-            try:
-                c.execute(
-                    """SELECT lp.resultaat
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT lp.resultaat, lp.geplande_tijd, lp.rit_id
                        FROM Leverpoging AS lp
                        JOIN Rit AS r ON r.rit_id = lp.rit_id
                        WHERE lp.levering_id = %s AND lp.pogingnummer = 1
-                         AND r.ritdatum = %s
-                       FOR UPDATE""",
+                         AND r.ritdatum = %s FOR UPDATE""",
                     (delivery_id, delivery_date),
                 )
-                attempt = c.fetchone()
+                attempt = cursor.fetchone()
                 if attempt is None:
                     raise DomainError("Eerste bezorgpoging niet gevonden.")
-                if attempt[0] is not None:
+                if attempt["resultaat"] is not None:
                     raise DomainError("Eerste bezorgpoging is al geregistreerd.")
-                c.execute(
+                if not delivered:
+                    planned_time = self.time_from_database(attempt["geplande_tijd"])
+                    if (not isinstance(second_time, time)
+                            or second_time <= planned_time
+                            or second_time >= time(18, 0)):
+                        raise DomainError(
+                            "Plan de tweede poging later op dezelfde dag, vóór 18:00 uur."
+                        )
+                cursor.execute(
                     """UPDATE Leverpoging
                        SET resultaat = %s, ontvangst_getekend = %s
-                       WHERE levering_id = %s AND pogingnummer = 1""",
-                    ("afgeleverd" if delivered else "niet aanwezig", receipt_signed,
-                     delivery_id),
+                       WHERE levering_id = %s AND pogingnummer = 1 AND resultaat IS NULL""",
+                    ("afgeleverd" if delivered else "niet aanwezig",
+                     receipt_signed, delivery_id),
                 )
+                if cursor.rowcount != 1:
+                    raise DomainError("Eerste bezorgpoging is al geregistreerd.")
                 if delivered:
-                    self._record_delivered_lines(c, delivery_id)
-                    self._mark_order_after_delivery(c, delivery_id)
-                self.db.commit()
-            except Exception:
-                self.db.rollback()
-                raise
+                    self._record_delivered_lines(cursor, delivery_id)
+                    self._mark_order_after_delivery(cursor, delivery_id)
+                else:
+                    cursor.execute(
+                        """INSERT INTO Leverpoging
+                           (levering_id, pogingnummer, rit_id, geplande_tijd,
+                            resultaat, ontvangst_getekend)
+                           VALUES (%s, 2, %s, %s, NULL, FALSE)""",
+                        (delivery_id, attempt["rit_id"], second_time),
+                    )
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
 
     @staticmethod
     def _validate_receipt(delivered, receipt_signed):
@@ -315,6 +360,59 @@ class AssessedRepository:
             self.db.rollback()
             raise
 
+    def determine_annual_customer_discounts(self, as_of=None):
+        """On December 31, fix next year's discount for every customer (AD28).
+
+        Only fully paid invoices count. The snapshot cannot be reissued after
+        it is fixed. Every customer is processed in one transaction.
+        """
+        from services.discount_service import DiscountService
+
+        as_of = as_of or date.today()
+        if (as_of.month, as_of.day) != (12, 31):
+            raise DomainError("De jaarlijkse klantkorting wordt op 31 december vastgesteld.")
+        next_year = as_of.year + 1
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT klant_id FROM Klant ORDER BY klant_id FOR UPDATE")
+                customers = cursor.fetchall()
+                cursor.execute(
+                    "SELECT COUNT(*) AS aantal FROM Klantkorting WHERE kalenderjaar=%s",
+                    (next_year,),
+                )
+                if cursor.fetchone()["aantal"]:
+                    raise ConflictError(
+                        "De klantkortingen voor volgend jaar zijn al vastgesteld."
+                    )
+                for customer in customers:
+                    customer_id = customer["klant_id"]
+                    cursor.execute(
+                        """SELECT COUNT(*) AS paid_count,
+                                  COUNT(totaal_bedrag) AS known_count,
+                                  COALESCE(SUM(totaal_bedrag), 0) AS jaaromzet
+                           FROM Factuur
+                           WHERE klant_id=%s AND betaald_op >= %s AND betaald_op <= %s""",
+                        (customer_id, date(as_of.year, 1, 1), as_of),
+                    )
+                    revenue = cursor.fetchone()
+                    if revenue["paid_count"] != revenue["known_count"]:
+                        raise DomainError(
+                            "Onvolledige betaalde factuurhistorie: bepaal geen korting op basis van geschatte omzet."
+                        )
+                    percentage = DiscountService.determine_discount_percentage(
+                        revenue["jaaromzet"]
+                    )
+                    cursor.execute(
+                        """INSERT INTO Klantkorting(klant_id, kalenderjaar, percentage)
+                           VALUES (%s, %s, %s)""",
+                        (customer_id, next_year, percentage),
+                    )
+            self.db.commit()
+            return len(customers)
+        except Exception:
+            self.db.rollback()
+            raise
+
     def uninvoiced_deliveries(self):
         """Overview required before the weekly invoice is approved."""
         with self.db.cursor(dictionary=True) as cursor:
@@ -453,6 +551,9 @@ class AssessedRepository:
                             customer_id, order_year - 1
                         )
                     line["annual_revenue"] = yearly_revenue[order_year]
+                    line["annual_discount_percentage"] = (
+                        revenue_repository.find_annual_percentage(customer_id, order_year)
+                    )
                 annual_revenue = yearly_revenue.get(invoice_date.year, 0)
                 cursor.execute(
                     "INSERT INTO Factuur (klant_id, factuurdatum) VALUES (%s, %s)",
@@ -480,6 +581,27 @@ class AssessedRepository:
                         raise DomainError(
                             "Een leveringsregel is ondertussen al gefactureerd."
                         )
+                # Fully delivered orders move to the case's 'invoiced' status.
+                # A partially delivered order remains backorder for its missing
+                # medicine, even though the delivered items are invoiced.
+                cursor.execute(
+                    """UPDATE Bestelling AS b
+                       SET status_naam = 'gefactureerd'
+                       WHERE b.klant_id = %s AND b.status_naam = 'afgeleverd'
+                         AND EXISTS (
+                             SELECT 1 FROM Levering AS l
+                             JOIN Leveringregel AS lr ON lr.levering_id = l.levering_id
+                             WHERE l.bestelling_id = b.bestelling_id
+                               AND lr.factuur_id = %s
+                         )
+                         AND NOT EXISTS (
+                             SELECT 1 FROM Levering AS l
+                             JOIN Leveringregel AS lr ON lr.levering_id = l.levering_id
+                             WHERE l.bestelling_id = b.bestelling_id
+                               AND lr.factuur_id IS NULL
+                         )""",
+                    (customer_id, invoice_id),
+                )
             self.save_invoice_snapshot(invoice_id, invoice_data)
             return invoice_id
         except Exception:

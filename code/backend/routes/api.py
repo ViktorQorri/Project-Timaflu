@@ -59,7 +59,7 @@ def complete_robot_order(robot_id):
     if not isinstance(payload, dict):
         return jsonify(error="Verwacht een JSON-object."), 400
     result = _robot_service().complete(
-        robot_id, payload.get("aisle"), payload.get("suborder_id")
+        robot_id, payload.get("aisle"), payload.get("suborder_id"), payload.get("collected")
     )
     return jsonify(result)
 

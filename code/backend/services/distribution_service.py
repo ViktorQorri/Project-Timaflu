@@ -35,6 +35,7 @@ class DistributionService:
                     "spoed": row["spoed"],
                     "status_naam": row["status_naam"],
                     "aantal_verhuisdozen": row["aantal_verhuisdozen"],
+                    "heeft_verzameld": bool(row.get("heeft_verzameld", True)),
                     "bakken": [],
                     "_deelorders": {},
                 },
@@ -62,12 +63,13 @@ class DistributionService:
             order["alle_deelorders_afgerond"] = all_complete
             order["kan_verpakken"] = (
                 bool(order["bakken"])
+                and (order.get("heeft_verzameld", True))
                 and all_complete
                 and order["status_naam"] not in {
-                    "backorder",
                     "ingepakt",
                     "verstuurd",
                     "afgeleverd",
+                    "gefactureerd",
                 }
             )
             order["kan_vrijgeven"] = (
@@ -106,13 +108,32 @@ class DistributionService:
     def couriers(self):
         return self.repository.list_couriers()
 
-    def create_courier(self, name):
+    def create_courier(self, name, region=None, external=False):
         name = str(name or "").strip()
         if not name:
             raise DomainError("Vul de naam van de koerier in.")
         if len(name) > 100:
             raise DomainError("De naam van de koerier mag maximaal 100 tekens bevatten.")
-        self.repository.create_courier(name)
+        if not isinstance(external, bool):
+            raise DomainError("Kies een geldige koeriersoort.")
+        region = str(region or "").strip()
+        if len(region) > 100:
+            raise DomainError("Regio mag maximaal 100 tekens bevatten.")
+        if external:
+            if region:
+                raise DomainError("Een externe spoedkoerier heeft geen eigen regio.")
+            region = None
+        elif not region:
+            raise DomainError("Vul de regio van de eigen koerier in.")
+        self.repository.create_courier(name, region, external)
+
+    def update_courier_region(self, courier_id, region):
+        region = str(region or "").strip()
+        if not region or len(region) > 100:
+            raise DomainError("Vul een geldige koeriersregio in, maximaal 100 tekens.")
+        self.repository.update_courier_region(
+            self._positive_integer(courier_id, "Koerier"), region
+        )
 
     def set_courier_availability(self, courier_id, available):
         if not isinstance(available, bool):

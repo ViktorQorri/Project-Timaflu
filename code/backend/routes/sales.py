@@ -31,13 +31,14 @@ def customer_service():
 def render_customers(form=None, errors=(), status=200):
     """Render the customer overview with the form for a new customer."""
     search = request.args.get("q", "", type=str).strip()
-    year = date.today().year
+    year = date.today().year - 1
     rows = customer_service().overview(search, year)
     return render_template(
         "customers.html",
         customers=rows,
         search=search,
         year=year,
+        discount_year=year + 1,
         form=form or {},
         errors=errors,
     ), status

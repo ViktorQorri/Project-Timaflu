@@ -7,6 +7,7 @@ STATUSES = {
     "verstuurd": ("Verstuurd", "info"),
     "backorder": ("Backorder", "warning"),
     "afgeleverd": ("Afgeleverd", "success"),
+    "gefactureerd": ("Gefactureerd", "success"),
     "niet afgeleverd": ("Niet afgeleverd", "warning"),
 }
 NO_STATUS = ("Nog geen status", "neutral")

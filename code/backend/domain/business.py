@@ -22,10 +22,12 @@ class CustomerDiscount:
 
 
 class Order:
-    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderThresholdBase=None):
+    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderThresholdBase=None,
+                 customerDiscountPercentage=None):
         self.subtotal = euro(subtotal)
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
+        self.customerDiscountPercentage = customerDiscountPercentage
         # Partial deliveries retain the discount eligibility of the original order.
         self.orderThresholdBase = (
             self.subtotal if orderThresholdBase is None else euro(orderThresholdBase)
@@ -39,7 +41,12 @@ class Order:
 
     def calculateCustomerDiscount(self):
         after = self.subtotal - self.calculateOrderDiscount() - self.calculateOneTimeDiscount()
-        return euro(after * CustomerDiscount().determinePercentage(self.annualRevenue))
+        percentage = (
+            CustomerDiscount().determinePercentage(self.annualRevenue)
+            if self.customerDiscountPercentage is None
+            else Decimal(str(self.customerDiscountPercentage)) / Decimal("100")
+        )
+        return euro(after * percentage)
 
     def calculateTotalAmount(self):
         a = self.calculateOrderDiscount()
@@ -119,12 +126,14 @@ class Invoice:
             group = orders.setdefault(order_id, {
                 "items": [],
                 "annual_revenue": line.get("annual_revenue", annualRevenue),
+                "annual_discount_percentage": line.get("annual_discount_percentage"),
                 "first_order": bool(line.get("eenmalige_korting_toegepast", firstOrder)),
                 "original_total": line.get("besteld_ex_btw"),
                 "extra_cost": euro(line.get("extra_bezorgkosten", 0)),
             })
             if (group["first_order"] != bool(line.get("eenmalige_korting_toegepast", firstOrder))
                     or group["annual_revenue"] != line.get("annual_revenue", annualRevenue)
+                    or group["annual_discount_percentage"] != line.get("annual_discount_percentage")
                     or group["extra_cost"] != euro(line.get("extra_bezorgkosten", 0))):
                 raise ValueError("Tegenstrijdige kortingsgegevens voor dezelfde bestelling")
             group["items"].append(item)
@@ -145,7 +154,8 @@ class Invoice:
                 if original_net is not None else gross
             )
             discount = Order(
-                gross, group["annual_revenue"], group["first_order"], threshold_base
+                gross, group["annual_revenue"], group["first_order"], threshold_base,
+                group["annual_discount_percentage"]
             ).calculateTotalAmount()
             amounts["total_ex_vat"] += net
             amounts["vat_9_percent"] += vat

@@ -41,7 +41,7 @@ class OrderStatusReportService:
     def _group(status):
         if status == BACKORDER:
             return "backorder"
-        if status == DELIVERED:
+        if status in (DELIVERED, "gefactureerd"):
             return "delivered"
         return "open"
 
