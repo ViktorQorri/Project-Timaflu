@@ -53,8 +53,6 @@ De belangrijkste beslismomenten hebben daarnaast afzonderlijke zichtbare schermt
 - screen_states.py: casusgebonden uitzonderingssituaties als schermvarianten.
 - case_render.py: herbruikbare HTML-uitvoer, factuurvoorbeeld en ontwerpvarianten.
 - python generate_wireframes.py: vernieuwt de 28 HTML-bestanden, index en deze README.
-- python test_case_screens.py: controleert bronlinks, verplichte inhoud en semantiek van de 28 ontwerpen.
-- python test_browser_screens.py: controleert 28 schermen op 390, 768 en 1440 px.
 - In previews/ staan screenshots van belangrijke casusschermen op 390 en 1440 px: AD02, AD05, AD09, AD12, AD16, AD23 en AD27.
 - Geen JavaScript, React, nieuwe bedrijfsstatussen of fictieve gegevens.
 

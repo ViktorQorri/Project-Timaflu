@@ -75,11 +75,9 @@ Het websitearchief bevat de Jinja/HTML-templates en CSS; voor dynamische
 schermen blijft de Python-backend nodig. De databasebestanden zijn
 MySQL-scripts en documentatie, geen automatisch gepubliceerde online database.
 
-Na een geslaagde GitHub Actions-run zijn dezelfde vier archieven ook te
-downloaden als artifact `timaflu-school-deliverables`. Alleen Git-tracked
-bronbestanden gaan mee: geen lokale `.env`, gebruikerswachtwoorden,
-`__pycache__` of tijdelijke testdatabases. De gegenereerde ZIPs hoeven
-niet in Git te worden gecommit.
+De ZIP-bestanden worden niet opgeslagen in Git. Maak deze lokaal wanneer
+de schooloplevering plaatsvindt. Er worden alleen Git-tracked bronnen opgenomen;
+lokale wachtwoorden en tijdelijke gegevens blijven uitgesloten.
 
 ## Adding a screen
 
