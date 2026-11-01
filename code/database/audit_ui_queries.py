@@ -54,7 +54,7 @@ SCREENS = [
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
 ]
-MODULES = ["routes.home","routes.purchasing","routes.sales",
+MODULES = ["routes.purchasing","routes.sales",
            "routes.distribution","routes.administration",
            "routes.weekly_invoices","routes.acquisition","routes.api"]
 
