@@ -66,7 +66,7 @@ class OrderRepository:
         try:
             with conn.cursor(dictionary=True) as cur:
                 cur.execute(
-                    """SELECT klant_id, afleveradres_id, betaaladres_id
+                    """SELECT klant_id, afleveradres_id, betaaladres_id, actief
                        FROM Klant
                        WHERE klant_id = %s
                        FOR UPDATE""",
@@ -75,6 +75,8 @@ class OrderRepository:
                 customer = cur.fetchone()
                 if customer is None:
                     raise NotFoundError("Deze klant bestaat niet.")
+                if not customer.get("actief", True):
+                    raise ConflictError("Deze klant is gedeactiveerd en kan geen bestelling plaatsen.")
                 cur.execute(BLOCKED_QUERY, (customer_id,))
                 if int(cur.fetchone()["aantal_facturen"]) > 0:
                     raise ConflictError(BLOCKED_MESSAGE)

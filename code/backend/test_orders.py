@@ -282,6 +282,15 @@ class OrderRepositoryTests(TestCase):
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
         self.assertEqual(inserts(db, "Bestelling"), [])
 
+    def test_deactivated_customer_cannot_order(self):
+        db = Connection(customer={
+            "klant_id": 7, "afleveradres_id": 3, "betaaladres_id": 4, "actief": False
+        })
+        with self.assertRaisesRegex(ConflictError, "gedeactiveerd"):
+            OrderRepository(db).save_order(7, [line(1, 1)], date(2026, 11, 2),
+                                            "ochtend", False)
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+
     def test_blocked_or_unknown_customer_rejected(self):
         db = Connection(blocked=True)
         with self.assertRaises(ConflictError):

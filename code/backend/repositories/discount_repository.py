@@ -24,6 +24,7 @@ class DiscountRepository:
         return self._fetchall("""
             SELECT klant_id, bedrijfsnaam
             FROM Klant
+            WHERE actief = TRUE
             ORDER BY bedrijfsnaam ASC
         """)
 
@@ -32,7 +33,7 @@ class DiscountRepository:
         return self._fetchone("""
             SELECT klant_id, bedrijfsnaam
             FROM Klant
-            WHERE klant_id = %s
+            WHERE klant_id = %s AND actief = TRUE
         """, (customer_id,))
 
     def list_products(self):

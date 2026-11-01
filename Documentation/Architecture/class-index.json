@@ -266,6 +266,13 @@
     "methods": []
   },
   {
+    "module": "domain.errors",
+    "class": "ValidationError",
+    "methods": [
+      "__init__"
+    ]
+  },
+  {
     "module": "domain.product",
     "class": "ProductActiveIngredient",
     "methods": []
@@ -310,6 +317,19 @@
       "close_prospect_followup",
       "record_payment_action",
       "save_invoice_snapshot"
+    ]
+  },
+  {
+    "module": "repositories.customer_repository",
+    "class": "CustomerRepository",
+    "methods": [
+      "__init__",
+      "list_customers",
+      "find_customer",
+      "create",
+      "update",
+      "deactivate",
+      "_insert_address"
     ]
   },
   {
@@ -459,6 +479,19 @@
       "issue_week",
       "_issue_customer",
       "issued_invoice"
+    ]
+  },
+  {
+    "module": "services.customer_service",
+    "class": "CustomerService",
+    "methods": [
+      "__init__",
+      "overview",
+      "get",
+      "create",
+      "update",
+      "deactivate",
+      "validate"
     ]
   },
   {
