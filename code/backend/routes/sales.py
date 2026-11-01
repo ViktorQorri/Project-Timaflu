@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import InvalidOperation
+from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import current_app, session
@@ -9,8 +9,8 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from db import get_connection
 from domain.errors import DomainError, ValidationError
-from domain.business import Order
-from repositories.assessed_repository import AssessedRepository
+from domain.business import Order, euro
+from repositories.discount_repository import DiscountRepository
 from repositories.customer_repository import CustomerRepository
 from repositories.sales_stock_repository import SalesStockRepository
 from repositories.sales_case_repository import SalesCaseRepository
@@ -120,15 +120,32 @@ def calculate_order_discount():
         raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from exc
     if customer_id<=0:
         raise DomainError("Klantnummer moet positief zijn.")
-    repository=AssessedRepository(get_connection())
-    customer,revenue=repository.customer_revenue(customer_id,date.today().year-1)
-    first_order=repository.customer_order_count(customer_id)==0
+    repository = DiscountRepository(get_connection())
+    customer = repository.find_customer(customer_id)
+    if customer is None:
+        raise DomainError("Deze klant bestaat niet of is niet actief.")
+    first_order = repository.count_previous_orders(customer_id) == 0
+    year = date.today().year
+    rate = repository.get_customer_discount_percentage(customer_id, year)
+    if rate is None:
+        if not first_order:
+            raise DomainError(f"De klantenkorting voor {year} is niet vastgelegd.")
+        rate = Decimal("5")
     try:
-        result=Order(subtotal,revenue,first_order).calculateTotalAmount()
+        subtotal_ex = euro(subtotal)
+        vat = euro(subtotal_ex * Decimal("0.09"))
+        gross = subtotal_ex + vat
+        result = Order(
+            gross, 0, first_order, customerDiscountPercentage=rate
+        ).calculateTotalAmount()
     except (ValueError, InvalidOperation) as exc:
         raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
-    return render_template("discount.html",customer=customer,annual_revenue=revenue,
-                           first_order=first_order,discount=result)
+    return render_template(
+        "discount.html", customer=customer,
+        subtotal_ex= subtotal_ex, vat=vat, gross=gross,
+        discount_year=year, customer_discount_percentage=rate,
+        first_order=first_order, discount=result
+    )
 
 
 def _approval_serializer():
@@ -138,8 +155,21 @@ def _approval_serializer():
 @sales.get("/orders/new")
 def new_telephone_order():
     customers, products = TelephoneOrderRepository(get_connection()).form_options()
-    return render_template("telephone_order.html", customers=customers, products=products,
-                           today=date.today().isoformat())
+    entered = request.args.getlist("product_id")
+    line_rows = max(6, len(entered) + (request.args.get("add_line") == "1"))
+    return render_template(
+        "telephone_order.html", customers=customers, products=products,
+        today=date.today().isoformat(), line_rows=line_rows,
+        entered={
+            "customer_id": request.args.get("customer_id", ""),
+            "day": request.args.get("day", ""),
+            "slot": request.args.get("slot", "ochtend"),
+            "urgent": request.args.get("urgent") == "yes",
+            "products": entered,
+            "quantities": request.args.getlist("quantity"),
+            "shortages": request.args.getlist("shortage"),
+        },
+    )
 
 
 @sales.post("/orders/quote")

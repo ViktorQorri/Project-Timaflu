@@ -9,11 +9,12 @@
 <section class="stock-dashboard">
   <h2>{{ customer.bedrijfsnaam }}</h2>
   <p>{{ customer.klantadres }}</p>
-  <p>Betaalde jaaromzet vorig kalenderjaar: € {{ annual_revenue }}</p>
-  {% if customer.eenmalige_korting_toegezegd %}<p>Acquisitie heeft een eenmalige korting van 10% op de eerste bestelling toegezegd.</p>{% endif %}
-  <p>Eerste bestelling: {{ 'Ja' if first_order else 'Nee' }}</p>
+  <p>Vastgestelde klantenkorting {{ discount_year }}: {{ customer_discount_percentage|int }}%.</p>
+  <p>Eerste bestelling: {{ 'Ja, eenmalige korting van 10%' if first_order else 'Nee' }}.</p>
   <dl class="invoice-totals">
-    <dt>Bestelbedrag</dt><dd>€ {{ discount.subtotal }}</dd>
+    <dt>Bestelbedrag excl. btw</dt><dd>€ {{ subtotal_ex }}</dd>
+    <dt>9% btw</dt><dd>€ {{ vat }}</dd>
+    <dt>Bestelbedrag incl. btw</dt><dd>€ {{ gross }}</dd>
     <dt>Bestellingskorting</dt><dd>€ {{ discount.order_discount }}</dd>
     <dt>Eenmalige korting</dt><dd>€ {{ discount.first_order_discount }}</dd>
     <dt>Klantenkorting</dt><dd>€ {{ discount.customer_discount }}</dd>

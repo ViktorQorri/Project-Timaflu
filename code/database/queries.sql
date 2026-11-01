@@ -545,7 +545,11 @@ SELECT lr.levering_id, lr.product_id, lr.aantal_geleverd AS quantity,
                            b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
                            (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
                             FROM Bestelregel AS ordered
-                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat,
+                           (SELECT kd.percentage FROM Klantkorting AS kd
+                            WHERE kd.klant_id=b.klant_id
+                              AND kd.kalenderjaar=YEAR(b.besteld_op)
+                           ) AS customer_discount_percentage
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -581,22 +585,15 @@ SELECT b.bestelling_id, b.extra_bezorgkosten,
                     ORDER BY b.bestelling_id FOR UPDATE;
 
 -- WeeklyInvoiceRepository._issue_customer example 5
-SELECT COUNT(*) AS paid_count,
-                           COUNT(totaal_bedrag) AS known_amount_count,
-                           COALESCE(SUM(totaal_bedrag),0) AS annual
-                    FROM Factuur
-                    WHERE klant_id=1 AND betaald_op >= '2025-01-01' AND betaald_op < '2026-01-01';
-
--- WeeklyInvoiceRepository._issue_customer example 6
 SELECT bestelling_id FROM Bestelling WHERE klant_id=1
                     ORDER BY besteld_op,bestelling_id LIMIT 1;
 
--- WeeklyInvoiceRepository._issue_customer example 7
+-- WeeklyInvoiceRepository._issue_customer example 6
 INSERT INTO Factuur
                     (klant_id,factuurdatum,week_start,afzenderadres,factuuradres)
                     VALUES (1,'2026-10-31','2026-10-19','Voorbeeldadres alleen voor test','Testapotheekstraat 1');
 
--- WeeklyInvoiceRepository._issue_customer example 8
+-- WeeklyInvoiceRepository._issue_customer example 7
 UPDATE Factuur
                            SET extra_bezorgkosten_excl_btw=10.00,
                                extra_bezorgkosten_btw=0.90,
@@ -604,15 +601,15 @@ UPDATE Factuur
                                totaal_bedrag=100.00
                            WHERE factuur_id=2;
 
--- WeeklyInvoiceRepository._issue_customer example 9
+-- WeeklyInvoiceRepository._issue_customer example 8
 UPDATE Bestelling SET extra_bezorgkosten_factuur_id=2
                                WHERE bestelling_id=1 AND extra_bezorgkosten_factuur_id IS NULL;
 
--- WeeklyInvoiceRepository._issue_customer example 10
+-- WeeklyInvoiceRepository._issue_customer example 9
 UPDATE Leveringregel SET factuur_id=2
                         WHERE levering_id=2 AND product_id=1 AND factuur_id IS NULL;
 
--- WeeklyInvoiceRepository._issue_customer example 11
+-- WeeklyInvoiceRepository._issue_customer example 10
 UPDATE Bestelling
                             SET eenmalige_korting_toegepast=TRUE
                             WHERE bestelling_id=2 AND eenmalige_korting_toegepast=FALSE;
