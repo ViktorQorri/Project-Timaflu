@@ -87,7 +87,19 @@ class CustomerOverviewTests(TestCase):
         self.assertIn("JOIN Adres AS af ON af.adres_id = k.afleveradres_id", query)
         self.assertIn("JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id", query)
         self.assertIn("WHERE YEAR(f.betaald_op) = %s", query)
+        self.assertIn("SUM(f.totaal_bedrag)", query)
+        self.assertIn("COUNT(f.totaal_bedrag)", query)
+        self.assertNotIn("SUM(lr.aantal_geleverd", query)
         self.assertIn("LEFT JOIN Klantkorting", query)
+
+    def test_missing_paid_invoice_total_is_not_shown_as_zero(self):
+        customer = {**CUSTOMER_ROW, "jaaromzet": None}
+        app = create_app()
+        app.testing = True
+        with patch("routes.sales.get_connection", return_value=Connection([[customer]])):
+            response = app.test_client().get("/customers")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Niet berekend", response.get_data(as_text=True))
 
     def test_empty_search_matches_every_customer(self):
         db = Connection([[]])

@@ -2,17 +2,20 @@
 skinparam conditionStyle diamond
 skinparam ConditionEndStyle diamond
 skinparam ActivityDiamondFontSize 11
+skinparam swimlaneWidth 220
 |Purchasing Employee|
 start
 :Open minimum stock overview;
 |System|
-:Execute AD UC04 Check stock;
-if (Products below minimum?) then ([yes])
-  :Show products with current\nand minimum stock;
-  stop
+:Retrieve physical warehouse stock by medicine;
+:Compare physical quantities with minimum stock thresholds;
+if (Any medicines below minimum?) then ([yes])
+  :Display shortage list with current and minimum quantities;
+  |Purchasing Employee|
+  :Select a medicine requiring replenishment;
+  :Start AD02 Reorder products;
 else ([no])
-  |System|
-  :Show message that all\nstock levels are sufficient;
-  stop
+  :Display that all products meet minimum stock;
 endif
+stop
 @enduml

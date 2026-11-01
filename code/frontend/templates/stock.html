@@ -1,31 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Stock shortages{% endblock %}
+{% block title %}Voorraadtekorten{% endblock %}
 
 {% block content %}
   <section class="stock-dashboard" aria-labelledby="stock-title">
     <header class="stock-dashboard__intro">
       <div>
-        <p class="stock-dashboard__eyebrow">Purchasing</p>
-        <h1 id="stock-title">Stock shortages</h1>
-        <p class="stock-dashboard__subtitle">Products below their minimum physical warehouse stock.</p>
+        <p class="stock-dashboard__eyebrow">Inkoop</p>
+        <h1 id="stock-title">Voorraadtekorten</h1>
+        <p class="stock-dashboard__subtitle">Producten waarvan de voorraad in het magazijn onder de minimumvoorraad zit.</p>
       </div>
-      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} products below minimum stock">
-        {{ shortages|length }} products below minimum
+      <div class="page-actions">
+        <a class="button button--secondary" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
+        <a class="button" href="{{ url_for('purchasing.reorder') }}">Medicijnen bijbestellen</a>
+      </div>
+      <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
+        {{ shortages|length }} producten onder minimum
       </p>
     </header>
 
     {% if shortages %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Products that need replenishment, sorted by largest shortage</caption>
+          <caption>Alle voorraadtekorten, grootste tekort bovenaan. Alleen producten met een leverancier kunnen worden bijbesteld.</caption>
           <thead>
             <tr>
               <th scope="col">Product</th>
-              <th scope="col">Article number</th>
-              <th scope="col" class="stock-dashboard__number">Available stock</th>
-              <th scope="col" class="stock-dashboard__number">Minimum stock</th>
-              <th scope="col" class="stock-dashboard__number">Shortage</th>
+              <th scope="col">Artikelnummer</th>
+              <th scope="col" class="stock-dashboard__number">Voorraad</th>
+              <th scope="col" class="stock-dashboard__number">Minimumvoorraad</th>
+              <th scope="col" class="stock-dashboard__number">Tekort</th>
+<th scope="col">Leveranciers</th>
             </tr>
           </thead>
           <tbody>
@@ -38,6 +43,13 @@
                 <td class="stock-dashboard__number">
                   <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
                 </td>
+<td>
+                  {% if item.heeft_leverancier %}
+                    <a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Vergelijk leveranciers en prijzen</a>
+                  {% else %}
+                    <span>Geen leverancier; niet bijbestellen</span>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -45,8 +57,8 @@
       </div>
     {% else %}
       <div class="stock-dashboard__empty" role="status">
-        <h2>No stock shortages</h2>
-        <p>All products meet their configured minimum inventory.</p>
+        <h2>Geen voorraadtekorten</h2>
+        <p>Alle producten zitten op of boven hun minimumvoorraad.</p>
       </div>
     {% endif %}
   </section>

@@ -56,4 +56,3 @@ class CustomerService:
             raise ValidationError(messages)
         customer["eenmalige_korting_toegezegd"] = form.get("eenmalige_korting_toegezegd") == "on"
         return customer
-

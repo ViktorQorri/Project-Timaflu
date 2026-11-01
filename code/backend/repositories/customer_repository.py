@@ -1,6 +1,6 @@
 """Central customer data for sales (AD07 Manage customer data), stored in Klant and Adres."""
 
-from domain.errors import ConflictError, NotFoundError
+from domain.errors import NotFoundError
 
 
 class CustomerRepository:
@@ -10,25 +10,25 @@ class CustomerRepository:
     def list_customers(self, search, year):
         """Return matching customers with both addresses, annual revenue and discount for a year.
 
-        Annual revenue is not stored: the case adds paid invoice amounts to it, so it is the
-        sum of delivered lines on invoices paid in that year (gross, as invoice totals are not stored).
+        Net annual revenue is the sum of paid invoice totals in that calendar year.
+        A missing total on a paid invoice means the annual amount is unknown.
         """
         query = """
             SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
                    af.adres AS afleveradres, ba.adres AS factuuradres,
-                   COALESCE(o.jaaromzet, 0) AS jaaromzet,
+                   CASE WHEN o.betaalde_facturen IS NULL THEN 0
+                        WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL
+                        ELSE o.jaaromzet END AS jaaromzet,
                    kk.percentage AS kortingspercentage
             FROM Klant AS k
             JOIN Adres AS af ON af.adres_id = k.afleveradres_id
             JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
             LEFT JOIN (
                 SELECT f.klant_id,
-                       SUM(lr.aantal_geleverd * br.prijs_per_eenheid) AS jaaromzet
+                       COUNT(*) AS betaalde_facturen,
+                       COUNT(f.totaal_bedrag) AS bekende_bedragen,
+                       SUM(f.totaal_bedrag) AS jaaromzet
                 FROM Factuur AS f
-                JOIN Leveringregel AS lr ON lr.factuur_id = f.factuur_id
-                JOIN Levering AS l ON l.levering_id = lr.levering_id
-                JOIN Bestelregel AS br ON br.bestelling_id = l.bestelling_id
-                                      AND br.product_id = lr.product_id
                 WHERE YEAR(f.betaald_op) = %s
                 GROUP BY f.klant_id
             ) AS o ON o.klant_id = k.klant_id

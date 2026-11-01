@@ -53,6 +53,7 @@ class PurchasingOrderTests(TestCase):
         self.assertEqual(db.rollbacks, 0)
         self.assertEqual(len(db.cur.commands), 3)
         self.assertEqual(db.cur.commands[0][1], (3, 9))
+        self.assertIn("p.intern_bestelbaar = TRUE", db.cur.commands[0][0])
         self.assertEqual(db.cur.commands[2][1], (42, 9, 5))
 
     def test_reject_invalid_quantity_without_writes(self):
@@ -73,8 +74,13 @@ class PurchasingOrderTests(TestCase):
         app.testing = True
         with app.test_client() as client:
             with patch("routes.purchasing.get_connection", return_value=Connection()):
-                response = client.post("/purchase-orders", data={
+                refused = client.post("/purchase-orders", data={
                     "supplier_id": "3", "product_id": "9", "quantity": "5"
+                })
+                self.assertEqual(refused.status_code, 400)
+                response = client.post("/purchase-orders", data={
+                    "supplier_id": "3", "product_id": "9", "quantity": "5",
+                    "supplier_contact_confirmed": "yes"
                 })
                 self.assertEqual(response.status_code, 302)
                 self.assertTrue(response.headers["Location"].endswith("/suppliers"))
