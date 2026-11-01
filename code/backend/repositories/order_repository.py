@@ -83,7 +83,7 @@ class OrderRepository:
                 # Lock in product order, so two orders with the same products cannot deadlock.
                 for line in sorted(lines, key=lambda line: line["product_id"]):
                     cur.execute(
-                        """SELECT product_id, prijs_per_grootverpakking
+                        """SELECT product_id, prijs_per_grootverpakking, minimale_bestelhoeveelheid
                            FROM Product
                            WHERE product_id = %s AND in_assortiment = TRUE
                            FOR UPDATE""",
@@ -92,6 +92,8 @@ class OrderRepository:
                     product = cur.fetchone()
                     if product is None:
                         raise NotFoundError("Dit medicijn staat niet in de catalogus.")
+                    if line["quantity"] < int(product.get("minimale_bestelhoeveelheid", 1)):
+                        raise ConflictError("Het bestelde aantal ligt onder de minimale bestelhoeveelheid.")
                     cur.execute(AVAILABLE_QUERY, (line["product_id"], line["product_id"]))
                     available = int(cur.fetchone()["beschikbaar"])
                     short = available < line["quantity"]
@@ -109,7 +111,7 @@ class OrderRepository:
                                                eenmalige_korting_toegepast)
                        VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s)""",
                     (customer_id, customer["afleveradres_id"], customer["betaaladres_id"], delivery_date,
-                     part_of_day, urgent, "backorder" if backorders else None, first_order),
+                     part_of_day, urgent, "backorder" if backorders else "nieuw", first_order),
                 )
                 order_id = cur.lastrowid
                 for line in priced:

@@ -12,7 +12,9 @@ class HomeDashboardTests(TestCase):
         app.testing = True
 
         with app.test_client() as client:
-            with patch("routes.home.HealthService.database_is_reachable", return_value=True):
+            with patch("routes.home.get_connection", return_value=object()), patch(
+                "routes.home.HealthService.database_is_reachable", return_value=True
+            ):
                 response = client.get("/")
 
         self.assertEqual(response.status_code, 200)
@@ -41,7 +43,9 @@ class HomeDashboardTests(TestCase):
         app.testing = True
 
         with app.test_client() as client:
-            with patch("routes.home.HealthService.database_is_reachable", return_value=False):
+            with patch("routes.home.get_connection", return_value=object()), patch(
+                "routes.home.HealthService.database_is_reachable", return_value=False
+            ):
                 response = client.get("/")
 
         self.assertEqual(response.status_code, 200)

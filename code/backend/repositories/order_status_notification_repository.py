@@ -23,7 +23,9 @@ class OrderStatusNotificationRepository:
         """Return order status, delivery details and customer contact information."""
         query = """
             SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel,
-                   b.status_naam, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                   b.status_naam, b.extra_bezorgkosten,
+                   b.toelichting_extra_bezorgkosten,
+                   k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
                    l.afgeleverd_op
             FROM Bestelling AS b
             JOIN Klant AS k ON k.klant_id = b.klant_id
@@ -45,7 +47,16 @@ class OrderStatusNotificationRepository:
         """Return order quantities and the amounts already reserved from stock."""
         query = """
             SELECT p.product_id, p.artikelnummer, p.productnaam, br.aantal,
-                   COALESCE(vr.aantal, 0) AS gereserveerd
+                   GREATEST(
+                       COALESCE(vr.aantal, 0),
+                       COALESCE((
+                           SELECT SUM(dr.aantal)
+                           FROM Deelorder AS d
+                           JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+                           WHERE d.bestelling_id = br.bestelling_id
+                             AND dr.product_id = br.product_id
+                       ), 0)
+                   ) AS gereserveerd
             FROM Bestelregel AS br
             JOIN Product AS p ON p.product_id = br.product_id
             LEFT JOIN Voorraadreservering AS vr

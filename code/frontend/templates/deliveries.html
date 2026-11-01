@@ -134,7 +134,11 @@
                         <option value="afgeleverd">Afgeleverd</option>
                         <option value="niet aanwezig">Niet aanwezig</option>
                       </select>
-                      <button type="submit">Registreer eerste poging</button>
+                      <label class="delivery-receipt">
+                          <input type="checkbox" name="receipt_signed" value="1">
+                          De klant heeft daadwerkelijk voor ontvangst getekend (bij aflevering verplicht)
+                        </label>
+                        <button type="submit">Registreer eerste poging</button>
                     </form>
                   {% elif item.can_register_second_attempt %}
                     <form method="post" action="{{ url_for('distribution.second_attempt') }}">
@@ -147,7 +151,42 @@
                         <option value="afgeleverd">Afgeleverd</option>
                         <option value="niet aanwezig">Niet afgeleverd</option>
                       </select>
-                      <button type="submit">Registreer tweede poging</button>
+                      <label class="delivery-receipt">
+                          <input type="checkbox" name="receipt_signed" value="1">
+                          De klant heeft daadwerkelijk voor ontvangst getekend (bij aflevering verplicht)
+                        </label>
+                        <button type="submit">Registreer tweede poging</button>
+                    </form>
+                  {% elif item.can_reschedule %}
+                    <p class="stock-dashboard__shortage" role="status">
+                      Tweede aflevering mislukt. De koerier brengt het pakket terug naar de distributiehoek;
+                      verkoop neemt contact op met de klant.
+                    </p>
+                    <form method="post" action="{{ url_for('distribution.reschedule_failed_delivery', delivery_id=item.levering_id) }}">
+                      <label for="retry-date-{{ item.levering_id }}">Nieuwe leverdatum
+                        <input id="retry-date-{{ item.levering_id }}" type="date"
+                               name="new_date" min="{{ today }}" required>
+                      </label>
+                      <label for="retry-slot-{{ item.levering_id }}">Afgesproken dagdeel
+                        <select id="retry-slot-{{ item.levering_id }}" name="part_of_day" required>
+                          <option value="">Kies een dagdeel</option>
+                          <option value="ochtend">Ochtend</option>
+                          <option value="middag">Middag</option>
+                        </select>
+                      </label>
+                      <label for="retry-cost-{{ item.levering_id }}">Extra bezorgkosten (€)
+                        <input id="retry-cost-{{ item.levering_id }}" type="number" name="additional_cost"
+                               min="0" max="99999999.99" step="0.01" value="0.00" required>
+                      </label>
+                      <label for="retry-reason-{{ item.levering_id }}">Toelichting extra kosten en situatie
+                        <textarea id="retry-reason-{{ item.levering_id }}" name="explanation"
+                                  maxlength="255" required></textarea>
+                      </label>
+                      <label>
+                        <input type="checkbox" name="customer_contact_confirmed" value="yes" required>
+                        Verkoop heeft met de klant een nieuwe leverafspraak gemaakt.
+                      </label>
+                      <button type="submit">Nieuwe bezorgafspraak vastleggen</button>
                     </form>
                   {% endif %}
                 </td>
@@ -235,6 +274,9 @@
               </form>
             {% elif order.status_naam == "ingepakt" and order.kan_vrijgeven %}
               <p>{{ order.aantal_verhuisdozen }} verhuisdozen geregistreerd.</p>
+              <a href="{{ url_for('distribution.packing_label', order_id=order.bestelling_id) }}">
+                Adreslabel{% if order.spoed %} en spoedlabel{% endif %} afdrukken
+              </a>
               <form method="post" action="{{ url_for('distribution.release_order', order_id=order.bestelling_id) }}" class="supplier-lookup">
                 <button type="submit">Vrijgeven voor distributie</button>
               </form>

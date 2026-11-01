@@ -7,6 +7,7 @@ STATUSES = {
     "verstuurd": ("Verstuurd", "info"),
     "backorder": ("Backorder", "warning"),
     "afgeleverd": ("Afgeleverd", "success"),
+    "niet afgeleverd": ("Niet afgeleverd", "warning"),
 }
 NO_STATUS = ("Nog geen status", "neutral")
 MAX_SEARCH_LENGTH = 100
@@ -53,15 +54,10 @@ class OrderStatusNotificationService:
         if order is None:
             raise NotFoundError(f"Order {order_id} is niet gevonden.")
         order = _with_status(order)
-        in_backorder = order.get("status_naam") == "backorder"
         lines = [
             {
                 **line,
-                "backorder": (
-                    max(line["aantal"] - line["gereserveerd"], 0)
-                    if in_backorder
-                    else 0
-                ),
+                "backorder": max(line["aantal"] - line["gereserveerd"], 0),
             }
             for line in self.repository.find_order_lines(order_id)
         ]
@@ -89,7 +85,12 @@ class OrderStatusNotificationService:
                 f"{_date(order['besteld_op'])} is ontvangen en wordt verwerkt."
             )
         if order.get("afgeleverd_op"):
-            parts.append(f"De bestelling is afgeleverd op {_date(order['afgeleverd_op'])}.")
+            if backorder_lines:
+                parts.append(
+                    f"De beschikbare producten zijn afgeleverd op {_date(order['afgeleverd_op'])}."
+                )
+            else:
+                parts.append(f"De bestelling is afgeleverd op {_date(order['afgeleverd_op'])}.")
         else:
             parts.append(
                 f"De geplande levering is op "

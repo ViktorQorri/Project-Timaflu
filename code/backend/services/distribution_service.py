@@ -1,6 +1,7 @@
 """Business rules for grouping collection bins and releasing packed orders."""
 
-from datetime import time
+from datetime import date, time
+from decimal import Decimal, InvalidOperation
 
 from domain.errors import DomainError
 
@@ -129,6 +130,38 @@ class DistributionService:
             self._positive_integer(courier_id, "Koerier"),
             planned_time,
         )
+
+    def reschedule_failed_delivery(
+        self, delivery_id, new_date, part_of_day,
+        additional_cost, explanation, customer_contact_confirmed,
+    ):
+        """Record a replacement appointment after two failed delivery attempts."""
+        if customer_contact_confirmed != "yes":
+            raise DomainError("Verkoop moet de nieuwe afspraak met de klant bevestigen.")
+        delivery_id = self._positive_integer(delivery_id, "Levering")
+        try:
+            agreed_date = date.fromisoformat(str(new_date or ""))
+        except ValueError as error:
+            raise DomainError("Kies een geldige nieuwe leverdatum.") from error
+        if agreed_date <= date.today():
+            raise DomainError("Kies een nieuwe leverdatum na vandaag.")
+        if part_of_day not in ("ochtend", "middag"):
+            raise DomainError("Kies ochtend of middag voor de nieuwe levering.")
+        try:
+            costs = Decimal(str(additional_cost or "").replace(",", "."))
+        except InvalidOperation as error:
+            raise DomainError("Extra bezorgkosten moeten een geldig bedrag zijn.") from error
+        if (not costs.is_finite() or costs < 0
+                or costs > Decimal("99999999.99")
+                or costs != costs.quantize(Decimal("0.01"))):
+            raise DomainError("Extra bezorgkosten moeten maximaal twee decimalen hebben.")
+        explanation = str(explanation or "").strip()
+        if not explanation or len(explanation) > 255:
+            raise DomainError("Leg de situatie en eventuele extra kosten kort uit.")
+        self.repository.reschedule_failed_delivery(
+            delivery_id, agreed_date, part_of_day, costs, explanation
+        )
+        return agreed_date
 
     @staticmethod
     def _positive_integer(value, label):

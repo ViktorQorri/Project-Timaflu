@@ -38,15 +38,21 @@
       </div>
     </dl>
 
+    {% if order.extra_bezorgkosten is defined and order.extra_bezorgkosten > 0 %}
+      <p class="stock-dashboard__subtitle">
+        Extra bezorgkosten: € {{ order.extra_bezorgkosten }}.
+        {{ order.toelichting_extra_bezorgkosten or '' }}
+      </p>
+    {% endif %}
     <div class="stock-dashboard__table-wrap">
       <table class="stock-dashboard__table">
-        <caption>Orderregels met gereserveerde voorraad en backorder</caption>
+        <caption>Orderregels met gereserveerde of verzamelde voorraad en backorder</caption>
         <thead>
           <tr>
             <th scope="col">Product</th>
             <th scope="col">Artikelnummer</th>
             <th scope="col" class="stock-dashboard__number">Besteld</th>
-            <th scope="col" class="stock-dashboard__number">Gereserveerd</th>
+            <th scope="col" class="stock-dashboard__number">Gereserveerd/verzameld</th>
             <th scope="col">Backorder</th>
           </tr>
         </thead>

@@ -1,6 +1,6 @@
 -- Add the order lifecycle states required by issue #12 to an existing database.
 INSERT IGNORE INTO OrderStatus (naam)
-VALUES ('nieuw'), ('ingepakt');
+VALUES ('nieuw'), ('ingepakt'), ('niet afgeleverd');
 
 UPDATE Bestelling
 SET status_naam = 'nieuw'

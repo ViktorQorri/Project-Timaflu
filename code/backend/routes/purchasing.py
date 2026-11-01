@@ -66,6 +66,7 @@ def reorder():
             request.form.get("supplier_id"),
             request.form.get("quantity"),
             request.form.get("confirmed"),
+            request.form.get("cheaper_unavailable"),
         )
         flash(f"Inkooporder {order_id} is geregistreerd.", "success")
         return redirect(url_for("purchasing.reorder"))
@@ -175,6 +176,7 @@ PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",
     "number_of_retail_packages", "short_description", "long_description",
     "minimum_order_quantity", "minimum_stock", "supplier_id", "purchase_price",
+    "management_approved",
 )
 
 

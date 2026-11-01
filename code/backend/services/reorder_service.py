@@ -33,7 +33,7 @@ class ReorderService:
             ]
         return {"shortages": shortages, "selected": selected, "offers": offers}
 
-    def record_confirmed(self, product_id, supplier_id, quantity, confirmed):
+    def record_confirmed(self, product_id, supplier_id, quantity, confirmed, cheaper_unavailable=None):
         if confirmed != "yes":
             raise DomainError("Bevestig eerst dat je de fabrikant hebt gesproken.")
         overview = self.overview(product_id)
@@ -41,11 +41,21 @@ class ReorderService:
             chosen_supplier = int(supplier_id)
         except (TypeError, ValueError):
             raise DomainError("Kies een bestaande leverancier.")
-        if not any(
-            int(offer["leverancier_id"]) == chosen_supplier
-            for offer in overview["offers"]
-        ):
+        chosen = next(
+            (offer for offer in overview["offers"]
+             if int(offer["leverancier_id"]) == chosen_supplier),
+            None,
+        )
+        if chosen is None:
             raise DomainError("De leverancier levert het gekozen product niet.")
+        lowest_price = min(
+            offer["inkoopprijs"] for offer in overview["offers"]
+        )
+        if (chosen["inkoopprijs"] > lowest_price
+                and cheaper_unavailable != "yes"):
+            raise DomainError(
+                "Kies de goedkoopste leverancier of bevestig dat alle goedkopere fabrikanten niet kunnen leveren."
+            )
         return self.purchase_order_service.record_order(
             supplier_id, product_id, quantity, confirmed
         )

@@ -87,4 +87,6 @@ class OrderService:
             raise DomainError("De leverdatum ligt in het verleden.")
         if delivery_date == today and not urgent:
             raise DomainError("Vandaag leveren kan alleen bij een spoedbestelling. Kies een datum vanaf morgen.")
+        if urgent and delivery_date != today:
+            raise DomainError("Een spoedbestelling wordt dezelfde dag geleverd. Kies vandaag als leverdatum.")
         return delivery_date

@@ -67,6 +67,9 @@
           <div><dt>Eenmalige korting</dt><dd>{% if f.first_order_discount is not none %}€ {{ f.first_order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
           <div><dt>Na eenmalige korting</dt><dd>{% if f.total_after_first_order_discount is not none %}€ {{ f.total_after_first_order_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
           <div><dt>Klantenkorting</dt><dd>{% if f.customer_discount is not none %}€ {{ f.customer_discount }}{% else %}Niet vastgelegd{% endif %}</dd></div>
+          {% if f.extra_delivery_costs is not none and f.extra_delivery_costs > 0 %}
+            <div><dt>Extra bezorgkosten wegens niet thuis</dt><dd>€ {{ f.extra_delivery_costs }}</dd></div>
+          {% endif %}
           <div class="invoice-card__total"><dt>Te betalen</dt><dd>{% if f.total is not none %}€ {{ f.total }}{% else %}Niet vastgelegd{% endif %}</dd></div>
         </dl>
 
@@ -102,6 +105,44 @@
         <p class="stock-dashboard__empty" role="status">Zoek op klantnummer om facturen te bekijken.</p>
       {% endif %}
     {% endfor %}
+  </section>
+
+  <section class="invoice-create" aria-labelledby="purchase-invoices-title">
+    <div>
+      <h2 id="purchase-invoices-title">Openstaande inkoopfacturen</h2>
+      <p>Na de wekelijkse klantfacturatie worden inkoopfacturen betaald.
+         Het systeem registreert de betaling; het voert geen bankbetaling uit.</p>
+    </div>
+    {% if purchase_invoices %}
+      <div class="stock-dashboard__table-wrap">
+        <table class="stock-dashboard__table">
+          <thead><tr><th scope="col">Inkoopfactuur</th><th scope="col">Leverancier</th>
+            <th scope="col">Factuurdatum</th><th scope="col">Bedrag</th>
+            <th scope="col">Betaling</th></tr></thead>
+          <tbody>
+          {% for item in purchase_invoices %}
+            <tr>
+              <th scope="row">{{ item.inkoopfactuur_id }}</th>
+              <td>{{ item.leverancier }}</td>
+              <td>{{ item.factuurdatum }}</td>
+              <td>€ {{ item.bedrag }}</td>
+              <td>
+                <form method="post" action="{{ url_for('administration.pay_purchase_invoice', invoice_id=item.inkoopfactuur_id) }}">
+                  <label>
+                    <input type="checkbox" name="payment_confirmed" value="yes" required>
+                    Factuur gecontroleerd en volledig betaald
+                  </label>
+                  <button type="submit">Betaling registreren</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>Er zijn geen openstaande inkoopfacturen.</p>
+    {% endif %}
   </section>
 </section>
 {% endblock %}

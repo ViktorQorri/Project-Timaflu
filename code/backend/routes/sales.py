@@ -201,6 +201,8 @@ def place_order():
     service = _order_service()
     form = _order_form(request.form)
     try:
+        if not form["customer_approved"]:
+            raise DomainError("Vraag de klant om akkoord op het totaalbedrag voordat je de bestelling opslaat.")
         saved = service.place(
             form["customer_id"],
             form["lines"],
@@ -247,6 +249,7 @@ def _order_form(values):
         "delivery_date": values.get("delivery_date", "", type=str),
         "part_of_day": values.get("part_of_day", "", type=str),
         "urgent": values.get("urgent") == "1",
+        "customer_approved": values.get("customer_approved") == "yes",
         "add_line": values.get("add_line") == "1",
         "edit_lines": values.get("add_line") == "1" or remove_line is not None,
     }

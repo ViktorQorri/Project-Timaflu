@@ -559,4 +559,5 @@ VALUES
     ('backorder'),
     ('ingepakt'),
     ('verstuurd'),
-    ('afgeleverd');
+    ('afgeleverd'),
+    ('niet afgeleverd');

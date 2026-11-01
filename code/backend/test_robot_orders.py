@@ -32,8 +32,9 @@ class FakeCursor:
         self.exists = exists
         self.bins = bins
         self.lines = lines
-        self.query_count = 0
         self.queries = []
+        self.current_query = ""
+        self.rowcount = 1
 
     def __enter__(self):
         return self
@@ -43,14 +44,26 @@ class FakeCursor:
 
     def execute(self, sql, parameters):
         self.queries.append((sql, parameters))
+        self.current_query = " ".join(sql.split())
 
     def fetchone(self):
-        self.query_count += 1
-        if self.query_count == 1:
-            return {"deelorder_id": 20, "afgerond": False} if self.exists else None
-        if self.query_count == 2:
+        if "FROM Deelorder AS d" in self.current_query:
+            return ({"deelorder_id": 20, "bestelling_id": 30,
+                     "gang": "A", "afgerond": False} if self.exists else None)
+        if "bin_count" in self.current_query:
             return {"bin_count": self.bins}
-        return {"line_count": self.lines}
+        if "FROM Product WHERE" in self.current_query:
+            return {"product_id": 7}
+        if "FROM Voorraadreservering" in self.current_query:
+            return {"aantal": 3}
+        raise AssertionError(self.current_query)
+
+    def fetchall(self):
+        if "FROM Deelorderregel" in self.current_query:
+            return ([{"product_id": 7, "aantal": 3}] if self.lines else [])
+        if "FROM Magazijnlocatie" in self.current_query:
+            return [{"schapnummer": 4, "aantal": 3}]
+        raise AssertionError(self.current_query)
 
 
 class FakeConnection:
@@ -97,7 +110,10 @@ class RobotOrderTests(TestCase):
         good = FakeConnection(bins=1)
         self.assertEqual(RobotOrderRepository(good).complete(1, 20)["afgerond"], True)
         self.assertEqual(good.committed, 1)
-        self.assertEqual(len(good.cursor_instance.queries), 4)
+        statements = [sql for sql, _ in good.cursor_instance.queries]
+        self.assertTrue(any("UPDATE Magazijnlocatie" in sql for sql in statements))
+        self.assertTrue(any("DELETE FROM Voorraadreservering" in sql for sql in statements))
+        self.assertTrue(any("SET afgerond = TRUE" in sql for sql in statements))
 
     def test_completion_rejects_empty_partial_order(self):
         from domain.errors import ConflictError

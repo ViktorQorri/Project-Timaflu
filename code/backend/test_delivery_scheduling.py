@@ -1,6 +1,6 @@
 """Manual courier setup and scheduling for released orders."""
 
-from datetime import date, time
+from datetime import date, datetime, time
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -46,6 +46,8 @@ class SchedulingCursor:
         return None
 
     def fetchall(self):
+        if "SELECT levering_id FROM Levering" in self.query:
+            return [self.database.existing_delivery] if self.database.existing_delivery else []
         return []
 
 
@@ -129,6 +131,21 @@ class DeliverySchedulingTests(TestCase):
         self.assertFalse(any("INSERT INTO Rit" in query for query, _ in database.statements))
         self.assertEqual(database.statements[-1][1], (20, 15, time(10, 0)))
 
+    def test_urgent_delivery_rejects_delivery_after_three_hours(self):
+        order = {
+            "status_naam": "verstuurd", "gewenste_leverdatum": date(2026, 11, 1),
+            "spoed": True, "besteld_op": datetime(2026, 11, 1, 10, 0),
+        }
+        late = SchedulingDatabase(order=order)
+        with self.assertRaisesRegex(ConflictError, "binnen drie uur"):
+            DistributionRepository(late).schedule_delivery(12, 3, time(13, 1))
+        self.assertEqual(late.rollbacks, 1)
+        self.assertEqual(late.commits, 0)
+
+        on_time = SchedulingDatabase(order=order)
+        DistributionRepository(on_time).schedule_delivery(12, 3, time(12, 30))
+        self.assertEqual(on_time.commits, 1)
+
     def test_unavailable_courier_cannot_be_scheduled(self):
         database = SchedulingDatabase(courier={"koerier_id": 3, "beschikbaar": False})
 
@@ -146,7 +163,8 @@ class DeliverySchedulingTests(TestCase):
             DistributionRepository(database).schedule_delivery(12, 3, time(9, 15))
 
         self.assertEqual(database.rollbacks, 1)
-        self.assertEqual(len(database.statements), 2)
+        self.assertEqual(len(database.statements), 3)
+        self.assertIn("JOIN Leverpoging", database.statements[-1][0])
 
     def test_service_rejects_invalid_ids_and_time(self):
         class NoWriteRepository:

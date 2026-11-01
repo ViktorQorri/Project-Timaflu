@@ -39,13 +39,37 @@ def invoices():
                 "customer_address": row["adres"],
                 "lines": line_items,
                 "snapshot_complete": all(value is not None for value in snapshots.values()),
+                "extra_delivery_costs": (
+                    row["totaal_bedrag"] -
+                    (row["bedrag_na_eenmalige_korting"] - row["klantenkorting"])
+                    if all(row[key] is not None for key in (
+                        "totaal_bedrag", "bedrag_na_eenmalige_korting", "klantenkorting"
+                    )) else None
+                ),
                 "action": invoice.checkPaymentArrears(date.today()),
                 **snapshots,
             }
             rows.append(doc)
+    purchase_invoices = AssessedRepository(get_connection()).outstanding_purchase_invoices()
     return render_template(
-        "invoices.html", invoices=rows, customer_id=customer_id, today=date.today().isoformat()
+        "invoices.html", invoices=rows, customer_id=customer_id,
+        purchase_invoices=purchase_invoices, today=date.today().isoformat()
     )
+
+
+@administration.post("/purchase-invoices/<int:invoice_id>/paid")
+def pay_purchase_invoice(invoice_id):
+    """Record a supplier invoice as paid after the employee confirms payment."""
+    from flask import flash, redirect, url_for
+    from domain.errors import DomainError
+
+    if request.form.get("payment_confirmed") != "yes":
+        raise DomainError("Bevestig dat de inkoopfactuur daadwerkelijk is betaald.")
+    AssessedRepository(get_connection()).mark_purchase_invoice_paid(
+        invoice_id, date.today()
+    )
+    flash(f"Betaling van inkoopfactuur {invoice_id} geregistreerd.", "success")
+    return redirect(url_for("administration.invoices"))
 
 
 @administration.post("/invoices/create")

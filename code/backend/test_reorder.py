@@ -80,6 +80,14 @@ class ReorderTests(TestCase):
         self.assertEqual(self.service.record_confirmed("7", "2", "8", "yes"), 44)
         self.assertEqual(self.purchases.calls, [("2", "7", "8", "yes")])
 
+    def test_expensive_supplier_requires_unavailable_cheaper_suppliers(self):
+        with self.assertRaisesRegex(DomainError, "goedkoopste"):
+            self.service.record_confirmed("7", "5", "8", "yes")
+        self.assertEqual(self.purchases.calls, [])
+        self.assertEqual(
+            self.service.record_confirmed("7", "5", "8", "yes", "yes"), 44
+        )
+
     def test_reorder_page_renders_offers_and_recorded_orders(self):
         app = create_app()
         app.config.update(TESTING=True, SECRET_KEY="test-secret")

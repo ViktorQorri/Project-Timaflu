@@ -108,7 +108,7 @@ class InvoiceIssuanceTests(TestCase):
         )
         self.assertEqual(snapshot[-2:], (Decimal("37.28"), 50))
 
-    def test_previous_invoice_with_unknown_one_time_discount_blocks_recalculation(self):
+    def test_earlier_week_invoice_does_not_cancel_original_first_order_discount(self):
         database = InvoiceDatabase(
             discount_history={
                 "aantal_facturen": 1,
@@ -116,24 +116,21 @@ class InvoiceIssuanceTests(TestCase):
                 "korting_al_toegepast": 0,
             }
         )
-
-        with self.assertRaises(DomainError):
-            AssessedRepository(database).create_weekly_invoice(
-                1, date(2026, 10, 26), date(2026, 10, 30)
-            )
-
-        self.assertEqual(database.commits, 0)
-        self.assertEqual(database.rollbacks, 1)
-        self.assertFalse(any("INSERT INTO Factuur" in query for query, _ in database.statements))
-
-    def test_one_time_discount_is_not_reapplied_to_a_later_week(self):
-        database = InvoiceDatabase(
-            discount_history={
-                "aantal_facturen": 1,
-                "bekende_kortingen": 1,
-                "korting_al_toegepast": 1,
-            }
+        AssessedRepository(database).create_weekly_invoice(
+            1, date(2026, 10, 26), date(2026, 10, 30)
         )
+        self.assertEqual(database.commits, 1)
+        snapshot = next(
+            params for query, params in database.statements
+            if "UPDATE Factuur SET bedrag_excl_btw" in query
+        )
+        # Whether the actual order was the first one is recorded on the order.
+        self.assertEqual(snapshot[-2], Decimal("37.28"))
+
+    def test_one_time_discount_is_not_reapplied_to_a_later_order(self):
+        database = InvoiceDatabase(lines=[
+            {**DELIVERED_LINES[0], "eenmalige_korting_toegepast": False}
+        ])
 
         AssessedRepository(database).create_weekly_invoice(
             1, date(2026, 11, 2), date(2026, 11, 6)

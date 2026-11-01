@@ -191,7 +191,7 @@ class OrderRepositoryTests(TestCase):
                 if "FROM Product" in query
             )
         )
-        self.assertEqual(inserts(db, "Bestelling"), [(7, 3, 4, date(2026, 11, 2), "ochtend", False, None, True)])
+        self.assertEqual(inserts(db, "Bestelling"), [(7, 3, 4, date(2026, 11, 2), "ochtend", False, "nieuw", True)])
         self.assertEqual(inserts(db, "Bestelregel"), [(15, 1, 10, Decimal("100.00"), None),
                                                       (15, 2, 5, Decimal("20.00"), None)])
         self.assertEqual(inserts(db, "Voorraadreservering"), [(15, 1, 10), (15, 2, 5)])
@@ -309,6 +309,7 @@ class OrderPageTests(TestCase):
                 response = client.post("/orders/new", data={
                     "customer_id": "7", "product_id": ["1", ""], "quantity": ["2", ""],
                     "delivery_date": "2099-01-05", "part_of_day": "middag",
+                    "customer_approved": "yes",
                 })
                 self.assertEqual(response.status_code, 302)
                 self.assertTrue(response.headers["Location"].endswith("/orders/new"))
@@ -316,11 +317,22 @@ class OrderPageTests(TestCase):
         self.assertIn("Order 15 is opgeslagen. Levering op 05-01-2099 in de middag.", page)
         self.assertEqual(len(repository.saved), 1)
 
+    def test_customer_must_approve_total_before_order_is_saved(self):
+        repository = FakeOrderRepository()
+        response = self.request(repository, "post", "/orders/new", data={
+            "customer_id": "7", "product_id": "1", "quantity": "2",
+            "delivery_date": "2099-01-05", "part_of_day": "middag",
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("akkoord op het totaalbedrag", response.get_data(as_text=True))
+        self.assertEqual(repository.saved, [])
+
     def test_rejected_order_keeps_input(self):
         repository = FakeOrderRepository()
         response = self.request(repository, "post", "/orders/new", data={
             "customer_id": "7", "product_id": "1", "quantity": "2",
             "delivery_date": "2000-01-05", "part_of_day": "middag", "urgent": "1",
+            "customer_approved": "yes",
         })
         self.assertEqual(response.status_code, 400)
         page = response.get_data(as_text=True)

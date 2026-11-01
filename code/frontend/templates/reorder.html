@@ -61,6 +61,12 @@
                   <label for="quantity-{{ offer.leverancier_id }}">Aantal</label>
                   <input id="quantity-{{ offer.leverancier_id }}" type="number" name="quantity" min="1" step="1" value="{{ selected.tekort }}" required>
                   <label><input type="checkbox" name="confirmed" value="yes" required> Fabrikant heeft deze bestelling bevestigd</label>
+                  {% if offer.inkoopprijs > offers[0].inkoopprijs %}
+                    <label>
+                      <input type="checkbox" name="cheaper_unavailable" value="yes" required>
+                      Alle goedkopere leveranciers zijn benaderd en kunnen niet leveren.
+                    </label>
+                  {% endif %}
                   <button type="submit">Inkooporder registreren</button>
                 </form>
               </td>

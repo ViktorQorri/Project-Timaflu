@@ -41,12 +41,18 @@ def deliveries():
         )
         row["can_register_second_attempt"] = (
             row["pogingnummer"] == 1
-            and row["resultaat"] != "afgeleverd"
+            and row["resultaat"] == "niet aanwezig"
             and row["levering_id"] not in second_attempts
+        )
+        row["can_reschedule"] = (
+            row["pogingnummer"] == 2
+            and row["resultaat"] == "niet aanwezig"
+            and row.get("status_naam") == "niet afgeleverd"
         )
     return render_template(
         "deliveries.html",
         day=day,
+        today=date.today().isoformat(),
         schedule=schedule,
         orders=orders,
         unscheduled_orders=unscheduled_orders,
@@ -106,7 +112,7 @@ def first_attempt():
         raise DomainError("Kies een geldige uitkomst voor de eerste bezorgpoging.")
 
     AssessedRepository(get_connection()).register_first_delivery_attempt(
-        delivery_id, day, outcome == "afgeleverd"
+        delivery_id, day, outcome == "afgeleverd", request.form.get("receipt_signed") == "1"
     )
     flash("Eerste bezorgpoging geregistreerd.", "success")
     return redirect(url_for("distribution.deliveries", day=day.isoformat()))
@@ -133,9 +139,32 @@ def second_attempt():
         day,
         outcome == "afgeleverd",
         planned_time,
+        request.form.get("receipt_signed") == "1",
     )
     flash("Tweede bezorgpoging geregistreerd.", "success")
     return redirect(url_for("distribution.deliveries", day=day.isoformat()))
+
+
+@distribution.post("/deliveries/<int:delivery_id>/reschedule")
+def reschedule_failed_delivery(delivery_id):
+    """Sales agrees a replacement delivery moment after two failed attempts."""
+    new_date = _service().reschedule_failed_delivery(
+        delivery_id,
+        request.form.get("new_date"),
+        request.form.get("part_of_day"),
+        request.form.get("additional_cost"),
+        request.form.get("explanation"),
+        request.form.get("customer_contact_confirmed"),
+    )
+    flash("Nieuwe leverafspraak en eventuele extra kosten opgeslagen.", "success")
+    return redirect(url_for("distribution.deliveries", day=new_date.isoformat()))
+
+
+@distribution.get("/deliveries/<int:order_id>/label")
+def packing_label(order_id):
+    """Print-oriented address and rush label for an already packed order."""
+    label = DistributionRepository(get_connection()).packing_label(order_id)
+    return render_template("packing_label.html", label=label)
 
 
 @distribution.post("/deliveries/<int:order_id>/pack")

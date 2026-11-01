@@ -1,6 +1,6 @@
 """MySQL queries for the five assessed scenarios, using the existing case tables."""
 from datetime import date, timedelta
-from domain.errors import DomainError
+from domain.errors import ConflictError, DomainError, NotFoundError
 
 
 class AssessedRepository:
@@ -71,7 +71,7 @@ class AssessedRepository:
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
                 SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
-                       b.bestelling_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
+                       b.bestelling_id, b.status_naam, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer,
                        a.adres, r.ritdatum
                 FROM Leverpoging lp
                 JOIN Rit r ON r.rit_id=lp.rit_id
@@ -83,7 +83,8 @@ class AssessedRepository:
             """,(day,))
             return c.fetchall()
 
-    def register_delivery_attempt(self, delivery_id, delivery_date, delivered, attempt_time):
+    def register_delivery_attempt(self, delivery_id, delivery_date, delivered, attempt_time, receipt_signed=False):
+        self._validate_receipt(delivered, receipt_signed)
         with self.db.cursor() as c:
             try:
                 c.execute("""SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
@@ -95,23 +96,32 @@ class AssessedRepository:
                 if not last:
                     raise DomainError("Delivery not scheduled")
                 ride, attempt, previous_result=last
-                if previous_result=="afgeleverd":
-                    raise DomainError("Delivery is already completed")
+                if previous_result != "niet aanwezig":
+                    raise DomainError("De eerste poging moet eerst als niet aanwezig geregistreerd zijn.")
                 if attempt >= 2:
                     raise DomainError("Maximum two attempts")
                 c.execute("UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=%s AND pogingnummer=%s",(delivery_id,attempt))
                 c.execute("""INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
                              VALUES (%s,2,%s,%s,%s,%s)""",
-                          (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",bool(delivered)))
+                          (delivery_id,ride,attempt_time,"afgeleverd" if delivered else "niet aanwezig",receipt_signed))
                 if delivered:
                     self._record_delivered_lines(c, delivery_id)
-                    c.execute("UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id SET b.status_naam='afgeleverd' WHERE l.levering_id=%s",(delivery_id,))
+                    self._mark_order_after_delivery(c, delivery_id)
+                else:
+                    c.execute(
+                        """UPDATE Bestelling AS b JOIN Levering AS l
+                           ON l.bestelling_id = b.bestelling_id
+                           SET b.status_naam = 'niet afgeleverd'
+                           WHERE l.levering_id = %s""",
+                        (delivery_id,),
+                    )
                 self.db.commit()
             except Exception:
                 self.db.rollback()
                 raise
 
-    def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered):
+    def register_first_delivery_attempt(self, delivery_id, delivery_date, delivered, receipt_signed=False):
+        self._validate_receipt(delivered, receipt_signed)
         with self.db.cursor() as c:
             try:
                 c.execute(
@@ -132,36 +142,59 @@ class AssessedRepository:
                     """UPDATE Leverpoging
                        SET resultaat = %s, ontvangst_getekend = %s
                        WHERE levering_id = %s AND pogingnummer = 1""",
-                    ("afgeleverd" if delivered else "niet aanwezig", bool(delivered),
+                    ("afgeleverd" if delivered else "niet aanwezig", receipt_signed,
                      delivery_id),
                 )
                 if delivered:
                     self._record_delivered_lines(c, delivery_id)
-                    c.execute(
-                        """UPDATE Bestelling AS b
-                           JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
-                           SET b.status_naam = 'afgeleverd'
-                           WHERE l.levering_id = %s""",
-                        (delivery_id,),
-                    )
+                    self._mark_order_after_delivery(c, delivery_id)
                 self.db.commit()
             except Exception:
                 self.db.rollback()
                 raise
 
     @staticmethod
+    def _validate_receipt(delivered, receipt_signed):
+        if delivered and not receipt_signed:
+            raise DomainError("De klant moet voor ontvangst hebben getekend.")
+        if receipt_signed and not delivered:
+            raise DomainError("Een niet-afgeleverde bestelling kan niet zijn ondertekend.")
+
+    @staticmethod
     def _record_delivered_lines(cursor, delivery_id):
         cursor.execute(
             """INSERT INTO Leveringregel
                    (levering_id, product_id, aantal_geleverd, factuur_id)
-               SELECT l.levering_id, br.product_id, br.aantal, NULL
+               SELECT l.levering_id, dr.product_id, SUM(dr.aantal), NULL
                FROM Levering AS l
-               JOIN Bestelregel AS br ON br.bestelling_id = l.bestelling_id
-               WHERE l.levering_id = %s""",
+               JOIN Deelorder AS d ON d.bestelling_id = l.bestelling_id
+                                   AND d.afgerond = TRUE
+               JOIN Deelorderregel AS dr ON dr.deelorder_id = d.deelorder_id
+               WHERE l.levering_id = %s
+               GROUP BY l.levering_id, dr.product_id""",
             (delivery_id,),
         )
         if cursor.rowcount == 0:
-            raise DomainError("Er zijn geen bestelregels om als geleverd vast te leggen.")
+            raise DomainError("Er zijn geen verzamelde producten om als geleverd vast te leggen.")
+
+    @staticmethod
+    def _mark_order_after_delivery(cursor, delivery_id):
+        """An order stays in backorder when not all requested medicines arrived."""
+        cursor.execute(
+            """UPDATE Bestelling AS b
+               JOIN Levering AS l ON l.bestelling_id = b.bestelling_id
+               SET b.status_naam = CASE
+                   WHEN EXISTS (
+                       SELECT 1 FROM Bestelregel AS br
+                       LEFT JOIN Leveringregel AS lr
+                         ON lr.levering_id = l.levering_id
+                        AND lr.product_id = br.product_id
+                       WHERE br.bestelling_id = b.bestelling_id
+                         AND COALESCE(lr.aantal_geleverd, 0) < br.aantal
+                   ) THEN 'backorder' ELSE 'afgeleverd' END
+               WHERE l.levering_id = %s""",
+            (delivery_id,),
+        )
 
     def prospect_followups(self, cutoff):
         with self.db.cursor(dictionary=True) as c:
@@ -237,8 +270,8 @@ class AssessedRepository:
                         "INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) "
                         "VALUES(%s,%s,%s)", (invoice_id,sequence,today))
                 elif action=="payment_plan_accepted":
-                    if invoice["betaald_op"]:
-                        raise DomainError("Invoice already paid")
+                    if invoice["betaald_op"] or (today-invoice["factuurdatum"]).days<21:
+                        raise DomainError("Een betalingsregeling volgt pas na drie onbetaalde weken.")
                     cursor.execute(
                         "UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=%s",
                         (invoice_id,))
@@ -282,6 +315,44 @@ class AssessedRepository:
             self.db.rollback()
             raise
 
+    def outstanding_purchase_invoices(self):
+        """List unpaid supplier invoices; receiving new stock is not implemented."""
+        with self.db.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT i.inkoopfactuur_id, i.factuurdatum, i.bedrag,
+                          l.naam AS leverancier
+                   FROM Inkoopfactuur AS i
+                   JOIN Leverancier AS l ON l.leverancier_id = i.leverancier_id
+                   WHERE i.betaald_op IS NULL
+                   ORDER BY i.factuurdatum, i.inkoopfactuur_id"""
+            )
+            return cursor.fetchall()
+
+    def mark_purchase_invoice_paid(self, invoice_id, paid_on):
+        """Only record a supplier invoice payment the employee has confirmed."""
+        if invoice_id < 1:
+            raise DomainError("Kies een geldig inkoopfactuurnummer.")
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT inkoopfactuur_id, betaald_op
+                       FROM Inkoopfactuur WHERE inkoopfactuur_id=%s FOR UPDATE""",
+                    (invoice_id,),
+                )
+                invoice = cursor.fetchone()
+                if invoice is None:
+                    raise NotFoundError("Inkoopfactuur niet gevonden.")
+                if invoice["betaald_op"] is not None:
+                    raise ConflictError("Deze inkoopfactuur is al betaald.")
+                cursor.execute(
+                    "UPDATE Inkoopfactuur SET betaald_op=%s WHERE inkoopfactuur_id=%s",
+                    (paid_on, invoice_id),
+                )
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
     def create_weekly_invoice(self, customer_id, week_start, invoice_date):
         """Issue one invoice for the customer's delivered, unbilled lines in a week."""
         from domain.business import Invoice
@@ -302,10 +373,20 @@ class AssessedRepository:
                 if customer is None:
                     raise DomainError("Klant niet gevonden.")
                 cursor.execute(
-                    """SELECT lr.levering_id, lr.product_id,
+                    """SELECT lr.levering_id, lr.product_id, b.bestelling_id, b.besteld_op,
                               lr.aantal_geleverd AS quantity,
                               br.prijs_per_eenheid AS unit_price,
-                              b.eenmalige_korting_toegepast
+                              b.eenmalige_korting_toegepast,
+                              CASE WHEN EXISTS (
+                                  SELECT 1 FROM Levering AS earlier_l
+                                  JOIN Leveringregel AS earlier_lr
+                                    ON earlier_lr.levering_id = earlier_l.levering_id
+                                  WHERE earlier_l.bestelling_id = b.bestelling_id
+                                    AND earlier_lr.factuur_id IS NOT NULL
+                              ) THEN 0 ELSE b.extra_bezorgkosten END AS extra_bezorgkosten,
+                               (SELECT SUM(x.aantal * x.prijs_per_eenheid)
+                                  FROM Bestelregel AS x
+                                 WHERE x.bestelling_id = b.bestelling_id) AS besteld_ex_btw
                        FROM Leveringregel AS lr
                        JOIN Levering AS l ON l.levering_id = lr.levering_id
                        JOIN Bestelling AS b ON b.bestelling_id = l.bestelling_id
@@ -331,29 +412,22 @@ class AssessedRepository:
                     raise DomainError(
                         "Geen afgeleverde, ongefactureerde producten voor deze klant en week."
                     )
+                # First-order eligibility belongs to the original order, not to
+                # whichever weekly invoice happens to be issued first.
                 first_order = any(
                     bool(line["eenmalige_korting_toegepast"]) for line in lines
                 )
-                if first_order:
-                    cursor.execute(
-                        """SELECT COUNT(*) AS aantal_facturen,
-                                  COUNT(eenmalige_korting) AS bekende_kortingen,
-                                  COALESCE(SUM(eenmalige_korting > 0), 0) AS korting_al_toegepast
-                           FROM Factuur
-                           WHERE klant_id = %s""",
-                        (customer_id,),
-                    )
-                    history = cursor.fetchone()
-                    if history["aantal_facturen"] != history["bekende_kortingen"]:
-                        raise DomainError(
-                            "Een eerdere factuur heeft geen vastgelegde eenmalige korting. "
-                            "Controleer de factuurhistorie voordat je deze factuur aanmaakt."
+                yearly_revenue = {}
+                revenue_repository = DiscountRepository(self.db)
+                for line in lines:
+                    ordered_on = line.get("besteld_op") or invoice_date
+                    order_year = ordered_on.year
+                    if order_year not in yearly_revenue:
+                        yearly_revenue[order_year] = revenue_repository.sum_purchases(
+                            customer_id, order_year - 1
                         )
-                    first_order = not bool(history["korting_al_toegepast"])
-
-                annual_revenue = DiscountRepository(self.db).sum_purchases(
-                    customer_id, invoice_date.year - 1
-                )
+                    line["annual_revenue"] = yearly_revenue[order_year]
+                annual_revenue = yearly_revenue.get(invoice_date.year, 0)
                 cursor.execute(
                     "INSERT INTO Factuur (klant_id, factuurdatum) VALUES (%s, %s)",
                     (customer_id, invoice_date),

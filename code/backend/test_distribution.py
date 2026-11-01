@@ -170,10 +170,10 @@ class DistributionServiceTests(TestCase):
 
 class DeliveryAttemptRepositoryTests(TestCase):
     def test_second_attempt_uses_selected_delivery_date(self):
-        connection = FakeConnection(one_rows=[(7, 1, None)])
+        connection = FakeConnection(one_rows=[(7, 1, "niet aanwezig")])
 
         AssessedRepository(connection).register_delivery_attempt(
-            5, date(2026, 10, 31), True, time(14, 30)
+            5, date(2026, 10, 31), True, time(14, 30), True
         )
 
         self.assertEqual(connection.commits, 1)
@@ -187,7 +187,7 @@ class DeliveryAttemptRepositoryTests(TestCase):
         connection = FakeConnection(one_rows=[(None,)])
 
         AssessedRepository(connection).register_first_delivery_attempt(
-            5, date(2026, 10, 31), True
+            5, date(2026, 10, 31), True, True
         )
 
         self.assertEqual(connection.commits, 1)
@@ -206,7 +206,7 @@ class DeliveryAttemptRepositoryTests(TestCase):
 
         with self.assertRaises(DomainError):
             AssessedRepository(connection).register_first_delivery_attempt(
-                5, date(2026, 10, 31), True
+                5, date(2026, 10, 31), True, True
             )
 
         self.assertEqual(connection.commits, 0)
@@ -277,12 +277,13 @@ class DistributionRouteTests(TestCase):
                             "delivery_id": "5",
                             "time": "14:30",
                             "outcome": "afgeleverd",
+                            "receipt_signed": "1",
                         },
                     )
 
         self.assertEqual(response.status_code, 302)
         repository.return_value.register_delivery_attempt.assert_called_once_with(
-            5, date(2026, 10, 31), True, time(14, 30)
+            5, date(2026, 10, 31), True, time(14, 30), True
         )
 
     def test_first_attempt_route_records_delivery_outcome(self):
@@ -299,12 +300,13 @@ class DistributionRouteTests(TestCase):
                             "day": "2026-10-31",
                             "delivery_id": "5",
                             "outcome": "afgeleverd",
+                            "receipt_signed": "1",
                         },
                     )
 
         self.assertEqual(response.status_code, 302)
         repository.return_value.register_first_delivery_attempt.assert_called_once_with(
-            5, date(2026, 10, 31), True
+            5, date(2026, 10, 31), True, True
         )
 
     def test_pack_route_redirects_after_recording_boxes(self):

@@ -14,7 +14,7 @@ class RobotOrderRepository:
                    b.dagdeel, b.spoed
             FROM Bestelling AS b
             JOIN Klant AS k ON k.klant_id = b.klant_id
-            WHERE b.status_naam IN ('nieuw', 'wordt verzameld')
+            WHERE b.status_naam IN ('nieuw', 'wordt verzameld', 'backorder')
               AND EXISTS (
                   SELECT 1 FROM Voorraadreservering AS vr
                   WHERE vr.bestelling_id = b.bestelling_id
@@ -45,27 +45,37 @@ class RobotOrderRepository:
             return cursor.fetchone()
 
     def suborder_lines(self, suborder_id):
-        sql = """SELECT dr.product_id, p.productnaam, dr.aantal
+        """Give the robot product quantities and actual shelf locations in its aisle."""
+        sql = """SELECT dr.product_id, p.productnaam, dr.aantal,
+                        GROUP_CONCAT(CONCAT(m.gang, m.schapnummer)
+                          ORDER BY m.schapnummer SEPARATOR ', ') AS magazijnlocaties
                  FROM Deelorderregel AS dr
                  JOIN Product AS p ON p.product_id = dr.product_id
+                 JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
+                 JOIN Robot AS r ON r.robot_id = d.robot_id
+                 LEFT JOIN Magazijnlocatie AS m
+                   ON m.product_id = dr.product_id AND m.gang = r.gang
+                      AND m.aantal > 0
                  WHERE dr.deelorder_id = %s
+                 GROUP BY dr.product_id, p.productnaam, dr.aantal
                  ORDER BY p.productnaam, dr.product_id"""
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(sql, (suborder_id,))
             return cursor.fetchall()
 
     def complete(self, robot_id, suborder_id):
-        """Complete only an unfinished sub-order belonging to this robot.
+        """Finish a robot's picked items and update warehouse stock atomically.
 
-        Lock the row to make duplicate completion messages harmless but explicit.
-        At least one registered physical bin is required before completion.
+        Picking removes medicines from physical shelves. Releasing the corresponding
+        reservation prevents counting those units twice as unavailable.
         """
         try:
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute(
-                    """SELECT deelorder_id, afgerond
-                       FROM Deelorder WHERE deelorder_id = %s AND robot_id = %s
-                       FOR UPDATE""",
+                    """SELECT d.deelorder_id, d.bestelling_id, d.afgerond, r.gang
+                       FROM Deelorder AS d
+                       JOIN Robot AS r ON r.robot_id = d.robot_id
+                       WHERE d.deelorder_id = %s AND d.robot_id = %s FOR UPDATE""",
                     (suborder_id, robot_id),
                 )
                 suborder = cursor.fetchone()
@@ -77,17 +87,68 @@ class RobotOrderRepository:
                     "SELECT COUNT(*) AS bin_count FROM Verzamelbak WHERE deelorder_id = %s",
                     (suborder_id,),
                 )
-                count = cursor.fetchone()["bin_count"]
-                if not count:
+                if not cursor.fetchone()["bin_count"]:
                     raise ConflictError("Registreer eerst minimaal een verzamelbak.")
                 cursor.execute(
-                    "SELECT COUNT(*) AS line_count FROM Deelorderregel WHERE deelorder_id = %s",
+                    """SELECT product_id, aantal FROM Deelorderregel
+                       WHERE deelorder_id = %s ORDER BY product_id""",
                     (suborder_id,),
                 )
-                if not cursor.fetchone()["line_count"]:
+                lines = cursor.fetchall()
+                if not lines:
                     raise ConflictError("Deelorder zonder regels kan niet worden afgerond.")
-                # This endpoint accepts the robot's explicit completion message.
-                # Actual collected quantities are not separately scanned in the case/EER.
+
+                for line in lines:
+                    product_id = line["product_id"]
+                    remaining = int(line["aantal"])
+                    cursor.execute(
+                        "SELECT product_id FROM Product WHERE product_id = %s FOR UPDATE",
+                        (product_id,),
+                    )
+                    if cursor.fetchone() is None:
+                        raise NotFoundError("Het verzamelde product bestaat niet.")
+                    cursor.execute(
+                        """SELECT schapnummer, aantal FROM Magazijnlocatie
+                           WHERE product_id = %s AND gang = %s
+                           ORDER BY schapnummer FOR UPDATE""",
+                        (product_id, suborder["gang"]),
+                    )
+                    for location in cursor.fetchall():
+                        take = min(remaining, int(location["aantal"]))
+                        if take:
+                            cursor.execute(
+                                """UPDATE Magazijnlocatie SET aantal = aantal - %s
+                                   WHERE gang = %s AND schapnummer = %s AND aantal >= %s""",
+                                (take, suborder["gang"], location["schapnummer"], take),
+                            )
+                            if cursor.rowcount != 1:
+                                raise ConflictError("De voorraad is tijdens het verzamelen gewijzigd.")
+                            remaining -= take
+                        if remaining == 0:
+                            break
+                    if remaining:
+                        raise ConflictError("Onvoldoende voorraad in de toegewezen robotgang.")
+
+                    cursor.execute(
+                        """SELECT aantal FROM Voorraadreservering
+                           WHERE bestelling_id = %s AND product_id = %s FOR UPDATE""",
+                        (suborder["bestelling_id"], product_id),
+                    )
+                    reservation = cursor.fetchone()
+                    if reservation is None or int(reservation["aantal"]) < line["aantal"]:
+                        raise ConflictError("De gereserveerde voorraad komt niet overeen met de deelorder.")
+                    if int(reservation["aantal"]) == line["aantal"]:
+                        cursor.execute(
+                            """DELETE FROM Voorraadreservering
+                               WHERE bestelling_id = %s AND product_id = %s""",
+                            (suborder["bestelling_id"], product_id),
+                        )
+                    else:
+                        cursor.execute(
+                            """UPDATE Voorraadreservering SET aantal = aantal - %s
+                               WHERE bestelling_id = %s AND product_id = %s""",
+                            (line["aantal"], suborder["bestelling_id"], product_id),
+                        )
                 cursor.execute(
                     "UPDATE Deelorder SET afgerond = TRUE WHERE deelorder_id = %s",
                     (suborder_id,),
@@ -115,7 +176,7 @@ class RobotOrderRepository:
                 order = cursor.fetchone()
                 if order is None:
                     raise NotFoundError("Bestelling niet gevonden.")
-                if order["status_naam"] not in {"nieuw", "wordt verzameld"}:
+                if order["status_naam"] not in {"nieuw", "wordt verzameld", "backorder"}:
                     raise ConflictError("Deze bestelling kan niet meer worden verdeeld over robots.")
                 cursor.execute(
                     "SELECT COUNT(*) AS assigned_count FROM Deelorder WHERE bestelling_id = %s",
@@ -151,6 +212,7 @@ class RobotOrderRepository:
                                     FROM Deelorderregel AS dr
                                     JOIN Deelorder AS d ON d.deelorder_id = dr.deelorder_id
                                     WHERE dr.product_id = %s AND d.robot_id = r.robot_id
+                                       AND d.afgerond = FALSE
                                   ), 0) AS already_assigned
                            FROM Magazijnlocatie AS m
                            JOIN Robot AS r ON r.gang = m.gang

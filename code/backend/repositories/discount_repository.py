@@ -38,7 +38,7 @@ class DiscountRepository:
     def list_products(self):
         """Return every catalog product with its price for the order line selection."""
         return self._fetchall("""
-            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
             WHERE in_assortiment = TRUE
             ORDER BY productnaam ASC
@@ -47,7 +47,7 @@ class DiscountRepository:
     def find_product(self, product_id):
         """Return one catalog product with its price, or None when the id is unknown."""
         return self._fetchone("""
-            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking
+            SELECT product_id, artikelnummer, productnaam, prijs_per_grootverpakking, minimale_bestelhoeveelheid
             FROM Product
             WHERE product_id = %s AND in_assortiment = TRUE
         """, (product_id,))

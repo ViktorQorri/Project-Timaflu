@@ -1,5 +1,8 @@
 """Database access for the distribution corner and order packing."""
 
+from datetime import datetime, timedelta
+from decimal import Decimal
+
 from domain.errors import ConflictError, NotFoundError
 
 
@@ -14,7 +17,7 @@ ORDERS_WITH_BINS_QUERY = """
     JOIN Deelorder AS d ON d.bestelling_id = b.bestelling_id
     LEFT JOIN Verzamelbak AS v ON v.deelorder_id = d.deelorder_id
     LEFT JOIN Robot AS r ON r.robot_id = d.robot_id
-    WHERE (b.status_naam IS NULL OR b.status_naam NOT IN ('verstuurd', 'afgeleverd'))
+    WHERE b.status_naam NOT IN ('verstuurd', 'afgeleverd')
       AND EXISTS (
           SELECT 1 FROM Deelorder AS d2
           JOIN Verzamelbak AS v2 ON v2.deelorder_id = d2.deelorder_id
@@ -42,6 +45,25 @@ class DistributionRepository:
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(ORDERS_WITH_BINS_QUERY)
             return cursor.fetchall()
+
+    def packing_label(self, order_id):
+        """Address label for a packed order, including the emergency marker."""
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """SELECT b.bestelling_id, b.spoed, b.aantal_verhuisdozen,
+                          k.bedrijfsnaam, k.telefoonnummer, a.adres AS afleveradres
+                   FROM Bestelling AS b
+                   JOIN Klant AS k ON k.klant_id = b.klant_id
+                   JOIN Adres AS a ON a.adres_id = b.afleveradres_id
+                   WHERE b.bestelling_id = %s""",
+                (order_id,),
+            )
+            label = cursor.fetchone()
+        if label is None:
+            raise NotFoundError("Bestelling niet gevonden.")
+        if label["aantal_verhuisdozen"] < 1:
+            raise ConflictError("Registreer eerst de verpakking van deze bestelling.")
+        return label
 
     def list_order_lines(self, order_id):
         """Return the product lines that belong to a customer order.
@@ -72,9 +94,21 @@ class DistributionRepository:
             JOIN Klant AS k ON k.klant_id = b.klant_id
             JOIN Adres AS a ON a.adres_id = b.afleveradres_id
             WHERE b.status_naam = 'verstuurd'
+              -- Rebooking is allowed only when every earlier delivery failed twice.
               AND NOT EXISTS (
                   SELECT 1 FROM Levering AS l
+                  LEFT JOIN Leverpoging AS retry
+                    ON retry.levering_id = l.levering_id AND retry.pogingnummer = 2
                   WHERE l.bestelling_id = b.bestelling_id
+                    AND (retry.resultaat IS NULL OR retry.resultaat <> 'niet aanwezig')
+              )
+              -- Never create another delivery for the same scheduled date.
+              AND NOT EXISTS (
+                  SELECT 1 FROM Levering AS l
+                  JOIN Leverpoging AS lp ON lp.levering_id = l.levering_id
+                  JOIN Rit AS r ON r.rit_id = lp.rit_id
+                  WHERE l.bestelling_id = b.bestelling_id
+                    AND r.ritdatum = b.gewenste_leverdatum
               )
             ORDER BY b.spoed DESC, b.gewenste_leverdatum, b.bestelling_id
         """
@@ -129,7 +163,7 @@ class DistributionRepository:
         try:
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute(
-                    """SELECT status_naam, gewenste_leverdatum
+                    """SELECT status_naam, gewenste_leverdatum, spoed, besteld_op
                        FROM Bestelling
                        WHERE bestelling_id = %s
                        FOR UPDATE""",
@@ -140,12 +174,38 @@ class DistributionRepository:
                     raise NotFoundError("Bestelling niet gevonden.")
                 if order["status_naam"] != "verstuurd":
                     raise ConflictError("Geef de bestelling eerst vrij voor distributie.")
+                if order.get("spoed"):
+                    planned_at = datetime.combine(order["gewenste_leverdatum"], planned_time)
+                    ordered_at = order.get("besteld_op")
+                    if (
+                        ordered_at is None
+                        or planned_at < ordered_at
+                        or planned_at > ordered_at + timedelta(hours=3)
+                    ):
+                        raise ConflictError(
+                            "Een spoedbestelling moet binnen drie uur na plaatsing worden afgeleverd."
+                        )
                 cursor.execute(
                     "SELECT levering_id FROM Levering WHERE bestelling_id = %s FOR UPDATE",
                     (order_id,),
                 )
-                if cursor.fetchone() is not None:
-                    raise ConflictError("Voor deze bestelling is al een levering ingepland.")
+                if cursor.fetchall():
+                    cursor.execute(
+                        """SELECT lp.pogingnummer, lp.resultaat, r.ritdatum
+                           FROM Levering AS l
+                           JOIN Leverpoging AS lp ON lp.levering_id = l.levering_id
+                           JOIN Rit AS r ON r.rit_id = lp.rit_id
+                           WHERE l.bestelling_id = %s
+                           ORDER BY l.levering_id DESC, lp.pogingnummer DESC
+                           LIMIT 1 FOR UPDATE""",
+                        (order_id,),
+                    )
+                    previous = cursor.fetchone()
+                    if (previous is None
+                            or previous["pogingnummer"] != 2
+                            or previous["resultaat"] != "niet aanwezig"
+                            or previous["ritdatum"] >= order["gewenste_leverdatum"]):
+                        raise ConflictError("Deze bestelling heeft al een actieve levering.")
                 cursor.execute(
                     """SELECT koerier_id, beschikbaar
                        FROM Koerier
@@ -187,6 +247,65 @@ class DistributionRepository:
                 )
             self.connection.commit()
             return order["gewenste_leverdatum"]
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def reschedule_failed_delivery(
+        self, delivery_id, new_date, part_of_day, extra_cost, explanation,
+    ):
+        """Keep the two failed attempts, and update the existing order after contact."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT b.bestelling_id, b.status_naam, b.gewenste_leverdatum,
+                              b.extra_bezorgkosten, b.toelichting_extra_bezorgkosten
+                       FROM Levering AS l
+                       JOIN Bestelling AS b ON b.bestelling_id = l.bestelling_id
+                       WHERE l.levering_id = %s FOR UPDATE""",
+                    (delivery_id,),
+                )
+                order = cursor.fetchone()
+                if order is None:
+                    raise NotFoundError("Deze levering bestaat niet.")
+                if order["status_naam"] != "niet afgeleverd":
+                    raise ConflictError("De levering is niet tweemaal mislukt.")
+                cursor.execute(
+                    """SELECT lp.pogingnummer, lp.resultaat, r.ritdatum
+                       FROM Leverpoging AS lp
+                       JOIN Rit AS r ON r.rit_id = lp.rit_id
+                       WHERE lp.levering_id = %s
+                       ORDER BY lp.pogingnummer FOR UPDATE""",
+                    (delivery_id,),
+                )
+                attempts = cursor.fetchall()
+                if (len(attempts) != 2 or
+                        [(a["pogingnummer"], a["resultaat"]) for a in attempts]
+                        != [(1, "niet aanwezig"), (2, "niet aanwezig")]):
+                    raise ConflictError("Registreer eerst beide mislukte bezorgpogingen.")
+                old_date = attempts[0]["ritdatum"]
+                if (attempts[1]["ritdatum"] != old_date
+                        or order["gewenste_leverdatum"] != old_date
+                        or new_date <= old_date):
+                    raise ConflictError("De nieuwe afspraak moet na de mislukte levering liggen.")
+                new_total = Decimal(order["extra_bezorgkosten"]) + extra_cost
+                if new_total > Decimal("99999999.99"):
+                    raise ConflictError("De totale extra bezorgkosten zijn te hoog.")
+                prior = order["toelichting_extra_bezorgkosten"] or ""
+                details = (prior + "; " if prior else "") + explanation
+                if len(details) > 255:
+                    raise ConflictError("De gecombineerde toelichting is te lang.")
+                cursor.execute(
+                    """UPDATE Bestelling
+                       SET gewenste_leverdatum = %s, dagdeel = %s,
+                           extra_bezorgkosten = %s,
+                           toelichting_extra_bezorgkosten = %s,
+                           status_naam = 'verstuurd'
+                       WHERE bestelling_id = %s""",
+                    (new_date, part_of_day, new_total, details,
+                     order["bestelling_id"]),
+                )
+            self.connection.commit()
         except Exception:
             self.connection.rollback()
             raise

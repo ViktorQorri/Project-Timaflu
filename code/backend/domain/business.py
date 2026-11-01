@@ -22,13 +22,17 @@ class CustomerDiscount:
 
 
 class Order:
-    def __init__(self, subtotal, annualRevenue=0, firstOrder=False):
+    def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderThresholdBase=None):
         self.subtotal = euro(subtotal)
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
+        # Partial deliveries retain the discount eligibility of the original order.
+        self.orderThresholdBase = (
+            self.subtotal if orderThresholdBase is None else euro(orderThresholdBase)
+        )
 
     def calculateOrderDiscount(self):
-        return euro(self.subtotal * Decimal("0.05")) if self.subtotal >= 500 else euro(0)
+        return euro(self.subtotal * Decimal("0.05")) if self.orderThresholdBase >= 500 else euro(0)
 
     def calculateOneTimeDiscount(self):
         return euro((self.subtotal - self.calculateOrderDiscount()) * Decimal("0.10")) if self.firstOrder else euro(0)
@@ -96,27 +100,73 @@ class Invoice:
         self.debtCollectionEnabled = False
 
     def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder):
-        """Use explicitly confirmed discount inputs; never default historical facts."""
+        """Bundle delivered lines on one invoice, retaining discounts per order.
+
+        The case gives an order-level 5% discount and first-order 10% discount,
+        while administration invoices delivered products together each week.
+        A weekly subtotal must never make smaller orders eligible for 5%.
+        """
         items = []
+        orders = {}
         for line in lines:
             qty = int(line["quantity"])
             if qty <= 0:
                 raise ValueError("Aantal moet positief zijn")
             price = euro(line["unit_price"])
-            items.append({"quantity": qty, "unit_price": price, "line_total": euro(qty * price)})
-        subtotal = euro(sum((line["line_total"] for line in items), Decimal(0)))
-        vat = euro(subtotal * Decimal("0.09"))
-        gross = subtotal + vat
-        discounts = Order(gross, annualRevenue, firstOrder).calculateTotalAmount()
-        after_order = euro(gross - discounts["order_discount"])
-        after_first_order = euro(after_order - discounts["first_order_discount"])
-        return {"total_after_order_discount": after_order,
-                "total_after_first_order_discount": after_first_order,
-                "date": self.invoiceDate, "invoice_number": self.invoiceNumber,
-                "customer_number": self.customerNumber, "customer_name": customerName,
-                "customer_address": customerAddress, "lines": items,
-                "total_ex_vat": subtotal, "vat_9_percent": vat, "total_incl_vat": gross,
-                **discounts}
+            item = {"quantity": qty, "unit_price": price, "line_total": euro(qty * price)}
+            items.append(item)
+            order_id = line.get("bestelling_id", "__single_order__")
+            group = orders.setdefault(order_id, {
+                "items": [],
+                "annual_revenue": line.get("annual_revenue", annualRevenue),
+                "first_order": bool(line.get("eenmalige_korting_toegepast", firstOrder)),
+                "original_total": line.get("besteld_ex_btw"),
+                "extra_cost": euro(line.get("extra_bezorgkosten", 0)),
+            })
+            if (group["first_order"] != bool(line.get("eenmalige_korting_toegepast", firstOrder))
+                    or group["annual_revenue"] != line.get("annual_revenue", annualRevenue)
+                    or group["extra_cost"] != euro(line.get("extra_bezorgkosten", 0))):
+                raise ValueError("Tegenstrijdige kortingsgegevens voor dezelfde bestelling")
+            group["items"].append(item)
+
+        amounts = {key: Decimal("0.00") for key in (
+            "total_ex_vat", "vat_9_percent", "total_incl_vat",
+            "order_discount", "total_after_order_discount", "first_order_discount",
+            "total_after_first_order_discount", "customer_discount",
+            "extra_delivery_costs", "total"
+        )}
+        for group in orders.values():
+            net = euro(sum((item["line_total"] for item in group["items"]), Decimal(0)))
+            vat = euro(net * Decimal("0.09"))
+            gross = net + vat
+            original_net = group["original_total"]
+            threshold_base = (
+                euro(euro(original_net) * Decimal("1.09"))
+                if original_net is not None else gross
+            )
+            discount = Order(
+                gross, group["annual_revenue"], group["first_order"], threshold_base
+            ).calculateTotalAmount()
+            amounts["total_ex_vat"] += net
+            amounts["vat_9_percent"] += vat
+            amounts["total_incl_vat"] += gross
+            amounts["order_discount"] += discount["order_discount"]
+            amounts["total_after_order_discount"] += gross - discount["order_discount"]
+            amounts["first_order_discount"] += discount["first_order_discount"]
+            amounts["total_after_first_order_discount"] += (
+                gross - discount["order_discount"] - discount["first_order_discount"]
+            )
+            amounts["customer_discount"] += discount["customer_discount"]
+            amounts["extra_delivery_costs"] += group["extra_cost"]
+            # Costs caused by customer absence are charged separately after the
+            # medicine discounts; they do not make the order eligible for 5%.
+            amounts["total"] += discount["total"] + group["extra_cost"]
+        return {
+            "date": self.invoiceDate, "invoice_number": self.invoiceNumber,
+            "customer_number": self.customerNumber, "customer_name": customerName,
+            "customer_address": customerAddress, "lines": items,
+            "subtotal": amounts["total_incl_vat"], **amounts,
+        }
 
     def checkPaymentArrears(self, today):
         if self.paidOn:

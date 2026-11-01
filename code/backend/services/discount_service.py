@@ -169,6 +169,11 @@ class DiscountService:
             product = self.repository.find_product(product_id)
             if product is None:
                 raise NotFoundError("Dit medicijn staat niet in de catalogus.")
+            minimum = int(product.get("minimale_bestelhoeveelheid", 1))
+            if quantity < minimum:
+                raise DomainError(
+                    f"Bestel minimaal {minimum} van {product['productnaam']}."
+                )
             price = to_cents(product["prijs_per_grootverpakking"])
             lines.append({**product, "quantity": quantity, "line_total": to_cents(price * quantity)})
         if not lines:

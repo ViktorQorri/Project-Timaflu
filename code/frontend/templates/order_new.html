@@ -36,7 +36,7 @@
               <select id="product-{{ row }}" name="product_id"{% if row == 0 %} required{% endif %}>
                 <option value="">Geen medicijn</option>
                 {% for product in products %}
-                  <option value="{{ product.product_id }}"{% if line[0] == product.product_id|string %} selected{% endif %}>{{ product.productnaam }} ({{ product.artikelnummer }}), {{ euro(product.prijs_per_grootverpakking) }}</option>
+                  <option value="{{ product.product_id }}"{% if line[0] == product.product_id|string %} selected{% endif %}>{{ product.productnaam }} ({{ product.artikelnummer }}), {{ euro(product.prijs_per_grootverpakking) }}, minimaal {{ product.minimale_bestelhoeveelheid }} stuks</option>
                 {% endfor %}
               </select>
             </div>
@@ -139,6 +139,10 @@
           {% if not calculation.can_save %}
             <p class="discount-summary__basis">Niet alles is op voorraad. Vink bij elke regel met een tekort backorder aan, of verwijder de regel en bereken opnieuw.</p>
           {% endif %}
+          <label class="order-delivery__approved">
+            <input type="checkbox" name="customer_approved" value="yes"{% if form.customer_approved %} checked{% endif %} required>
+            De klant heeft het totaalbedrag en de afgesproken levering bevestigd.
+          </label>
           <button type="submit" class="discount-form__submit" formmethod="post" formaction="{{ url_for('sales.place_order') }}">Order opslaan</button>
         </fieldset>
       </div>
