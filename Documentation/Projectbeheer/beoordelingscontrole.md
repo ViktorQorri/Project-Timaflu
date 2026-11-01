@@ -45,6 +45,19 @@ De 87 browsercontroles bewijzen een responsieve weergave bij de gekozen breedtes
 | Individueel, minimaal drie uiteenlopende STARR-momenten voor beoordeling 'goed' | 10% | [Werkblad](reflectie-werkblad.md) met controleerbare gebeurtenissen en vragen; geen eigen ervaringen ingevuld. | Individueel aan te leveren |
 | Groepsreflectiesessie en actiepunten | 10% | De evaluatie en een invulschema zijn aanwezig, maar een werkelijk gehouden sessie en bijdragen zijn niet vastgesteld. | Groep moet uitvoeren en vastleggen |
 
+## Knock-outvoorwaarden SLB
+
+De toetsmatrijs vermeldt vier SLB-opdrachten als **knock-outcriterium** voor het recht op een eindresultaat bij deze leeruitkomst. Of ze individueel zijn afgerond is niet uit de Timaflu-repository vast te stellen.
+
+| SLB-opdracht | Status in deze repository |
+| --- | --- |
+| Terugblik op eerste resultaten | Niet vastgesteld; controleer persoonlijk SLB-portaal |
+| Bezoek aan stagiair | Niet vastgesteld; controleer persoonlijk SLB-portaal |
+| Intervisie | Niet vastgesteld; controleer persoonlijk SLB-portaal |
+| Van compliment tot kracht | Niet vastgesteld; controleer persoonlijk SLB-portaal |
+
+Dit zijn **geen** softwaretaken die door GitHub-commits kunnen worden afgevinkt. Controleer ze vóór de eindbeoordeling in het eigen SLB-dossier.
+
 ## Hoogste resterende prioriteiten
 
 1. **Online database voor de einddemo:** host een veilige test-/demo-MySQL, vul relevante fictieve casusdata, test de website tegen deze database en bewijs de bereikbaarheid. Gebruik geen echte medicijnklanten; voeg geen wachtwoorden aan Git toe.
