@@ -49,6 +49,12 @@
     ] %}
     <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
     {% endfor %}
+    {% if f.extra_cost_gross %}
+    <dt>Afgesproken extra bezorgkosten excl. btw</dt><dd>€ {{ f.extra_cost_ex }}</dd>
+    <dt>Btw over extra bezorgkosten</dt><dd>€ {{ f.extra_cost_vat }}</dd>
+    <dt>Extra bezorgkosten incl. btw</dt><dd>€ {{ f.extra_cost_gross }}</dd>
+    {% endif %}
+    <dt><strong>Definitief te betalen</strong></dt><dd><strong>€ {{ f.final_total }}</strong></dd>
   </dl>
   {% if not f.snapshot_complete %}
   <p class="flash flash-warning" role="status">Een historisch factuurbedrag of een toegepaste korting is niet vastgelegd. Een eerder verzonden bedrag mag niet worden herberekend met aangenomen korting.</p>

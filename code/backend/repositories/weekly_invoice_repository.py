@@ -4,7 +4,7 @@ Uses one transaction per customer, with a customer row lock and a unique
 (customer, week) constraint. Already issued invoice amounts are immutable.
 """
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from domain.business import Invoice, euro
 from domain.errors import DomainError
 from repositories.assessed_repository import AssessedRepository
@@ -35,7 +35,8 @@ class WeeklyInvoiceRepository:
                 FROM Leveringregel lr
                 JOIN Levering l ON l.levering_id=lr.levering_id
                 JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
-                WHERE lr.factuur_id IS NULL
+                WHERE (lr.factuur_id IS NULL OR
+                       (b.extra_bezorgkosten > 0 AND b.extra_bezorgkosten_factuur_id IS NULL))
                   AND EXISTS (
                     SELECT 1 FROM Leverpoging lp
                     JOIN Rit r ON r.rit_id=lp.rit_id
@@ -48,20 +49,21 @@ class WeeklyInvoiceRepository:
             """, (week_start, week_end))
             return [row["klant_id"] for row in cursor.fetchall()]
 
-    def issue_week(self, week_start, sender_address, issued_on=None):
+    def issue_week(self, week_start, sender_address, issued_on=None, delivery_cost_vat_percent=None):
         """Issue each eligible customer once. Does not send email or invent an address."""
         issued_on = issued_on or date.today()
         self.validate_week(week_start, issued_on, sender_address)
         issued_ids = []
         for customer_id in self.eligible_customers(week_start):
             invoice_id = self._issue_customer(
-                customer_id, week_start, sender_address.strip(), issued_on
+                customer_id, week_start, sender_address.strip(), issued_on,
+                delivery_cost_vat_percent
             )
             if invoice_id is not None:
                 issued_ids.append(invoice_id)
         return issued_ids
 
-    def _issue_customer(self, customer_id, week_start, sender_address, issued_on):
+    def _issue_customer(self, customer_id, week_start, sender_address, issued_on, delivery_cost_vat_percent):
         end = week_start + timedelta(days=6)
         with self.db.cursor(dictionary=True) as cursor:
             try:
@@ -111,9 +113,44 @@ class WeeklyInvoiceRepository:
                     FOR UPDATE
                 """, (customer_id, week_start, end))
                 rows = cursor.fetchall()
-                if not rows:
+                # Re-delivery costs are bound to the order in the case. Include them
+                # once, only after a signed delivery in this billing week.
+                cursor.execute("""
+                    SELECT b.bestelling_id, b.extra_bezorgkosten,
+                           b.toelichting_extra_bezorgkosten
+                    FROM Bestelling b
+                    WHERE b.klant_id=%s AND b.extra_bezorgkosten > 0
+                      AND b.extra_bezorgkosten_factuur_id IS NULL
+                      AND EXISTS (
+                        SELECT 1 FROM Levering l
+                        JOIN Leverpoging lp ON lp.levering_id=l.levering_id
+                        JOIN Rit r ON r.rit_id=lp.rit_id
+                        WHERE l.bestelling_id=b.bestelling_id
+                          AND lp.resultaat='afgeleverd'
+                          AND lp.ontvangst_getekend=TRUE
+                          AND r.ritdatum BETWEEN %s AND %s
+                      )
+                    ORDER BY b.bestelling_id FOR UPDATE
+                """, (customer_id, week_start, end))
+                charges = cursor.fetchall()
+                if not rows and not charges:
                     self.db.rollback()
                     return None
+                # No fictitious VAT treatment: the agreed charge is the final amount.
+                # The legal VAT percentage must be supplied by the operator.
+                extra_gross = euro(sum((Decimal(str(r["extra_bezorgkosten"]))
+                                        for r in charges), Decimal(0)))
+                if charges:
+                    try:
+                        percent = Decimal(str(delivery_cost_vat_percent))
+                    except (InvalidOperation, ValueError, TypeError) as exc:
+                        raise DomainError("Stel het btw-percentage voor extra bezorgkosten expliciet in.") from exc
+                    if not percent.is_finite() or percent < 0 or percent > 100:
+                        raise DomainError("Ongeldig btw-percentage voor extra bezorgkosten.")
+                    extra_ex = euro(extra_gross / (Decimal(1) + percent / Decimal(100)))
+                else:
+                    extra_ex = Decimal("0.00")
+                extra_vat = euro(extra_gross - extra_ex)
 
                 year = end.year - 1
                 cursor.execute("""
@@ -150,10 +187,21 @@ class WeeklyInvoiceRepository:
                         "quantity": row["quantity"], "unit_price": row["unit_price"]
                     })
                 # One first-order discount, even if acquisition also offered 10%.
-                invoice = Invoice(customer_id, "", issued_on).createWeeklyInvoiceForOrders(
-                    customer["bedrijfsnaam"], customer["factuuradres"],
-                    list(orders.values()), revenue["annual"]
-                )
+                if orders:
+                    invoice = Invoice(customer_id, "", issued_on).createWeeklyInvoiceForOrders(
+                        customer["bedrijfsnaam"], customer["factuuradres"],
+                        list(orders.values()), revenue["annual"]
+                    )
+                else:
+                    # Only extra costs from a signed delivery remain unbilled.
+                    invoice = {
+                        "total_ex_vat": Decimal("0.00"), "vat_9_percent": Decimal("0.00"),
+                        "total_incl_vat": Decimal("0.00"), "order_discount": Decimal("0.00"),
+                        "total_after_order_discount": Decimal("0.00"),
+                        "first_order_discount": Decimal("0.00"),
+                        "total_after_first_order_discount": Decimal("0.00"),
+                        "customer_discount": Decimal("0.00"), "total": Decimal("0.00"),
+                    }
 
                 cursor.execute("""
                     INSERT INTO Factuur
@@ -167,6 +215,25 @@ class WeeklyInvoiceRepository:
                 AssessedRepository(self.db).save_invoice_snapshot(
                     invoice_id, invoice, commit=False
                 )
+                if charges:
+                    cursor.execute(
+                        """UPDATE Factuur
+                           SET extra_bezorgkosten_excl_btw=%s,
+                               extra_bezorgkosten_btw=%s,
+                               extra_bezorgkosten_incl_btw=%s,
+                               totaal_bedrag=%s
+                           WHERE factuur_id=%s""",
+                        (extra_ex, extra_vat, extra_gross,
+                         euro(invoice["total"] + extra_gross), invoice_id)
+                    )
+                    for charge in charges:
+                        cursor.execute(
+                            """UPDATE Bestelling SET extra_bezorgkosten_factuur_id=%s
+                               WHERE bestelling_id=%s AND extra_bezorgkosten_factuur_id IS NULL""",
+                            (invoice_id, charge["bestelling_id"])
+                        )
+                        if cursor.rowcount != 1:
+                            raise DomainError("Bezorgkosten zijn al aan een andere factuur gekoppeld.")
 
                 for row in rows:
                     cursor.execute("""
@@ -216,4 +283,12 @@ class WeeklyInvoiceRepository:
                 ORDER BY b.bestelling_id, lr.product_id
             """, (invoice_id,))
             invoice["lines"] = cursor.fetchall()
+            cursor.execute(
+                """SELECT bestelling_id, extra_bezorgkosten,
+                          toelichting_extra_bezorgkosten
+                   FROM Bestelling WHERE extra_bezorgkosten_factuur_id=%s
+                   ORDER BY bestelling_id""",
+                (invoice_id,)
+            )
+            invoice["delivery_charges"] = cursor.fetchall()
             return invoice

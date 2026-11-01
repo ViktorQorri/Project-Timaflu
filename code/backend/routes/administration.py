@@ -31,7 +31,10 @@ def invoices():
                 "first_order_discount": row["eenmalige_korting"],
                 "total_after_first_order_discount": row["bedrag_na_eenmalige_korting"],
                 "customer_discount": row["klantenkorting"],
-                "total": row["totaal_bedrag"],
+                "total": (
+                    row["totaal_bedrag"] - (row.get("extra_bezorgkosten_incl_btw") or 0)
+                    if row["totaal_bedrag"] is not None else None
+                ),
             }
             doc = {
                 "invoice_number": row["factuur_id"],
@@ -42,6 +45,10 @@ def invoices():
                 "lines": line_items,
                 "snapshot_complete": all(value is not None for value in snapshots.values()),
                 "action": invoice.checkPaymentArrears(date.today()),
+                "extra_cost_ex": row.get("extra_bezorgkosten_excl_btw") or 0,
+                "extra_cost_vat": row.get("extra_bezorgkosten_btw") or 0,
+                "extra_cost_gross": row.get("extra_bezorgkosten_incl_btw") or 0,
+                "final_total": row["totaal_bedrag"],
                 **snapshots,
             }
             rows.append(doc)

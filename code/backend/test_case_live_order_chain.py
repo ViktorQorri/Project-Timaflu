@@ -48,9 +48,14 @@ class RealOrderChainTests(unittest.TestCase):
         self.admin.close()
 
     def scalar(self,statement):
+        # End the old REPEATABLE READ snapshot before observing writes committed
+        # by Flask through a separate database connection.
+        self.db.rollback()
         with self.db.cursor() as c:
             c.execute(statement)
-            return c.fetchone()[0]
+            row = c.fetchone()
+            self.assertIsNotNone(row, statement)
+            return row[0]
 
     def quote(self,client,n,shortage="skip",slot="ochtend"):
         data={"customer_id":"1","day":date.today().isoformat(),"slot":slot,
@@ -117,3 +122,57 @@ class RealOrderChainTests(unittest.TestCase):
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Voorraadreservering"),0)
             self.assertEqual(self.scalar("SELECT COUNT(*) FROM Deelorder"),0)
             self.assertEqual(self.scalar("SELECT status_naam FROM Bestelling"),"backorder")
+
+    def test_two_failed_visits_can_be_rescheduled_and_charge_billed_once(self):
+        first = date.today()
+        retry = first + timedelta(days=1)
+        with self.app.test_client() as client:
+            quote = self.quote(client, 3)
+            token = self.token(quote)
+            self.assertEqual(client.post("/orders/confirm",
+                data={"quote_token": token, "customer_approved": "yes"}).status_code, 302)
+            self.assertEqual(client.post("/api/picking-bins",
+                json={"bin_code": "RETRY-BIN", "sub_order_id": 1, "aisle": "A"}).status_code, 200)
+            self.assertEqual(client.post("/api/robots/1/complete",
+                json={"aisle": "A", "suborder_id": 1}).status_code, 200)
+            self.assertEqual(client.post("/order-picking/orders/1/pack").status_code, 302)
+            self.assertEqual(client.post("/deliveries/plan",
+                data={"delivery_id": 1, "courier_id": 1, "day": first.isoformat(),
+                      "time": "10:00", "courier_assignment_confirmed": "yes"}).status_code, 302)
+            self.assertEqual(client.post("/deliveries/second-attempt",
+                data={"day": first.isoformat(), "delivery_id": 1,
+                      "time": "14:00"}).status_code, 302)
+            self.assertEqual(client.post("/deliveries/second-attempt/result",
+                data={"day": first.isoformat(), "delivery_id": 1,
+                      "outcome": "niet aanwezig"}).status_code, 302)
+            followup = client.post("/deliveries/failed-followup",
+                data={"day": first.isoformat(), "delivery_id": 1,
+                      "requested_date": retry.isoformat(), "time_slot": "ochtend",
+                      "customer_contact_confirmed": "yes",
+                      "extra_cost": "10.90", "explanation": "Twee keer niet aanwezig"})
+            self.assertEqual(followup.status_code, 302, followup.data[:300])
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM Levering"), 2)
+            self.assertEqual(self.scalar("SELECT levering_id FROM Leveringregel"), 2)
+            self.assertEqual(client.post("/deliveries/plan",
+                data={"delivery_id": 2, "courier_id": 1, "day": retry.isoformat(),
+                      "time": "10:00", "courier_assignment_confirmed": "yes"}).status_code, 302)
+            self.assertEqual(client.post("/deliveries/first-attempt/delivered",
+                data={"day": retry.isoformat(), "delivery_id": 2,
+                      "signature_confirmed": "yes"}).status_code, 302)
+            week = retry - timedelta(days=retry.weekday())
+            with self.app.app_context():
+                issued = WeeklyInvoiceRepository(get_connection()).issue_week(
+                    week, "TEST fictief", issued_on=week + timedelta(days=7),
+                    delivery_cost_vat_percent="9")
+            self.assertEqual(len(issued), 1)
+            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_incl_btw FROM Factuur"), Decimal("10.90"))
+            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_excl_btw FROM Factuur"), Decimal("10.00"))
+            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_btw FROM Factuur"), Decimal("0.90"))
+            self.assertEqual(self.scalar("SELECT totaal_bedrag FROM Factuur"), Decimal("290.48"))
+            self.assertEqual(self.scalar("SELECT extra_bezorgkosten_factuur_id FROM Bestelling"), issued[0])
+            with self.app.app_context():
+                again = WeeklyInvoiceRepository(get_connection()).issue_week(
+                    week, "TEST fictief", issued_on=week + timedelta(days=8),
+                    delivery_cost_vat_percent="9")
+            self.assertEqual(again, [])
+            self.assertEqual(client.get(f"/invoices/issued/{issued[0]}").status_code, 200)

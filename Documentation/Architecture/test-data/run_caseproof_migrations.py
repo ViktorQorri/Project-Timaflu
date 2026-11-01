@@ -33,7 +33,8 @@ def main():
         conn.commit()
         run_text(conn,old_file("code/database/schema.sql"))
         for file in ("2026_10_31_acquisition_followup.sql",
-                     "2026_10_31_failed_delivery_status.sql"):
+                     "2026_10_31_failed_delivery_status.sql",
+                     "2026_11_01_delivery_charges.sql"):
             with conn.cursor() as cur:
                 for statement in sql_statements(ROOT/"code/database/migrations"/file):
                     cur.execute(statement)
@@ -49,6 +50,16 @@ def main():
                          AND IS_NULLABLE='NO'""",(name,table,column))
                 assert cur.fetchone()["num"]==1,(table,column)
                 print("MIGRATED COLUMN",table,column)
+            for table, column in (("Bestelling", "extra_bezorgkosten_factuur_id"),
+                                  ("Factuur", "extra_bezorgkosten_excl_btw"),
+                                  ("Factuur", "extra_bezorgkosten_btw"),
+                                  ("Factuur", "extra_bezorgkosten_incl_btw")):
+                cur.execute(
+                    """SELECT COUNT(*) AS num FROM information_schema.COLUMNS
+                       WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s AND COLUMN_NAME=%s""",
+                    (name, table, column))
+                assert cur.fetchone()["num"] == 1, (table, column)
+                print("MIGRATED COLUMN", table, column)
             cur.execute("SELECT COUNT(*) AS num FROM OrderStatus WHERE naam='niet afgeleverd'")
             assert cur.fetchone()["num"]==1
             cur.execute("SELECT COUNT(*) AS num FROM Klant")

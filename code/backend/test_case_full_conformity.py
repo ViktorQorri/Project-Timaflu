@@ -17,6 +17,7 @@ class CaseCursor:
         self.db = connection
         self.lastrowid = 0
         self.last = ""
+        self.rowcount = 1
     def __enter__(self): return self
     def __exit__(self, *args): return False
     def execute(self, sql, params=()):

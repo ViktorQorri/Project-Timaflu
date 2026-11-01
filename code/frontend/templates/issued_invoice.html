@@ -34,7 +34,19 @@
 ] %}
 <dt>{{label}}</dt><dd>{{'€ ' ~ value if value is not none else 'Niet vastgelegd'}}</dd>
 {% endfor %}
+{% if invoice.extra_bezorgkosten_incl_btw %}
+  <dt>Afgesproken extra bezorgkosten, excl. btw</dt><dd>€ {{ invoice.extra_bezorgkosten_excl_btw }}</dd>
+  <dt>Btw over extra bezorgkosten</dt><dd>€ {{ invoice.extra_bezorgkosten_btw }}</dd>
+  <dt>Extra bezorgkosten incl. btw</dt><dd>€ {{ invoice.extra_bezorgkosten_incl_btw }}</dd>
+{% endif %}
+  <dt><strong>Definitief te betalen</strong></dt>
+  <dd><strong>€ {{ invoice.totaal_bedrag if invoice.totaal_bedrag is not none else 'Niet vastgelegd' }}</strong></dd>
 </dl>
+{% for charge in invoice.delivery_charges %}
+  <p>Extra bezorgkosten bij bestelling #{{ charge.bestelling_id }}:
+  {{ charge.toelichting_extra_bezorgkosten or 'Opnieuw aanbieden op afgesproken datum' }}
+  (afgesproken totaal € {{ charge.extra_bezorgkosten }})</p>
+{% endfor %}
 {% if not complete or not invoice.afzenderadres %}
 <p class="flash flash-warning">Deze historische factuur mist een oorspronkelijke snapshot of het afzenderadres. Vul geen fictieve waarden in.</p>
 {% endif %}

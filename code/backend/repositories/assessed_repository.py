@@ -46,6 +46,8 @@ class AssessedRepository:
                 SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
                        f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
+                       f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw,
+                       f.extra_bezorgkosten_incl_btw,
                        f.bedrag_excl_btw,
                        f.btw_bedrag,
                        f.bedrag_incl_btw,
@@ -228,9 +230,27 @@ WHERE f.klant_id=%s AND f.betaald_op IS NULL
                 cursor.execute(
                     """UPDATE Bestelling SET gewenste_leverdatum=%s, dagdeel=%s,
                        extra_bezorgkosten=%s, toelichting_extra_bezorgkosten=%s
-                       WHERE bestelling_id=%s""",
+                       WHERE bestelling_id=%s
+                         AND extra_bezorgkosten_factuur_id IS NULL""",
                     (requested_date, time_slot, cost, explanation.strip() or None,
                      row["bestelling_id"]))
+                if cursor.rowcount != 1:
+                    raise DomainError("Deze bezorgkosten zijn al gefactureerd.")
+                # The second absence closes this shipment. The agreed next
+                # attempt is a NEW shipment, preserving the previous attempts.
+                # Move its unbilled packed lines without duplicating quantities.
+                cursor.execute(
+                    "INSERT INTO Levering(bestelling_id) VALUES(%s)",
+                    (row["bestelling_id"],),
+                )
+                new_delivery_id = cursor.lastrowid
+                cursor.execute(
+                    """UPDATE Leveringregel SET levering_id=%s
+                       WHERE levering_id=%s AND factuur_id IS NULL""",
+                    (new_delivery_id, delivery_id),
+                )
+                if cursor.rowcount < 1:
+                    raise DomainError("Geen ongefactureerde producten voor de nieuwe leverpoging.")
             self.db.commit()
         except Exception:
             self.db.rollback()
