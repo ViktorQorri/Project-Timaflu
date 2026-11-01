@@ -34,6 +34,8 @@ class FakeCursor:
         self.lines = lines
         self.query_count = 0
         self.queries = []
+        self.last = ""
+        self.rowcount = 1
 
     def __enter__(self):
         return self
@@ -43,14 +45,27 @@ class FakeCursor:
 
     def execute(self, sql, parameters):
         self.queries.append((sql, parameters))
+        self.last = " ".join(sql.split())
 
     def fetchone(self):
-        self.query_count += 1
-        if self.query_count == 1:
+        if "FROM Deelorder WHERE" in self.last:
             return {"deelorder_id": 20, "afgerond": False} if self.exists else None
-        if self.query_count == 2:
+        if "bin_count" in self.last:
             return {"bin_count": self.bins}
-        return {"line_count": self.lines}
+        if "line_count" in self.last:
+            return {"line_count": self.lines}
+        if "FROM Product WHERE" in self.last:
+            return {"product_id": 7}
+        if "FROM Voorraadreservering" in self.last:
+            return {"aantal": 3}
+        raise AssertionError(self.last)
+
+    def fetchall(self):
+        if "FROM Deelorderregel dr" in self.last:
+            return [{"product_id": 7, "aantal": 3, "bestelling_id": 30}]
+        if "FROM Magazijnlocatie" in self.last:
+            return [{"gang": "A", "schapnummer": 4, "aantal": 3}]
+        raise AssertionError(self.last)
 
 
 class FakeConnection:
@@ -97,7 +112,8 @@ class RobotOrderTests(TestCase):
         good = FakeConnection(bins=1)
         self.assertEqual(RobotOrderRepository(good).complete(1, 20)["afgerond"], True)
         self.assertEqual(good.committed, 1)
-        self.assertEqual(len(good.cursor_instance.queries), 4)
+        self.assertTrue(any("UPDATE Magazijnlocatie" in sql for sql, _ in good.cursor_instance.queries))
+        self.assertTrue(any("DELETE FROM Voorraadreservering" in sql for sql, _ in good.cursor_instance.queries))
 
     def test_completion_rejects_empty_partial_order(self):
         from domain.errors import ConflictError

@@ -30,7 +30,8 @@ def weekly_overview():
     )
     if request.method == "POST":
         ids = WeeklyInvoiceRepository(get_connection()).issue_week(
-            week_start, current_app.config.get("TIMAFLU_ADDRESS", "")
+            week_start, current_app.config.get("TIMAFLU_ADDRESS", ""),
+            delivery_cost_vat_percent=current_app.config.get("TIMAFLU_DELIVERY_COST_VAT_PERCENT", "")
         )
         if ids:
             flash(f"{len(ids)} weekfactuur/facturen opgeslagen.", "success")
@@ -65,7 +66,10 @@ def issued_invoice(invoice_id):
         "first_order_discount": row["eenmalige_korting"],
         "total_after_first_order_discount": row["bedrag_na_eenmalige_korting"],
         "customer_discount": row["klantenkorting"],
-        "total": row["totaal_bedrag"],
+        "total": (
+            row["totaal_bedrag"] - row["extra_bezorgkosten_incl_btw"]
+            if row["totaal_bedrag"] is not None else None
+        ),
     }
     rows = [{**line, "line_total": euro(line["quantity"] * line["unit_price"])}
             for line in row["lines"]]

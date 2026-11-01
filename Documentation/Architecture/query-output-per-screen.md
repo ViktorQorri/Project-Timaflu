@@ -26,12 +26,33 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
 ]
 ```
 
-## Klanten (statisch scherm)
+## Klanten zoeken: centrale klantgegevens
 
-Scherm: /customers
+Scherm: /customers?q=TEST
 HTTP-status: 200
 
-*Geen SQL-query: statisch/placeholder-scherm.*
+### Query 1
+```sql
+SELECT k.klant_id, k.bedrijfsnaam, k.contactpersoon, k.telefoonnummer, af.adres AS afleveradres, ba.adres AS factuuradres, CASE WHEN o.betaalde_facturen IS NULL THEN 0 WHEN o.betaalde_facturen <> o.bekende_bedragen THEN NULL ELSE o.jaaromzet END AS jaaromzet, kk.percentage AS kortingspercentage FROM Klant AS k JOIN Adres AS af ON af.adres_id = k.afleveradres_id JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id LEFT JOIN ( SELECT f.klant_id, COUNT(*) AS betaalde_facturen, COUNT(f.totaal_bedrag) AS bekende_bedragen, SUM(f.totaal_bedrag) AS jaaromzet FROM Factuur AS f WHERE YEAR(f.betaald_op) = %s GROUP BY f.klant_id ) AS o ON o.klant_id = k.klant_id LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id AND kk.kalenderjaar = %s WHERE k.actief = TRUE AND (k.bedrijfsnaam LIKE %s OR k.contactpersoon LIKE %s OR k.telefoonnummer LIKE %s) ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC
+```
+Parameters: ```json
+[2026, 2026, "%TEST%", "%TEST%", "%TEST%"]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "contactpersoon": "TEST medewerker",
+    "telefoonnummer": "0612345678",
+    "afleveradres": "TEST: Afleverstraat 8, Breda",
+    "factuuradres": "TEST: Factuurstraat 12, Breda",
+    "jaaromzet": "0",
+    "kortingspercentage": null
+  }
+]
+```
 
 ## Telefonische verkoop en beschikbaarheid
 
@@ -55,6 +76,117 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "voorraad": "10",
     "gereserveerd": "0",
     "beschikbaar": "10"
+  }
+]
+```
+
+## Telefonische orderinvoer met actuele klant- en productgegevens
+
+Scherm: /orders/new
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT klant_id, bedrijfsnaam FROM Klant WHERE actief=TRUE ORDER BY bedrijfsnaam, klant_id
+```
+Parameters: ```json
+[]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V."
+  }
+]
+```
+
+### Query 2
+```sql
+SELECT product_id, productnaam, artikelnummer, minimale_bestelhoeveelheid, prijs_per_grootverpakking FROM Product WHERE in_assortiment=TRUE ORDER BY productnaam
+```
+Parameters: ```json
+[]
+```
+Resultaat: 2 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "product_id": 1,
+    "productnaam": "Testmedicijn",
+    "artikelnummer": "TEST-001",
+    "minimale_bestelhoeveelheid": 1,
+    "prijs_per_grootverpakking": "100.00"
+  },
+  {
+    "product_id": 2,
+    "productnaam": "Testtekortproduct",
+    "artikelnummer": "TEST-002",
+    "minimale_bestelhoeveelheid": 1,
+    "prijs_per_grootverpakking": "15.00"
+  }
+]
+```
+
+## Bestellingen en echte orderstatus
+
+Scherm: /orders/status
+HTTP-status: 200
+
+### Query 1
+```sql
+SELECT b.bestelling_id, b.besteld_op, b.gewenste_leverdatum, b.dagdeel, b.spoed, b.status_naam, k.klant_id, k.bedrijfsnaam, address.adres AS afleveradres FROM Bestelling AS b JOIN Klant AS k ON k.klant_id=b.klant_id JOIN Adres AS address ON address.adres_id=b.afleveradres_id WHERE (%s IS NULL OR b.klant_id = %s) ORDER BY b.besteld_op DESC, b.bestelling_id DESC
+```
+Parameters: ```json
+[null, null]
+```
+Resultaat: 4 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "bestelling_id": 4,
+    "besteld_op": "2026-10-29 09:00:00",
+    "gewenste_leverdatum": "2026-10-30",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 3,
+    "besteld_op": "2026-10-21 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "verstuurd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 2,
+    "besteld_op": "2026-10-20 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "middag",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
+  },
+  {
+    "bestelling_id": 1,
+    "besteld_op": "2026-10-19 09:00:00",
+    "gewenste_leverdatum": "2026-10-22",
+    "dagdeel": "ochtend",
+    "spoed": 0,
+    "status_naam": "afgeleverd",
+    "klant_id": 1,
+    "bedrijfsnaam": "TEST Apotheek B.V.",
+    "afleveradres": "TEST: Afleverstraat 8, Breda"
   }
 ]
 ```
@@ -255,7 +387,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT p.product_id, p.artikelnummer, p.productnaam, p.minimumvoorraad, COALESCE(SUM(m.aantal), 0) AS voorraad FROM Product AS p LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id WHERE p.in_assortiment = TRUE GROUP BY p.product_id, p.artikelnummer, p.productnaam, p.minimumvoorraad HAVING voorraad < p.minimumvoorraad ORDER BY (p.minimumvoorraad - voorraad) DESC, p.productnaam ASC
+SELECT p.product_id, p.artikelnummer, p.productnaam, p.minimumvoorraad, COALESCE(SUM(m.aantal), 0) AS voorraad, EXISTS ( SELECT 1 FROM LeveranciersAanbod AS a WHERE a.product_id = p.product_id ) AS heeft_leverancier FROM Product AS p LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id WHERE p.in_assortiment = TRUE GROUP BY p.product_id, p.artikelnummer, p.productnaam, p.minimumvoorraad HAVING voorraad < p.minimumvoorraad ORDER BY (p.minimumvoorraad - voorraad) DESC, p.productnaam ASC
 ```
 Parameters: ```json
 []
@@ -268,7 +400,8 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "artikelnummer": "TEST-002",
     "productnaam": "Testtekortproduct",
     "minimumvoorraad": 9,
-    "voorraad": "0"
+    "voorraad": "0",
+    "heeft_leverancier": 0
   }
 ]
 ```
@@ -280,7 +413,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier, l.contactpersoon, l.telefoonnummer, a.inkoopprijs FROM Product AS p JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id WHERE p.productnaam LIKE %s AND p.intern_bestelbaar = TRUE AND p.in_assortiment = TRUE ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC
+SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier, l.contactpersoon, l.telefoonnummer, l.internetadres, a.inkoopprijs FROM Product AS p JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id WHERE p.productnaam LIKE %s AND p.intern_bestelbaar = TRUE AND p.in_assortiment = TRUE ORDER BY p.productnaam, a.inkoopprijs ASC, l.naam ASC
 ```
 Parameters: ```json
 ["%Testmedicijn%"]
@@ -295,6 +428,7 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "leverancier": "TEST Fabrikant",
     "contactpersoon": "TEST contactpersoon",
     "telefoonnummer": "0600000000",
+    "internetadres": null,
     "inkoopprijs": "65.00"
   }
 ]
@@ -361,6 +495,35 @@ Resultaat: 3 rij(en) (maximaal 15 getoond)
 ]
 ```
 
+### Query 2
+```sql
+SELECT l.levering_id, b.bestelling_id, b.gewenste_leverdatum, b.dagdeel, b.spoed, k.bedrijfsnaam, a.adres FROM Levering l JOIN Bestelling b ON b.bestelling_id=l.bestelling_id JOIN Klant k ON k.klant_id=b.klant_id JOIN Adres a ON a.adres_id=b.afleveradres_id WHERE NOT EXISTS (SELECT 1 FROM Leverpoging lp WHERE lp.levering_id=l.levering_id) ORDER BY b.spoed DESC, b.gewenste_leverdatum, l.levering_id
+```
+Parameters: ```json
+[]
+```
+Resultaat: 0 rij(en) (maximaal 15 getoond)
+```json
+[]
+```
+
+### Query 3
+```sql
+SELECT koerier_id,naam FROM Koerier WHERE beschikbaar=TRUE ORDER BY naam
+```
+Parameters: ```json
+[]
+```
+Resultaat: 1 rij(en) (maximaal 15 getoond)
+```json
+[
+  {
+    "koerier_id": 1,
+    "naam": "TEST koerier"
+  }
+]
+```
+
 ## Openstaande facturen
 
 Scherm: /invoices?customer_id=1
@@ -368,7 +531,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start, f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld, f.bedrag_excl_btw, f.btw_bedrag, f.bedrag_incl_btw, f.bestellingskorting, f.bedrag_na_bestellingskorting, f.eenmalige_korting, f.bedrag_na_eenmalige_korting, f.klantenkorting, f.totaal_bedrag, k.bedrijfsnaam, a.adres FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id JOIN Adres a ON a.adres_id=k.betaaladres_id WHERE f.klant_id=%s AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start, f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd, f.incasso_ingeschakeld, f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw, f.extra_bezorgkosten_incl_btw, f.bedrag_excl_btw, f.btw_bedrag, f.bedrag_incl_btw, f.bestellingskorting, f.bedrag_na_bestellingskorting, f.eenmalige_korting, f.bedrag_na_eenmalige_korting, f.klantenkorting, f.totaal_bedrag, k.bedrijfsnaam, a.adres FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id JOIN Adres a ON a.adres_id=k.betaaladres_id WHERE f.klant_id=%s AND f.betaald_op IS NULL ORDER BY f.factuurdatum DESC
 ```
 Parameters: ```json
 [1]
@@ -385,6 +548,9 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "factuuradres": "TEST: Factuurstraat 12, Breda",
     "betalingsregeling_geaccepteerd": null,
     "incasso_ingeschakeld": 0,
+    "extra_bezorgkosten_excl_btw": "0.00",
+    "extra_bezorgkosten_btw": "0.00",
+    "extra_bezorgkosten_incl_btw": "0.00",
     "bedrag_excl_btw": "700.00",
     "btw_bedrag": "63.00",
     "bedrag_incl_btw": "763.00",
@@ -438,7 +604,7 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT DISTINCT b.klant_id FROM Leveringregel lr JOIN Levering l ON l.levering_id=lr.levering_id JOIN Bestelling b ON b.bestelling_id=l.bestelling_id WHERE lr.factuur_id IS NULL AND EXISTS ( SELECT 1 FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id WHERE lp.levering_id=l.levering_id AND lp.resultaat='afgeleverd' AND lp.ontvangst_getekend=TRUE AND r.ritdatum BETWEEN %s AND %s ) ORDER BY b.klant_id
+SELECT DISTINCT b.klant_id FROM Leveringregel lr JOIN Levering l ON l.levering_id=lr.levering_id JOIN Bestelling b ON b.bestelling_id=l.bestelling_id WHERE (lr.factuur_id IS NULL OR (b.extra_bezorgkosten > 0 AND b.extra_bezorgkosten_factuur_id IS NULL)) AND EXISTS ( SELECT 1 FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id WHERE lp.levering_id=l.levering_id AND lp.resultaat='afgeleverd' AND lp.ontvangst_getekend=TRUE AND r.ritdatum BETWEEN %s AND %s ) ORDER BY b.klant_id
 ```
 Parameters: ```json
 ["2026-10-19", "2026-10-25"]
@@ -473,6 +639,9 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
     "betaald_op": null,
     "betalingsregeling_geaccepteerd": null,
     "incasso_ingeschakeld": 0,
+    "extra_bezorgkosten_excl_btw": "0.00",
+    "extra_bezorgkosten_btw": "0.00",
+    "extra_bezorgkosten_incl_btw": "0.00",
     "bedrag_excl_btw": "700.00",
     "btw_bedrag": "63.00",
     "bedrag_incl_btw": "763.00",
@@ -495,7 +664,8 @@ Resultaat: 1 rij(en) (maximaal 15 getoond)
         "unit_price": "100.00",
         "order_id": 2
       }
-    ]
+    ],
+    "delivery_charges": []
   }
 ]
 ```
@@ -523,6 +693,18 @@ Resultaat: 2 rij(en) (maximaal 15 getoond)
 ]
 ```
 
+### Query 3
+```sql
+SELECT bestelling_id, extra_bezorgkosten, toelichting_extra_bezorgkosten FROM Bestelling WHERE extra_bezorgkosten_factuur_id=%s ORDER BY bestelling_id
+```
+Parameters: ```json
+[1]
+```
+Resultaat: 0 rij(en) (maximaal 15 getoond)
+```json
+[]
+```
+
 ## Acquisitie-opvolging
 
 Scherm: /acquisition
@@ -530,10 +712,10 @@ HTTP-status: 200
 
 ### Query 1
 ```sql
-SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon, p.contactgegevens, a.adres, p.klant_id, MAX(v.bezoekdatum) AS bezoekdatum FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id JOIN Adres a ON a.adres_id=p.adres_id WHERE NOT EXISTS ( SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id ) GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id HAVING MAX(v.bezoekdatum)<=%s ORDER BY bezoekdatum
+SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon, p.contactgegevens, a.adres, p.klant_id, MAX(v.bezoekdatum) AS bezoekdatum FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id JOIN Adres a ON a.adres_id=p.adres_id WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS ( SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id ) GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id HAVING MAX(v.bezoekdatum)<=%s ORDER BY bezoekdatum
 ```
 Parameters: ```json
-["2026-09-30"]
+["2026-10-01"]
 ```
 Resultaat: 1 rij(en) (maximaal 15 getoond)
 ```json

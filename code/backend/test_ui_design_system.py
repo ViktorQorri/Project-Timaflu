@@ -66,17 +66,27 @@ class DesignSystemTests(TestCase):
             stack.enter_context(patch("routes.home.HealthService"))
             bins = stack.enter_context(patch("routes.order_picking.PickingBinService"))
             bins.return_value.bins.return_value = []
+            packing = stack.enter_context(patch("routes.order_picking.DistributionPreparationRepository"))
+            packing.return_value.ready_to_pack.return_value = []
+            planned = stack.enter_context(patch("routes.distribution.DistributionPreparationRepository"))
+            planned.return_value.pending_shipments.return_value = ([], [])
             deliveries = stack.enter_context(patch("routes.distribution.AssessedRepository"))
             deliveries.return_value.delivery_schedule.return_value = []
             acquisition = stack.enter_context(patch("routes.acquisition.AssessedRepository"))
             acquisition.return_value.prospect_followups.return_value = []
+            stack.enter_context(patch("routes.sales.get_connection", return_value=object()))
+            customers = stack.enter_context(patch("routes.sales.SalesCaseRepository"))
+            customers.return_value.customers.return_value = []
+            customers.return_value.order_statuses.return_value = []
+            # Only the order status overview is changed by PR95. Keep smoke tests
+            # independent from a live DB; the real MySQL integration suite tests it.
             stack.enter_context(patch("routes.reports.get_connection", return_value=object()))
             report_repository = stack.enter_context(
                 patch("routes.reports.OrderStatusReportRepository")
             )
             report_repository.return_value.list_orders.return_value = []
             with app.test_client() as client:
-                for route in ("/", "/customers", "/order-picking", "/deliveries",
+                for route in ("/", "/customers", "/orders/status", "/order-picking", "/deliveries",
                               "/invoices", "/acquisition", "/reports"):
                     response = client.get(route)
                     self.assertEqual(response.status_code, 200, route)
