@@ -1,13 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Rapportages{% endblock %}
+{% block title %}Orderstatusoverzicht{% endblock %}
+{% block extra_styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status-report.css') }}">
+{% endblock %}
 {% block content %}
-<section class="page-intro">
-  <span class="eyebrow">Overzichten</span>
-  <h1>Rapportages</h1>
-  <p>Overzichtelijke informatie ondersteunt de medewerkers en de directie bij de bedrijfsprocessen van Timaflu.</p>
-</section>
-<section class="page-panel" aria-labelledby="reports-information">
-  <h2 id="reports-information">Procesinformatie</h2>
-  <p>Hier horen alleen gegevens en rapportages die daadwerkelijk uit de database worden opgehaald. Er worden geen fictieve cijfers weergegeven.</p>
+<section class="order-report" aria-labelledby="order-report-title">
+  <header class="order-report__intro">
+    <p class="order-report__eyebrow">Rapportages</p>
+    <h1 id="order-report-title">Orderstatusoverzicht</h1>
+    <p class="order-report__subtitle">Actuele orderstatus en afgesproken leverdatum van geregistreerde bestellingen.</p>
+  </header>
+  <div class="order-report__table-wrap" tabindex="0" role="region" aria-label="Orderstatussen, horizontaal scrollbare tabel">
+    <table class="order-report__table">
+      <caption>Bestellingen, nieuwste eerst</caption>
+      <thead>
+        <tr>
+          <th scope="col">Ordernummer</th>
+          <th scope="col">Klant</th>
+          <th scope="col">Besteld op</th>
+          <th scope="col">Gewenste levering</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <th scope="row">{{ order.bestelling_id }}</th>
+          <td>{{ order.bedrijfsnaam }}</td>
+          <td>{{ order.besteld_op.strftime('%d-%m-%Y %H:%M') }}</td>
+          <td>
+            {{ order.gewenste_leverdatum.strftime('%d-%m-%Y') }}, {{ order.dagdeel }}
+            {% if order.spoed %}<span class="order-report__urgent">Spoed</span>{% endif %}
+          </td>
+          <td>
+            <span class="order-report__status{% if order.status_naam == 'backorder' %} order-report__status--backorder{% elif order.status_naam == 'afgeleverd' %} order-report__status--delivered{% else %} order-report__status--neutral{% endif %}">
+              {{ order.status_naam|capitalize if order.status_naam else 'Nog geen status' }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="order-report__empty">Geen bestellingen gevonden.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}

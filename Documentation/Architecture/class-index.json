@@ -367,6 +367,14 @@
     ]
   },
   {
+    "module": "repositories.order_status_report_repository",
+    "class": "OrderStatusReportRepository",
+    "methods": [
+      "__init__",
+      "list_orders"
+    ]
+  },
+  {
     "module": "repositories.picking_bin_repository",
     "class": "PickingBinRepository",
     "methods": [
