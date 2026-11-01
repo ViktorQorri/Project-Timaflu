@@ -10,6 +10,12 @@
         <h1 id="stock-title">Voorraadtekorten</h1>
         <p class="stock-dashboard__subtitle">Producten waarvan de voorraad in het magazijn onder de minimumvoorraad zit.</p>
       </div>
+      <div class="page-actions">
+        <a class="button button--secondary" href="{{ url_for('purchasing.stock_minimums') }}">Minimumvoorraad instellen</a>
+        {% if shortages|selectattr('heeft_leverancier')|list %}
+          <a class="button" href="{{ url_for('purchasing.reorder') }}">Vergelijk leveranciers en prijzen</a>
+        {% endif %}
+      </div>
       <p class="stock-dashboard__count" aria-label="{{ shortages|length }} producten onder de minimumvoorraad">
         {{ shortages|length }} producten onder minimum
       </p>
@@ -18,7 +24,7 @@
     {% if shortages %}
       <div class="stock-dashboard__table-wrap">
         <table class="stock-dashboard__table">
-          <caption>Producten die bijbesteld moeten worden, grootste tekort bovenaan</caption>
+          <caption>Alle voorraadtekorten, grootste tekort bovenaan. Alleen producten met een leverancier kunnen worden bijbesteld.</caption>
           <thead>
             <tr>
               <th scope="col">Product</th>
@@ -39,7 +45,14 @@
                 <td class="stock-dashboard__number">
                   <span class="stock-dashboard__shortage">{{ item.tekort }}</span>
                 </td>
-                <td><a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Bijbestellen</a></td>
+                <td>
+                  {% if item.heeft_leverancier %}
+                    <a href="{{ url_for('purchasing.suppliers', product=item.productnaam) }}">Leveranciers bekijken</a>
+                    <a href="{{ url_for('purchasing.reorder', product_id=item.product_id) }}">Bijbestellen</a>
+                  {% else %}
+                    <span class="stock-dashboard__shortage">Geen leverancier; niet bijbestellen</span>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>

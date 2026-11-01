@@ -100,4 +100,19 @@
       {% endif %}
     </section>
   </section>
+  <section class="stock-dashboard" aria-labelledby="package-title">
+    <h2 id="package-title">Verzamelde orders verpakken</h2>
+    <p>De huidige robotdeelorders moeten allemaal gereed zijn. Registreer na het werkelijk verpakken de producten voor bezorging.</p>
+    {% for order in ready_orders %}
+    <article class="page-panel">
+      <h3>Order #{{ order.bestelling_id }} · {{ order.bedrijfsnaam }}</h3>
+      <p>Verzameld: {{ order.collected }}. Eerder verpakt: {{ order.prepared }}.</p>
+      <form method="post" action="{{ url_for('order_picking.pack', order_id=order.bestelling_id) }}">
+        <button type="submit">Verpakking bevestigen en levering aanmaken</button>
+      </form>
+    </article>
+    {% else %}
+      <p>Geen afgeronde deelorders die nog verpakt moeten worden.</p>
+    {% endfor %}
+  </section>
 {% endblock %}

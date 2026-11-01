@@ -25,7 +25,9 @@ def index():
 @acquisition.post("/acquisition/prospects")
 def register_prospect():
     """Register a prospective customer and the acquisition visit."""
-    prospect_id = _service().register_prospect(request.form)
+    # Invalid form data is a user error, even when the database is unavailable.
+    prospect = AcquisitionService.validate_prospect(request.form)
+    prospect_id = AcquisitionRepository(get_connection()).register_prospect(prospect)
     flash(f"Potentiële klant {prospect_id} en het bezoek zijn vastgelegd.", "success")
     return redirect(url_for("acquisition.index"))
 
@@ -33,6 +35,10 @@ def register_prospect():
 @acquisition.post("/acquisition/prospects/<int:prospect_id>/follow-up")
 def complete_follow_up(prospect_id):
     """Record the follow-up decision, converting the prospect when requested."""
+    if (request.form.get("outcome") in ("no_interest", "no_consent")
+            and request.form.get("decision_confirmed") != "yes"):
+        from domain.errors import DomainError
+        raise DomainError("Bevestig eerst de afwijzing of ontbrekende toestemming.")
     customer_id = _service().complete_follow_up(prospect_id, request.form)
     if customer_id is None:
         flash("De acquisitieopvolging is afgesloten.", "success")
@@ -41,4 +47,19 @@ def complete_follow_up(prospect_id):
             f"Potentiële klant is klant {customer_id}; de eenmalige korting van 10% is toegekend.",
             "success",
         )
+    return redirect(url_for("acquisition.index"))
+
+@acquisition.post("/acquisition/decline")
+def decline_followup():
+    """Original case: after rejecting the incentive, stop further acquisition."""
+    try:
+        prospect_id=int(request.form["prospect_id"])
+    except (KeyError, ValueError) as exc:
+        raise DomainError("Ongeldig prospectnummer.") from exc
+    if prospect_id < 1 or request.form.get("declined") != "yes":
+        raise DomainError("Bevestig dat de apotheek geen interesse heeft.")
+    AssessedRepository(get_connection()).close_prospect_followup(
+        prospect_id, previous_month(date.today())
+    )
+    flash("Acquisitieopvolging afgesloten; geen verdere actie.", "success")
     return redirect(url_for("acquisition.index"))

@@ -27,6 +27,13 @@ class AcquisitionService:
         Returns:
             The new prospective-customer identifier.
         """
+        prospect = self.validate_prospect(form)
+        return self.repository.register_prospect(prospect)
+
+    @classmethod
+    def validate_prospect(cls, form):
+        """Validate acquisition input before establishing a database connection."""
+        self = cls(None)
         prospect = {
             "company_name": self._required_text(form, "company_name", "Bedrijfsnaam", 100),
             "contact_person": self._required_text(
@@ -42,7 +49,7 @@ class AcquisitionService:
             prospect["visit_date"] = date.fromisoformat(visit_value)
         except (TypeError, ValueError) as error:
             raise DomainError("Vul een geldige bezoekdatum in.") from error
-        return self.repository.register_prospect(prospect)
+        return prospect
 
     def complete_follow_up(self, prospect_id, form):
         """Validate a follow-up decision and optionally create a customer account.
@@ -65,6 +72,10 @@ class AcquisitionService:
         if outcome not in {"convert", "no_interest", "no_consent"}:
             raise DomainError("Kies een geldige opvolguitkomst.")
         if outcome != "convert":
+            if form.get("decision_confirmed") != "yes":
+                raise DomainError(
+                    "Bevestig dat de apotheek geen interesse heeft of geen toestemming geeft."
+                )
             return self.repository.complete_follow_up(prospect_id, outcome)
 
         customer = {

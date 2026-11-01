@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
@@ -86,23 +87,19 @@ def update_customer(customer_id):
     return redirect(url_for("sales.customers"))
 
 
-@sales.get("/customers/<int:customer_id>/delete")
-def confirm_delete_customer(customer_id):
-    """Ask the employee to confirm deleting a customer."""
+@sales.get("/customers/<int:customer_id>/deactivate")
+def confirm_deactivate_customer(customer_id):
+    """Ask confirmation before deactivating, preserving order and invoice history."""
     return render_template(
-        "customer_delete.html", customer=customer_service().get(customer_id)
+        "customer_deactivate.html", customer=customer_service().get(customer_id)
     )
 
 
-@sales.post("/customers/<int:customer_id>/delete")
-def delete_customer(customer_id):
-    """Delete a confirmed customer, or explain why it cannot be deleted."""
-    try:
-        customer_service().delete(customer_id)
-    except ConflictError as error:
-        flash(str(error), "error")
-        return redirect(url_for("sales.customers"))
-    flash(f"Klant {customer_id} is verwijderd.", "success")
+@sales.post("/customers/<int:customer_id>/deactivate")
+def deactivate_customer(customer_id):
+    """Deactivate a customer while retaining all linked business records."""
+    customer_service().deactivate(customer_id)
+    flash(f"Klant {customer_id} is gedeactiveerd.", "success")
     return redirect(url_for("sales.customers"))
 
 
@@ -151,9 +148,11 @@ def calculate_order_discount():
     """Calculate discounts using the customer's recorded revenue and order history."""
     try:
         customer_id = int(request.form["customer_id"])
-        subtotal = request.form["subtotal"]
-    except (TypeError, ValueError, KeyError) as error:
-        raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from error
+        subtotal = Decimal(request.form["subtotal"])
+    except (TypeError, ValueError, KeyError, InvalidOperation) as error:
+        raise DomainError("Vul een geldig klantnummer en bestelbedrag in.") from error
+    if not subtotal.is_finite() or subtotal < 0:
+        raise DomainError("Vul een geldig, niet-negatief bestelbedrag in.")
     if customer_id <= 0:
         raise DomainError("Klantnummer moet positief zijn.")
     repository = AssessedRepository(get_connection())

@@ -15,5 +15,10 @@ class Config:
     DB_NAME = os.getenv("DB_NAME") or "timaflu"
     DB_USER = os.getenv("DB_USER") or "timaflu_app"
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    # The fictional Timaflu case provides no street address. Never invent it.
+    TIMAFLU_ADDRESS = os.getenv("TIMAFLU_ADDRESS", "").strip()
+    # No VAT rule for exceptional re-delivery costs is specified in the case.
+    # Explicit percentage required only for invoices containing these costs.
+    TIMAFLU_DELIVERY_COST_VAT_PERCENT = os.getenv("TIMAFLU_DELIVERY_COST_VAT_PERCENT", "").strip()
     # Without a fixed key, flash messages only survive until the next restart.
     SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)

@@ -197,7 +197,7 @@ class RobotOrderRepository:
             self.connection.rollback()
             raise
 
-    def generate(self, order_id):
+    def generate(self, order_id, commit=True):
         """Split reserved order quantities by aisle in one transaction.
 
         Existing sub-orders and previously assigned quantities are accounted
@@ -300,5 +300,6 @@ class RobotOrderRepository:
             self.connection.commit()
             return assignments
         except Exception:
-            self.connection.rollback()
+            if commit:
+                self.connection.rollback()
             raise

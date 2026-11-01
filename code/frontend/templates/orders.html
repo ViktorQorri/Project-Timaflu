@@ -2,6 +2,7 @@
 {% block title %}Voorraad controleren{% endblock %}
 {% block content %}
 <section class="stock-dashboard" aria-labelledby="sales-stock-title">
+  <span class="eyebrow">Verkoop</span>
   <h1 id="sales-stock-title">Voorraad controleren bij een telefonische bestelling</h1>
   <p class="stock-dashboard__subtitle">Controleer de voorraad in het magazijn voordat je de beschikbaarheid aan de klant bevestigt.</p>
   <p class="stock-dashboard__subtitle"><a class="discount-link" href="{{ url_for('sales.new_order') }}">Nieuwe order invoeren</a></p>
@@ -33,6 +34,7 @@
     {% endif %}
   {% endif %}
   <p class="stock-dashboard__subtitle">Reserveringen worden vastgelegd bij echte bestellingen; dit scherm controleert alleen de voorraad.</p>
+  <p><a class="button button--secondary" href="{{ url_for('sales.orders') }}#order-status-title">Bestaande bestellingen en hun status bekijken</a></p>
 </section>
 
 <section class="stock-dashboard" aria-labelledby="discount-title">

@@ -3,7 +3,11 @@
 -- This version uses no parameters; its result depends on current warehouse data.
 SELECT p.product_id, p.artikelnummer, p.productnaam,
        p.minimumvoorraad,
-       COALESCE(SUM(m.aantal), 0) AS voorraad
+       COALESCE(SUM(m.aantal), 0) AS voorraad,
+       EXISTS (
+           SELECT 1 FROM LeveranciersAanbod AS a
+           WHERE a.product_id = p.product_id
+       ) AS heeft_leverancier
 FROM Product AS p
 LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
 WHERE p.in_assortiment = TRUE
@@ -16,7 +20,7 @@ ORDER BY (p.minimumvoorraad - voorraad) DESC,
 -- Supplier offers for GET /suppliers?product=...
 -- Example parameter 'Medication': backend uses LIKE %s with value '%Medication%'.
 SELECT p.product_id, p.productnaam, l.leverancier_id, l.naam AS leverancier,
-       l.contactpersoon, l.telefoonnummer, a.inkoopprijs
+       l.contactpersoon, l.telefoonnummer, l.internetadres, a.inkoopprijs
 FROM Product AS p
 JOIN LeveranciersAanbod AS a ON a.product_id = p.product_id
 JOIN Leverancier AS l ON l.leverancier_id = a.leverancier_id
@@ -85,7 +89,7 @@ SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
 FROM PotentieleKlant AS p
 JOIN Adres AS a ON a.adres_id = p.adres_id
 JOIN Acquisitiebezoek AS v ON v.potentiele_klant_id = p.potentiele_klant_id
-WHERE p.status = 'open'
+WHERE p.opvolging_afgesloten = FALSE
   AND NOT EXISTS (
       SELECT 1 FROM Bestelling AS b WHERE b.klant_id = p.klant_id
   )
@@ -96,31 +100,31 @@ ORDER BY laatste_bezoek ASC, p.bedrijfsnaam ASC;
 
 -- Register a prospect and the acquisition visit in one transaction.
 INSERT INTO Adres (adres) VALUES ('Voorbeeldstraat 1, Utrecht');
-INSERT INTO PotentieleKlant (bedrijfsnaam, contactpersoon, contactgegevens, adres_id, status)
-VALUES ('Voorbeeld Apotheek', 'A. Contact', '030-1234567', 1, 'open');
+INSERT INTO PotentieleKlant (bedrijfsnaam, contactpersoon, contactgegevens, adres_id)
+VALUES ('Voorbeeld Apotheek', 'A. Contact', '030-1234567', 1);
 INSERT INTO Acquisitiebezoek (potentiele_klant_id, bezoekdatum) VALUES (1, '2026-10-31');
 
 -- Lock and check an acquisition follow-up before recording its outcome.
-SELECT klant_id, status, bedrijfsnaam, contactpersoon
+SELECT klant_id, opvolging_afgesloten, bedrijfsnaam, contactpersoon
 FROM PotentieleKlant WHERE potentiele_klant_id = 1 FOR UPDATE;
 SELECT MAX(bezoekdatum) <= DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AS is_due
 FROM Acquisitiebezoek WHERE potentiele_klant_id = 1;
 SELECT bestelling_id FROM Bestelling WHERE klant_id = 1 LIMIT 1;
 
 -- Close a follow-up when the pharmacy is not interested or does not consent.
-UPDATE PotentieleKlant SET status = 'geen_interesse'
+UPDATE PotentieleKlant SET opvolging_afgesloten = TRUE
 WHERE potentiele_klant_id = 1;
-UPDATE PotentieleKlant SET status = 'geen_toestemming'
+UPDATE PotentieleKlant SET opvolging_afgesloten = TRUE
 WHERE potentiele_klant_id = 1;
 
 -- Convert an interested prospect into a customer and grant the one-time discount.
 INSERT INTO Adres (adres) VALUES ('Afleverstraat 1, Utrecht');
 INSERT INTO Adres (adres) VALUES ('Factuurstraat 1, Utrecht');
 INSERT INTO Klant (bedrijfsnaam, telefoonnummer, contactpersoon, afleveradres_id,
-                   betaaladres_id, eenmalige_korting_toegekend)
+                   betaaladres_id, eenmalige_korting_toegezegd)
 VALUES ('Voorbeeld Apotheek', '030-1234567', 'A. Contact', 2, 3, TRUE);
 UPDATE PotentieleKlant
-SET klant_id = 1, status = 'geconverteerd'
+SET klant_id = 1, opvolging_afgesloten = TRUE
 WHERE potentiele_klant_id = 1;
 
 -- Distribution corner overview, GET /deliveries
@@ -174,7 +178,10 @@ WHERE bestelling_id = 1;
 
 -- AssessedRepository.customer_revenue
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=1;
+SELECT k.klant_id, k.bedrijfsnaam,
+                                k.eenmalige_korting_toegezegd, a.adres AS klantadres FROM Klant k
+                         JOIN Adres a ON a.adres_id=k.betaaladres_id
+                         WHERE k.klant_id=1 AND k.actief=TRUE;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT 1 FROM Factuur WHERE klant_id=1
                          AND incasso_ingeschakeld=TRUE AND betaald_op IS NULL
@@ -192,8 +199,11 @@ SELECT COUNT(*) FROM Bestelling WHERE klant_id=1;
 
 -- AssessedRepository.invoice_for_customer
 -- Query 1 (illustrative input, not a claimed database result)
-SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
+                       f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
+                       f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw,
+                       f.extra_bezorgkosten_incl_btw,
        f.bedrag_excl_btw,
        f.btw_bedrag,
        f.bedrag_incl_btw,
@@ -206,7 +216,8 @@ SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepte
        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=1 ORDER BY f.factuurdatum DESC;
+WHERE f.klant_id=1 AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC;
 -- Query 2 (illustrative input, not a claimed database result)
 SELECT l.aantal_geleverd AS quantity, b.prijs_per_eenheid AS unit_price
                     FROM Leveringregel l JOIN Levering v ON v.levering_id=l.levering_id
@@ -226,14 +237,33 @@ SELECT lp.levering_id, lp.pogingnummer, lp.geplande_tijd, lp.resultaat,
                 JOIN Adres a ON a.adres_id=b.afleveradres_id
                 WHERE r.ritdatum='2026-10-30' ORDER BY lp.geplande_tijd;
 
--- AssessedRepository.register_delivery_attempt
+-- AssessedRepository.record_first_attempt_delivery
+-- First visit: complete only after signed receipt, without a second attempt.
+SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=1 AND lp.pogingnummer=1 AND r.ritdatum='2026-10-30'
+                       FOR UPDATE;
+UPDATE Leverpoging SET resultaat='afgeleverd', ontvangst_getekend=TRUE
+                       WHERE levering_id=1 AND pogingnummer=1;
+UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       SET b.status_naam='afgeleverd' WHERE l.levering_id=1;
+
+-- First attempt start, to verify that a second visit is later the same day.
+SELECT lp.levering_id, TIME_TO_SEC(lp.geplande_tijd) AS first_attempt_seconds
+FROM Leverpoging AS lp
+JOIN Rit AS r ON r.rit_id = lp.rit_id
+WHERE lp.levering_id = 1 AND lp.pogingnummer = 1 AND r.ritdatum = '2026-10-30';
+
+-- AssessedRepository.schedule_second_attempt
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT lp.rit_id, lp.pogingnummer, lp.resultaat
                              FROM Leverpoging lp JOIN Rit r ON r.rit_id=lp.rit_id
                              WHERE lp.levering_id=1 AND r.ritdatum='2026-10-30'
                              ORDER BY lp.pogingnummer DESC FOR UPDATE;
 -- Query 2 (illustrative input, not a claimed database result)
-UPDATE Leverpoging SET resultaat='niet aanwezig' WHERE levering_id=1 AND pogingnummer=1;
+UPDATE Leverpoging SET resultaat='niet aanwezig',
+                              ontvangst_getekend=FALSE
+                       WHERE levering_id=1 AND pogingnummer=1;
 -- Query 3 (illustrative input, not a claimed database result)
 INSERT INTO Leverpoging (levering_id,pogingnummer,rit_id,geplande_tijd,resultaat,ontvangst_getekend)
                              VALUES (1,2,1,'14:00:00','niet aanwezig',0);
@@ -355,11 +385,14 @@ WHERE levering_id=4 AND product_id=2 AND factuur_id IS NULL;
 -- AssessedRepository.prospect_followups
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
-                       p.contactgegevens, a.adres, MAX(v.bezoekdatum) AS bezoekdatum
+                       p.contactgegevens, a.adres, p.klant_id,
+                       MAX(v.bezoekdatum) AS bezoekdatum
                 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
                 JOIN Adres a ON a.adres_id=p.adres_id
-                WHERE p.klant_id IS NULL
-                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+                WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (
+                    SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
+                )
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
                 HAVING MAX(v.bezoekdatum)<='2026-09-30'
                 ORDER BY bezoekdatum;
 
@@ -374,15 +407,31 @@ INSERT INTO Acquisitiebezoek (potentiele_klant_id,bezoekdatum) VALUES (1,'2026-0
 -- AssessedRepository.register_prospect_customer
 -- Query 1 (illustrative input, not a claimed database result)
 SELECT * FROM PotentieleKlant WHERE potentiele_klant_id=1 FOR UPDATE;
--- Query 2 (illustrative input, not a claimed database result)
+-- Query 2: the most recent visit must have taken place at least a calendar month earlier.
+SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek
+WHERE potentiele_klant_id=1;
+-- Query 3 (illustrative input, not a claimed database result)
 INSERT INTO Adres (adres) VALUES ('Factuuradres 1');
 -- Query 3 (illustrative input, not a claimed database result)
 INSERT INTO Adres (adres) VALUES ('Afleveradres 1');
 -- Query 4 (illustrative input, not a claimed database result)
-INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
-                             VALUES('Testapotheek','0612345678','Contact',1,2);
+INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id,eenmalige_korting_toegezegd)
+                             VALUES('Testapotheek','0612345678','Contact',1,2,TRUE);
 -- Query 5 (illustrative input, not a claimed database result)
-UPDATE PotentieleKlant SET klant_id=1 WHERE potentiele_klant_id=1;
+UPDATE PotentieleKlant SET klant_id=1, opvolging_afgesloten=TRUE WHERE potentiele_klant_id=1;
+
+-- AssessedRepository.close_prospect_followup (only after a month and explicit refusal)
+-- Query 1: lock the prospective customer to avoid simultaneous conversion.
+SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant
+WHERE potentiele_klant_id=1 FOR UPDATE;
+-- Query 2: last visit must be at least one month old.
+SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek
+WHERE potentiele_klant_id=1;
+-- Query 3: only when linked to an existing customer; do not retry someone who ordered.
+SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=1;
+-- Query 4: no more acquisition once interest is declined.
+UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE
+WHERE potentiele_klant_id=1;
 
 -- AssessedRepository.record_payment_action
 -- Query 1 (illustrative input, not a claimed database result)
@@ -390,7 +439,9 @@ SELECT f.factuur_id,f.klant_id,f.factuurdatum,f.betaald_op FROM Factuur f WHERE 
 -- Query 2 (illustrative input, not a claimed database result)
 INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) VALUES(1,1,'2026-10-30');
 -- Query 3 (illustrative input, not a claimed database result)
-SELECT 1 FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=1;
+-- Hetzelfde SELECT wordt ook gebruikt voor volgnummer=2, om dubbele herinneringen te voorkomen.
+SELECT verstuurd_op FROM Betalingsherinnering WHERE factuur_id=1 AND volgnummer=2;
 -- Query 4 (illustrative input, not a claimed database result)
 UPDATE Factuur SET betalingsregeling_geaccepteerd=TRUE WHERE factuur_id=1;
 -- Query 5 (illustrative input, not a claimed database result)
@@ -528,6 +579,62 @@ VALUES (1, 'paracetamol', '500 mg');
 UPDATE Product SET in_assortiment = FALSE
 WHERE product_id = 1 AND in_assortiment = TRUE;
 
+-- Issue #14: manufacturer management (repository uses %s placeholders).
+SELECT l.leverancier_id, l.naam, a.adres, l.contactpersoon,
+       l.telefoonnummer, l.internetadres
+FROM Leverancier AS l
+JOIN Adres AS a ON a.adres_id = l.adres_id
+ORDER BY l.naam, l.leverancier_id;
+
+SELECT l.leverancier_id, l.naam, a.adres, l.contactpersoon,
+       l.telefoonnummer, l.internetadres
+FROM Leverancier AS l
+JOIN Adres AS a ON a.adres_id = l.adres_id
+WHERE l.leverancier_id = 1;
+
+-- One transaction: create an address and manufacturer.
+INSERT INTO Adres (adres) VALUES ('Voorbeeldstraat 1, Breda');
+INSERT INTO Leverancier (naam, adres_id, contactpersoon, telefoonnummer, internetadres)
+VALUES ('Voorbeeldfabrikant', LAST_INSERT_ID(), 'Contactpersoon', '0761234567', 'https://example.org');
+
+-- Update transaction checks existence and writes a new address before updating manufacturer.
+SELECT adres_id FROM Leverancier WHERE leverancier_id = 1 FOR UPDATE;
+INSERT INTO Adres (adres) VALUES ('Nieuw adres 2, Breda');
+UPDATE Leverancier
+SET naam = 'Voorbeeldfabrikant', adres_id = LAST_INSERT_ID(),
+    contactpersoon = 'Contactpersoon', telefoonnummer = '0761234567',
+    internetadres = 'https://example.org'
+WHERE leverancier_id = 1;
+
+SELECT product_id, productnaam, artikelnummer
+FROM Product ORDER BY productnaam, product_id;
+
+SELECT a.product_id, p.productnaam, a.inkoopprijs
+FROM LeveranciersAanbod AS a
+JOIN Product AS p ON p.product_id = a.product_id
+WHERE a.leverancier_id = 1
+ORDER BY p.productnaam, a.product_id;
+
+-- One transaction: validate manufacturer and product before upserting purchase price.
+SELECT 1 FROM Leverancier WHERE leverancier_id = 1;
+SELECT 1 FROM Product WHERE product_id = 1;
+INSERT INTO LeveranciersAanbod (leverancier_id, product_id, inkoopprijs)
+VALUES (1, 1, 12.50)
+ON DUPLICATE KEY UPDATE inkoopprijs = VALUES(inkoopprijs);
+
+-- Issue #15: minimum stock settings overview.
+SELECT p.product_id, p.artikelnummer, p.productnaam,
+       p.minimumvoorraad,
+       COALESCE(SUM(m.aantal), 0) AS voorraad
+FROM Product AS p
+LEFT JOIN Magazijnlocatie AS m ON m.product_id = p.product_id
+GROUP BY p.product_id, p.artikelnummer, p.productnaam,
+         p.minimumvoorraad
+ORDER BY p.productnaam, p.product_id;
+
+-- Transactional minimum stock setting (repository uses %s).
+SELECT product_id FROM Product WHERE product_id = 1 FOR UPDATE;
+UPDATE Product SET minimumvoorraad = 15 WHERE product_id = 1;
 
 -- Persist a completed and explicitly calculated weekly invoice once.
 -- This UPDATE may only run after the original order discounts are known.

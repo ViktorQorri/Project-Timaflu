@@ -62,7 +62,7 @@ class AcquisitionRepositoryTests(TestCase):
         query = connection.cursor_instance.statements[0][0]
         self.assertIn("DATE_SUB(CURDATE(), INTERVAL 1 MONTH)", query)
         self.assertIn("NOT EXISTS", query)
-        self.assertIn("p.status = 'open'", query)
+        self.assertIn("p.opvolging_afgesloten = FALSE", query)
 
     def test_register_prospect_saves_address_prospect_and_visit_together(self):
         connection = FakeConnection(lastrowids=[14, 8, 22])
@@ -90,7 +90,7 @@ class AcquisitionRepositoryTests(TestCase):
     def test_closing_follow_up_records_no_interest(self):
         connection = FakeConnection(
             rows=[
-                {"klant_id": None, "status": "open", "bedrijfsnaam": "Apotheek A"},
+                {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek A"},
                 {"is_due": 1},
                 None,
             ]
@@ -103,14 +103,14 @@ class AcquisitionRepositoryTests(TestCase):
         self.assertIsNone(result)
         self.assertEqual(connection.commits, 1)
         self.assertIn(
-            "status = 'geen_interesse'",
+            "opvolging_afgesloten = TRUE",
             connection.cursor_instance.statements[-1][0],
         )
 
     def test_conversion_creates_customer_with_discount_and_links_prospect(self):
         connection = FakeConnection(
             rows=[
-                {"klant_id": None, "status": "open", "bedrijfsnaam": "Apotheek A",
+                {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek A",
                  "contactpersoon": "A. Contact"},
                 {"is_due": 1},
                 None,
@@ -131,9 +131,9 @@ class AcquisitionRepositoryTests(TestCase):
         self.assertEqual(connection.commits, 1)
         statements = connection.cursor_instance.statements
         customer_insert = next(sql for sql, _ in statements if "INSERT INTO Klant" in sql)
-        self.assertIn("eenmalige_korting_toegekend", customer_insert)
+        self.assertIn("eenmalige_korting_toegezegd", customer_insert)
         self.assertIn("TRUE", customer_insert)
-        self.assertIn("status = 'geconverteerd'", statements[-1][0])
+        self.assertIn("opvolging_afgesloten = TRUE", statements[-1][0])
         self.assertEqual(statements[-1][1], (90, 8))
 
     def test_unknown_prospect_rolls_back(self):
@@ -148,7 +148,7 @@ class AcquisitionRepositoryTests(TestCase):
     def test_follow_up_not_due_rolls_back(self):
         connection = FakeConnection(
             rows=[
-                {"klant_id": None, "status": "open", "bedrijfsnaam": "Apotheek A"},
+                {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek A"},
                 {"is_due": 0},
             ]
         )
@@ -161,7 +161,7 @@ class AcquisitionRepositoryTests(TestCase):
     def test_follow_up_with_existing_order_is_rejected(self):
         connection = FakeConnection(
             rows=[
-                {"klant_id": 4, "status": "open", "bedrijfsnaam": "Apotheek A"},
+                {"klant_id": 4, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek A"},
                 {"is_due": 1},
                 {"bestelling_id": 15},
             ]
@@ -268,7 +268,7 @@ class AcquisitionRouteTests(TestCase):
         app.testing = True
         connection = FakeConnection(
             rows=[
-                {"klant_id": None, "status": "open", "bedrijfsnaam": "Apotheek A",
+                {"klant_id": None, "opvolging_afgesloten": False, "bedrijfsnaam": "Apotheek A",
                  "contactpersoon": "A. Contact"},
                 {"is_due": 1},
                 None,

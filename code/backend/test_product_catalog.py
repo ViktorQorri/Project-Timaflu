@@ -4,6 +4,8 @@ from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import patch
 
+from mysql.connector.errors import IntegrityError
+
 from app import create_app
 from domain.errors import ConflictError, DomainError, NotFoundError
 from domain.product import Product, ProductActiveIngredient, SupplierOffer
@@ -118,9 +120,10 @@ class RecordingCursor:
 
 
 class RecordingConnection:
-    def __init__(self, results=None, fail_on=None):
+    def __init__(self, results=None, fail_on=None, fail_error=None):
         self.cur = RecordingCursor(results)
         self.fail_on = fail_on
+        self.fail_error = fail_error
         self.committed = False
         self.rolled_back = False
         if fail_on:
@@ -129,6 +132,8 @@ class RecordingConnection:
             def execute(sql, params=None):
                 original(sql, params)
                 if fail_on in sql:
+                    if fail_error is not None:
+                        raise fail_error
                     raise RuntimeError("database failure")
 
             self.cur.execute = execute
@@ -149,6 +154,13 @@ class ReadProductTests(TestCase):
         self.assertEqual(result.price_per_bulk_package, Decimal("24.50"))
         self.assertEqual(result.number_of_retail_packages, 20)
         self.assertIsNone(result.long_description)
+        self.assertEqual(result.active_ingredients, [ProductActiveIngredient("paracetamol", "500 mg")])
+
+    def test_ingredient_may_be_in_any_row(self):
+        result = read_product(form_data(
+            ingredient_name=["", "paracetamol"],
+            ingredient_quantity=["", "500 mg"],
+        ))
         self.assertEqual(result.active_ingredients, [ProductActiveIngredient("paracetamol", "500 mg")])
 
     def test_rejects_invalid_values(self):
@@ -230,6 +242,28 @@ class ProductRepositoryTests(TestCase):
         self.assertTrue(connection.rolled_back)
         self.assertFalse(connection.committed)
 
+    def test_duplicate_product_code_race_returns_conflict(self):
+        connection = RecordingConnection(
+            fail_on="INSERT INTO Product",
+            fail_error=IntegrityError(msg="Duplicate entry", errno=1062),
+        )
+        with self.assertRaises(ConflictError):
+            ProductRepository(connection).add(
+                product(None), SupplierOffer(1, Decimal("18.75"))
+            )
+        self.assertTrue(connection.rolled_back)
+        self.assertFalse(connection.committed)
+
+    def test_duplicate_code_on_update_returns_conflict(self):
+        connection = RecordingConnection(
+            results=[[(1,)]], fail_on="UPDATE Product",
+            fail_error=IntegrityError(msg="Duplicate entry", errno=1062),
+        )
+        with self.assertRaises(ConflictError):
+            ProductRepository(connection).update(product())
+        self.assertTrue(connection.rolled_back)
+        self.assertFalse(connection.committed)
+
     def test_remove_keeps_the_row(self):
         connection = RecordingConnection()
         self.assertTrue(ProductRepository(connection).remove_from_assortment(1))
@@ -303,6 +337,13 @@ class ProductPageTests(TestCase):
         self.assertIn(b"Paracetamol 500 mg", response.data)
         self.assertIn(b"paracetamol 500 mg", response.data)
         self.assertIn(b"/products/1/edit", response.data)
+
+    def test_catalog_shows_long_description_from_case(self):
+        self.products.products[1].long_description = "Beschrijving voor de productcatalogus."
+        response = self.client.get("/products")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Lange omschrijving", response.data)
+        self.assertIn(b"Beschrijving voor de productcatalogus.", response.data)
 
     def test_add_form_shows_suppliers(self):
         response = self.client.get("/products/new")

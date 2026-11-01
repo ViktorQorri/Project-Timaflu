@@ -74,10 +74,18 @@
                       </form>
                       <form method="post" action="{{ url_for('acquisition.complete_follow_up', prospect_id=prospect.potentiele_klant_id) }}">
                         <input type="hidden" name="outcome" value="no_interest">
+                        <label>
+                          <input type="checkbox" name="decision_confirmed" value="yes" required>
+                          De apotheek heeft dit tijdens het opvolggesprek bevestigd.
+                        </label>
                         <button type="submit">Geen interesse</button>
                       </form>
                       <form method="post" action="{{ url_for('acquisition.complete_follow_up', prospect_id=prospect.potentiele_klant_id) }}">
                         <input type="hidden" name="outcome" value="no_consent">
+                        <label>
+                          <input type="checkbox" name="decision_confirmed" value="yes" required>
+                          De apotheek heeft dit tijdens het opvolggesprek bevestigd.
+                        </label>
                         <button type="submit">Geen toestemming voor account</button>
                       </form>
                     </div>

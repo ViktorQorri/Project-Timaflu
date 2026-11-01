@@ -104,11 +104,13 @@ class Product {
     minimumOrderQuantity
     minimumStock
     inAssortment
+    internalReorderEligible
     --
     checkStock()
     checkMinimumStock()
     findSuppliersByPrice()
     removeSupplier(supplier)
+    removeFromInternalReorderList()
     removeFromAssortment()
 }
 

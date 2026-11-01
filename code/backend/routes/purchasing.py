@@ -36,6 +36,8 @@ def suppliers():
 @purchasing.post("/purchase-orders")
 def record_purchase_order():
     """Record a purchase after the employee confirms contacting a supplier."""
+    if request.form.get("supplier_contact_confirmed") != "yes":
+        raise DomainError("Bevestig eerst het handmatige contact met de leverancier.")
     service = PurchaseOrderService(PurchaseOrderRepository(get_connection()))
     order_id = service.record_order(
         request.form.get("supplier_id"),
@@ -172,6 +174,21 @@ def remove_product_from_reorder_list():
     flash("Medicijn uit interne bestellijst verwijderd, niet uit het verkoopassortiment.", "success")
     return redirect(url_for("purchasing.suppliers", product=request.form.get("product_name","")))
 
+@purchasing.get("/stock/minimums")
+def stock_minimums():
+    """Manage minimum stock alerts for every catalog item."""
+    service = StockService(StockRepository(get_connection()))
+    return render_template("stock_minimums.html", products=service.minimums())
+
+
+@purchasing.post("/stock/minimums/<int:product_id>")
+def set_stock_minimum(product_id):
+    """Store a manually chosen threshold and return to the overview."""
+    service = StockService(StockRepository(get_connection()))
+    service.set_minimum(product_id, request.form.get("minimumvoorraad"))
+    flash("Minimumvoorraad bijgewerkt.", "success")
+    return redirect(url_for("purchasing.stock_minimums"))
+
 PRODUCT_FIELDS = (
     "article_number", "order_code", "product_name", "price_per_bulk_package", "package_type",
     "number_of_retail_packages", "short_description", "long_description",
@@ -191,18 +208,13 @@ def product_form_data():
     data = {key: request.form.get(key, "") for key in PRODUCT_FIELDS}
     data["ingredient_name"] = request.form.getlist("ingredient_name")
     data["ingredient_quantity"] = request.form.getlist("ingredient_quantity")
-    data["ingredient_rows"] = request.form.get("ingredient_rows", "2")
     return data
 
 
 def added_ingredient_row(data):
-    """Preserve submitted fields and add one empty ingredient pair without JS."""
-    try:
-        previous = int(data["ingredient_rows"])
-    except (ValueError, TypeError):
-        previous = 2
-    previous = max(previous, len(data["ingredient_name"]), len(data["ingredient_quantity"]), 2)
-    data["ingredient_rows"] = min(previous + 1, 64)
+    """Preserve submitted values and add one pair without an arbitrary ingredient limit."""
+    data["ingredient_name"].append("")
+    data["ingredient_quantity"].append("")
     return data
 
 

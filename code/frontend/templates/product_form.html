@@ -6,7 +6,7 @@
   {% set editing = product is defined %}
   {% set names = form.ingredient_name or [] %}
   {% set quantities = form.ingredient_quantity or [] %}
-  {% set ingredient_rows = [2, names|length, quantities|length, form.ingredient_rows|default(2)|int]|max %}
+  {% set ingredient_rows = [2, names|length, quantities|length]|max %}
   <section class="stock-dashboard" aria-labelledby="product-form-title">
     <header class="stock-dashboard__intro">
       <div>
@@ -72,15 +72,14 @@
 
         <fieldset class="product-form__group">
           <legend>Werkzame stoffen</legend>
-          <input type="hidden" name="ingredient_rows" value="{{ ingredient_rows }}">
           <p class="product-form__hint">Minimaal één. Laat rijen die je niet nodig hebt leeg.</p>
           {% for index in range(ingredient_rows) %}
             <div class="product-form__ingredient">
               <label class="product-form__field">Werkzame stof
-                <input name="ingredient_name" value="{{ names[index] if index < names|length else '' }}" maxlength="100"{% if index == 0 %} required{% endif %}>
+                <input name="ingredient_name" value="{{ names[index] if index < names|length else '' }}" maxlength="100">
               </label>
               <label class="product-form__field">Hoeveelheid
-                <input name="ingredient_quantity" value="{{ quantities[index] if index < quantities|length else '' }}" maxlength="50" placeholder="500 mg"{% if index == 0 %} required{% endif %}>
+                <input name="ingredient_quantity" value="{{ quantities[index] if index < quantities|length else '' }}" maxlength="50" placeholder="500 mg">
               </label>
             </div>
           {% endfor %}
@@ -121,7 +120,7 @@
 
         <div class="product-form__buttons">
           <button class="button button--primary" type="submit">{{ 'Wijzigingen opslaan' if editing else 'Toevoegen aan assortiment' }}</button>
-          <a class="button" href="{{ url_for('purchasing.products') }}">Annuleren</a>
+          <a class="button button--secondary" href="{{ url_for('purchasing.products') }}">Annuleren</a>
         </div>
       </form>
     {% endif %}

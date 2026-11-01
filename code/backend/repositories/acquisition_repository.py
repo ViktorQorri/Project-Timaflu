@@ -9,7 +9,7 @@ FOLLOW_UPS_QUERY = """
     FROM PotentieleKlant AS p
     JOIN Adres AS a ON a.adres_id = p.adres_id
     JOIN Acquisitiebezoek AS v ON v.potentiele_klant_id = p.potentiele_klant_id
-    WHERE p.status = 'open'
+    WHERE p.opvolging_afgesloten = FALSE
       AND NOT EXISTS (
           SELECT 1 FROM Bestelling AS b WHERE b.klant_id = p.klant_id
       )
@@ -54,8 +54,8 @@ class AcquisitionRepository:
                 address_id = self._insert_address(cursor, prospect["address"])
                 cursor.execute(
                     """INSERT INTO PotentieleKlant
-                           (bedrijfsnaam, contactpersoon, contactgegevens, adres_id, status)
-                       VALUES (%s, %s, %s, %s, 'open')""",
+                           (bedrijfsnaam, contactpersoon, contactgegevens, adres_id)
+                       VALUES (%s, %s, %s, %s)""",
                     (
                         prospect["company_name"],
                         prospect["contact_person"],
@@ -91,7 +91,7 @@ class AcquisitionRepository:
         try:
             with connection.cursor(dictionary=True) as cursor:
                 cursor.execute(
-                    """SELECT klant_id, status, bedrijfsnaam, contactpersoon
+                    """SELECT klant_id, opvolging_afgesloten, bedrijfsnaam, contactpersoon
                        FROM PotentieleKlant
                        WHERE potentiele_klant_id = %s
                        FOR UPDATE""",
@@ -100,7 +100,7 @@ class AcquisitionRepository:
                 prospect = cursor.fetchone()
                 if prospect is None:
                     raise NotFoundError("Potentiële klant niet gevonden.")
-                if prospect["status"] != "open":
+                if prospect["opvolging_afgesloten"]:
                     raise ConflictError("Deze acquisitieopvolging is al afgesloten.")
 
                 cursor.execute(
@@ -120,15 +120,9 @@ class AcquisitionRepository:
                 if cursor.fetchone() is not None:
                     raise ConflictError("Deze potentiële klant heeft al een bestelling geplaatst.")
 
-                if outcome == "no_interest":
+                if outcome in ("no_interest", "no_consent"):
                     cursor.execute(
-                        """UPDATE PotentieleKlant SET status = 'geen_interesse'
-                           WHERE potentiele_klant_id = %s""",
-                        (prospect_id,),
-                    )
-                elif outcome == "no_consent":
-                    cursor.execute(
-                        """UPDATE PotentieleKlant SET status = 'geen_toestemming'
+                        """UPDATE PotentieleKlant SET opvolging_afgesloten = TRUE
                            WHERE potentiele_klant_id = %s""",
                         (prospect_id,),
                     )
@@ -142,7 +136,7 @@ class AcquisitionRepository:
                     cursor.execute(
                         """INSERT INTO Klant
                                (bedrijfsnaam, telefoonnummer, contactpersoon,
-                                afleveradres_id, betaaladres_id, eenmalige_korting_toegekend)
+                                afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd)
                            VALUES (%s, %s, %s, %s, %s, TRUE)""",
                         (
                             prospect["bedrijfsnaam"],
@@ -155,7 +149,7 @@ class AcquisitionRepository:
                     customer_id = cursor.lastrowid
                     cursor.execute(
                         """UPDATE PotentieleKlant
-                           SET klant_id = %s, status = 'geconverteerd'
+                           SET klant_id = %s, opvolging_afgesloten = TRUE
                            WHERE potentiele_klant_id = %s""",
                         (customer_id, prospect_id),
                     )

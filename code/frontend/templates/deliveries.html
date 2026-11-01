@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Bezorgrooster{% endblock %}
+{% block extra_styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/deliveries.css') }}">
+{% endblock %}
 {% block content %}
   <section class="stock-dashboard delivery-page" aria-labelledby="distribution-title">
     <header class="stock-dashboard__intro delivery-page__intro">
@@ -158,15 +161,15 @@
           <tbody>
             {% for item in schedule %}
               <tr>
-                <td>{{ item.geplande_tijd }}</td>
+                <td data-label="Tijd">{{ item.geplande_tijd }}</td>
                 <td>{{ item.koerier or "Niet bekend" }}</td>
-                <td>{{ item.bestelling_id }}</td>
+                <td data-label="Bestelling">{{ item.bestelling_id }}</td>
                 <td>{{ "Spoed" if item.spoed else "Regulier" }}</td>
-                <td>{{ item.bedrijfsnaam }}</td>
-                <td>{{ item.adres }}</td>
-                <td>{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
-                <td>{{ item.resultaat or "nog niet afgeleverd" }}</td>
-                <td>
+                <td data-label="Klant">{{ item.bedrijfsnaam }}</td>
+                <td data-label="Adres">{{ item.adres }}</td>
+                <td data-label="Contact">{{ item.contactpersoon }} — {{ item.telefoonnummer }}</td>
+                <td data-label="Status">{{ item.resultaat or "nog niet afgeleverd" }}</td>
+                <td data-label="Afhandeling">
                   {% if item.can_register_first_attempt %}
                     <form method="post" action="{{ url_for('distribution.first_attempt') }}">
                       <input type="hidden" name="day" value="{{ day.isoformat() }}">

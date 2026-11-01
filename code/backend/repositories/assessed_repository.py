@@ -9,7 +9,10 @@ class AssessedRepository:
 
     def customer_revenue(self, customer_id, year):
         with self.db.cursor(dictionary=True) as c:
-            c.execute("SELECT klant_id, bedrijfsnaam FROM Klant WHERE klant_id=%s", (customer_id,))
+            c.execute("""SELECT k.klant_id, k.bedrijfsnaam,
+                                k.eenmalige_korting_toegezegd, a.adres AS klantadres FROM Klant k
+                         JOIN Adres a ON a.adres_id=k.betaaladres_id
+                         WHERE k.klant_id=%s AND k.actief=TRUE""", (customer_id,))
             customer = c.fetchone()
             if not customer:
                 raise DomainError("Unknown customer")
@@ -40,8 +43,11 @@ class AssessedRepository:
     def invoice_for_customer(self, customer_id):
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
-                SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.betalingsregeling_geaccepteerd,
+                SELECT f.factuur_id, f.factuurdatum, f.betaald_op, f.week_start,
+                       f.afzenderadres, f.factuuradres, f.betalingsregeling_geaccepteerd,
                        f.incasso_ingeschakeld,
+                       f.extra_bezorgkosten_excl_btw, f.extra_bezorgkosten_btw,
+                       f.extra_bezorgkosten_incl_btw,
                        f.bedrag_excl_btw,
                        f.btw_bedrag,
                        f.bedrag_incl_btw,
@@ -54,7 +60,8 @@ class AssessedRepository:
                        k.bedrijfsnaam, a.adres
                 FROM Factuur f JOIN Klant k ON k.klant_id=f.klant_id
                 JOIN Adres a ON a.adres_id=k.betaaladres_id
-                WHERE f.klant_id=%s ORDER BY f.factuurdatum DESC
+WHERE f.klant_id=%s AND f.betaald_op IS NULL
+                ORDER BY f.factuurdatum DESC
             """, (customer_id,))
             invoices=c.fetchall()
             for invoice in invoices:
@@ -241,15 +248,121 @@ class AssessedRepository:
             (delivery_id,),
         )
 
+    def record_second_attempt_outcome(self, delivery_id, delivery_day, outcome, signature_confirmed):
+        """Record second visit only after it takes place; never invent a signature."""
+        if outcome not in ("afgeleverd", "niet aanwezig"):
+            raise DomainError("Ongeldige afleveruitkomst.")
+        if outcome == "afgeleverd" and signature_confirmed != "yes":
+            raise DomainError("Bevestig dat de klant voor ontvangst heeft getekend.")
+        if outcome == "niet aanwezig" and signature_confirmed == "yes":
+            raise DomainError("Zonder aflevering kan geen ontvangst worden bevestigd.")
+        with self.db.cursor(dictionary=True) as c:
+            try:
+                c.execute(
+                    """SELECT lp.resultaat FROM Leverpoging lp
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE lp.levering_id=%s AND lp.pogingnummer=2 AND r.ritdatum=%s
+                       FOR UPDATE""",
+                    (delivery_id, delivery_day),
+                )
+                row = c.fetchone()
+                if not row:
+                    raise DomainError("Geen tweede bezorgpoging gepland voor deze dag.")
+                if row["resultaat"] is not None:
+                    raise DomainError("Tweede bezorgpoging is al afgehandeld.")
+                c.execute(
+                    """UPDATE Leverpoging SET resultaat=%s, ontvangst_getekend=%s
+                       WHERE levering_id=%s AND pogingnummer=2""",
+                    (outcome, outcome == "afgeleverd", delivery_id),
+                )
+                if outcome == "afgeleverd":
+                    c.execute(
+                        """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='afgeleverd' WHERE l.levering_id=%s""",
+                        (delivery_id,),
+                    )
+                else:
+                    c.execute(
+                        """UPDATE Bestelling b JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                           SET b.status_naam='niet afgeleverd' WHERE l.levering_id=%s""",
+                        (delivery_id,),
+                    )
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def record_failed_delivery_followup(self, delivery_id, requested_date,
+                                        time_slot, extra_cost, explanation):
+        """Sales agrees a new delivery time and explains extra costs after two absences."""
+        from decimal import Decimal, InvalidOperation
+        if time_slot not in ("ochtend", "middag"):
+            raise DomainError("Kies ochtend of middag als levermoment.")
+        if not isinstance(requested_date, date):
+            raise DomainError("Een nieuwe leverdatum is verplicht.")
+        try:
+            cost = Decimal(str(extra_cost))
+        except (InvalidOperation, TypeError, ValueError) as exc:
+            raise DomainError("Bezorgkosten moeten een geldig bedrag zijn.") from exc
+        if not cost.is_finite() or cost < 0 or cost.as_tuple().exponent < -2:
+            raise DomainError("Bezorgkosten moeten een niet-negatief bedrag in eurocent zijn.")
+        if cost > 0 and not explanation.strip():
+            raise DomainError("Leg extra bezorgkosten kort uit.")
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT b.bestelling_id, r.ritdatum FROM Bestelling b
+                       JOIN Levering l ON l.bestelling_id=b.bestelling_id
+                       JOIN Leverpoging lp ON lp.levering_id=l.levering_id AND lp.pogingnummer=2
+                       JOIN Rit r ON r.rit_id=lp.rit_id
+                       WHERE l.levering_id=%s AND lp.resultaat='niet aanwezig'
+                       FOR UPDATE""", (delivery_id,))
+                row = cursor.fetchone()
+                if row is None:
+                    raise DomainError("Er zijn geen twee mislukte bezorgpogingen geregistreerd.")
+                if requested_date <= row["ritdatum"]:
+                    raise DomainError("Plan een nieuwe leverdag na de mislukte bezorgdag.")
+                cursor.execute(
+                    """UPDATE Bestelling SET gewenste_leverdatum=%s, dagdeel=%s,
+                       extra_bezorgkosten=%s, toelichting_extra_bezorgkosten=%s
+                       WHERE bestelling_id=%s
+                         AND extra_bezorgkosten_factuur_id IS NULL""",
+                    (requested_date, time_slot, cost, explanation.strip() or None,
+                     row["bestelling_id"]))
+                if cursor.rowcount != 1:
+                    raise DomainError("Deze bezorgkosten zijn al gefactureerd.")
+                # The second absence closes this shipment. The agreed next
+                # attempt is a NEW shipment, preserving the previous attempts.
+                # Move its unbilled packed lines without duplicating quantities.
+                cursor.execute(
+                    "INSERT INTO Levering(bestelling_id) VALUES(%s)",
+                    (row["bestelling_id"],),
+                )
+                new_delivery_id = cursor.lastrowid
+                cursor.execute(
+                    """UPDATE Leveringregel SET levering_id=%s
+                       WHERE levering_id=%s AND factuur_id IS NULL""",
+                    (new_delivery_id, delivery_id),
+                )
+                if cursor.rowcount < 1:
+                    raise DomainError("Geen ongefactureerde producten voor de nieuwe leverpoging.")
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
     def prospect_followups(self, cutoff):
         with self.db.cursor(dictionary=True) as c:
             c.execute("""
                 SELECT p.potentiele_klant_id, p.bedrijfsnaam, p.contactpersoon,
-                       p.contactgegevens, a.adres, MAX(v.bezoekdatum) AS bezoekdatum
+                       p.contactgegevens, a.adres, p.klant_id,
+                       MAX(v.bezoekdatum) AS bezoekdatum
                 FROM PotentieleKlant p JOIN Acquisitiebezoek v ON v.potentiele_klant_id=p.potentiele_klant_id
                 JOIN Adres a ON a.adres_id=p.adres_id
-                WHERE p.klant_id IS NULL
-                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres
+                WHERE p.opvolging_afgesloten=FALSE AND NOT EXISTS (
+                    SELECT 1 FROM Bestelling b WHERE b.klant_id = p.klant_id
+                )
+                GROUP BY p.potentiele_klant_id,p.bedrijfsnaam,p.contactpersoon,p.contactgegevens,a.adres,p.klant_id
                 HAVING MAX(v.bezoekdatum)<=%s
                 ORDER BY bezoekdatum
             """,(cutoff,))
@@ -274,21 +387,61 @@ class AssessedRepository:
             try:
                 c.execute("SELECT * FROM PotentieleKlant WHERE potentiele_klant_id=%s FOR UPDATE",(prospect,))
                 p=c.fetchone()
-                if not p or p["klant_id"] is not None:
-                    raise DomainError("Prospect not available for conversion")
+                if not p or p["klant_id"] is not None or p["opvolging_afgesloten"]:
+                    raise DomainError("Deze acquisitieopvolging is al afgesloten of geconverteerd.")
+                from domain.business import ProspectiveCustomer
+                c.execute(
+                    "SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek "
+                    "WHERE potentiele_klant_id=%s", (prospect,))
+                last_visit = c.fetchone()
+                if not last_visit or not last_visit["laatste_bezoek"] or not (
+                    ProspectiveCustomer(p["bedrijfsnaam"]).checkFollowUpAfterOneMonth(
+                        last_visit["laatste_bezoek"], date.today()
+                    )
+                ):
+                    raise DomainError("De opvolging is pas een maand na het bezoek toegestaan.")
                 c.execute("INSERT INTO Adres (adres) VALUES (%s)",(billing,))
                 billing_id=c.lastrowid
                 c.execute("INSERT INTO Adres (adres) VALUES (%s)",(delivery,))
                 delivery_id=c.lastrowid
-                c.execute("""INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id)
-                             VALUES(%s,%s,%s,%s,%s)""",(p["bedrijfsnaam"],p["contactgegevens"],p["contactpersoon"],delivery_id,billing_id))
+                c.execute("""INSERT INTO Klant(bedrijfsnaam,telefoonnummer,contactpersoon,afleveradres_id,betaaladres_id,eenmalige_korting_toegezegd)
+                             VALUES(%s,%s,%s,%s,%s,TRUE)""",(p["bedrijfsnaam"],p["contactgegevens"],p["contactpersoon"],delivery_id,billing_id))
                 customer=c.lastrowid
-                c.execute("UPDATE PotentieleKlant SET klant_id=%s WHERE potentiele_klant_id=%s",(customer,prospect))
+                c.execute("UPDATE PotentieleKlant SET klant_id=%s, opvolging_afgesloten=TRUE WHERE potentiele_klant_id=%s",(customer,prospect))
                 self.db.commit()
                 return customer
             except Exception:
                 self.db.rollback()
                 raise
+
+    def close_prospect_followup(self, prospect_id, cutoff):
+        """A definitive no after the callback ends acquisition; do not contact again."""
+        try:
+            with self.db.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT klant_id, opvolging_afgesloten FROM PotentieleKlant "
+                    "WHERE potentiele_klant_id=%s FOR UPDATE", (prospect_id,))
+                prospect = cursor.fetchone()
+                if prospect is None or prospect["opvolging_afgesloten"]:
+                    raise DomainError("Deze opvolging bestaat niet of is al afgesloten.")
+                cursor.execute(
+                    "SELECT MAX(bezoekdatum) AS laatste_bezoek FROM Acquisitiebezoek "
+                    "WHERE potentiele_klant_id=%s", (prospect_id,))
+                visited = cursor.fetchone()
+                if not visited or not visited["laatste_bezoek"] or visited["laatste_bezoek"] > cutoff:
+                    raise DomainError("Opvolging mag pas een maand na het bezoek worden afgesloten.")
+                if prospect["klant_id"] is not None:
+                    cursor.execute("SELECT COUNT(*) AS aantal FROM Bestelling WHERE klant_id=%s",
+                                   (prospect["klant_id"],))
+                    if cursor.fetchone()["aantal"]:
+                        raise DomainError("Deze apotheek heeft al besteld; opvolging is niet nodig.")
+                cursor.execute(
+                    "UPDATE PotentieleKlant SET opvolging_afgesloten=TRUE "
+                    "WHERE potentiele_klant_id=%s", (prospect_id,))
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
 
     def record_payment_action(self, invoice_id, action, today):
         """Record the case's reminders, full payment, or rejected plan/debt collection."""
@@ -307,10 +460,20 @@ class AssessedRepository:
                     min_days=sequence*7
                     if (today-invoice["factuurdatum"]).days<min_days:
                         raise DomainError("Reminder is not due")
+                    cursor.execute(
+                        "SELECT verstuurd_op FROM Betalingsherinnering "
+                        "WHERE factuur_id=%s AND volgnummer=%s", (invoice_id, sequence))
+                    if cursor.fetchone():
+                        raise DomainError("Deze herinnering is al geregistreerd.")
                     if sequence==2:
-                        cursor.execute("SELECT 1 FROM Betalingsherinnering WHERE factuur_id=%s AND volgnummer=1",(invoice_id,))
-                        if not cursor.fetchone():
-                            raise DomainError("First reminder must be recorded before second")
+                        cursor.execute(
+                            "SELECT verstuurd_op FROM Betalingsherinnering "
+                            "WHERE factuur_id=%s AND volgnummer=1", (invoice_id,))
+                        first = cursor.fetchone()
+                        if not first:
+                            raise DomainError("Registreer eerst de eerste herinnering.")
+                        if (today - first["verstuurd_op"]).days < 7:
+                            raise DomainError("De tweede herinnering volgt pas minimaal een week later.")
                     cursor.execute(
                         "INSERT INTO Betalingsherinnering(factuur_id,volgnummer,verstuurd_op) "
                         "VALUES(%s,%s,%s)", (invoice_id,sequence,today))
@@ -327,6 +490,8 @@ class AssessedRepository:
                         "UPDATE Factuur SET betalingsregeling_geaccepteerd=FALSE, "
                         "incasso_ingeschakeld=TRUE WHERE factuur_id=%s", (invoice_id,))
                 elif action=="mark_paid":
+                    if invoice["betaald_op"]:
+                        raise DomainError("Factuur is al betaald; betaaldatum mag niet worden overschreven.")
                     cursor.execute("UPDATE Factuur SET betaald_op=%s WHERE factuur_id=%s",
                                    (today,invoice_id))
                 else:
@@ -336,7 +501,7 @@ class AssessedRepository:
                 self.db.rollback()
                 raise
 
-    def save_invoice_snapshot(self, invoice_id, invoice_data):
+    def save_invoice_snapshot(self, invoice_id, invoice_data, commit=True):
         """Store the issued invoice amounts once, not recomputed at payment time."""
         from domain.business import euro
         values = tuple(euro(invoice_data[field]) for _, field in [('bedrag_excl_btw', 'total_ex_vat'), ('btw_bedrag', 'vat_9_percent'), ('bedrag_incl_btw', 'total_incl_vat'), ('bestellingskorting', 'order_discount'), ('bedrag_na_bestellingskorting', 'total_after_order_discount'), ('eenmalige_korting', 'first_order_discount'), ('bedrag_na_eenmalige_korting', 'total_after_first_order_discount'), ('klantenkorting', 'customer_discount'), ('totaal_bedrag', 'total')])
@@ -355,7 +520,8 @@ class AssessedRepository:
                     """UPDATE Factuur SET bedrag_excl_btw=%s, btw_bedrag=%s, bedrag_incl_btw=%s, bestellingskorting=%s, bedrag_na_bestellingskorting=%s, eenmalige_korting=%s, bedrag_na_eenmalige_korting=%s, klantenkorting=%s, totaal_bedrag=%s WHERE factuur_id=%s""",
                     values + (invoice_id,),
                 )
-            self.db.commit()
+            if commit:
+                self.db.commit()
         except Exception:
             self.db.rollback()
             raise

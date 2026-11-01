@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import InvalidOperation
 from flask import Blueprint, render_template, request
 from db import get_connection
 from domain.business import Invoice
@@ -30,13 +31,17 @@ def invoices():
                 "first_order_discount": row["eenmalige_korting"],
                 "total_after_first_order_discount": row["bedrag_na_eenmalige_korting"],
                 "customer_discount": row["klantenkorting"],
-                "total": row["totaal_bedrag"],
+                "total": (
+                    row["totaal_bedrag"] - (row.get("extra_bezorgkosten_incl_btw") or 0)
+                    if row["totaal_bedrag"] is not None else None
+                ),
             }
             doc = {
                 "invoice_number": row["factuur_id"],
                 "date": row["factuurdatum"],
                 "customer_name": row["bedrijfsnaam"],
-                "customer_address": row["adres"],
+                "customer_address": row.get("factuuradres") or row["adres"],
+                "sender_address": row.get("afzenderadres"),
                 "lines": line_items,
                 "snapshot_complete": all(value is not None for value in snapshots.values()),
                 "extra_delivery_costs": (
@@ -47,6 +52,10 @@ def invoices():
                     )) else None
                 ),
                 "action": invoice.checkPaymentArrears(date.today()),
+                "extra_cost_ex": row.get("extra_bezorgkosten_excl_btw") or 0,
+                "extra_cost_vat": row.get("extra_bezorgkosten_btw") or 0,
+                "extra_cost_gross": row.get("extra_bezorgkosten_incl_btw") or 0,
+                "final_total": row["totaal_bedrag"],
                 **snapshots,
             }
             rows.append(doc)
@@ -124,17 +133,21 @@ def invoice_action():
         raise DomainError("Invoice and customer are required")
     if action not in ("reminder1","reminder2","payment_plan_accepted","payment_plan_rejected","mark_paid"):
         raise DomainError("Unknown invoice action")
+    if action=="payment_plan_rejected" and request.form.get("offer_refused_confirmed") != "yes":
+        raise DomainError("Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd.")
     repo=AssessedRepository(get_connection())
+    # Validate invoice ownership for every mutation, not only mark_paid.
+    # Otherwise a forged form can modify another customer's invoice.
+    invoices_for_customer=repo.invoice_for_customer(customer_id)
+    matched=next((row for row in invoices_for_customer if row["factuur_id"]==invoice_id),None)
+    if matched is None:
+        raise DomainError("Invoice does not belong to selected customer")
     if action=="mark_paid":
         from domain.business import euro
         try:
             received=euro(request.form["received_amount"])
-        except (ValueError,KeyError) as exc:
-            raise DomainError("Valid payment amount required") from exc
-        invoices_for_customer=repo.invoice_for_customer(customer_id)
-        matched=next((row for row in invoices_for_customer if row["factuur_id"]==invoice_id),None)
-        if matched is None:
-            raise DomainError("Invoice does not belong to selected customer")
+        except (ValueError,KeyError,InvalidOperation) as exc:
+            raise DomainError("Vul een geldig volledig ontvangen bedrag in.") from exc
         # Only the exact, originally persisted invoice amount can prove
         # a full payment, not a recalculation with guessed discounts.
         if matched["totaal_bedrag"] is None:

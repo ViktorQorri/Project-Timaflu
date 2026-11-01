@@ -1,19 +1,15 @@
 """Manage customer data centrally for sales, following AD07 Manage customer data."""
 
-import re
-
 from domain.errors import NotFoundError, ValidationError
 
 # Form field, label for messages, maximum length from schema.sql, required.
 FIELDS = (
     ("bedrijfsnaam", "Bedrijfsnaam", 100, True),
     ("contactpersoon", "Contactpersoon", 100, False),
-    ("telefoonnummer", "Telefoonnummer", 25, True),
+    ("telefoonnummer", "Telefoonnummer", 25, False),
     ("afleveradres", "Afleveradres", 255, True),
     ("factuuradres", "Factuuradres", 255, True),
 )
-PHONE_CHARACTERS = re.compile(r"\+?[0-9 ()-]+")
-MIN_PHONE_DIGITS = 8
 
 
 class CustomerService:
@@ -39,14 +35,14 @@ class CustomerService:
         """Validate and save changed data of an existing customer."""
         self.repository.update(customer_id, self.validate(form))
 
-    def delete(self, customer_id):
-        """Delete a customer; customers with history are refused by the repository."""
-        self.repository.delete(customer_id)
+    def deactivate(self, customer_id):
+        """Deactivate a customer while retaining their history."""
+        self.repository.deactivate(customer_id)
 
     def validate(self, form):
         """Return cleaned customer data, or raise ValidationError with every problem found.
 
-        The phone number is required so couriers can call the customer (AD15).
+        The phone number is optional in schema.sql; its maximum length is enforced.
         """
         customer, messages = {}, []
         for field, label, max_length, required in FIELDS:
@@ -56,17 +52,7 @@ class CustomerService:
             elif len(value) > max_length:
                 messages.append(f"{label} mag maximaal {max_length} tekens bevatten.")
             customer[field] = value or None
-        phone = customer["telefoonnummer"]
-        if phone and not self._is_phone_number(phone):
-            messages.append(
-                f"Telefoonnummer mag alleen cijfers, spaties, +, - en haakjes bevatten "
-                f"en moet minstens {MIN_PHONE_DIGITS} cijfers hebben."
-            )
         if messages:
             raise ValidationError(messages)
+        customer["eenmalige_korting_toegezegd"] = form.get("eenmalige_korting_toegezegd") == "on"
         return customer
-
-    @staticmethod
-    def _is_phone_number(value):
-        digits = sum(character.isdigit() for character in value)
-        return PHONE_CHARACTERS.fullmatch(value) is not None and digits >= MIN_PHONE_DIGITS

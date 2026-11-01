@@ -1,10 +1,8 @@
-<!doctype html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Adreslabel voor bestelling {{ label.bestelling_id }} | Timaflu</title>
-  <style>
+{% extends "base.html" %}
+{% block title %}Adreslabel voor bestelling {{ label.bestelling_id }}{% endblock %}
+{% block content %}
+<style>
+
     body { font: 16px/1.5 Arial, sans-serif; margin: 2rem; color: #111; }
     .label { border: 2px solid #111; padding: 1.5rem; max-width: 30rem; }
     .label__name { display: block; font-size: 1.5rem; margin-bottom: 1rem; }
@@ -15,9 +13,9 @@
       .instructions { display: none; }
       .label { margin: 0; border: 2px solid #111; break-inside: avoid; }
     }
-  </style>
-</head>
-<body>
+
+  .site-header, .site-footer, .skip-link { display: none; }
+</style>
   <p class="instructions">
     Dit is het printklare adreslabel. Druk af via de afdrukfunctie van de browser.
   </p>
@@ -28,5 +26,4 @@
     <p>{{ label.afleveradres }}</p>
     <p>Telefoon: {{ label.telefoonnummer or "Niet beschikbaar" }}</p>
   </section>
-</body>
-</html>
+{% endblock %}

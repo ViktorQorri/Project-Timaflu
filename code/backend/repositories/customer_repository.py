@@ -1,6 +1,6 @@
 """Central customer data for sales (AD07 Manage customer data), stored in Klant and Adres."""
 
-from domain.errors import ConflictError, NotFoundError
+from domain.errors import NotFoundError
 
 
 class CustomerRepository:
@@ -36,8 +36,9 @@ class CustomerRepository:
             ) AS o ON o.klant_id = k.klant_id
             LEFT JOIN Klantkorting AS kk ON kk.klant_id = k.klant_id
                                         AND kk.kalenderjaar = %s
-            WHERE k.bedrijfsnaam LIKE %s OR k.contactpersoon LIKE %s
-               OR k.telefoonnummer LIKE %s
+            WHERE k.actief = TRUE
+              AND (k.bedrijfsnaam LIKE %s OR k.contactpersoon LIKE %s
+               OR k.telefoonnummer LIKE %s)
             ORDER BY k.bedrijfsnaam ASC, k.klant_id ASC
         """
         pattern = f"%{search}%"
@@ -53,7 +54,7 @@ class CustomerRepository:
             FROM Klant AS k
             JOIN Adres AS af ON af.adres_id = k.afleveradres_id
             JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
-            WHERE k.klant_id = %s
+            WHERE k.klant_id = %s AND k.actief = TRUE
         """
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(query, (customer_id,))
@@ -72,10 +73,11 @@ class CustomerRepository:
                 invoice_id = self._insert_address(cursor, customer["factuuradres"])
                 cursor.execute(
                     """INSERT INTO Klant (bedrijfsnaam, telefoonnummer, contactpersoon,
-                                          afleveradres_id, betaaladres_id)
-                       VALUES (%s, %s, %s, %s, %s)""",
+                                          afleveradres_id, betaaladres_id, eenmalige_korting_toegezegd)
+                       VALUES (%s, %s, %s, %s, %s, %s)""",
                     (customer["bedrijfsnaam"], customer["telefoonnummer"],
-                     customer["contactpersoon"], delivery_id, invoice_id),
+                     customer["contactpersoon"], delivery_id, invoice_id,
+                     customer.get("eenmalige_korting_toegezegd", False)),
                 )
                 customer_id = cursor.lastrowid
             connection.commit()
@@ -99,7 +101,7 @@ class CustomerRepository:
                        FROM Klant AS k
                        JOIN Adres AS af ON af.adres_id = k.afleveradres_id
                        JOIN Adres AS ba ON ba.adres_id = k.betaaladres_id
-                       WHERE k.klant_id = %s
+                       WHERE k.klant_id = %s AND k.actief = TRUE
                        FOR UPDATE""",
                     (customer_id,),
                 )
@@ -125,34 +127,21 @@ class CustomerRepository:
             connection.rollback()
             raise
 
-    def delete(self, customer_id):
-        """Delete a customer without order, invoice or acquisition history.
-
-        Its yearly discounts go with it. Addresses stay, as Adres rows can be shared.
-        """
+    def deactivate(self, customer_id):
+        """Deactivate without destroying orders, invoices, discounts or acquisition links."""
         connection = self.connection
         try:
             with connection.cursor(dictionary=True) as cursor:
                 cursor.execute(
-                    "SELECT klant_id FROM Klant WHERE klant_id = %s FOR UPDATE",
+                    "SELECT klant_id FROM Klant WHERE klant_id = %s AND actief = TRUE FOR UPDATE",
                     (customer_id,),
                 )
                 if cursor.fetchone() is None:
-                    raise NotFoundError("Deze klant bestaat niet.")
+                    raise NotFoundError("Deze actieve klant bestaat niet.")
                 cursor.execute(
-                    """SELECT (SELECT COUNT(*) FROM Bestelling WHERE klant_id = %s) AS bestellingen,
-                              (SELECT COUNT(*) FROM Factuur WHERE klant_id = %s) AS facturen,
-                              (SELECT COUNT(*) FROM PotentieleKlant WHERE klant_id = %s) AS acquisities""",
-                    (customer_id, customer_id, customer_id),
+                    "UPDATE Klant SET actief = FALSE WHERE klant_id = %s",
+                    (customer_id,),
                 )
-                history = cursor.fetchone()
-                if any(history.values()):
-                    raise ConflictError(
-                        "Deze klant heeft bestellingen, facturen of een acquisitiedossier "
-                        "en kan daarom niet worden verwijderd."
-                    )
-                cursor.execute("DELETE FROM Klantkorting WHERE klant_id = %s", (customer_id,))
-                cursor.execute("DELETE FROM Klant WHERE klant_id = %s", (customer_id,))
             connection.commit()
         except Exception:
             connection.rollback()

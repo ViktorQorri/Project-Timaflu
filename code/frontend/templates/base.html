@@ -1,13 +1,29 @@
+{% set navigation = [
+  ('home.index', 'Home'),
+  ('sales.customers', 'Klanten'),
+  ('sales.orders', 'Orders'),
+  ('purchasing.products', 'Producten'),
+  ('purchasing.stock', 'Voorraad'),
+  ('purchasing.suppliers', 'Leveranciers'),
+  ('order_picking.index', 'Orderpicking'),
+  ('distribution.deliveries', 'Leveringen'),
+  ('administration.invoices', 'Facturen'),
+  ('weekly_invoices.weekly_overview', 'Weekfacturen'),
+  ('acquisition.index', 'Acquisitie'),
+  ('reports.index', 'Rapportages')
+] %}
 <!doctype html>
 <html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123653">
   <title>{% block title %}Timaflu{% endblock %} | Timaflu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-system.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/stock.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/suppliers.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/sales-stock.css') }}">
@@ -18,12 +34,31 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status-report.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/order-status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/operations.css') }}">
+  {% block extra_styles %}{% endblock %}
 </head>
 <body>
   <a class="skip-link" href="#main-content">Direct naar de inhoud</a>
   <header class="site-header">
-    <a class="site-name" href="{{ url_for('home.index') }}">tima<span>flu</span></a>
-    <nav aria-label="Hoofdnavigatie">
+    <a class="site-name" href="{{ url_for('home.index') }}"><span class="brand-mark">tima<span>flu</span></span></a>
+    <details class="mobile-navigation">
+      <summary>Menu</summary>
+      <nav aria-label="Mobiele navigatie">
+        <ul>
+          {% for endpoint, label in [
+            ('home.index', 'Home'), ('sales.customers', 'Klanten'),
+            ('sales.new_order', 'Order invoeren'), ('sales.orders', 'Voorraad controleren'),
+            ('purchasing.products', 'Producten'), ('purchasing.stock', 'Voorraad'),
+            ('purchasing.suppliers', 'Leveranciers'), ('purchasing.reorder', 'Bijbestellen'),
+            ('order_picking.index', 'Orderpicking'), ('distribution.deliveries', 'Leveringen'),
+            ('administration.invoices', 'Facturen'), ('acquisition.index', 'Acquisitie'),
+            ('reports.index', 'Rapportages')
+          ] %}
+          <li><a href="{{ url_for(endpoint) }}">{{ label }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </details>
+    <nav class="desktop-navigation" aria-label="Hoofdnavigatie">
       <ul>
         {% for endpoint, label in [
           ('home.index', 'Home'),
@@ -49,13 +84,14 @@
   <main id="main-content">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
-        <p class="flash flash-{{ category }}">{{ message }}</p>
+        <p class="flash flash-{{ category }}" role="status">{{ message }}</p>
       {% endfor %}
     {% endwith %}
-
     {% block content %}{% endblock %}
   </main>
-
-  <footer class="site-footer">Timaflu informatiesysteem</footer>
+  <footer class="site-footer">
+    <span>Timaflu</span>
+    <span>Medewerkersportaal</span>
+  </footer>
 </body>
 </html>

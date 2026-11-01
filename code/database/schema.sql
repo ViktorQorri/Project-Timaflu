@@ -20,7 +20,8 @@ CREATE TABLE Klant (
     bedrijfsnaam VARCHAR(100) NOT NULL,
     telefoonnummer VARCHAR(25),
     contactpersoon VARCHAR(100),
-    eenmalige_korting_toegekend BOOLEAN NOT NULL DEFAULT FALSE,
+    actief BOOLEAN NOT NULL DEFAULT TRUE,
+    eenmalige_korting_toegezegd BOOLEAN NOT NULL DEFAULT FALSE,
     afleveradres_id INT NOT NULL,
     betaaladres_id INT NOT NULL,
 
@@ -44,8 +45,7 @@ CREATE TABLE PotentieleKlant (
     contactgegevens VARCHAR(255),
     adres_id INT NOT NULL,
     klant_id INT UNIQUE,
-    status ENUM('open', 'geconverteerd', 'geen_interesse', 'geen_toestemming')
-        NOT NULL DEFAULT 'open',
+    opvolging_afgesloten BOOLEAN NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (adres_id)
         REFERENCES Adres(adres_id),
@@ -252,6 +252,7 @@ CREATE TABLE Bestelling (
     extra_bezorgkosten DECIMAL(10,2)
         NOT NULL DEFAULT 0,
     toelichting_extra_bezorgkosten VARCHAR(255),
+    extra_bezorgkosten_factuur_id INT NULL,
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id),
@@ -473,9 +474,15 @@ CREATE TABLE Factuur (
     factuur_id INT AUTO_INCREMENT PRIMARY KEY,
     klant_id INT NOT NULL,
     factuurdatum DATE NOT NULL,
+    week_start DATE NULL,
+    afzenderadres VARCHAR(255) NULL,
+    factuuradres VARCHAR(255) NULL,
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    extra_bezorgkosten_excl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_bezorgkosten_incl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
     bedrag_excl_btw DECIMAL(10,2) NULL,
     btw_bedrag DECIMAL(10,2) NULL,
     bedrag_incl_btw DECIMAL(10,2) NULL,
@@ -485,11 +492,17 @@ CREATE TABLE Factuur (
     bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
     klantenkorting DECIMAL(10,2) NULL,
     totaal_bedrag DECIMAL(10,2) NULL,
+    CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
 );
 
+
+-- Koppelt iedere afzonderlijk afgesproken bezorgtoeslag aantoonbaar aan één factuur.
+ALTER TABLE Bestelling
+    ADD CONSTRAINT fk_bestelling_bezorgkosten_factuur
+    FOREIGN KEY (extra_bezorgkosten_factuur_id) REFERENCES Factuur(factuur_id);
 
 -- =========================================
 -- 25. LEVERINGREGEL

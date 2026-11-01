@@ -23,8 +23,15 @@ class CustomerDiscount:
 
 class Order:
     def __init__(self, subtotal, annualRevenue=0, firstOrder=False, orderThresholdBase=None,
-                 customerDiscountPercentage=None):
+                 customerDiscountPercentage=None, orderTotal=None):
         self.subtotal = euro(subtotal)
+        # Both the original assessed API (orderTotal) and the live invoice
+        # workflow (orderThresholdBase) refer to the same original order total.
+        if orderTotal is not None:
+            if (orderThresholdBase is not None
+                    and euro(orderThresholdBase) != euro(orderTotal)):
+                raise ValueError("Tegenstrijdige oorspronkelijke ordertotalen.")
+            orderThresholdBase = orderTotal
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
         self.customerDiscountPercentage = customerDiscountPercentage
@@ -106,7 +113,8 @@ class Invoice:
         self.paymentPlanAccepted = None
         self.debtCollectionEnabled = False
 
-    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder):
+    def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder,
+                            orderTotal=None):
         """Bundle delivered lines on one invoice, retaining discounts per order.
 
         The case gives an order-level 5% discount and first-order 10% discount,
@@ -150,7 +158,8 @@ class Invoice:
             gross = net + vat
             original_net = group["original_total"]
             threshold_base = (
-                euro(euro(original_net) * Decimal("1.09"))
+                euro(orderTotal) if orderTotal is not None
+                else euro(euro(original_net) * Decimal("1.09"))
                 if original_net is not None else gross
             )
             discount = Order(
@@ -176,6 +185,38 @@ class Invoice:
             "customer_number": self.customerNumber, "customer_name": customerName,
             "customer_address": customerAddress, "lines": items,
             "subtotal": amounts["total_incl_vat"], **amounts,
+        }
+
+    def createWeeklyInvoiceForOrders(self, customerName, customerAddress, orders, annualRevenue):
+        """Aggregate actual delivered order lines, calculating discounts per order.
+
+        The 5% threshold belongs to an order, not the sum of different orders.
+        10% applies only once to the first order, not again for acquisition.
+        """
+        if not orders:
+            from domain.errors import DomainError
+            raise DomainError("Geen afgeleverde regels om te factureren.")
+        fields = ("total_ex_vat", "vat_9_percent", "total_incl_vat",
+                  "order_discount", "total_after_order_discount",
+                  "first_order_discount", "total_after_first_order_discount",
+                  "customer_discount", "total")
+        totals = {key: Decimal("0.00") for key in fields}
+        all_lines = []
+        for order in orders:
+            detail = self.createWeeklyInvoice(
+                customerName, customerAddress, order["lines"],
+                annualRevenue, order["first_order"], order.get("order_total")
+            )
+            for key in fields:
+                totals[key] = euro(totals[key] + detail[key])
+            for line in detail["lines"]:
+                all_lines.append({**line, "order_id": order["order_id"]})
+        return {
+            "date": self.invoiceDate, "invoice_number": self.invoiceNumber,
+            "customer_number": self.customerNumber, "customer_name": customerName,
+            "customer_address": customerAddress, "lines": all_lines,
+            "subtotal": totals["total_incl_vat"],
+            **totals,
         }
 
     def checkPaymentArrears(self, today):
@@ -222,6 +263,7 @@ class Customer:
         self.deliveryAddress = deliveryAddress
         self.billingAddress = billingAddress
         self.blocked = False
+        self.oneTimeDiscountGranted = False
 
     def checkOrderBlock(self):
         return self.blocked
@@ -277,16 +319,20 @@ class Route:
 
 class AcquisitionVisit:
     def recordVisit(self, companyName, contactPerson, contactDetails, address, visitDate):
-        if not companyName or not address or not isinstance(visitDate, date):
-            raise ValueError("Bedrijf, adres en datum zijn verplicht")
+        if (not all((companyName.strip(), contactPerson.strip(),
+                     contactDetails.strip(), address.strip()))
+                or not isinstance(visitDate, date)):
+            from domain.errors import DomainError
+            raise DomainError("Bedrijf, contactpersoon, contactgegevens, adres en datum zijn verplicht")
         return {"company": companyName, "contact": contactPerson,
                 "contact_details": contactDetails, "address": address, "date": visitDate}
 
 
 class ProspectiveCustomer:
-    def __init__(self, companyName, ordered=False):
+    def __init__(self, companyName, ordered=False, followUpClosed=False):
         self.companyName = companyName
         self.ordered = ordered
+        self.followUpClosed = followUpClosed
 
     def hasPlacedOrder(self):
         return self.ordered
@@ -295,7 +341,7 @@ class ProspectiveCustomer:
         m = today.month - 1 or 12
         y = today.year - int(today.month == 1)
         cutoff = date(y, m, min(today.day, monthrange(y, m)[1]))
-        return not self.hasPlacedOrder() and lastVisitDate <= cutoff
+        return not self.hasPlacedOrder() and not self.followUpClosed and lastVisitDate <= cutoff
 
     def offerOneTimeDiscount(self):
         return Decimal("0.10")
