@@ -385,6 +385,16 @@
     ]
   },
   {
+    "module": "repositories.order_status_notification_repository",
+    "class": "OrderStatusNotificationRepository",
+    "methods": [
+      "__init__",
+      "search_orders",
+      "find_order",
+      "find_order_lines"
+    ]
+  },
+  {
     "module": "repositories.order_status_report_repository",
     "class": "OrderStatusReportRepository",
     "methods": [
@@ -565,6 +575,15 @@
       "_positive_id",
       "_validate",
       "remove_offer"
+    ]
+  },
+  {
+    "module": "services.order_status_notification_service",
+    "class": "OrderStatusNotificationService",
+    "methods": [
+      "__init__",
+      "search",
+      "status_overview"
     ]
   },
   {
