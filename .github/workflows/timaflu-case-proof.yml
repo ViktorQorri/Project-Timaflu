@@ -1,0 +1,29 @@
+name: Timaflu traceability en regressietests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  traceability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Python dependencies
+        run: |
+          python -m pip install -r code/backend/requirements.txt
+          python -m pip install pytest
+      - name: Backend, UML and traceability regression tests
+        run: python -m pytest code/backend Documentation/Architecture/uml/tests -q --junitxml=traceability-test-results.xml
+      - name: Static case screen checks
+        run: python Documentation/Architecture/screens/test_case_screens.py
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timaflu-traceability-test-results
+          path: traceability-test-results.xml
+          if-no-files-found: ignore
