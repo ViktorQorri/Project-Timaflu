@@ -286,12 +286,6 @@
         "key": ""
       },
       {
-        "name": "extra_bezorgkosten_incl_btw",
-        "type": "decimal(10,2)",
-        "nullable": false,
-        "key": ""
-      },
-      {
         "name": "bedrag_excl_btw",
         "type": "decimal(10,2)",
         "nullable": true,
@@ -304,19 +298,7 @@
         "key": ""
       },
       {
-        "name": "bedrag_incl_btw",
-        "type": "decimal(10,2)",
-        "nullable": true,
-        "key": ""
-      },
-      {
         "name": "bestellingskorting",
-        "type": "decimal(10,2)",
-        "nullable": true,
-        "key": ""
-      },
-      {
-        "name": "bedrag_na_bestellingskorting",
         "type": "decimal(10,2)",
         "nullable": true,
         "key": ""
@@ -328,19 +310,7 @@
         "key": ""
       },
       {
-        "name": "bedrag_na_eenmalige_korting",
-        "type": "decimal(10,2)",
-        "nullable": true,
-        "key": ""
-      },
-      {
         "name": "klantenkorting",
-        "type": "decimal(10,2)",
-        "nullable": true,
-        "key": ""
-      },
-      {
-        "name": "totaal_bedrag",
         "type": "decimal(10,2)",
         "nullable": true,
         "key": ""

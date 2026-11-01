@@ -482,24 +482,46 @@ CREATE TABLE Factuur (
     betaald_op DATE,
     betalingsregeling_geaccepteerd BOOLEAN,
     incasso_ingeschakeld BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Factuurbedragen: uitsluitend onafhankelijke uitgifte-snapshots.
     extra_bezorgkosten_excl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
     extra_bezorgkosten_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
-    extra_bezorgkosten_incl_btw DECIMAL(10,2) NOT NULL DEFAULT 0,
     bedrag_excl_btw DECIMAL(10,2) NULL,
     btw_bedrag DECIMAL(10,2) NULL,
-    bedrag_incl_btw DECIMAL(10,2) NULL,
     bestellingskorting DECIMAL(10,2) NULL,
-    bedrag_na_bestellingskorting DECIMAL(10,2) NULL,
     eenmalige_korting DECIMAL(10,2) NULL,
-    bedrag_na_eenmalige_korting DECIMAL(10,2) NULL,
     klantenkorting DECIMAL(10,2) NULL,
-    totaal_bedrag DECIMAL(10,2) NULL,
+    CONSTRAINT ck_factuur_bedragen CHECK (
+        extra_bezorgkosten_excl_btw >= 0 AND extra_bezorgkosten_btw >= 0
+        AND (bedrag_excl_btw IS NULL OR bedrag_excl_btw >= 0)
+        AND (btw_bedrag IS NULL OR btw_bedrag >= 0)
+        AND (bestellingskorting IS NULL OR bestellingskorting >= 0)
+        AND (eenmalige_korting IS NULL OR eenmalige_korting >= 0)
+        AND (klantenkorting IS NULL OR klantenkorting >= 0)
+    ),
     CONSTRAINT uq_factuur_klant_week UNIQUE (klant_id, week_start),
 
     FOREIGN KEY (klant_id)
         REFERENCES Klant(klant_id)
 );
 
+
+-- Berekeningen zijn niet opgeslagen: de basistabel blijft in 3NF.
+-- NULL in historische bronbedragen blijft NULL; onbekende omzet wordt niet verzonnen.
+CREATE VIEW FactuurOverzicht AS
+SELECT f.*,
+       f.extra_bezorgkosten_excl_btw + f.extra_bezorgkosten_btw
+           AS extra_bezorgkosten_incl_btw,
+       f.bedrag_excl_btw + f.btw_bedrag AS bedrag_incl_btw,
+       f.bedrag_excl_btw + f.btw_bedrag - f.bestellingskorting
+           AS bedrag_na_bestellingskorting,
+       f.bedrag_excl_btw + f.btw_bedrag
+           - f.bestellingskorting - f.eenmalige_korting
+           AS bedrag_na_eenmalige_korting,
+       f.bedrag_excl_btw + f.btw_bedrag
+           - f.bestellingskorting - f.eenmalige_korting - f.klantenkorting
+           + f.extra_bezorgkosten_excl_btw + f.extra_bezorgkosten_btw
+           AS totaal_bedrag
+FROM Factuur AS f;
 
 -- Koppelt iedere afzonderlijk afgesproken bezorgtoeslag aantoonbaar aan één factuur.
 ALTER TABLE Bestelling
