@@ -93,11 +93,10 @@ class OrderStatusNotificationTests(TestCase):
             return_value=self.service,
         ), patch("routes.sales.get_connection", return_value=object()):
             with app.test_client() as client:
-                search = client.get("/orders?order=7")
+                search = client.get("/orders")
                 detail = client.get("/orders/7/status")
         self.assertEqual(search.status_code, 200)
-        self.assertIn(b"Orderstatus opzoeken", search.data)
-        self.assertIn(b"Apotheek A", search.data)
+        self.assertIn(b"Bestaande bestellingen en hun status", search.data)
         self.assertEqual(detail.status_code, 200)
         self.assertIn(b"Geplande levering", detail.data)
         self.assertIn(b"Backorder", detail.data)

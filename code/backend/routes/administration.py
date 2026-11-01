@@ -98,30 +98,6 @@ def pay_purchase_invoice(invoice_id):
     return redirect(url_for("administration.invoices"))
 
 
-@administration.post("/invoices/create")
-def create_invoice():
-    from flask import flash, redirect, url_for
-    from domain.errors import DomainError
-    from datetime import timedelta
-
-    customer_id = request.form.get("customer_id", type=int)
-    if request.form.get("invoice_approved") != "yes":
-        raise DomainError("Controleer de afgeleverde regels en keur de weekfactuur goed.")
-    try:
-        week_of = date.fromisoformat(request.form.get("week_of", ""))
-    except ValueError as error:
-        raise DomainError("Kies een geldige datum voor de factuurweek.") from error
-    if not customer_id or customer_id < 1:
-        raise DomainError("Kies een geldig klantnummer.")
-
-    week_start = week_of - timedelta(days=week_of.weekday())
-    invoice_id = AssessedRepository(get_connection()).create_weekly_invoice(
-        customer_id, week_start, date.today()
-    )
-    flash(f"Weekfactuur {invoice_id} is aangemaakt.", "success")
-    return redirect(url_for("administration.invoices", customer_id=customer_id))
-
-
 @administration.post("/invoices/actions")
 def invoice_action():
     from flask import redirect, url_for, flash

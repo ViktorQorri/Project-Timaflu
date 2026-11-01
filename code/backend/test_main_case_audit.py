@@ -65,15 +65,17 @@ class MainCaseAuditTests(TestCase):
         self.assertEqual([r.status_code for r in requests],[400,400,400,400])
 
     def test_negative_or_non_numeric_sales_discount_is_rejected(self):
-        class FakeAssessed:
+        class FakeDiscountRepository:
             def __init__(self, connection):
                 pass
-            def customer_revenue(self, customer_id, year):
-                return {"bedrijfsnaam": "TEST", "klantadres": "TEST"}, Decimal("0")
-            def customer_order_count(self, customer_id):
+            def find_customer(self, customer_id):
+                return {"klant_id": 1, "bedrijfsnaam": "TEST", "klantadres": "TEST"}
+            def count_previous_orders(self, customer_id):
                 return 0
+            def get_customer_discount_percentage(self, customer_id, year):
+                return Decimal("5")
         with patch("routes.sales.get_connection", return_value=object()):
-            with patch("routes.sales.AssessedRepository", FakeAssessed):
+            with patch("routes.sales.DiscountRepository", FakeDiscountRepository):
                 with self.app.test_client() as client:
                     for amount in ("-1", "not-a-number", "NaN", "Infinity"):
                         response = client.post("/orders/calculate-discount",

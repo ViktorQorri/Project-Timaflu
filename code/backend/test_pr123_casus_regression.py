@@ -11,7 +11,7 @@ from domain.errors import ConflictError, DomainError
 from repositories.assessed_repository import AssessedRepository
 from repositories.robot_order_repository import RobotOrderRepository
 from services.discount_service import DiscountService
-from services.order_service import OrderService
+from repositories.telephone_order_repository import TelephoneOrderRepository
 from services.product_service import ProductService
 
 from test_discounts import FakeRepository
@@ -122,7 +122,7 @@ class CasusPr123Tests(TestCase):
         class Repository(FakeRepository):
             def find_product(self, product_id):
                 return {**super().find_product(product_id), "minimale_bestelhoeveelheid": 5}
-        with self.assertRaisesRegex(DomainError, "Bestel minimaal 5"):
+        with self.assertRaisesRegex(DomainError, "Minimale bestelhoeveelheid"):
             DiscountService(Repository()).calculate_total_amount("7", [("1", "4")])
 
     def test_new_medicine_requires_management_approval(self):
@@ -134,10 +134,17 @@ class CasusPr123Tests(TestCase):
         self.assertIsNone(repo.added)
 
     def test_urgent_order_must_be_delivered_same_day(self):
-        today = date(2026, 11, 1)
-        with self.assertRaisesRegex(DomainError, "dezelfde dag"):
-            OrderService._delivery_date("2026-11-02", True, today)
-        self.assertEqual(OrderService._delivery_date("2026-11-01", True, today), today)
+        from datetime import timedelta
+        today = date.today()
+        requested = [{"product_id": 1, "quantity": 1, "shortage": "skip"}]
+        with self.assertRaisesRegex(DomainError, "vandaag"):
+            TelephoneOrderRepository.validate(
+                1, requested, today + timedelta(days=1), "ochtend", True
+            )
+        customer_id, lines = TelephoneOrderRepository.validate(
+            1, requested, today, "ochtend", True
+        )
+        self.assertEqual((customer_id, lines[0]["quantity"]), (1, 1))
 
     def test_home_shows_database_unavailable_without_crashing(self):
         from mysql.connector import Error as DatabaseError

@@ -1,28 +1,26 @@
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from uuid import uuid4
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from flask import current_app, session
+
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from db import get_connection
-from domain.business import Invoice
-from domain.errors import ConflictError, DomainError, ValidationError
-from repositories.assessed_repository import AssessedRepository
-from repositories.customer_repository import CustomerRepository
+from domain.errors import DomainError, ValidationError
+from domain.business import Order, euro
 from repositories.discount_repository import DiscountRepository
-from repositories.order_repository import OrderRepository
-from repositories.order_status_notification_repository import OrderStatusNotificationRepository
+from repositories.customer_repository import CustomerRepository
 from repositories.sales_stock_repository import SalesStockRepository
-from services.customer_service import CustomerService
-from services.discount_service import DiscountService
-from services.order_service import PARTS_OF_DAY, OrderService
+from repositories.sales_case_repository import SalesCaseRepository
+from repositories.order_status_notification_repository import OrderStatusNotificationRepository
 from services.order_status_notification_service import OrderStatusNotificationService
+from repositories.telephone_order_repository import TelephoneOrderRepository
+from services.customer_service import CustomerService
 from services.sales_stock_service import SalesStockService
 
-
 sales = Blueprint("sales", __name__)
-
-ORDER_LINE_ROWS = 3
-MAX_ORDER_LINE_ROWS = 20
 
 
 def customer_service():
@@ -32,16 +30,11 @@ def customer_service():
 def render_customers(form=None, errors=(), status=200):
     """Render the customer overview with the form for a new customer."""
     search = request.args.get("q", "", type=str).strip()
-    year = date.today().year - 1
+    year = date.today().year
     rows = customer_service().overview(search, year)
     return render_template(
-        "customers.html",
-        customers=rows,
-        search=search,
-        year=year,
-        discount_year=year + 1,
-        form=form or {},
-        errors=errors,
+        "customers.html", customers=rows, search=search, year=year,
+        form=form or {}, errors=errors,
     ), status
 
 
@@ -66,9 +59,7 @@ def create_customer():
 def edit_customer(customer_id):
     """Show the form with the current data of one customer."""
     customer = customer_service().get(customer_id)
-    return render_template(
-        "customer_edit.html", customer_id=customer_id, form=customer, errors=()
-    )
+    return render_template("customer_edit.html", customer_id=customer_id, form=customer, errors=())
 
 
 @sales.post("/customers/<int:customer_id>/edit")
@@ -78,10 +69,7 @@ def update_customer(customer_id):
         customer_service().update(customer_id, request.form)
     except ValidationError as error:
         return render_template(
-            "customer_edit.html",
-            customer_id=customer_id,
-            form=request.form,
-            errors=error.messages,
+            "customer_edit.html", customer_id=customer_id, form=request.form, errors=error.messages,
         ), 400
     flash(f"De gegevens van klant {customer_id} zijn opgeslagen.", "success")
     return redirect(url_for("sales.customers"))
@@ -89,10 +77,8 @@ def update_customer(customer_id):
 
 @sales.get("/customers/<int:customer_id>/deactivate")
 def confirm_deactivate_customer(customer_id):
-    """Ask confirmation before deactivating, preserving order and invoice history."""
-    return render_template(
-        "customer_deactivate.html", customer=customer_service().get(customer_id)
-    )
+    """Confirm the AD07 deactivation action."""
+    return render_template("customer_deactivate.html", customer=customer_service().get(customer_id))
 
 
 @sales.post("/customers/<int:customer_id>/deactivate")
@@ -102,172 +88,154 @@ def deactivate_customer(customer_id):
     flash(f"Klant {customer_id} is gedeactiveerd.", "success")
     return redirect(url_for("sales.customers"))
 
-
-@sales.get("/orders")
-def orders():
-    """Show order availability based on physical and reserved stock."""
-    query = request.args.get("q", "", type=str).strip()
-    quantity = request.args.get("quantity", "1", type=str)
-    order_search = request.args.get("order", "", type=str).strip()
-    products = (
-        SalesStockService(SalesStockRepository(get_connection())).check(query, quantity)
-        if query
-        else []
-    )
-    found_orders = (
-        OrderStatusNotificationService(
-            OrderStatusNotificationRepository(get_connection())
-        ).search(order_search)
-        if order_search
-        else []
-    )
-    return render_template(
-        "orders.html",
-        query=query,
-        quantity=quantity,
-        products=products,
-        order_search=order_search,
-        found_orders=found_orders,
-    )
+@sales.get("/orders/status")
+def order_status():
+    raw = request.args.get("customer_id", "").strip()
+    if raw:
+        try:
+            customer_id = int(raw)
+        except ValueError as exc:
+            raise DomainError("Voer een geldig klantnummer in.") from exc
+        if customer_id < 1:
+            raise DomainError("Klantnummer moet positief zijn.")
+    else:
+        customer_id = None
+    rows = SalesCaseRepository(get_connection()).order_statuses(customer_id)
+    return render_template("order_status.html", orders=rows, customer_id=raw)
 
 
 @sales.get("/orders/<int:order_id>/status")
-def order_status(order_id):
-    """Show order status and a message employees can share with the customer."""
+def order_status_detail(order_id):
+    """Show the exact status, delivery date and outstanding backorder to sales."""
     service = OrderStatusNotificationService(
         OrderStatusNotificationRepository(get_connection())
     )
     return render_template(
-        "order_status_notification.html",
-        **service.status_overview(order_id),
+        "order_status_notification.html", **service.status_overview(order_id)
     )
+
+
+@sales.get("/orders")
+def orders():
+    """Show the orders page."""
+    query = request.args.get("q", "", type=str).strip()
+    quantity = request.args.get("quantity", "1", type=str)
+    products = SalesStockService(SalesStockRepository(get_connection())).check(query, quantity) if query else []
+    return render_template("orders.html", query=query, quantity=quantity, products=products)
 
 
 @sales.post("/orders/calculate-discount")
 def calculate_order_discount():
-    """Calculate discounts using the customer's recorded revenue and order history."""
     try:
-        customer_id = int(request.form["customer_id"])
-        subtotal = Decimal(request.form["subtotal"])
-    except (TypeError, ValueError, KeyError, InvalidOperation) as error:
-        raise DomainError("Vul een geldig klantnummer en bestelbedrag in.") from error
-    if not subtotal.is_finite() or subtotal < 0:
-        raise DomainError("Vul een geldig, niet-negatief bestelbedrag in.")
-    if customer_id <= 0:
+        customer_id=int(request.form["customer_id"])
+        subtotal=request.form["subtotal"]
+    except (TypeError,ValueError,KeyError) as exc:
+        raise DomainError("Klantnummer en ordertotaal zijn verplicht.") from exc
+    if customer_id<=0:
         raise DomainError("Klantnummer moet positief zijn.")
-    repository = AssessedRepository(get_connection())
-    customer, revenue = repository.customer_revenue(customer_id, date.today().year - 1)
-    first_order = repository.customer_order_count(customer_id) == 0
     try:
-        result = Invoice(customer_id, "preview", date.today()).createWeeklyInvoice(
-            customer["bedrijfsnaam"],
-            "",
-            [{"quantity": 1, "unit_price": subtotal}],
-            revenue,
-            first_order,
-        )
-    except ValueError as error:
-        raise DomainError("Vul een geldig, niet-negatief bestelbedrag in.") from error
+        subtotal = euro(subtotal)
+    except (ValueError, InvalidOperation) as exc:
+        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
+    repository = DiscountRepository(get_connection())
+    customer = repository.find_customer(customer_id)
+    if customer is None:
+        raise DomainError("Deze klant bestaat niet of is niet actief.")
+    first_order = repository.count_previous_orders(customer_id) == 0
+    year = date.today().year
+    rate = repository.get_customer_discount_percentage(customer_id, year)
+    if rate is None:
+        if not first_order:
+            raise DomainError(f"De klantenkorting voor {year} is niet vastgelegd.")
+        rate = Decimal("5")
+    try:
+        subtotal_ex = euro(subtotal)
+        vat = euro(subtotal_ex * Decimal("0.09"))
+        gross = subtotal_ex + vat
+        result = Order(
+            gross, 0, first_order, customerDiscountPercentage=rate
+        ).calculateTotalAmount()
+    except (ValueError, InvalidOperation) as exc:
+        raise DomainError("Vul een geldig, niet-negatief orderbedrag in.") from exc
     return render_template(
-        "discount.html",
-        customer=customer,
-        annual_revenue=revenue,
-        first_order=first_order,
-        discount=result,
+        "discount.html", customer=customer,
+        subtotal_ex= subtotal_ex, vat=vat, gross=gross,
+        discount_year=year, customer_discount_percentage=rate,
+        first_order=first_order, discount=result
     )
+
+
+def _approval_serializer():
+    return URLSafeTimedSerializer(current_app.secret_key, salt="timaflu-telefonisch-orderakkoord")
 
 
 @sales.get("/orders/new")
-def new_order():
-    """Enter a telephone order with stock checks and calculated discounts."""
-    service = _order_service()
-    form = _order_form(request.args)
-    calculation, error, status = None, None, 200
-    if not form["edit_lines"] and (
-        form["customer_id"] or any(product_id for product_id, _ in form["lines"])
-    ):
-        try:
-            calculation = service.prepare(
-                form["customer_id"], form["lines"], form["backorders"]
-            )
-        except DomainError as domain_error:
-            error, status = str(domain_error), domain_error.status_code
-    return _render_order(service, form, calculation, error), status
-
-
-@sales.post("/orders/new")
-def place_order():
-    """Save the order the customer agreed to, with its lines and reservations."""
-    service = _order_service()
-    form = _order_form(request.form)
-    try:
-        if not form["customer_approved"]:
-            raise DomainError("Vraag de klant om akkoord op het totaalbedrag voordat je de bestelling opslaat.")
-        saved = service.place(
-            form["customer_id"],
-            form["lines"],
-            form["backorders"],
-            form["delivery_date"],
-            form["part_of_day"],
-            form["urgent"],
-        )
-    except DomainError as domain_error:
-        try:
-            calculation = service.prepare(
-                form["customer_id"], form["lines"], form["backorders"]
-            )
-        except DomainError:
-            calculation = None
-        return _render_order(service, form, calculation, str(domain_error)), domain_error.status_code
-    message = (
-        f"Order {saved['order_id']} is opgeslagen. Levering op "
-        f"{saved['delivery_date']:%d-%m-%Y} in de {saved['part_of_day']}."
-    )
-    if saved["backorders"]:
-        message += " Regels zonder voorraad staan als backorder."
-    flash(message, "success")
-    return redirect(url_for("sales.new_order"))
-
-
-def _order_service():
-    connection = get_connection()
-    return OrderService(
-        OrderRepository(connection),
-        DiscountService(DiscountRepository(connection)),
-    )
-
-
-def _order_form(values):
-    lines = list(zip(values.getlist("product_id"), values.getlist("quantity")))
-    remove_line = values.get("remove_line", type=int)
-    if remove_line is not None and 0 <= remove_line < len(lines):
-        del lines[remove_line]
-    return {
-        "customer_id": values.get("customer_id", "", type=str).strip(),
-        "lines": lines,
-        "backorders": values.getlist("backorder"),
-        "delivery_date": values.get("delivery_date", "", type=str),
-        "part_of_day": values.get("part_of_day", "", type=str),
-        "urgent": values.get("urgent") == "1",
-        "customer_approved": values.get("customer_approved") == "yes",
-        "add_line": values.get("add_line") == "1",
-        "edit_lines": values.get("add_line") == "1" or remove_line is not None,
-    }
-
-
-def _render_order(service, form, calculation, error):
-    line_rows = min(
-        max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"]),
-        MAX_ORDER_LINE_ROWS,
-    )
+def new_telephone_order():
+    customers, products = TelephoneOrderRepository(get_connection()).form_options()
+    entered = request.args.getlist("product_id")
+    line_rows = max(6, len(entered) + (request.args.get("add_line") == "1"))
     return render_template(
-        "order_new.html",
-        form=form,
-        calculation=calculation,
-        error=error,
-        line_rows=line_rows,
-        max_line_rows=MAX_ORDER_LINE_ROWS,
-        parts_of_day=PARTS_OF_DAY,
-        today=date.today().isoformat(),
-        **service.discount_service.form_options(),
+        "telephone_order.html", customers=customers, products=products,
+        today=date.today().isoformat(), line_rows=line_rows,
+        entered={
+            "customer_id": request.args.get("customer_id", ""),
+            "day": request.args.get("day", ""),
+            "slot": request.args.get("slot", "ochtend"),
+            "urgent": request.args.get("urgent") == "yes",
+            "products": entered,
+            "quantities": request.args.getlist("quantity"),
+            "shortages": request.args.getlist("shortage"),
+        },
     )
+
+
+@sales.post("/orders/quote")
+def preview_telephone_order():
+    """Show exactly the order amount to be approved verbally by the customer."""
+    try:
+        wanted = [
+            {"product_id": pid, "quantity": qty, "shortage": choice}
+            for pid, qty, choice in zip(
+                request.form.getlist("product_id"), request.form.getlist("quantity"),
+                request.form.getlist("shortage"), strict=True)
+            if pid.strip() or qty.strip()
+        ]
+        day = date.fromisoformat(request.form["day"])
+    except (ValueError, KeyError) as exc:
+        raise DomainError("Vul een geldige leverdag en complete bestelregels in.") from exc
+    urgent = request.form.get("urgent") == "yes"
+    customer_id = request.form.get("customer_id")
+    slot = request.form.get("slot")
+    quote = TelephoneOrderRepository(get_connection()).quote(
+        customer_id, wanted, day, slot, urgent
+    )
+    nonce = uuid4().hex
+    session["telephone_quote_nonce"] = nonce
+    payload = {
+        "nonce": nonce, "customer_id": quote["customer_id"],
+        "wanted": wanted, "day": day.isoformat(), "slot": slot,
+        "urgent": urgent, "fingerprint": quote["fingerprint"]
+    }
+    return render_template("telephone_order_quote.html", quote=quote,
+                           quote_token=_approval_serializer().dumps(payload))
+
+
+@sales.post("/orders/confirm")
+def confirm_telephone_order():
+    """No recorded order or reservation without a confirmed and unchanged quote."""
+    if request.form.get("customer_approved") != "yes":
+        raise DomainError("Leg eerst het definitieve akkoord van de klant vast.")
+    try:
+        payload = _approval_serializer().loads(request.form["quote_token"], max_age=900)
+        day = date.fromisoformat(payload["day"])
+    except (SignatureExpired, BadSignature, KeyError, ValueError, TypeError) as exc:
+        raise DomainError("De prijsbevestiging is verlopen of ongeldig. Bereken de order opnieuw.") from exc
+    if not payload["nonce"] or session.get("telephone_quote_nonce") != payload["nonce"]:
+        raise DomainError("Deze prijsbevestiging is al gebruikt of hoort niet bij dit gesprek.")
+    result = TelephoneOrderRepository(get_connection()).approve(
+        payload["customer_id"], payload["wanted"], day, payload["slot"],
+        payload["urgent"], payload["fingerprint"]
+    )
+    session.pop("telephone_quote_nonce", None)
+    flash("Bestelling na akkoord vastgelegd en beschikbare voorraad voor robots gereserveerd.", "success")
+    return redirect(url_for("sales.order_status", customer_id=payload["customer_id"]))

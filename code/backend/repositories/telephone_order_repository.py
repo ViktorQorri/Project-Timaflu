@@ -6,15 +6,14 @@ bedrag. Er wordt geen online bestelling door een klant aangenomen.
 """
 from datetime import date, datetime
 from decimal import Decimal
-from domain.business import Order, euro
+from domain.business import euro
 from domain.errors import ConflictError, DomainError
-from repositories.assessed_repository import AssessedRepository
+from repositories.discount_repository import DiscountRepository
+from services.discount_service import DiscountService
 from repositories.robot_order_repository import RobotOrderRepository
 
 
 class TelephoneOrderRepository:
-    MAX_LINES = 12
-
     def __init__(self, connection):
         self.db = connection
 
@@ -38,8 +37,16 @@ class TelephoneOrderRepository:
             raise DomainError("Kies een klant, leverdag en dagdeel.")
         if not isinstance(day, date) or day < date.today():
             raise DomainError("Een leverdatum mag niet in het verleden liggen.")
-        if not isinstance(wanted, list) or not 1 <= len(wanted) <= cls.MAX_LINES:
-            raise DomainError("Voer één tot twaalf verschillende medicijnen in.")
+        if urgent and day != date.today():
+            raise DomainError(
+                "Een spoedbestelling wordt vandaag binnen maximaal drie uur geleverd."
+            )
+        if not urgent and day == date.today():
+            raise DomainError(
+                "Vandaag leveren kan alleen bij een spoedbestelling."
+            )
+        if not isinstance(wanted, list) or not wanted:
+            raise DomainError("Voer minimaal één bestelregel in.")
         clean = []
         used = set()
         for row in wanted:
@@ -59,14 +66,23 @@ class TelephoneOrderRepository:
         customer_id, wanted = self.validate(customer_id, wanted, day, slot, urgent)
         with self.db.cursor(dictionary=True) as c:
             c.execute(
-                "SELECT klant_id FROM Klant WHERE klant_id=%s AND actief=TRUE" +
+                """SELECT k.klant_id, k.bedrijfsnaam,
+                          delivery.adres AS afleveradres, billing.adres AS factuuradres
+                   FROM Klant AS k
+                   JOIN Adres AS delivery ON delivery.adres_id=k.afleveradres_id
+                   JOIN Adres AS billing ON billing.adres_id=k.betaaladres_id
+                   WHERE k.klant_id=%s AND k.actief=TRUE""" +
                 (" FOR UPDATE" if for_update else ""), (customer_id,)
             )
-            if c.fetchone() is None:
+            customer = c.fetchone()
+            if customer is None:
                 raise DomainError("Klant bestaat niet.")
-        assessed = AssessedRepository(self.db)
-        customer, revenue = assessed.customer_revenue(customer_id, date.today().year - 1)
-        first_order = assessed.customer_order_count(customer_id) == 0
+            c.execute(
+                """SELECT 1 FROM Factuur WHERE klant_id=%s AND betaald_op IS NULL
+                   AND incasso_ingeschakeld=TRUE LIMIT 1""", (customer_id,)
+            )
+            if c.fetchone() is not None:
+                raise ConflictError("Een klant bij het incassobureau kan geen nieuwe bestelling plaatsen.")
         lines = []
         with self.db.cursor(dictionary=True) as c:
             for requested in sorted(wanted, key=lambda item: item["product_id"]):
@@ -95,19 +111,41 @@ class TelephoneOrderRepository:
         selected = [line for line in lines if not line["skipped"]]
         if not selected:
             raise DomainError("De klant neemt geen producten af. Er is geen bestelling om vast te leggen.")
-        subtotal_ex_vat = euro(sum((line["line_total"] for line in selected), Decimal(0)))
-        gross = euro(subtotal_ex_vat * Decimal("1.09"))
-        discount = Order(gross, revenue, first_order).calculateTotalAmount()
+        # Reuse the case pricing flow and the rate fixed for this calendar year.
+        # A first order receives the same single 10% incentive irrespective of acquisition.
+        calculation = DiscountService(
+            DiscountRepository(self.db)
+        ).calculate_total_amount(
+            customer_id, [(line["product_id"], line["quantity"]) for line in selected]
+        )
+        subtotal_ex_vat = calculation["subtotal"]
+        gross = calculation["gross_total"]
+        amounts = {item["kind"]: item["amount"] for item in calculation["discounts"]}
+        discount = {
+            "order_discount": amounts.get("order", Decimal("0.00")),
+            "first_order_discount": amounts.get("one_time", Decimal("0.00")),
+            "customer_discount": amounts["customer"],
+            "total": calculation["total_amount"],
+        }
         fingerprint = [
             [line["product_id"], line["quantity"], line["shortage"],
              str(line["unit_price"]), line["available"], line["skipped"]]
             for line in lines
         ]
-        fingerprint.append([str(revenue), first_order, str(discount["total"])])
+        fingerprint.append([
+            calculation["discount_year"],
+            str(calculation["customer_discount_percentage"]),
+            calculation["first_order"],
+            str(discount["total"]),
+            customer["bedrijfsnaam"],
+            customer["afleveradres"],
+            customer["factuuradres"],
+        ])
         return {
             "customer": customer, "customer_id": customer_id, "lines": lines,
             "selected": selected, "day": day, "slot": slot, "urgent": urgent,
             "subtotal_ex_vat": subtotal_ex_vat, "gross": gross,
+            "calculation": calculation,
             "discount": discount, "fingerprint": fingerprint
         }
 
@@ -118,15 +156,38 @@ class TelephoneOrderRepository:
             if quote["fingerprint"] != expected:
                 raise ConflictError("Voorraad, prijs of korting is gewijzigd; bespreek de nieuwe prijs opnieuw met de klant.")
             with self.db.cursor(dictionary=True) as c:
+                calc = quote["calculation"]
+                customer_id = quote["customer_id"]
+                year = calc["discount_year"]
+                c.execute(
+                    """SELECT percentage FROM Klantkorting
+                       WHERE klant_id=%s AND kalenderjaar=%s FOR UPDATE""",
+                    (customer_id, year),
+                )
+                stored = c.fetchone()
+                if stored is None:
+                    # The first order of a customer registered after year-end gets
+                    # the 5% baseline, recorded only after confirmed approval.
+                    if not calc["first_order"]:
+                        raise ConflictError("De klantenkorting voor dit jaar ontbreekt.")
+                    c.execute(
+                        """INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
+                           VALUES (%s,%s,%s)""",
+                        (customer_id, year, calc["customer_discount_percentage"]),
+                    )
+                elif Decimal(stored["percentage"]) != calc["customer_discount_percentage"]:
+                    raise ConflictError("De klantenkorting is gewijzigd. Vraag opnieuw akkoord.")
                 c.execute(
                     """INSERT INTO Bestelling
                        (klant_id, afleveradres_id, betaaladres_id, besteld_op,
-                        gewenste_leverdatum, dagdeel, spoed, status_naam)
-                       SELECT klant_id, afleveradres_id, betaaladres_id, %s, %s, %s, %s, %s
+                        gewenste_leverdatum, dagdeel, spoed, status_naam,
+                        eenmalige_korting_toegepast)
+                       SELECT klant_id, afleveradres_id, betaaladres_id,
+                              %s, %s, %s, %s, %s, %s
                        FROM Klant WHERE klant_id=%s""",
                     (datetime.now(), day, slot, urgent,
                      "backorder" if any(l["backorder"] for l in quote["selected"]) else "wordt verzameld",
-                     quote["customer_id"])
+                     calc["first_order"], customer_id)
                 )
                 order_id = c.lastrowid
                 for line in quote["selected"]:

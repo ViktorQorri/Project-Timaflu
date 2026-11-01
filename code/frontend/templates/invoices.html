@@ -40,15 +40,9 @@
             <td>€ {{ item.subtotaal }}</td>
             <td>€ {{ item.extra_bezorgkosten }}</td>
             <td>
-              <form method="post" action="{{ url_for('administration.create_invoice') }}">
-                <input type="hidden" name="customer_id" value="{{ item.klant_id }}">
-                <input type="hidden" name="week_of" value="{{ item.afgeleverd_op.isoformat() }}">
-                <label>
-                  <input type="checkbox" name="invoice_approved" value="yes" required>
-                  Afgeleverde regels gecontroleerd en factuur goedgekeurd
-                </label>
-                <button type="submit">Weekfactuur aanmaken</button>
-              </form>
+              <a href="{{ url_for('weekly_invoices.weekly_overview') }}">
+                Naar de gecontroleerde weekfacturatie
+              </a>
             </td>
           </tr>
         {% endfor %}
@@ -67,23 +61,9 @@
     <button type="submit">Facturen opzoeken</button>
   </form>
 
-  {% if customer_id %}
-    <section class="invoice-create" aria-labelledby="create-invoice-title">
-      <div>
-        <h2 id="create-invoice-title">Weekfactuur aanmaken</h2>
-        <p>Factureer de werkelijk afgeleverde, nog niet gefactureerde producten uit de week van de gekozen datum.</p>
-      </div>
-      <form method="post" action="{{ url_for('administration.create_invoice') }}" class="invoice-create__form">
-        <input type="hidden" name="customer_id" value="{{ customer_id }}">
-        <label for="invoice-week">Datum in factuurweek
-          <input id="invoice-week" type="date" name="week_of" required value="{{ today }}">
-        </label>
-        <label><input type="checkbox" name="invoice_approved" value="yes" required>
-          Ik heb de afgeleverde regels gecontroleerd en de weekfactuur goedgekeurd.</label>
-        <button type="submit">Weekfactuur aanmaken</button>
-      </form>
-    </section>
-  {% endif %}
+  <p><a href="{{ url_for('weekly_invoices.weekly_overview') }}">
+    Weekfacturen voor een afgesloten week controleren en uitgeven
+  </a></p>
 
   <section aria-label="Factuuroverzicht">
     {% for f in invoices %}

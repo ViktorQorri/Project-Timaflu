@@ -1,218 +1,81 @@
-"""Weekly invoices use only delivered, unbilled lines and saved amount snapshots."""
-
+"""Regression checks for the one case-backed weekly invoice issuing process."""
 from datetime import date
 from decimal import Decimal
 from unittest import TestCase
-from unittest.mock import patch
 
 from app import create_app
+from domain.business import Invoice
 from domain.errors import DomainError
-from repositories.assessed_repository import AssessedRepository
-
-
-DELIVERED_LINES = [
-    {
-        "levering_id": 4,
-        "product_id": 2,
-        "quantity": 2,
-        "unit_price": Decimal("20.00"),
-        "eenmalige_korting_toegepast": True,
-    }
-]
-
-
-class InvoiceCursor:
-    def __init__(self, database):
-        self.database = database
-        self.rowcount = 1
-        self.lastrowid = None
-        self.query = ""
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
-
-    def execute(self, query, params=()):
-        self.query = query
-        self.database.statements.append((query, params))
-        if "INSERT INTO Factuur" in query:
-            self.lastrowid = 50
-
-    def fetchone(self):
-        if "FROM Klant AS k" in self.query:
-            return {"klant_id": 1, "bedrijfsnaam": "Testapotheek", "adres": "Teststraat 1"}
-        if "AS bekende_kortingen" in self.query:
-            return self.database.discount_history
-        if "AS paid_count" in self.query:
-            return {"paid_count": 0, "known_amount_count": 0, "jaaromzet": Decimal("0.00")}
-        if "SELECT factuur_id, totaal_bedrag" in self.query:
-            return {"factuur_id": 50, "totaal_bedrag": None}
-        return None
-
-    def fetchall(self):
-        if "FROM Leveringregel AS lr" in self.query:
-            return self.database.lines
-        return []
-
-
-class InvoiceDatabase:
-    def __init__(self, lines=None, discount_history=None):
-        self.lines = DELIVERED_LINES if lines is None else lines
-        self.discount_history = discount_history or {
-            "aantal_facturen": 0,
-            "bekende_kortingen": 0,
-            "korting_al_toegepast": 0,
-        }
-        self.statements = []
-        self.commits = 0
-        self.rollbacks = 0
-
-    def cursor(self, dictionary=False):
-        return InvoiceCursor(self)
-
-    def commit(self):
-        self.commits += 1
-
-    def rollback(self):
-        self.rollbacks += 1
+from repositories.weekly_invoice_repository import WeeklyInvoiceRepository
 
 
 class InvoiceIssuanceTests(TestCase):
-    def test_weekly_invoice_snapshots_only_the_new_delivered_lines(self):
-        database = InvoiceDatabase()
+    def test_order_discount_is_never_based_on_the_combined_week_amount(self):
+        invoice = Invoice(1, "test", date(2026, 10, 30)).createWeeklyInvoiceForOrders(
+            "Apotheek", "Adres", [
+                {"order_id": 21, "first_order": False, "order_total": Decimal("436"),
+                 "customer_discount_percentage": Decimal("5"),
+                 "lines": [{"quantity": 1, "unit_price": Decimal("400")}]},
+                {"order_id": 22, "first_order": False, "order_total": Decimal("436"),
+                 "customer_discount_percentage": Decimal("5"),
+                 "lines": [{"quantity": 1, "unit_price": Decimal("400")}]},
+            ], annualRevenue=0
+        )
+        self.assertEqual(invoice["total_incl_vat"], Decimal("872.00"))
+        self.assertEqual(invoice["order_discount"], Decimal("0.00"))
+        self.assertEqual(invoice["total"], Decimal("828.40"))
+        self.assertEqual({row["order_id"] for row in invoice["lines"]}, {21, 22})
 
-        invoice_id = AssessedRepository(database).create_weekly_invoice(
-            1, date(2026, 10, 26), date(2026, 10, 30)
+    def test_only_the_original_first_order_gets_the_ten_percent_discount(self):
+        invoice = Invoice(1, "test", date(2026, 10, 30)).createWeeklyInvoiceForOrders(
+            "Apotheek", "Adres", [
+                {"order_id": 21, "first_order": True, "order_total": Decimal("109"),
+                 "customer_discount_percentage": Decimal("5"),
+                 "lines": [{"quantity": 1, "unit_price": Decimal("100")}]},
+                {"order_id": 22, "first_order": False, "order_total": Decimal("109"),
+                 "customer_discount_percentage": Decimal("5"),
+                 "lines": [{"quantity": 1, "unit_price": Decimal("100")}]},
+            ], annualRevenue=0
         )
+        self.assertEqual(invoice["first_order_discount"], Decimal("10.90"))
+        self.assertEqual(invoice["total"], Decimal("196.74"))
 
-        self.assertEqual(invoice_id, 50)
-        self.assertEqual(database.commits, 1)
-        self.assertEqual(database.rollbacks, 0)
-        line_query = next(
-            query for query, _ in database.statements if "FROM Leveringregel AS lr" in query
-        )
-        self.assertIn("lr.factuur_id IS NULL", line_query)
-        self.assertIn("lp.resultaat = 'afgeleverd'", line_query)
-        update = next(
-            (query, params)
-            for query, params in database.statements
-            if "SET factuur_id = %s" in query
-        )
-        self.assertEqual(update[1], (50, 4, 2))
-        status_update = next(
-            (query, params) for query, params in database.statements
-            if "SET status_naam = 'gefactureerd'" in query
-        )
-        self.assertIn("b.status_naam = 'afgeleverd'", status_update[0])
-        self.assertIn("lr.factuur_id IS NULL", status_update[0])
-        self.assertEqual(status_update[1], (1, 50))
-        snapshot = next(
-            params
-            for query, params in database.statements
-            if "UPDATE Factuur SET bedrag_excl_btw" in query
-        )
-        self.assertEqual(snapshot[-2:], (Decimal("37.28"), 50))
-
-    def test_earlier_week_invoice_does_not_cancel_original_first_order_discount(self):
-        database = InvoiceDatabase(
-            discount_history={
-                "aantal_facturen": 1,
-                "bekende_kortingen": 0,
-                "korting_al_toegepast": 0,
-            }
-        )
-        AssessedRepository(database).create_weekly_invoice(
-            1, date(2026, 10, 26), date(2026, 10, 30)
-        )
-        self.assertEqual(database.commits, 1)
-        snapshot = next(
-            params for query, params in database.statements
-            if "UPDATE Factuur SET bedrag_excl_btw" in query
-        )
-        # Whether the actual order was the first one is recorded on the order.
-        self.assertEqual(snapshot[-2], Decimal("37.28"))
-
-    def test_one_time_discount_is_not_reapplied_to_a_later_order(self):
-        database = InvoiceDatabase(lines=[
-            {**DELIVERED_LINES[0], "eenmalige_korting_toegepast": False}
-        ])
-
-        AssessedRepository(database).create_weekly_invoice(
-            1, date(2026, 11, 2), date(2026, 11, 6)
-        )
-
-        snapshot = next(
-            params
-            for query, params in database.statements
-            if "UPDATE Factuur SET bedrag_excl_btw" in query
-        )
-        self.assertEqual(snapshot[-2], Decimal("41.42"))
-
-    def test_no_delivered_lines_does_not_create_an_invoice(self):
-        database = InvoiceDatabase(lines=[])
-
-        with self.assertRaises(DomainError):
-            AssessedRepository(database).create_weekly_invoice(
-                1, date(2026, 10, 26), date(2026, 10, 30)
+    def test_invoice_week_must_have_fully_ended_and_sender_must_be_known(self):
+        week = date(2026, 10, 19)
+        WeeklyInvoiceRepository.validate_week(week, date(2026, 10, 30), "Teststraat 1")
+        with self.assertRaisesRegex(DomainError, "afgesloten week"):
+            WeeklyInvoiceRepository.validate_week(week, date(2026, 10, 24), "Teststraat 1")
+        with self.assertRaisesRegex(DomainError, "maandag"):
+            WeeklyInvoiceRepository.validate_week(
+                date(2026, 10, 20), date(2026, 10, 30), "Teststraat 1"
             )
+        with self.assertRaisesRegex(DomainError, "afzenderadres"):
+            WeeklyInvoiceRepository.validate_week(week, date(2026, 10, 30), "")
 
-        self.assertEqual(database.commits, 0)
-        self.assertEqual(database.rollbacks, 1)
-
-    def test_weekly_invoice_requires_employee_approval(self):
+    def test_only_the_canonical_weekly_route_can_create_invoices(self):
         app = create_app()
-        app.testing = True
+        app.config.update(TESTING=True, SECRET_KEY="test")
+        issuing_routes = [
+            rule.rule for rule in app.url_map.iter_rules()
+            if rule.rule.startswith("/invoices") and "POST" in rule.methods
+        ]
+        self.assertIn("/invoices/weekly", issuing_routes)
+        self.assertNotIn("/invoices/create", issuing_routes)
         with app.test_client() as client:
-            response = client.post(
+            old = client.post(
                 "/invoices/create",
-                data={"customer_id": "1", "week_of": "2026-10-30"},
+                data={"customer_id": "1", "week_of": "2026-10-30"}
             )
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("keur de weekfactuur goed".encode(), response.data)
+            self.assertEqual(old.status_code, 404)
+            unapproved = client.post(
+                "/invoices/weekly", data={"week_start": "2026-10-19"}
+            )
+            self.assertEqual(unapproved.status_code, 400)
+            self.assertIn(b"Controleer en bevestig", unapproved.data)
 
-    def test_create_route_uses_monday_of_selected_week(self):
-        app = create_app()
-        app.testing = True
-
-        with app.test_client() as client:
-            with patch("routes.administration.get_connection", return_value=object()):
-                with patch("routes.administration.AssessedRepository") as repository:
-                    repository.return_value.create_weekly_invoice.return_value = 50
-                    response = client.post(
-                        "/invoices/create",
-                        data={"customer_id": "1", "week_of": "2026-10-30", "invoice_approved": "yes"},
-                    )
-
-        self.assertEqual(response.status_code, 302)
-        args = repository.return_value.create_weekly_invoice.call_args.args
-        self.assertEqual(args[:2], (1, date(2026, 10, 26)))
-
-    def test_manual_discount_preview_uses_invoice_discount_sequence(self):
-        app = create_app()
-        app.testing = True
-        assessed = type(
-            "AssessedStub",
-            (),
-            {
-                "customer_revenue": lambda self, customer_id, year: (
-                    {"klant_id": customer_id, "bedrijfsnaam": "Testapotheek"},
-                    Decimal("0.00"),
-                ),
-                "customer_order_count": lambda self, customer_id: 0,
-            },
-        )()
-
-        with app.test_client() as client:
-            with patch("routes.sales.get_connection", return_value=object()):
-                with patch("routes.sales.AssessedRepository", return_value=assessed):
-                    response = client.post(
-                        "/orders/calculate-discount",
-                        data={"customer_id": "1", "subtotal": "40.00"},
-                    )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"9% btw", response.data)
-        self.assertIn(b"De eenmalige korting en klantenkorting", response.data)
-        self.assertIn(b"37.28", response.data)
+    def test_unissued_or_empty_week_cannot_create_fake_invoice_amounts(self):
+        invoice = Invoice(1, "test", date(2026, 10, 30))
+        with self.assertRaises(DomainError):
+            invoice.createWeeklyInvoiceForOrders(
+                "Apotheek", "Adres", [], annualRevenue=0
+            )

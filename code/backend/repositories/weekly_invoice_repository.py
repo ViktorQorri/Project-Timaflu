@@ -94,7 +94,11 @@ class WeeklyInvoiceRepository:
                            b.besteld_op, b.eenmalige_korting_toegepast AS first_used,
                            (SELECT SUM(ordered.aantal * ordered.prijs_per_eenheid)
                             FROM Bestelregel AS ordered
-                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat
+                            WHERE ordered.bestelling_id=b.bestelling_id) AS full_order_ex_vat,
+                           (SELECT kd.percentage FROM Klantkorting AS kd
+                            WHERE kd.klant_id=b.klant_id
+                              AND kd.kalenderjaar=YEAR(b.besteld_op)
+                           ) AS customer_discount_percentage
                     FROM Leveringregel lr
                     JOIN Levering l ON l.levering_id=lr.levering_id
                     JOIN Bestelling b ON b.bestelling_id=l.bestelling_id
@@ -152,17 +156,10 @@ class WeeklyInvoiceRepository:
                     extra_ex = Decimal("0.00")
                 extra_vat = euro(extra_gross - extra_ex)
 
-                year = end.year - 1
-                cursor.execute("""
-                    SELECT COUNT(*) AS paid_count,
-                           COUNT(totaal_bedrag) AS known_amount_count,
-                           COALESCE(SUM(totaal_bedrag),0) AS annual
-                    FROM Factuur
-                    WHERE klant_id=%s AND betaald_op >= %s AND betaald_op < %s
-                """, (customer_id, date(year,1,1), date(year+1,1,1)))
-                revenue = cursor.fetchone()
-                if revenue["paid_count"] != revenue["known_amount_count"]:
-                    raise DomainError("Betaalde historische facturen missen bedragen.")
+                if any(row["customer_discount_percentage"] is None for row in rows):
+                    raise DomainError(
+                        "De klantenkorting voor een bestelling is niet vastgelegd."
+                    )
 
                 cursor.execute("""
                     SELECT bestelling_id FROM Bestelling WHERE klant_id=%s
@@ -181,6 +178,7 @@ class WeeklyInvoiceRepository:
                             "first_order": order_id == first_order_id,
                             "mark_first_used": order_id == first_order_id and not row["first_used"],
                             "order_total": euro(Decimal(str(row["full_order_ex_vat"])) * Decimal("1.09")),
+                            "customer_discount_percentage": row["customer_discount_percentage"],
                             "lines": []
                         }
                     orders[order_id]["lines"].append({
@@ -190,7 +188,7 @@ class WeeklyInvoiceRepository:
                 if orders:
                     invoice = Invoice(customer_id, "", issued_on).createWeeklyInvoiceForOrders(
                         customer["bedrijfsnaam"], customer["factuuradres"],
-                        list(orders.values()), revenue["annual"]
+                        list(orders.values()), 0
                     )
                 else:
                     # Only extra costs from a signed delivery remain unbilled.
@@ -252,6 +250,23 @@ class WeeklyInvoiceRepository:
                         """, (order["order_id"],))
                         if cursor.rowcount != 1:
                             raise DomainError("Eenmalige korting is al gebruikt.")
+                cursor.execute("""
+                    UPDATE Bestelling AS b
+                       SET b.status_naam = 'gefactureerd'
+                     WHERE b.klant_id=%s AND b.status_naam='afgeleverd'
+                       AND EXISTS (
+                          SELECT 1 FROM Levering AS l
+                          JOIN Leveringregel AS lr ON lr.levering_id=l.levering_id
+                          WHERE l.bestelling_id=b.bestelling_id
+                            AND lr.factuur_id=%s
+                       )
+                       AND NOT EXISTS (
+                          SELECT 1 FROM Levering AS l
+                          JOIN Leveringregel AS lr ON lr.levering_id=l.levering_id
+                          WHERE l.bestelling_id=b.bestelling_id
+                            AND lr.factuur_id IS NULL
+                       )
+                """, (customer_id,invoice_id))
                 self.db.commit()
                 return invoice_id
             except Exception:

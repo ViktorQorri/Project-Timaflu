@@ -1,10 +1,12 @@
 """Order discount calculation for telephone sales, following SD01 Calculate customer discount.
 
-Business rules from the case (Current-processes, Tabel 1):
-- 9% VAT is added to the order subtotal before discounts are calculated;
-- 5% order discount applies when the amount including VAT is EUR 500 or more;
-- the one-time 10% discount and annual customer discount are applied sequentially;
-- the annual customer discount is based on the previous year's paid invoice totals.
+Business rules from the case (Current-processes, Tabel 1; Product-description, invoice):
+- 9% medicine VAT is added before the displayed discounts;
+- 5% order discount over the VAT-inclusive order total from EUR 500;
+- the next discount is calculated over the amount left after the order discount;
+- every first order receives a one-time 10% discount (product description);
+- the customer discount uses the percentage already recorded for the order year
+  in Klantkorting; that percentage is determined on 31 December for the next year.
 Every amount is rounded to cents (ROUND_HALF_UP) after each step.
 """
 
@@ -17,6 +19,7 @@ CENT = Decimal("0.01")
 ORDER_DISCOUNT_THRESHOLD = Decimal("500.00")
 ORDER_DISCOUNT_PERCENTAGE = Decimal("5")
 ONE_TIME_DISCOUNT_PERCENTAGE = Decimal("10")
+MEDICINE_VAT_PERCENTAGE = Decimal("9")
 # Tabel 1: lowest annual revenue of each tier and its percentage, highest tier first.
 CUSTOMER_DISCOUNT_TIERS = (
     (Decimal("20000.00"), Decimal("15")),
@@ -49,51 +52,61 @@ class DiscountService:
         Args:
             customer_id: The id of the customer placing the order.
             order_lines: (product_id, quantity) pairs; pairs that are both empty are skipped.
-            order_date: The date of the order, today by default. Its previous year sets the
-                annual revenue used for the customer discount.
+            order_date: The order date, today by default. Its year selects the
+                already established annual customer discount.
 
         Returns:
-            A dict with the customer, priced lines, subtotal, VAT, discounts in order,
-            and the total amount including VAT and discounts.
+            A dict with the customer, the priced lines, the subtotal, the applied discounts
+            in order, the total amount, and how the second discount was chosen.
         """
         customer = self._find_customer(customer_id)
         lines = self._price_order_lines(order_lines)
         subtotal = to_cents(sum(line["line_total"] for line in lines))
-        vat = to_cents(subtotal * Decimal("0.09"))
-        total_incl_vat = subtotal + vat
+        # Product-description.md (invoice layout): add 9% VAT first,
+        # then apply order, first-order and customer discounts in sequence.
+        vat_amount = to_cents(subtotal * MEDICINE_VAT_PERCENTAGE / Decimal("100"))
+        gross_total = subtotal + vat_amount
         discounts = []
 
-        order_discount = self.calculate_order_discount(total_incl_vat)
+        order_discount = self.calculate_order_discount(gross_total)
         if order_discount:
             discounts.append(order_discount)
-        amount = discounts[-1]["total_after"] if discounts else total_incl_vat
+        amount = discounts[-1]["total_after"] if discounts else gross_total
 
-        previous_year = (order_date or date.today()).year - 1
+        discount_year = (order_date or date.today()).year
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
         if first_order:
             discounts.append(self.calculate_one_time_discount(amount))
             amount = discounts[-1]["total_after"]
-        annual_revenue = self.calculate_annual_revenue(customer["klant_id"], previous_year)
-        saved_percentage = self.repository.find_annual_percentage(
-            customer["klant_id"], previous_year + 1
+
+        percentage = self.repository.get_customer_discount_percentage(
+            customer["klant_id"], discount_year
         )
-        percentage = (
-            saved_percentage if saved_percentage is not None
-            else self.determine_discount_percentage(annual_revenue)
-        )
+        if percentage is None:
+            if not first_order:
+                raise DomainError(
+                    f"De klantenkorting voor {discount_year} is niet vastgelegd. "
+                    "Laat de jaarafsluiting controleren."
+                )
+            # A pharmacy registered after 31 December had no turnover in the prior year.
+            percentage = Decimal("5.00")
+        percentage = Decimal(percentage)
+        if percentage not in (Decimal("5"), Decimal("10"), Decimal("15")):
+            raise DomainError("Het vastgelegde kortingspercentage is ongeldig.")
         discounts.append(self.calculate_customer_discount(amount, percentage))
 
         return {
             "customer": customer,
             "lines": lines,
             "subtotal": subtotal,
-            "vat_9_percent": vat,
-            "total_incl_vat": total_incl_vat,
+            "vat_amount": vat_amount,
+            "gross_total": gross_total,
             "discounts": discounts,
-            "total_amount": self.calculate_total_after_discount(total_incl_vat, discounts),
+            "total_amount": self.calculate_total_after_discount(gross_total, discounts),
             "first_order": first_order,
-            "previous_year": previous_year,
-            "annual_revenue": annual_revenue,
+            "one_time_discount": first_order,
+            "discount_year": discount_year,
+            "customer_discount_percentage": percentage,
         }
 
     def calculate_order_discount(self, subtotal):
@@ -103,11 +116,24 @@ class DiscountService:
         return self._discount("order", subtotal, ORDER_DISCOUNT_PERCENTAGE)
 
     def calculate_one_time_discount(self, amount):
-        """SD01 calculateOneTimeDiscount(10%) for the first order of a customer."""
+        """Apply the product description's 10% discount to the first order only."""
         return self._discount("one_time", amount, ONE_TIME_DISCOUNT_PERCENTAGE)
 
+    def update_annual_discounts(self, as_of=None):
+        """AD28: on 31 December, store next year's rates from this year's paid invoices."""
+        as_of = as_of or date.today()
+        if (as_of.month, as_of.day) != (12, 31):
+            raise DomainError("De jaarlijkse klantenkorting wordt op 31 december vastgesteld.")
+
+        rates = []
+        for customer_id in self.repository.list_customer_ids():
+            revenue = self.calculate_annual_revenue(customer_id, as_of.year)
+            rates.append((customer_id, self.determine_discount_percentage(revenue)))
+        self.repository.save_annual_discounts(as_of.year + 1, rates)
+        return {"discount_year": as_of.year + 1, "customers": len(rates)}
+
     def calculate_annual_revenue(self, customer_id, year):
-        """SD01 Customer.calculateAnnualRevenue(previousYear), via sumPurchases(previousYear)."""
+        """AD28: revenue from fully paid invoices during the closing calendar year."""
         return to_cents(self.repository.sum_purchases(customer_id, year))
 
     @staticmethod
@@ -175,10 +201,10 @@ class DiscountService:
             product = self.repository.find_product(product_id)
             if product is None:
                 raise NotFoundError("Dit medicijn staat niet in de catalogus.")
-            minimum = int(product.get("minimale_bestelhoeveelheid", 1))
+            minimum = product.get("minimale_bestelhoeveelheid", 1)
             if quantity < minimum:
                 raise DomainError(
-                    f"Bestel minimaal {minimum} van {product['productnaam']}."
+                    f"Minimale bestelhoeveelheid voor {product['productnaam']} is {minimum}."
                 )
             price = to_cents(product["prijs_per_grootverpakking"])
             lines.append({**product, "quantity": quantity, "line_total": to_cents(price * quantity)})

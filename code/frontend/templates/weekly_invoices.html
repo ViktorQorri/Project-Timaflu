@@ -19,6 +19,10 @@
 <p>Klanten met nog niet gefactureerde, getekende leveringen: <strong>{{customer_count}}</strong></p>
 <form method="post" action="{{ url_for('weekly_invoices.weekly_overview') }}">
   <input type="hidden" name="week_start" value="{{week_start}}">
+  <label>
+    <input type="checkbox" name="invoice_approved" value="yes" required>
+    Ik heb de afgeleverde, ondertekende orders en de factuurweek gecontroleerd.
+  </label>
   <button type="submit" {% if not sender_address or not customer_count %}disabled{% endif %}>Facturen eenmalig uitgeven en bedragen opslaan</button>
 </form>
 {% if created %}

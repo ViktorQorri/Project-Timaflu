@@ -34,7 +34,14 @@ class Order:
             orderThresholdBase = orderTotal
         self.annualRevenue = euro(annualRevenue)
         self.firstOrder = firstOrder
-        self.customerDiscountPercentage = customerDiscountPercentage
+        # Annual rates are stored as percentages (5, 10, 15).
+        if customerDiscountPercentage is None:
+            self.customerDiscountPercentage = None
+        else:
+            rate = euro(customerDiscountPercentage)
+            if rate not in (Decimal("5"), Decimal("10"), Decimal("15")):
+                raise ValueError("Ongeldig vastgelegd klantenkortingspercentage.")
+            self.customerDiscountPercentage = rate
         # Partial deliveries retain the discount eligibility of the original order.
         self.orderThresholdBase = (
             self.subtotal if orderThresholdBase is None else euro(orderThresholdBase)
@@ -114,7 +121,7 @@ class Invoice:
         self.debtCollectionEnabled = False
 
     def createWeeklyInvoice(self, customerName, customerAddress, lines, annualRevenue, firstOrder,
-                            orderTotal=None):
+                            orderTotal=None, customerDiscountPercentage=None):
         """Bundle delivered lines on one invoice, retaining discounts per order.
 
         The case gives an order-level 5% discount and first-order 10% discount,
@@ -134,14 +141,18 @@ class Invoice:
             group = orders.setdefault(order_id, {
                 "items": [],
                 "annual_revenue": line.get("annual_revenue", annualRevenue),
-                "annual_discount_percentage": line.get("annual_discount_percentage"),
+                "annual_discount_percentage": line.get(
+                    "annual_discount_percentage", customerDiscountPercentage
+                ),
                 "first_order": bool(line.get("eenmalige_korting_toegepast", firstOrder)),
                 "original_total": line.get("besteld_ex_btw"),
                 "extra_cost": euro(line.get("extra_bezorgkosten", 0)),
             })
             if (group["first_order"] != bool(line.get("eenmalige_korting_toegepast", firstOrder))
                     or group["annual_revenue"] != line.get("annual_revenue", annualRevenue)
-                    or group["annual_discount_percentage"] != line.get("annual_discount_percentage")
+                    or group["annual_discount_percentage"] != line.get(
+                        "annual_discount_percentage", customerDiscountPercentage
+                    )
                     or group["extra_cost"] != euro(line.get("extra_bezorgkosten", 0))):
                 raise ValueError("Tegenstrijdige kortingsgegevens voor dezelfde bestelling")
             group["items"].append(item)
@@ -205,7 +216,8 @@ class Invoice:
         for order in orders:
             detail = self.createWeeklyInvoice(
                 customerName, customerAddress, order["lines"],
-                annualRevenue, order["first_order"], order.get("order_total")
+                annualRevenue, order["first_order"], order.get("order_total"),
+                order.get("customer_discount_percentage")
             )
             for key in fields:
                 totals[key] = euro(totals[key] + detail[key])

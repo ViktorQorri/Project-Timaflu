@@ -1,8 +1,8 @@
-"""Customer, product and order history lookups for the order discount calculation (SD01)."""
+"""Order lookups and the once-a-year customer discount determination (AD28)."""
 
-from datetime import date
+from decimal import Decimal
 
-from domain.errors import DomainError
+from domain.errors import ConflictError, DomainError
 
 
 class DiscountRepository:
@@ -24,15 +24,18 @@ class DiscountRepository:
         return self._fetchall("""
             SELECT klant_id, bedrijfsnaam
             FROM Klant
+            WHERE actief = TRUE
             ORDER BY bedrijfsnaam ASC
         """)
 
     def find_customer(self, customer_id):
         """Return one customer, or None when the id is unknown."""
         return self._fetchone("""
-            SELECT klant_id, bedrijfsnaam
-            FROM Klant
-            WHERE klant_id = %s
+            SELECT k.klant_id, k.bedrijfsnaam, k.eenmalige_korting_toegezegd,
+                   a.adres AS klantadres
+            FROM Klant AS k
+            JOIN Adres AS a ON a.adres_id = k.betaaladres_id
+            WHERE k.klant_id = %s AND k.actief = TRUE
         """, (customer_id,))
 
     def list_products(self):
@@ -61,28 +64,60 @@ class DiscountRepository:
         """, (customer_id,))
         return int(row["aantal_bestellingen"])
 
+    def get_customer_discount_percentage(self, customer_id, year):
+        """Read the annual rate set for the order's calendar year, never recalculate it."""
+        row = self._fetchone("""
+            SELECT percentage FROM Klantkorting
+            WHERE klant_id = %s AND kalenderjaar = %s
+        """, (customer_id, year))
+        return None if row is None else row["percentage"]
+
     def find_annual_percentage(self, customer_id, calendar_year):
-        """The annual rate fixed on December 31 for the next calendar year."""
-        row = self._fetchone(
-            """SELECT percentage FROM Klantkorting
-               WHERE klant_id=%s AND kalenderjaar=%s""",
-            (customer_id, calendar_year),
-        )
-        return row["percentage"] if row else None
+        """Return the rate fixed for the order year, used by weekly invoices."""
+        return self.get_customer_discount_percentage(customer_id, calendar_year)
+
+    def list_customer_ids(self):
+        """All customers to process in the 31 December annual determination."""
+        return [row["klant_id"] for row in self._fetchall(
+            "SELECT klant_id FROM Klant ORDER BY klant_id"
+        )]
+
+    def save_annual_discounts(self, year, rates):
+        """Record next-year percentages atomically, preserving already confirmed values."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                for customer_id, percentage in rates:
+                    cursor.execute(
+                        """SELECT percentage FROM Klantkorting
+                           WHERE klant_id = %s AND kalenderjaar = %s FOR UPDATE""",
+                        (customer_id, year),
+                    )
+                    current = cursor.fetchone()
+                    if current is not None:
+                        if Decimal(current["percentage"]) != Decimal(percentage):
+                            raise ConflictError(
+                                f"De klantenkorting voor {year} is al anders vastgesteld."
+                            )
+                        continue
+                    cursor.execute(
+                        """INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
+                           VALUES (%s, %s, %s)""",
+                        (customer_id, year, percentage),
+                    )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
 
     def sum_purchases(self, customer_id, year):
-        """Return persisted net totals from paid invoices in the selected year."""
+        """Sum paid invoice amounts in the year, as recorded by administration."""
         row = self._fetchone("""
-            SELECT COUNT(*) AS paid_count,
-                   COUNT(f.totaal_bedrag) AS known_amount_count,
-                   COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet
+            SELECT COALESCE(SUM(f.totaal_bedrag), 0) AS jaaromzet,
+                   COUNT(*) AS betaalde_facturen,
+                   COUNT(f.totaal_bedrag) AS facturen_met_bedrag
             FROM Factuur AS f
-            WHERE f.klant_id = %s
-              AND f.betaald_op >= %s
-              AND f.betaald_op < %s
-        """, (customer_id, date(year, 1, 1), date(year + 1, 1, 1)))
-        if row["paid_count"] != row["known_amount_count"]:
-            raise DomainError(
-                "De netto betaalde jaaromzet is niet betrouwbaar vastgelegd voor alle facturen."
-            )
+            WHERE f.klant_id = %s AND YEAR(f.betaald_op) = %s
+        """, (customer_id, year))
+        if row["betaalde_facturen"] != row["facturen_met_bedrag"]:
+            raise DomainError("Betaalde jaaromzet is niet volledig vastgelegd.")
         return row["jaaromzet"]

@@ -97,7 +97,7 @@ class AnnualDiscountTests(TestCase):
 
     def test_saved_annual_rate_overrides_dynamic_recalculation(self):
         class SavedRepository(FakeRepository):
-            def find_annual_percentage(self, customer_id, year):
+            def get_customer_discount_percentage(self, customer_id, year):
                 self.saved_year = year
                 return Decimal("15")
         repo = SavedRepository(revenue=Decimal("0"))
