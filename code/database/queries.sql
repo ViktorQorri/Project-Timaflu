@@ -159,7 +159,7 @@ UPDATE Bestelling AS b
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
             AND br.afnemen_bij_tekort IS NOT FALSE
-            AND br.aantal > COALESCE((
+            AND br.aantal <> COALESCE((
                 SELECT SUM(lr.aantal_geleverd)
                 FROM Levering AS previous
                 JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id
@@ -216,7 +216,7 @@ UPDATE Bestelling AS b
           SELECT 1 FROM Bestelregel AS br
           WHERE br.bestelling_id = b.bestelling_id
             AND br.afnemen_bij_tekort IS NOT FALSE
-            AND br.aantal > COALESCE((
+            AND br.aantal <> COALESCE((
                 SELECT SUM(lr.aantal_geleverd)
                 FROM Levering AS previous
                 JOIN Leveringregel AS lr ON lr.levering_id = previous.levering_id

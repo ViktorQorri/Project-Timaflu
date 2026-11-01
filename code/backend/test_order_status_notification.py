@@ -704,6 +704,35 @@ class FullOrderDeliveryStatusMySQLTests(TestCase):
                 ["ITEM-B"],
                 "The customer's earlier shortage agreement remains as history.",
             )
+
+            # An over-delivery mismatch must not count as exact fulfilment.
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE Bestelregel SET aantal=3 WHERE bestelling_id=%s AND product_id=%s",
+                    (order_id, products["ITEM-A"]),
+                )
+                cursor.execute(
+                    "UPDATE Bestelling SET status_naam='verstuurd' WHERE bestelling_id=%s",
+                    (order_id,),
+                )
+            connection.commit()
+            from repositories.assessed_repository import MARK_ORDER_DELIVERED_IF_COMPLETE
+            with connection.cursor() as cursor:
+                cursor.execute(MARK_ORDER_DELIVERED_IF_COMPLETE, (delivery_ids[1],))
+                self.assertEqual(cursor.rowcount, 0)
+            connection.commit()
+            self.assertEqual(persisted_status(), "verstuurd")
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE Bestelling SET status_naam='afgeleverd' WHERE bestelling_id=%s",
+                    (order_id,),
+                )
+            connection.commit()
+            self.assertTrue(
+                detail.status_overview(order_id)["delivery_status_conflict"],
+                "An already-invalid status must be visibly flagged.",
+            )
+
         finally:
             if connection is not None:
                 connection.close()
