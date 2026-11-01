@@ -43,7 +43,7 @@ UPDATE Product SET intern_bestelbaar=FALSE WHERE product_id=1;
 SELECT 1 FROM LeveranciersAanbod AS a
 JOIN Product AS p ON p.product_id = a.product_id
 WHERE a.leverancier_id = 1 AND a.product_id = 1
-  AND p.in_assortiment = TRUE;
+  AND p.in_assortiment = TRUE AND p.intern_bestelbaar = TRUE;
 INSERT INTO Inkoopbestelling (leverancier_id, besteld_op, status_naam)
 VALUES (1, CURRENT_TIMESTAMP, 'besteld');
 INSERT INTO Inkoopbestelregel (inkoopbestelling_id, product_id, aantal)
