@@ -142,7 +142,7 @@ class OrderStatusReportMySQLTests(unittest.TestCase):
             ):
                 self.assertIn(label, html)
             self.assertEqual(html.count('<th scope="row">'), len(self.saved_statuses))
-            self.assertNotIn("Openstaande orders", html)
+            self.assertIn("Openstaande orders", html)
             self.assertNotIn('name="order"', html)
             self.assertIn('name="from"', html)
             self.assertIn('name="to"', html)
