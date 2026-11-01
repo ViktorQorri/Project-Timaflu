@@ -544,6 +544,7 @@
     "methods": [
       "__init__",
       "prepare",
+      "quote_snapshot",
       "place",
       "_delivery_date"
     ]

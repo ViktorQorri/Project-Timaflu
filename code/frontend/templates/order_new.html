@@ -57,6 +57,7 @@
     {% if error %}<p class="discount-error" role="alert">{{ error }}</p>{% endif %}
 
     {% if calculation %}
+      <input type="hidden" name="quote" value="{{ quote_token }}">
       <div class="discount-result">
         <div class="stock-dashboard__table-wrap">
           <table class="stock-dashboard__table">
@@ -98,9 +99,11 @@
             Klantenkorting {{ calculation.discount_year }}: {{ calculation.customer_discount_percentage|int }}%.
           </p>
           <dl class="discount-summary__rows">
-            <div class="discount-summary__row"><dt>Subtotaal</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>
+            <div class="discount-summary__row"><dt>Subtotaal excl. btw</dt><dd>{{ euro(calculation.subtotal) }}</dd></div>
+            <div class="discount-summary__row"><dt>9% btw</dt><dd>{{ euro(calculation.vat_amount) }}</dd></div>
+            <div class="discount-summary__row"><dt>Totaal incl. btw vóór kortingen</dt><dd>{{ euro(calculation.gross_total) }}</dd></div>
             {% if calculation.discounts[0].kind != "order" %}
-              <div class="discount-summary__row discount-summary__row--muted"><dt>Bestellingskorting</dt><dd>Niet van toepassing, subtotaal onder € 500,00</dd></div>
+              <div class="discount-summary__row discount-summary__row--muted"><dt>Bestellingskorting</dt><dd>Niet van toepassing, totaal incl. btw onder € 500,00</dd></div>
             {% endif %}
             {% for discount in calculation.discounts %}
               <div class="discount-summary__row discount-summary__row--discount"><dt>{{ labels[discount.kind] }} ({{ discount.percentage|int }}% over {{ euro(discount.base) }})</dt><dd>− {{ euro(discount.amount) }}</dd></div>
@@ -112,7 +115,8 @@
 
         <fieldset class="discount-form order-delivery">
           <legend>Levermoment</legend>
-          <p class="discount-summary__basis">Gaat de klant akkoord met het totaalbedrag? Spreek dan de leverdatum en het dagdeel af.</p>
+          <p class="discount-summary__basis">Gaat de klant akkoord met het totaalbedrag incl. btw? Spreek dan de leverdatum en het dagdeel af.</p>
+          <p class="discount-summary__basis">Bij spoed wordt vandaag geleverd, uiterlijk drie uur na het plaatsen van de bestelling. Controleer of de bezorging haalbaar is.</p>
           <div class="order-delivery__fields">
             <div class="discount-form__field">
               <label for="delivery-date">Leverdatum</label>

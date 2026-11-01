@@ -2,6 +2,7 @@
 
 from datetime import date
 from decimal import Decimal
+import re
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -74,7 +75,7 @@ class OrderServiceTests(TestCase):
         calculation = order_service(FakeOrderRepository({1: 10, 2: 3})).prepare("7", [("1", "10"), ("2", "5")])
         self.assertEqual([(line["available"], line["short"]) for line in calculation["lines"]], [(10, False), (3, True)])
         self.assertFalse(calculation["can_save"])
-        self.assertEqual(calculation["total_amount"], Decimal("940.50"))
+        self.assertEqual(calculation["total_amount"], Decimal("1025.14"))
 
     def test_accepted_backorder_allows_saving(self):
         calculation = order_service(FakeOrderRepository({1: 10, 2: 3})).prepare("7", [("1", "10"), ("2", "5")], ["2"])
@@ -90,7 +91,7 @@ class OrderServiceTests(TestCase):
         repository = FakeOrderRepository({1: 10, 2: 3})
         saved = order_service(repository).place("7", [("1", "10"), ("2", "5")], ["2"], "2026-11-02", "ochtend", False, TODAY)
         self.assertEqual(saved["order_id"], 15)
-        self.assertEqual(saved["total_amount"], Decimal("940.50"))
+        self.assertEqual(saved["total_amount"], Decimal("1025.14"))
         customer_id, lines, delivery_date, part_of_day, urgent = repository.saved[0]
         self.assertEqual(customer_id, 7)
         self.assertEqual([(line["product_id"], line["quantity"], line["backorder"]) for line in lines],
@@ -98,6 +99,14 @@ class OrderServiceTests(TestCase):
         self.assertEqual((delivery_date, part_of_day, urgent), (date(2026, 11, 2), "ochtend", False))
         self.assertEqual(repository.expected_discount_year, 2026)
         self.assertEqual(repository.expected_customer_discount_percentage, Decimal("10"))
+
+    def test_urgent_cannot_be_scheduled_for_a_later_day(self):
+        repository = FakeOrderRepository()
+        service = order_service(repository)
+        for when in ("2026-10-31", "2026-11-02"):
+            with self.subTest(when=when), self.assertRaisesRegex(DomainError, "dezelfde dag"):
+                service.place("7", [("1", "1")], [], when, "middag", True, TODAY)
+        self.assertEqual(repository.saved, [])
 
     def test_only_urgent_order_is_delivered_today(self):
         with self.assertRaises(DomainError):
@@ -197,7 +206,9 @@ class OrderRepositoryTests(TestCase):
         self.assertIn("FOR UPDATE", db.cur.statements[0][0])
         locked = [params for query, params in db.cur.statements if "FROM Product" in query]
         self.assertEqual(locked, [(1,), (2,)])
-        self.assertEqual(inserts(db, "Bestelling"), [(7, 3, 4, date(2026, 11, 2), "ochtend", False, None, True)])
+        self.assertEqual(inserts(db, "Bestelling"), [
+            (7, 3, 4, date(2026, 11, 2), "ochtend", False, "wordt verzameld", True)
+        ])
         self.assertEqual(inserts(db, "Bestelregel"), [(15, 1, 10, Decimal("100.00"), None),
                                                       (15, 2, 5, Decimal("20.00"), None)])
         self.assertEqual(inserts(db, "Voorraadreservering"), [(15, 1, 10), (15, 2, 5)])
@@ -274,6 +285,16 @@ class OrderRepositoryTests(TestCase):
             OrderRepository(db).save_order(7, [order_line], date(2026, 11, 2), "ochtend", False)
         self.assertEqual((db.commits, db.rollbacks), (0, 1))
 
+    def test_stock_changed_but_still_enough_requires_new_approval(self):
+        db = Connection(stock={1: 11})
+        quoted = {**line(1, 5), "expected_available": 12}
+        with self.assertRaisesRegex(ConflictError, "voorraad is veranderd"):
+            OrderRepository(db).save_order(
+                7, [quoted], date(2026, 11, 2), "ochtend", False
+            )
+        self.assertEqual((db.commits, db.rollbacks), (0, 1))
+        self.assertEqual(inserts(db, "Bestelling"), [])
+
     def test_changed_stock_rejects_whole_order(self):
         db = Connection(stock={1: 50, 2: 3})
         with self.assertRaises(ConflictError) as raised:
@@ -321,6 +342,62 @@ class OrderPageTests(TestCase):
             with patch("routes.sales._order_service", return_value=order_service(repository)):
                 return getattr(client, method)(url, **kwargs)
 
+    def quote(self, repository, url):
+        response = self.request(repository, "get", url)
+        self.assertEqual(response.status_code, 200)
+        match = re.search(r'name="quote" value="([^"]+)"',
+                          response.get_data(as_text=True))
+        self.assertIsNotNone(match, "Approval requires a calculated order with a signed quote")
+        return match.group(1)
+
+    def test_post_without_prior_customer_approval_is_rejected(self):
+        repository = FakeOrderRepository()
+        result = self.request(repository, "post", "/orders/new", data={
+            "customer_id": "7", "product_id": "1", "quantity": "1",
+            "delivery_date": "2099-01-05", "part_of_day": "middag"
+        })
+        self.assertEqual(result.status_code, 400)
+        self.assertIn("Bereken eerst het totaal", result.get_data(as_text=True))
+        self.assertEqual(repository.saved, [])
+
+    def test_tampered_quote_is_rejected(self):
+        repository = FakeOrderRepository()
+        result = self.request(repository, "post", "/orders/new", data={
+            "customer_id": "7", "product_id": "1", "quantity": "1",
+            "delivery_date": "2099-01-05", "part_of_day": "middag",
+            "quote": "invalid-quote"
+        })
+        self.assertEqual(result.status_code, 400)
+        self.assertIn("berekende order is ongeldig", result.get_data(as_text=True))
+        self.assertEqual(repository.saved, [])
+
+    def test_changed_lines_after_quote_require_new_approval(self):
+        repository = FakeOrderRepository()
+        quote = self.quote(repository,
+                           "/orders/new?customer_id=7&product_id=1&quantity=1")
+        result = self.request(repository, "post", "/orders/new", data={
+            "customer_id": "7", "product_id": "1", "quantity": "2",
+            "delivery_date": "2099-01-05", "part_of_day": "middag",
+            "quote": quote
+        })
+        self.assertEqual(result.status_code, 409)
+        self.assertIn("vraag de klant opnieuw akkoord", result.get_data(as_text=True))
+        self.assertEqual(repository.saved, [])
+
+    def test_changed_stock_after_quote_requires_new_approval(self):
+        repository = FakeOrderRepository()
+        quote = self.quote(repository,
+                           "/orders/new?customer_id=7&product_id=1&quantity=2")
+        repository.stock[1] = 40
+        result = self.request(repository, "post", "/orders/new", data={
+            "customer_id": "7", "product_id": "1", "quantity": "2",
+            "delivery_date": "2099-01-05", "part_of_day": "middag",
+            "quote": quote
+        })
+        self.assertEqual(result.status_code, 409)
+        self.assertIn("voorraad", result.get_data(as_text=True))
+        self.assertEqual(repository.saved, [])
+
     def test_page_shows_stock_discounts_and_backorder_choice(self):
         response = self.request(FakeOrderRepository({1: 10, 2: 3}), "get",
                                 "/orders/new?customer_id=7&product_id=1&quantity=10&product_id=2&quantity=5")
@@ -329,7 +406,9 @@ class OrderPageTests(TestCase):
         self.assertIn("Nieuwe order", page)
         self.assertIn("Tekort", page)
         self.assertIn('name="backorder" value="2"', page)
-        self.assertIn("Klantenkorting (10% over € 1.045,00)", page)
+        self.assertIn("9% btw", page)
+        self.assertIn("Klantenkorting (10% over € 1.139,05)", page)
+        self.assertIn("1.025,14", page)
         self.assertIn("Klantenkorting 2026: 10%", page)
         self.assertIn("Order opslaan", page)
 
@@ -384,9 +463,14 @@ class OrderPageTests(TestCase):
         repository = FakeOrderRepository()
         with self.app.test_client() as client:
             with patch("routes.sales._order_service", return_value=order_service(repository)):
+                preview = client.get("/orders/new?customer_id=7&product_id=1&quantity=2")
+                self.assertEqual(preview.status_code, 200)
+                quoted = re.search(r'name="quote" value="([^"]+)"',
+                                   preview.get_data(as_text=True)).group(1)
                 response = client.post("/orders/new", data={
                     "customer_id": "7", "product_id": ["1", ""], "quantity": ["2", ""],
                     "delivery_date": "2099-01-05", "part_of_day": "middag",
+                    "quote": quoted,
                 })
                 self.assertEqual(response.status_code, 302)
                 self.assertTrue(response.headers["Location"].endswith("/orders/new"))
@@ -396,9 +480,11 @@ class OrderPageTests(TestCase):
 
     def test_rejected_order_keeps_input(self):
         repository = FakeOrderRepository()
+        quote = self.quote(repository, "/orders/new?customer_id=7&product_id=1&quantity=2")
         response = self.request(repository, "post", "/orders/new", data={
             "customer_id": "7", "product_id": "1", "quantity": "2",
             "delivery_date": "2000-01-05", "part_of_day": "middag", "urgent": "1",
+            "quote": quote,
         })
         self.assertEqual(response.status_code, 400)
         page = response.get_data(as_text=True)

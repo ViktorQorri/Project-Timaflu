@@ -336,6 +336,7 @@ package "services" {
   class "services.order_service.OrderService" as C55 {
     +__init__()
     +prepare()
+    +quote_snapshot()
     +place()
     +_delivery_date()
   }

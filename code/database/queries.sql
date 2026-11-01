@@ -731,7 +731,7 @@ FOR UPDATE;
 INSERT INTO Bestelling (klant_id, afleveradres_id, betaaladres_id, besteld_op,
                         gewenste_leverdatum, dagdeel, spoed, status_naam,
                         eenmalige_korting_toegepast)
-VALUES (1, 1, 2, NOW(), '2026-11-02', 'ochtend', FALSE, NULL, FALSE);
+VALUES (1, 1, 2, NOW(), '2026-11-02', 'ochtend', FALSE, 'wordt verzameld', TRUE);
 INSERT INTO Bestelregel (bestelling_id, product_id, aantal, prijs_per_eenheid,
                          afnemen_bij_tekort)
 VALUES (15, 1, 20, 45.00, NULL);

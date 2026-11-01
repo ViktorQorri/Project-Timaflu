@@ -131,6 +131,12 @@ class OrderRepository:
                         raise ConflictError("De catalogusprijs is gewijzigd. Bereken het totaal opnieuw.")
                     cur.execute(AVAILABLE_QUERY, (line["product_id"], line["product_id"]))
                     available = int(cur.fetchone()["beschikbaar"])
+                    if ("expected_available" in line
+                            and available != line["expected_available"]):
+                        raise ConflictError(
+                            "De beschikbare voorraad is veranderd. "
+                            "Bereken opnieuw en vraag de klant opnieuw akkoord."
+                        )
                     short = available < line["quantity"]
                     if short and not line["backorder"]:
                         raise ConflictError(
@@ -154,7 +160,8 @@ class OrderRepository:
                                                eenmalige_korting_toegepast)
                        VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s)""",
                     (customer_id, customer["afleveradres_id"], customer["betaaladres_id"], delivery_date,
-                     part_of_day, urgent, "backorder" if backorders else None, one_time_discount),
+                     part_of_day, urgent,
+                     "backorder" if backorders else "wordt verzameld", one_time_discount),
                 )
                 order_id = cur.lastrowid
                 for line in priced:

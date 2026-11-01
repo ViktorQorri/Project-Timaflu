@@ -1,6 +1,7 @@
 from datetime import date
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from itsdangerous import BadSignature, URLSafeSerializer
 
 from db import get_connection
 from services.order_service import PARTS_OF_DAY, OrderService
@@ -120,8 +121,19 @@ def place_order():
     service = _order_service()
     form = _order_form(request.form)
     try:
-        saved = service.place(form["customer_id"], form["lines"], form["backorders"],
-                              form["delivery_date"], form["part_of_day"], form["urgent"])
+        if not form["quote"]:
+            raise DomainError(
+                "Bereken eerst het totaal en vraag de klant akkoord voordat je de order opslaat."
+            )
+        try:
+            approved_quote = _quote_serializer().loads(form["quote"])
+        except BadSignature as error:
+            raise DomainError("De berekende order is ongeldig. Bereken de order opnieuw.") from error
+        saved = service.place(
+            form["customer_id"], form["lines"], form["backorders"],
+            form["delivery_date"], form["part_of_day"], form["urgent"],
+            expected_quote=approved_quote,
+        )
     except DomainError as domain_error:
         try:
             calculation = service.prepare(form["customer_id"], form["lines"], form["backorders"])
@@ -131,9 +143,15 @@ def place_order():
     message = (f"Order {saved['order_id']} is opgeslagen. Levering op "
                f"{saved['delivery_date']:%d-%m-%Y} in de {saved['part_of_day']}.")
     if saved["backorders"]:
-        message += " Regels zonder voorraad staan als backorder."
+        message += " Status: backorder. Regels zonder voorraad staan als backorder."
+    else:
+        message += " Status: wordt verzameld."
     flash(message, "success")
     return redirect(url_for("sales.new_order"))
+
+
+def _quote_serializer():
+    return URLSafeSerializer(current_app.secret_key, salt="timaflu-approved-order-quote")
 
 
 def _order_service():
@@ -153,6 +171,7 @@ def _order_form(values):
         "delivery_date": values.get("delivery_date", "", type=str),
         "part_of_day": values.get("part_of_day", "", type=str),
         "urgent": values.get("urgent") == "1",
+        "quote": values.get("quote", "", type=str),
         "add_line": values.get("add_line") == "1",
         "edit_lines": values.get("add_line") == "1" or remove_line is not None,
     }
@@ -160,8 +179,11 @@ def _order_form(values):
 
 def _render_order(service, form, calculation, error):
     line_rows = max(ORDER_LINE_ROWS, len(form["lines"]) + form["add_line"])
+    quote_token = (_quote_serializer().dumps(service.quote_snapshot(calculation))
+                   if calculation is not None else "")
     return render_template(
-        "order_new.html", form=form, calculation=calculation, error=error, line_rows=line_rows,
+        "order_new.html", form=form, calculation=calculation, error=error,
+        quote_token=quote_token, line_rows=line_rows,
         parts_of_day=PARTS_OF_DAY, today=date.today().isoformat(),
         **service.discount_service.form_options(),
     )

@@ -5,6 +5,7 @@ No existing database or production records are modified.
 """
 from datetime import date
 from decimal import Decimal
+import re
 import os
 from pathlib import Path
 import unittest
@@ -133,7 +134,7 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
         self.db.commit()
         quote = self.service.calculate_total_amount(1, [(1, 10)], date(2026, 11, 1))
         self.assertEqual(quote["customer_discount_percentage"], Decimal("5"))
-        self.assertEqual(quote["total_amount"], Decimal("812.25"))
+        self.assertEqual(quote["total_amount"], Decimal("885.35"))
         self.assertTrue(quote["one_time_discount"])
 
         # The actual order-entry route applies and persists the one-time allowance.
@@ -141,9 +142,13 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
             preview = client.get("/orders/new?customer_id=2&product_id=1&quantity=10")
             self.assertEqual(preview.status_code, 200, preview.data[:600])
             self.assertIn(b"Klantenkorting 2026: 10%", preview.data)
+            approved_quote = re.search(
+                rb'name="quote" value="([^"]+)"', preview.data
+            ).group(1).decode("ascii")
             order = client.post("/orders/new", data={
                 "customer_id": "2", "product_id": "1", "quantity": "10",
                 "delivery_date": "2099-01-05", "part_of_day": "ochtend",
+                "quote": approved_quote,
             })
             self.assertEqual(order.status_code, 302, order.data[:600])
         self.db.commit()
@@ -170,9 +175,17 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
             new_customer, 2026
         ), None)
         with self.app.test_client() as client:
+            preview = client.get(
+                f"/orders/new?customer_id={new_customer}&product_id=1&quantity=1"
+            )
+            self.assertEqual(preview.status_code, 200)
+            approved_quote = re.search(
+                rb'name="quote" value="([^"]+)"', preview.data
+            ).group(1).decode("ascii")
             response = client.post("/orders/new", data={
                 "customer_id": str(new_customer), "product_id": "1", "quantity": "1",
                 "delivery_date": "2099-01-05", "part_of_day": "middag",
+                "quote": approved_quote,
             })
             self.assertEqual(response.status_code, 302, response.data[:600])
         self.db.commit()
@@ -183,6 +196,65 @@ class AnnualDiscountMySqlTests(unittest.TestCase):
             SELECT eenmalige_korting_toegepast AS applied FROM Bestelling
             WHERE klant_id = %s
         """, (new_customer,))[0]["applied"], 1)
+
+    def test_changing_warehouse_stock_after_customer_approval_blocks_order(self):
+        with self.db.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO Klantkorting (klant_id, kalenderjaar, percentage)
+                VALUES (1, %s, 5.00)
+            """, (date.today().year,))
+        self.db.commit()
+        with self.app.test_client() as client:
+            preview = client.get("/orders/new?customer_id=1&product_id=1&quantity=10")
+            self.assertEqual(preview.status_code, 200)
+            approved_quote = re.search(
+                rb'name="quote" value="([^"]+)"', preview.data
+            ).group(1).decode("ascii")
+
+            with self.db.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE Magazijnlocatie SET aantal = 99
+                    WHERE gang = 'A' AND schapnummer = 1
+                """)
+            self.db.commit()
+            response = client.post("/orders/new", data={
+                "customer_id": "1", "product_id": "1", "quantity": "10",
+                "delivery_date": "2099-01-05", "part_of_day": "ochtend",
+                "quote": approved_quote,
+            })
+            self.assertEqual(response.status_code, 409)
+            self.assertIn("vraag de klant opnieuw akkoord".encode(), response.data)
+        self.db.commit()
+        self.assertEqual(self.rows(
+            "SELECT COUNT(*) AS n FROM Bestelling"
+        )[0]["n"], 0)
+
+    def test_urgent_order_cannot_be_placed_for_tomorrow_and_has_picking_status(self):
+        with self.app.test_client() as client:
+            preview = client.get("/orders/new?customer_id=4&product_id=1&quantity=1")
+            self.assertEqual(preview.status_code, 200)
+            approved_quote = re.search(
+                rb'name="quote" value="([^"]+)"', preview.data
+            ).group(1).decode("ascii")
+            from datetime import timedelta
+            tomorrow = (date.today() + timedelta(days=1)).isoformat()
+            invalid = client.post("/orders/new", data={
+                "customer_id": "4", "product_id": "1", "quantity": "1",
+                "delivery_date": tomorrow, "part_of_day": "middag",
+                "urgent": "1", "quote": approved_quote,
+            })
+            self.assertEqual(invalid.status_code, 400)
+            self.assertIn("binnen drie uur".encode(), invalid.data)
+            valid = client.post("/orders/new", data={
+                "customer_id": "4", "product_id": "1", "quantity": "1",
+                "delivery_date": tomorrow, "part_of_day": "middag",
+                "quote": approved_quote,
+            })
+            self.assertEqual(valid.status_code, 302, valid.data[:400])
+        self.db.commit()
+        self.assertEqual(self.rows("""
+            SELECT status_naam AS status FROM Bestelling WHERE klant_id=4
+        """)[0]["status"], "wordt verzameld")
 
     def test_missing_existing_rate_is_not_silently_recalculated(self):
         with self.db.cursor() as cursor:

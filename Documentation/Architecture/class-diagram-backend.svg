@@ -380,13 +380,14 @@
 <text x="910" y="2140" font-family="monospace" font-size="11">_positive_id()</text>
 <text x="910" y="2158" font-family="monospace" font-size="11">_validate()</text>
 <text x="910" y="2176" font-family="monospace" font-size="11">remove_offer()</text>
-<rect x="1340" y="1680" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="1680" width="416" height="136" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="1340" y="1680" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="1348" y="1699" font-family="Arial" font-size="12" font-weight="bold">services.order_service.OrderService</text>
 <text x="1350" y="1726" font-family="monospace" font-size="11">__init__()</text>
 <text x="1350" y="1744" font-family="monospace" font-size="11">prepare()</text>
-<text x="1350" y="1762" font-family="monospace" font-size="11">place()</text>
-<text x="1350" y="1780" font-family="monospace" font-size="11">_delivery_date()</text>
+<text x="1350" y="1762" font-family="monospace" font-size="11">quote_snapshot()</text>
+<text x="1350" y="1780" font-family="monospace" font-size="11">place()</text>
+<text x="1350" y="1798" font-family="monospace" font-size="11">_delivery_date()</text>
 <rect x="20" y="2424" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2424" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2443" font-family="Arial" font-size="12" font-weight="bold">services.picking_bin_service.PickingBinService</text>
@@ -409,12 +410,12 @@
 <text x="908" y="2245" font-family="Arial" font-size="12" font-weight="bold">services.purchase_order_service.PurchaseOrderService</text>
 <text x="910" y="2272" font-family="monospace" font-size="11">__init__()</text>
 <text x="910" y="2290" font-family="monospace" font-size="11">record_order()</text>
-<rect x="1340" y="1830" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="1340" y="1830" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="1348" y="1849" font-family="Arial" font-size="12" font-weight="bold">services.reorder_service.ReorderService</text>
-<text x="1350" y="1876" font-family="monospace" font-size="11">__init__()</text>
-<text x="1350" y="1894" font-family="monospace" font-size="11">overview()</text>
-<text x="1350" y="1912" font-family="monospace" font-size="11">record_confirmed()</text>
+<rect x="1340" y="1848" width="416" height="100" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="1848" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="1348" y="1867" font-family="Arial" font-size="12" font-weight="bold">services.reorder_service.ReorderService</text>
+<text x="1350" y="1894" font-family="monospace" font-size="11">__init__()</text>
+<text x="1350" y="1912" font-family="monospace" font-size="11">overview()</text>
+<text x="1350" y="1930" font-family="monospace" font-size="11">record_confirmed()</text>
 <rect x="20" y="2556" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2556" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2575" font-family="Arial" font-size="12" font-weight="bold">services.reservation_service.ReservationService</text>
@@ -436,13 +437,13 @@
 <text x="908" y="2359" font-family="Arial" font-size="12" font-weight="bold">services.sales_stock_service.SalesStockService</text>
 <text x="910" y="2386" font-family="monospace" font-size="11">__init__()</text>
 <text x="910" y="2404" font-family="monospace" font-size="11">check()</text>
-<rect x="1340" y="1962" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
-<rect x="1340" y="1962" width="416" height="28" rx="5" fill="#E7EDF5"/>
-<text x="1348" y="1981" font-family="Arial" font-size="12" font-weight="bold">services.stock_service.StockService</text>
-<text x="1350" y="2008" font-family="monospace" font-size="11">__init__()</text>
-<text x="1350" y="2026" font-family="monospace" font-size="11">shortages()</text>
-<text x="1350" y="2044" font-family="monospace" font-size="11">minimums()</text>
-<text x="1350" y="2062" font-family="monospace" font-size="11">set_minimum()</text>
+<rect x="1340" y="1980" width="416" height="118" rx="5" stroke="#42536C" fill="#fff"/>
+<rect x="1340" y="1980" width="416" height="28" rx="5" fill="#E7EDF5"/>
+<text x="1348" y="1999" font-family="Arial" font-size="12" font-weight="bold">services.stock_service.StockService</text>
+<text x="1350" y="2026" font-family="monospace" font-size="11">__init__()</text>
+<text x="1350" y="2044" font-family="monospace" font-size="11">shortages()</text>
+<text x="1350" y="2062" font-family="monospace" font-size="11">minimums()</text>
+<text x="1350" y="2080" font-family="monospace" font-size="11">set_minimum()</text>
 <rect x="20" y="2706" width="416" height="82" rx="5" stroke="#42536C" fill="#fff"/>
 <rect x="20" y="2706" width="416" height="28" rx="5" fill="#E7EDF5"/>
 <text x="28" y="2725" font-family="Arial" font-size="12" font-weight="bold">services.supplier_service.SupplierService</text>

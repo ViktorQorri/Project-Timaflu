@@ -1,7 +1,8 @@
 """Order discount calculation for telephone sales, following SD01 Calculate customer discount.
 
-Business rules from the case (Current-processes, Tabel 1):
-- 5% order discount over the order total when the total is EUR 500 or more;
+Business rules from the case (Current-processes, Tabel 1; Product-description, invoice):
+- 9% medicine VAT is added before the displayed discounts;
+- 5% order discount over the VAT-inclusive order total from EUR 500;
 - the next discount is calculated over the amount left after the order discount;
 - every first order receives a one-time 10% discount (product description);
 - the customer discount uses the percentage already recorded for the order year
@@ -18,6 +19,7 @@ CENT = Decimal("0.01")
 ORDER_DISCOUNT_THRESHOLD = Decimal("500.00")
 ORDER_DISCOUNT_PERCENTAGE = Decimal("5")
 ONE_TIME_DISCOUNT_PERCENTAGE = Decimal("10")
+MEDICINE_VAT_PERCENTAGE = Decimal("9")
 # Tabel 1: lowest annual revenue of each tier and its percentage, highest tier first.
 CUSTOMER_DISCOUNT_TIERS = (
     (Decimal("20000.00"), Decimal("15")),
@@ -60,12 +62,16 @@ class DiscountService:
         customer = self._find_customer(customer_id)
         lines = self._price_order_lines(order_lines)
         subtotal = to_cents(sum(line["line_total"] for line in lines))
+        # Product-description.md (invoice layout): add 9% VAT first,
+        # then apply order, first-order and customer discounts in sequence.
+        vat_amount = to_cents(subtotal * MEDICINE_VAT_PERCENTAGE / Decimal("100"))
+        gross_total = subtotal + vat_amount
         discounts = []
 
-        order_discount = self.calculate_order_discount(subtotal)
+        order_discount = self.calculate_order_discount(gross_total)
         if order_discount:
             discounts.append(order_discount)
-        amount = discounts[-1]["total_after"] if discounts else subtotal
+        amount = discounts[-1]["total_after"] if discounts else gross_total
 
         discount_year = (order_date or date.today()).year
         first_order = self.repository.count_previous_orders(customer["klant_id"]) == 0
@@ -93,8 +99,10 @@ class DiscountService:
             "customer": customer,
             "lines": lines,
             "subtotal": subtotal,
+            "vat_amount": vat_amount,
+            "gross_total": gross_total,
             "discounts": discounts,
-            "total_amount": self.calculate_total_after_discount(subtotal, discounts),
+            "total_amount": self.calculate_total_after_discount(gross_total, discounts),
             "first_order": first_order,
             "one_time_discount": first_order,
             "discount_year": discount_year,
