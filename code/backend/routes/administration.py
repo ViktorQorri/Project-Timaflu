@@ -145,8 +145,15 @@ def invoice_action():
         raise DomainError(
             "Herinneringen worden na het verzenden via het herinneringsscherm geregistreerd."
         )
-    if action=="payment_plan_rejected" and request.form.get("offer_refused_confirmed") != "yes":
-        raise DomainError("Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd.")
+    if action=="payment_plan_rejected":
+        if request.form.get("offer_refused_confirmed") != "yes":
+            raise DomainError(
+                "Bevestig dat de klant de aangeboden betalingsregeling heeft geweigerd."
+            )
+        if request.form.get("agency_acceptance_confirmed") != "yes":
+            raise DomainError(
+                "Bevestig dat het incassobureau de opdracht heeft geaccepteerd."
+            )
     repo=AssessedRepository(get_connection())
     # Validate invoice ownership for every mutation, not only mark_paid.
     # Otherwise a forged form can modify another customer's invoice.

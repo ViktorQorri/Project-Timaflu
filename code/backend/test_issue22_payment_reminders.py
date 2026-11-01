@@ -225,6 +225,7 @@ class ReminderCaseTests(TestCase):
             create_app().jinja_env, "invoices.html"
         )[0]
         self.assertIn('name="offer_refused_confirmed"', source)
+        self.assertIn('name="agency_acceptance_confirmed"', source)
         self.assertIn("Betalingsregeling geweigerd", source)
         self.assertIn('name="received_amount"', source)
 
