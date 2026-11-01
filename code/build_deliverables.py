@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
+from database.validate_eer_schema import validate as validate_eer_schema
+
 ROOT = Path(__file__).resolve().parents[1]
 
 ARCHIVES = {
@@ -25,6 +27,7 @@ ARCHIVES = {
     "timaflu-database-en-queries.zip": (
         ("code/database/",),
         (
+            "eer.mwb",
             "Documentation/Architecture/eer-mysql-verified.svg",
             "Documentation/Architecture/eer-mysql-schema.json",
             "Documentation/Architecture/query-output-per-screen.md",
@@ -61,6 +64,7 @@ def included(path, folders, fixed):
 
 
 def build(output_dir: Path):
+    validate_eer_schema()
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = tracked_paths()
     resulting = {}

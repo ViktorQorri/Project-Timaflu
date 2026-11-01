@@ -190,6 +190,8 @@ CREATE TABLE LeveranciersAanbod (
 CREATE TABLE Inkoopbestelling (
     inkoopbestelling_id INT AUTO_INCREMENT PRIMARY KEY,
     leverancier_id INT NOT NULL,
+    -- Legacy inkooporders hebben geen betrouwbare datum of status.
+    -- Nieuwe bevestigde orders krijgen CURRENT_TIMESTAMP en 'besteld'.
     besteld_op DATETIME NULL,
     status_naam VARCHAR(30) NULL,
 
