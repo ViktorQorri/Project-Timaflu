@@ -122,24 +122,29 @@ def _approval_serializer():
     return URLSafeTimedSerializer(current_app.secret_key, salt="timaflu-telefonisch-orderakkoord")
 
 
-@sales.get("/orders/new")
-def new_telephone_order():
+def render_telephone_order(values, error=None, status=200):
+    """Show the order form again with the entered values, so nothing has to be retyped."""
     customers, products = TelephoneOrderRepository(get_connection()).form_options()
-    entered = request.args.getlist("product_id")
-    line_rows = max(6, len(entered) + (request.args.get("add_line") == "1"))
+    entered = values.getlist("product_id")
+    line_rows = max(6, len(entered) + (values.get("add_line") == "1"))
     return render_template(
         "telephone_order.html", customers=customers, products=products,
-        today=date.today().isoformat(), line_rows=line_rows,
+        today=date.today().isoformat(), line_rows=line_rows, error=error,
         entered={
-            "customer_id": request.args.get("customer_id", ""),
-            "day": request.args.get("day", ""),
-            "slot": request.args.get("slot", "ochtend"),
-            "urgent": request.args.get("urgent") == "yes",
+            "customer_id": values.get("customer_id", ""),
+            "day": values.get("day", ""),
+            "slot": values.get("slot", "ochtend"),
+            "urgent": values.get("urgent") == "yes",
             "products": entered,
-            "quantities": request.args.getlist("quantity"),
-            "shortages": request.args.getlist("shortage"),
+            "quantities": values.getlist("quantity"),
+            "shortages": values.getlist("shortage"),
         },
-    )
+    ), status
+
+
+@sales.get("/orders/new")
+def new_telephone_order():
+    return render_telephone_order(request.args)
 
 
 @sales.post("/orders/quote")
@@ -154,14 +159,19 @@ def preview_telephone_order():
             if pid.strip() or qty.strip()
         ]
         day = date.fromisoformat(request.form["day"])
-    except (ValueError, KeyError) as exc:
-        raise DomainError("Vul een geldige leverdag en complete bestelregels in.") from exc
+    except (ValueError, KeyError):
+        return render_telephone_order(
+            request.form, "Vul een geldige leverdag en complete bestelregels in.", 400
+        )
     urgent = request.form.get("urgent") == "yes"
     customer_id = request.form.get("customer_id")
     slot = request.form.get("slot")
-    quote = TelephoneOrderRepository(get_connection()).quote(
-        customer_id, wanted, day, slot, urgent
-    )
+    try:
+        quote = TelephoneOrderRepository(get_connection()).quote(
+            customer_id, wanted, day, slot, urgent
+        )
+    except DomainError as error:
+        return render_telephone_order(request.form, str(error), error.status_code)
     nonce = uuid4().hex
     session["telephone_quote_nonce"] = nonce
     payload = {

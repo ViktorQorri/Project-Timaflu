@@ -10,6 +10,10 @@
     </div>
   </header>
 
+  {% if error %}
+  <p class="flash flash-error" role="alert">De prijs is niet berekend: {{ error }}</p>
+  {% endif %}
+
   <form method="post" action="{{ url_for('sales.preview_telephone_order') }}">
     <section class="stock-dashboard__section stock-dashboard__panel" aria-labelledby="order-delivery-title">
       <h2 id="order-delivery-title">Klant en levering</h2>
