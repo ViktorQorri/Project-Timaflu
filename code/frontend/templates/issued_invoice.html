@@ -9,6 +9,7 @@
       <p class="stock-dashboard__subtitle">Factuurdatum: {{invoice.factuurdatum}}{% if invoice.week_start %}, factuurweek vanaf {{invoice.week_start}}{% endif %}</p>
     </div>
     <div class="page-actions">
+      <a class="button button--secondary" href="{{url_for('weekly_invoices.invoice_overview')}}">Terug naar factuuroverzicht</a>
       <a class="button button--secondary" href="{{url_for('weekly_invoices.weekly_overview')}}">Terug naar weekfacturen</a>
     </div>
   </header>

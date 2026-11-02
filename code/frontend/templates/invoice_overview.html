@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Factuuroverzicht{% endblock %}
+{% block content %}
+<section class="stock-dashboard" aria-labelledby="invoice-overview-title">
+  <header class="stock-dashboard__intro">
+    <div>
+      <p class="stock-dashboard__eyebrow">Administratie</p>
+      <h1 id="invoice-overview-title">Factuuroverzicht</h1>
+      <p class="stock-dashboard__subtitle">Alle uitgegeven klantfacturen, betaald en openstaand. Open een factuur om de vastgelegde regels en bedragen in te zien.</p>
+    </div>
+    <div class="page-actions">
+      <a class="button button--secondary" href="{{ url_for('administration.invoices') }}">Terug naar facturen beheren</a>
+    </div>
+  </header>
+
+  <section class="stock-dashboard__section" aria-labelledby="invoice-filter-title">
+    <h2 id="invoice-filter-title">Filteren op klant</h2>
+    <form method="get" class="stock-dashboard__form" role="search">
+      <label for="overview-customer">Klantnummer
+        <input id="overview-customer" type="number" min="1" name="customer_id" value="{{ customer_id or '' }}">
+      </label>
+      <button type="submit">Filteren</button>
+      {% if customer_id %}<a href="{{ url_for('weekly_invoices.invoice_overview') }}">Alle klanten tonen</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="stock-dashboard__section" aria-labelledby="invoice-list-title">
+    <h2 id="invoice-list-title">{{ invoices|length }} factu{{ 'ur' if invoices|length == 1 else 'ren' }}</h2>
+    {% if invoices %}
+    <div class="stock-dashboard__table-wrap" role="region" aria-labelledby="invoice-list-title" tabindex="0">
+      <table class="stock-dashboard__table">
+        <thead><tr><th scope="col">Factuur</th><th scope="col">Factuurdatum</th>
+          <th scope="col">Klant</th><th scope="col">Totaal</th>
+          <th scope="col">Betaald op</th><th scope="col">Inzien</th></tr></thead>
+        <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <th scope="row">{{ invoice.factuur_id }}</th>
+            <td>{{ invoice.factuurdatum.strftime('%d-%m-%Y') }}</td>
+            <td>{{ invoice.klant_id }} · {{ invoice.bedrijfsnaam }}</td>
+            <td>{% if invoice.totaal_bedrag is not none %}€ {{ invoice.totaal_bedrag }}{% else %}Niet vastgelegd{% endif %}</td>
+            <td>{{ invoice.betaald_op.strftime('%d-%m-%Y') if invoice.betaald_op else 'Openstaand' }}</td>
+            <td><a href="{{ url_for('weekly_invoices.issued_invoice', invoice_id=invoice.factuur_id) }}">Factuur {{ invoice.factuur_id }} bekijken</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="stock-dashboard__empty" role="status">Geen facturen gevonden{% if customer_id %} voor klant {{ customer_id }}{% endif %}.</p>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

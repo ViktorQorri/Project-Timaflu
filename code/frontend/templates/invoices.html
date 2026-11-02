@@ -9,6 +9,7 @@
       <p class="stock-dashboard__subtitle">Bekijk facturen, factureer geleverde producten per week en registreer betalingsopvolging.</p>
     </div>
     <div class="page-actions">
+      <a class="button button--secondary" href="{{ url_for('weekly_invoices.invoice_overview') }}">Alle facturen inzien</a>
       <a class="button button--secondary" href="{{ url_for('administration.outstanding_invoices') }}">Openstaande klantfacturen</a>
       <a class="button button--secondary" href="{{ url_for('weekly_invoices.weekly_overview') }}">Weekfacturen uitgeven</a>
     </div>
@@ -76,7 +77,8 @@
             <h2 id="invoice-{{ f.invoice_number }}">Factuur {{ f.invoice_number }}</h2>
             <p class="invoice-card__meta">{{ f.date }} · {{ f.customer_name }} · {{ f.customer_address }}</p>
           </div>
-          <p class="invoice-card__meta">Betalingsopvolging: <strong>{{ f.action }}</strong></p>
+          <p class="invoice-card__meta">Betalingsopvolging: <strong>{{ f.action }}</strong>
+            · <a href="{{ url_for('weekly_invoices.issued_invoice', invoice_id=f.invoice_number) }}">Factuur bekijken</a></p>
         </header>
 
         <div class="invoice-card__lines">

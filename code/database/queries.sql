@@ -1137,6 +1137,14 @@ UPDATE Bestelling AS b
                             AND lr.factuur_id IS NULL
                        );
 
+-- WeeklyInvoiceRepository.list_invoices, GET /invoices/all?customer_id=...
+-- Example: customer 5. Without a customer filter both parameters are NULL.
+SELECT f.factuur_id, f.klant_id, f.factuurdatum, f.betaald_op,
+                       f.totaal_bedrag, k.bedrijfsnaam
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
+                WHERE 5 IS NULL OR f.klant_id=5
+                ORDER BY f.factuurdatum DESC, f.factuur_id DESC;
+
 -- WeeklyInvoiceRepository.issued_invoice example 1
 SELECT f.*, k.bedrijfsnaam,
                        COALESCE(f.factuuradres,a.adres) AS adres

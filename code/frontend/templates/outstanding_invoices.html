@@ -33,7 +33,7 @@
       <tbody>
         {% for invoice in invoices %}
           <tr>
-            <th scope="row">{{ invoice.factuur_id }}</th>
+            <th scope="row"><a href="{{ url_for('weekly_invoices.issued_invoice', invoice_id=invoice.factuur_id) }}">{{ invoice.factuur_id }}</a></th>
             <td>{{ invoice.bedrijfsnaam }}</td>
             <td>{{ invoice.contactpersoon or "Niet bekend" }} - {{ invoice.telefoonnummer or "Niet bekend" }}</td>
             <td>{{ invoice.factuurdatum.strftime('%d-%m-%Y') }}</td>

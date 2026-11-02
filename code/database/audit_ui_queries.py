@@ -52,6 +52,7 @@ SCREENS = [
     ("/invoices/outstanding", "Openstaande klantfacturen en betalingsherinneringen"),
     ("/invoices/1/reminders/1", "Eerste betalingsherinnering, echte factuur en vast referentiemoment"),
     ("/invoices/weekly?week_start=2026-10-26", "Weekfacturen"),
+    ("/invoices/all?customer_id=5", "Factuuroverzicht"),
     ("/invoices/issued/1", "Uitgegeven factuur"),
     ("/acquisition", "Acquisitie-opvolging"),
 ]

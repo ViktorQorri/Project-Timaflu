@@ -270,6 +270,18 @@ class WeeklyInvoiceRepository:
                 self.db.rollback()
                 raise
 
+    def list_invoices(self, customer_id=None):
+        """All issued invoices, paid and unpaid, optionally for one customer."""
+        with self.db.cursor(dictionary=True) as cursor:
+            cursor.execute("""
+                SELECT f.factuur_id, f.klant_id, f.factuurdatum, f.betaald_op,
+                       f.totaal_bedrag, k.bedrijfsnaam
+                FROM FactuurOverzicht f JOIN Klant k ON k.klant_id=f.klant_id
+                WHERE %s IS NULL OR f.klant_id=%s
+                ORDER BY f.factuurdatum DESC, f.factuur_id DESC
+            """, (customer_id, customer_id))
+            return cursor.fetchall()
+
     def issued_invoice(self, invoice_id):
         """Retrieve a persisted invoice even after it has been paid."""
         with self.db.cursor(dictionary=True) as cursor:

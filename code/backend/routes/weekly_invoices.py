@@ -54,6 +54,15 @@ def weekly_overview():
     )
 
 
+@weekly_invoices.get("/invoices/all")
+def invoice_overview():
+    customer_id = request.args.get("customer_id", type=int)
+    invoices = WeeklyInvoiceRepository(get_connection()).list_invoices(customer_id)
+    return render_template(
+        "invoice_overview.html", invoices=invoices, customer_id=customer_id
+    )
+
+
 @weekly_invoices.get("/invoices/issued/<int:invoice_id>")
 def issued_invoice(invoice_id):
     row = WeeklyInvoiceRepository(get_connection()).issued_invoice(invoice_id)
