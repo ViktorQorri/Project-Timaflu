@@ -94,8 +94,13 @@ class TelephoneOrderRepository:
                 product = c.fetchone()
                 if not product:
                     raise ConflictError("Het geselecteerde medicijn is niet meer leverbaar.")
-                if requested["quantity"] < int(product["minimale_bestelhoeveelheid"]):
-                    raise DomainError("Aantal is lager dan de minimale bestelhoeveelheid.")
+                minimum = int(product["minimale_bestelhoeveelheid"])
+                if requested["quantity"] < minimum:
+                    raise DomainError(
+                        f"Minimale bestelhoeveelheid voor {product['productnaam']} "
+                        f"({product['artikelnummer']}) is {minimum} grootverpakkingen; "
+                        f"ingevoerd: {requested['quantity']}."
+                    )
                 c.execute("SELECT COALESCE(SUM(aantal),0) AS physical FROM Magazijnlocatie WHERE product_id=%s", (pid,))
                 physical = int(c.fetchone()["physical"])
                 c.execute("SELECT COALESCE(SUM(aantal),0) AS reserved FROM Voorraadreservering WHERE product_id=%s", (pid,))
